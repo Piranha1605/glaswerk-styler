@@ -61,16 +61,16 @@ const STUFEN = [
         // Begleiter sind dagegen feste Werte und bleiben sonst auf HAs Blau
         // stehen, waehrend alles andere umschwenkt - sie werden mitgeschrieben.
         { t: "Primaerfarbe", art: "farbe", rolle: "primary", v: "--ha-color-primary-60", ebene: "beide",
-          begleiter: true, sync: { bubble: "--bubble-accent-color", mush: "--mush-rgb-blue" } },
+          begleiter: true, sync: { bubble: "--bubble-accent-color", mush: null } },
         { t: "Neutral", art: "farbe", rolle: "neutral", v: "--ha-color-neutral-60", ebene: "beide", sync: { mush: "--mush-rgb-grey" } },
-        { t: "Erfolg",  art: "farbe", rolle: "green",   v: "--ha-color-green-60",   ebene: "beide", sync: { mush: "--mush-rgb-green" } },
-        { t: "Warnung", art: "farbe", rolle: "orange",  v: "--ha-color-orange-60",  ebene: "beide" },
-        { t: "Fehler",  art: "farbe", rolle: "red",     v: "--ha-color-red-60",     ebene: "beide" },
+        { t: "Erfolg",  art: "farbe", rolle: "green",   v: "--ha-color-green-60",   ebene: "beide", sync: { mush: "--mush-rgb-success" } },
+        { t: "Warnung", art: "farbe", rolle: "orange",  v: "--ha-color-orange-60",  ebene: "beide", sync: { mush: "--mush-rgb-warning" } },
+        { t: "Fehler",  art: "farbe", rolle: "red",     v: "--ha-color-red-60",     ebene: "beide", sync: { mush: "--mush-rgb-danger" } },
         // Der Akzent ist KEINE Rampe, sondern ein eigener Wert - von Haus aus
         // orange, nicht blau. Fremde Karten lesen ihn: die Horizon-Karten
         // ziehen --karten-akzent daraus.
         { t: "Akzent", art: "farbe", v: "--accent-color", ebene: "beide",
-          sync: { bubble: "--bubble-accent-color" } },
+          sync: { bubble: "--bubble-accent-color", mush: null } },
       ] },
 
       // Schrift wechselt mit dem Modus - im Hellen dunkel, im Dunkeln hell.
@@ -631,6 +631,16 @@ class HatsPanel extends HTMLElement {
     };
     const aus = [];
     for (const [name, variable] of Object.entries(f.sync || {})) {
+      const anzeige = name === "mush" ? "Mushroom" : "Bubble";
+      // null heisst: gibt es dort nicht. Am 12.10.2026 gemessen - Mushroom
+      // kennt keinen Akzent (null Namen mit "accent") und liest
+      // --accent-color kein einziges Mal. Das ausdruecklich zu zeigen ist
+      // besser, als die Ampel wegzulassen und raten zu lassen.
+      if (variable === null) {
+        aus.push({ name: anzeige, stand: "nichts",
+                   titel: `${anzeige} hat dafuer keine Entsprechung` });
+        continue;
+      }
       const v = cs.getPropertyValue(variable).trim().toLowerCase();
       let stand = "leer";
       if (v) {
@@ -1008,6 +1018,9 @@ class HatsPanel extends HTMLElement {
       .ampel i { width: 7px; height: 7px; border-radius: 50%; background: #c2c8d2; }
       .ampel.an i  { background: #7bd14a; }
       .ampel.aus i { background: #f0a23c; }
+      /* Nicht anwendbar: durchgestrichener Punkt, kein Zustand. */
+      .ampel.nichts { opacity: .5; }
+      .ampel.nichts i { background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
 
       /* Die elf Stufen, die aus einer Farbe entstehen. */
       .rampe { display: flex; gap: 3px; margin-top: 14px; }
