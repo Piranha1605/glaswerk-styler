@@ -23,6 +23,7 @@
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
 import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne } from "./theme.js";
+import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 
 const HATS_VERSION = "0.2.0b1";
 
@@ -70,8 +71,12 @@ const STUFEN = [
         // Der Akzent ist KEINE Rampe, sondern ein eigener Wert - von Haus aus
         // orange, nicht blau. Fremde Karten lesen ihn: die Horizon-Karten
         // ziehen --karten-akzent daraus.
+        // Bubble hat zwar ein --bubble-accent-color, aber das markiert aktive
+        // Knoepfe und folgt damit der Primaerfarbe, nicht diesem dekorativen
+        // Akzent. Deshalb hier keine Entsprechung - sonst stuende die Ampel
+        // dauerhaft auf orange, obwohl alles richtig ist.
         { t: "Akzent", art: "farbe", v: "--accent-color", ebene: "beide",
-          sync: { bubble: "--bubble-accent-color", mush: null } },
+          sync: { bubble: null, mush: null } },
       ] },
 
       // Schrift wechselt mit dem Modus - im Hellen dunkel, im Dunkeln hell.
@@ -195,7 +200,9 @@ const STUFEN = [
     ] },
 
   { n: 6, titel: "Fremde Karten", kurz: "Bubble Card und Mushroom anbinden",
-    marke: "#c2c8d2", stand: "wartet", gruppen: [
+    marke: "#c2c8d2", stand: "wartet",
+    aktion: { name: "Alle anbinden", tut: "zuordnung" },
+    gruppen: [
       // Hier stehen Verweise, keine Farben: ein Eintrag wie
       // var(--ha-card-background) gilt in beiden Modi zugleich. Das ist der
       // ganze Gewinn - Fremdfelder, die sich von selbst mitaendern.
@@ -356,7 +363,8 @@ const TEXTE = {
     "Gruppen": "groups",
     "Ansicht": "View", "Gemischt": "Mixed", "Liste": "List", "Kacheln": "Tiles",
     "Jetzt in Kraft": "In effect now", "Hell": "Light", "Dunkel": "Dark",
-    "Beide Modi": "Both modes", "Aenderungen": "changes", "Speichern": "Save",
+    "Beide Modi": "Both modes", "Alle anbinden": "Wire up all",
+    "Zuordnungen eingetragen": "mappings written", "Toene": "tones", "Aenderungen": "changes", "Speichern": "Save",
     "Grundlage nicht geladen: ": "Base not loaded: ",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
     "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
@@ -581,6 +589,7 @@ class HatsPanel extends HTMLElement {
           <h2>${st.n}. ${T(st.titel)}</h2>
           <p>${T(st.kurz)} · ${st.gruppen.length} ${T("Gruppen")} · ${felderZahl(st)} ${T("Felder")}</p>
         </div>
+        ${st.aktion ? `<button class="aktion" data-tut="${st.aktion.tut}">${T(st.aktion.name)}</button>` : ""}
         <div class="umschalter" role="group" aria-label="${T("Ansicht")}">
           ${ANSICHTEN.map((a) => `<button data-ansicht="${a.id}" class="${a.id === this._ansicht ? "an" : ""}">${T(a.name)}</button>`).join("")}
         </div>
@@ -590,6 +599,13 @@ class HatsPanel extends HTMLElement {
         ${st.gruppen.map((g) => (kachelbrett ? this.spalte(st, g, T) : this.gruppe(st, g, T))).join("")}
       </div>`;
     d.querySelector(".zu").addEventListener("click", () => this.schliesse());
+    const ak = d.querySelector(".aktion");
+    if (ak) ak.addEventListener("click", () => {
+      const n = this.zuordnungAnwenden();
+      ZUSTAND.meldung = { text: `${n} ${T("Zuordnungen eingetragen")} (${ANZAHL.bubble} Bubble, ${ANZAHL.mushroom} Mushroom, ${ANZAHL.toene} ${T("Toene")})`, art: "gut" };
+      this.zeichneDialog();
+      this.zeichneZaehler();
+    });
     d.querySelectorAll(".umschalter button").forEach((b) =>
       b.addEventListener("click", () => {
         this._ansicht = b.dataset.ansicht;
@@ -710,8 +726,7 @@ class HatsPanel extends HTMLElement {
       const aus = d.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
       if (aus && wert === null) aus.textContent = T("nicht gesetzt");
       this.aendere(f, wert);
-      const z = this.shadowRoot.querySelector(".zaehler");
-      if (z) z.textContent = ZUSTAND.geaendert.size;
+      this.zeichneZaehler();
     });
 
     const o = this.shadowRoot.querySelector(".overlay.zwei");
@@ -741,15 +756,38 @@ class HatsPanel extends HTMLElement {
                    titel: `${anzeige} hat dafuer keine Entsprechung` });
         continue;
       }
-      const v = cs.getPropertyValue(variable).trim().toLowerCase();
+      // Erst das Modell fragen: steht dort ein Verweis auf UNSER Feld, ist die
+      // Anbindung da - unabhaengig davon, ob die Theme schon geladen ist. Das
+      // berechnete CSS zeigt die AKTIVE Theme, nicht die, die gerade gebaut
+      // wird; allein darauf zu schauen liesse die Ampel grau, obwohl alles
+      // eingetragen ist.
+      const imModell = this.modellWert(variable.replace(/^--/, ""));
       let stand = "leer";
-      if (v) {
-        const soll = name === "mush" ? alsTripel(eigen) : eigen;
-        const ist = v.replace(/\s+/g, "");
-        stand = soll && ist === soll.replace(/\s+/g, "") ? "an" : "aus";
+      let quelle;
+      if (imModell !== undefined && imModell !== "") {
+        // Die Zuordnung zeigt oft nicht auf die Rampenstufe selbst, sondern
+        // auf etwas, das daraus abgeleitet ist: --bubble-accent-color steht
+        // auf var(--ha-color-fill-primary-normal-resting), und das IST die
+        // Primaerfarbe - nur eine Ebene weiter. Ein Vergleich auf den exakten
+        // Namen meldete dort eine Luecke, wo keine ist. Bei einer Rolle zaehlt
+        // deshalb die Familie, sonst der Name.
+        const eigenName = (f.v || "").replace(/^--/, "");
+        const familie = /^ha-color-(primary|neutral|red|green|orange)-/.exec(eigenName);
+        const zeigtAufUns = familie
+          ? new RegExp(`var\\(\\s*--[a-z-]*${familie[1]}\\b`).test(imModell)
+          : new RegExp(`var\\(\\s*--(?:rgb-)?${eigenName}\\b`).test(imModell);
+        stand = zeigtAufUns ? "an" : "aus";
+        quelle = imModell;
+      } else {
+        const berechnet = cs.getPropertyValue(variable).trim().toLowerCase();
+        quelle = berechnet;
+        if (berechnet) {
+          const soll = name === "mush" ? alsTripel(eigen) : eigen;
+          stand = soll && berechnet.replace(/\s+/g, "") === soll.replace(/\s+/g, "") ? "an" : "aus";
+        }
       }
-      aus.push({ name: name === "mush" ? "Mushroom" : "Bubble", stand,
-                 titel: `${variable}: ${v || "nicht gesetzt"}` });
+      aus.push({ name: anzeige, stand,
+                 titel: `${variable}: ${quelle || "nicht gesetzt"}` });
     }
     return aus;
   }
@@ -801,6 +839,27 @@ class HatsPanel extends HTMLElement {
       return;
     }
     schreibe(name, wert);
+  }
+
+  // Die ganze Zuordnung auf einmal: 159 Eintraege, alle als Verweis. Einzeln
+  // waere es eine halbe Stunde Klicken, und genau dabei entstehen die Luecken,
+  // die man spaeter sucht.
+  zuordnungAnwenden() {
+    if (!ZUSTAND.modell) return 0;
+    let n = 0;
+    for (const [k, v] of Object.entries(ZUORDNUNG)) {
+      setze(ZUSTAND.modell, k, v, "beide");
+      ZUSTAND.geaendert.add(k);
+      n++;
+    }
+    return n;
+  }
+
+  zeichneZaehler() {
+    const z = this.shadowRoot.querySelector(".zaehler");
+    if (z) z.textContent = ZUSTAND.geaendert.size;
+    const m = this.shadowRoot.querySelector(".meldung");
+    if (m && ZUSTAND.meldung) { m.textContent = ZUSTAND.meldung.text; m.className = "meldung " + ZUSTAND.meldung.art; }
   }
 
   async speichern() {
@@ -1299,6 +1358,11 @@ class HatsPanel extends HTMLElement {
                           background: rgba(27,36,48,.06); color: var(--s-tinte); font-size: 15px; line-height: 1; }
       .blaettern button:hover:not([disabled]) { background: rgba(27,36,48,.12); }
       .blaettern button[disabled] { opacity: .35; cursor: default; }
+
+      .aktion { border: 0; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 500;
+                padding: 8px 16px; border-radius: 999px; background: var(--s-tinte); color: #fff;
+                margin-left: auto; white-space: nowrap; }
+      .aktion:hover { background: #000; }
 
       /* Der Umschalter im Kopf des Pop-ups. */
       .umschalter { display: flex; gap: 2px; margin-left: auto; padding: 3px;
