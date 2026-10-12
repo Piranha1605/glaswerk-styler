@@ -109,6 +109,33 @@ export function setze(modell, name, wert, ebene = "beide") {
   return modell;
 }
 
+// Ein flaches Feld in zwei Modi aufteilen.
+//
+// Der geltende Wert wird in BEIDE Modi kopiert, erst dann faellt der flache
+// weg. Das Kopieren ist der ganze Punkt: setze(modell, name, wert, "light")
+// loescht den flachen Eintrag und schreibt nur nach hell - der Dunkelmodus
+// stuende danach ohne Wert da, still und ohne Meldung.
+export function teileAuf(modell, name) {
+  const w = modell.flach[name];
+  if (w === undefined) return modell;
+  modell.light = modell.light || {};
+  modell.dark = modell.dark || {};
+  if (modell.light[name] === undefined) modell.light[name] = w;
+  if (modell.dark[name] === undefined) modell.dark[name] = w;
+  delete modell.flach[name];
+  return modell;
+}
+
+// Zurueck auf flach: Der Wert des angegebenen Modus gilt dann fuer beide.
+// Welcher gewinnt, ist eine Entscheidung - deshalb steht sie im Aufruf und
+// nicht hier drin.
+export function fuehreZusammen(modell, name, modus = "light") {
+  const quelle = modus === "dark" ? modell.dark : modell.light;
+  const w = quelle[name] !== undefined ? quelle[name] : modell.flach[name];
+  if (w === undefined) return entferne(modell, name);
+  return setze(modell, name, w, "beide");
+}
+
 export function entferne(modell, name) {
   delete modell.flach[name];
   delete modell.light[name];

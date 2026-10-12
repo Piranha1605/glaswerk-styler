@@ -104,7 +104,9 @@ if (n < 8) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
 // orange an". Dahinter lagen drei getrennte Fehler.
 
 pruefe("Hell und Dunkel kommen aus dem Modell", () => {
-  const block = panel.slice(panel.indexOf("werteJeModus(f) {"), panel.indexOf("werteJeModus(f) {") + 900);
+  const auf2 = panel.indexOf("werteJeModus(f) {");
+  const block = panel.slice(auf2, panel.indexOf("\n  }\n", auf2));
+  assert.ok(block.includes("m.light[name]"), "werteJeModus nicht gefunden");
   assert.match(block, /ZUSTAND\.modell/, "werteJeModus liest nicht das Modell");
   assert.doesNotMatch(block, /hass\.themes\.themes/,
     "werteJeModus liest wieder die laufende Theme statt das Modell");
@@ -137,7 +139,10 @@ pruefe("Der Modus wird VOR dem Zeichnen gesetzt, und nur bei einem anderen Feld"
   // Ueber die Oberflaeche liess sich kein Dunkel-Wert setzen.
   const auf = panel.indexOf("  oeffneFeld(st, schluessel) {");
   const block = panel.slice(auf, panel.indexOf("\n  }\n", panel.indexOf("binde(d, (id, wert)", auf)));
-  const zuweisung = block.indexOf("this._feldModus = f.ebene");
+  // Seit dem Umschalter leitet sich der Modus aus dem Modell ab
+  // (geteilt ? "light" : "beide"), nicht mehr aus f.ebene. Die Reihenfolge
+  // bleibt das Entscheidende: vor dem Zeichnen.
+  const zuweisung = block.indexOf("this._feldModus = geteilt");
   const zeichnen = block.indexOf("d.innerHTML = `");
   assert.ok(zuweisung > 0 && zeichnen > 0, "Die Stellen wurden nicht gefunden");
   assert.ok(zuweisung < zeichnen, "Der Modus wird immer noch nach dem Zeichnen gesetzt");
@@ -149,7 +154,11 @@ pruefe("Der Modus wird VOR dem Zeichnen gesetzt, und nur bei einem anderen Feld"
 });
 
 pruefe("Der Infostreifen zeigt den tatsaechlichen Modus", () => {
-  const block = panel.slice(panel.indexOf("  streifen(f, T) {"), panel.indexOf("  streifen(f, T) {") + 900);
+  // Bis zum Methodenende schneiden, nicht nach Zeichenzahl - die Methode ist
+  // mit dem Umschalter gewachsen, und 900 Zeichen reichten nicht mehr.
+  const auf = panel.indexOf("  streifen(f, T) {");
+  const block = panel.slice(auf, panel.indexOf("\n  }\n", auf));
+  assert.ok(block.includes("infostreifen("), "streifen() nicht gefunden");
   assert.doesNotMatch(block, /modus: beide \? "beide" : "light"/,
     "Der Streifen steht wieder fest auf hell");
   assert.match(block, /this\._feldModus === "dark"/);

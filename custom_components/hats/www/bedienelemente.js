@@ -90,8 +90,11 @@ export function farbe({ id, wert, bahn = [], alpha = true }) {
 // Ein schmaler Streifen ueber dem Feld: in welchem Modus gearbeitet wird, ob
 // Bubble und Mushroom mitziehen, und ein Weg zurueck auf HAs Vorgabe.
 export function infostreifen({ id, modus = "beide", modi = [], sync = [], zurueck = true }) {
+  // titel traegt die Begruendung, warum ein Knopf allein steht - sonst sieht
+  // ein Feld ohne Hell/Dunkel nach einem Versehen aus.
   const knopf = (m) => `<button data-be-modus="${esc(id)}" data-wert="${esc(m.wert)}"
-      class="${m.wert === modus ? "an" : ""}" ${m.aus ? "disabled" : ""}>${esc(m.name)}</button>`;
+      class="${m.wert === modus ? "an" : ""}" ${m.aus ? "disabled" : ""}
+      ${m.titel ? `title="${esc(m.titel)}"` : ""}>${esc(m.name)}</button>`;
   const lampe = (s) => `<span class="ampel ${s.stand}" title="${esc(s.titel || "")}">
       <i></i>${esc(s.name)}</span>`;
   return `

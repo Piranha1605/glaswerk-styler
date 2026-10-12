@@ -22,7 +22,7 @@
 
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
-import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne } from "./theme.js";
+import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 
 const HATS_VERSION = "0.2.0b1";
@@ -768,6 +768,7 @@ const felderGesamt = STUFEN.reduce((n, st) => n + felderZahl(st), 0);
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Eine Rolle setzt elf Palettenstufen und bleibt deshalb in beiden Modi gleich": "A role sets eleven palette steps and therefore stays the same in both modes",
     "Womit faengst du an?": "Where do you want to start?",
     "Eine neue Theme oder eine vorhandene weiterbauen": "A new theme, or carry on with an existing one",
     "Neue Theme": "New theme",
@@ -1212,7 +1213,12 @@ class HatsPanel extends HTMLElement {
     // ein SyntaxError. Die Datei laedt dann gar nicht mehr.
     const feldId = f.v || f.t;
     if (this._feldModusFuer !== feldId) {
-      this._feldModus = f.ebene === "getrennt" ? "light" : "beide";
+      // Was gilt, steht im Modell: Liegt das Feld unter modes, wird je Modus
+      // gearbeitet, sonst flach. f.ebene ist nur noch der Startwert fuer ein
+      // Feld, das noch gar nicht gesetzt ist.
+      const stand = this.werteJeModus(f);
+      const geteilt = stand ? stand.wo === "je Modus" : f.ebene === "getrennt";
+      this._feldModus = geteilt ? "light" : "beide";
       this._feldModusFuer = feldId;
     }
 
@@ -1279,7 +1285,21 @@ class HatsPanel extends HTMLElement {
 
     binde(d, (id, wert) => {
       // Der Modus-Umschalter liefert ein Objekt, kein Wert.
-      if (wert && typeof wert === "object" && wert.modus) { this._feldModus = wert.modus; this.oeffneFeld(st, f.v || f.t); return; }
+      if (wert && typeof wert === "object" && wert.modus) {
+        // Umschalten heisst hier mehr als die Ansicht wechseln: Das Feld wird
+        // im Modell aufgeteilt oder wieder zusammengefuehrt.
+        const name = (f.v || "").replace(/^--/, "");
+        if (name && ZUSTAND.modell) {
+          if (wert.modus === "beide") fuehreZusammen(ZUSTAND.modell, name, this._feldModus);
+          else teileAuf(ZUSTAND.modell, name);
+          ZUSTAND.geaendert.add(name);
+        }
+        this._feldModus = wert.modus;
+        this._feldModusFuer = f.v || f.t;
+        this.oeffneFeld(st, f.v || f.t);
+        this.zeichneZaehler();
+        return;
+      }
       if (f.rolle) {
         const r = d.querySelector("[data-rampe]");
         if (r) r.innerHTML = this.rampeHtml(f, wert);
@@ -1368,16 +1388,25 @@ class HatsPanel extends HTMLElement {
 
   streifen(f, T) {
     if (f.meta) return "";
-    const beide = f.ebene !== "getrennt";
+    // Ob ein Feld flach steht oder je Modus, ist KEINE feste Eigenschaft mehr,
+    // sondern eine Wahl - und sie steht im Modell, nicht in der Felddefinition.
+    // f.ebene sagt nur noch, womit begonnen wird.
+    const je = this.werteJeModus(f);
+    const geteilt = je ? je.wo === "je Modus" : f.ebene === "getrennt";
+
+    // Die fuenf Rollen bleiben flach. Jede setzt elf Palettenstufen auf einmal,
+    // und HA rechnet daraus die RGB-Tripel, aus denen Mushroom lebt - eine
+    // halb aufgeteilte Rampe waere in einem Modus unvollstaendig.
+    const modi = f.rolle
+      ? [{ wert: "beide", name: T("Beide Modi"), titel: T("Eine Rolle setzt elf Palettenstufen und bleibt deshalb in beiden Modi gleich") }]
+      : [{ wert: "beide", name: T("Beide Modi") },
+         { wert: "light", name: T("Hell") },
+         { wert: "dark",  name: T("Dunkel") }];
+
     return infostreifen({
       id: f.v || f.t,
-      // Nicht fest "light": sonst springt die Markierung beim Umschalten
-      // zurueck, und man sieht nicht, in welchen Modus man gerade schreibt.
-      modus: beide ? "beide" : (this._feldModus === "dark" ? "dark" : "light"),
-      // Ein Feld, das flach steht, gilt in beiden Modi - die Wahl waere eine
-      // Luege. Deshalb hier nur ein Knopf, und der ist gesetzt.
-      modi: beide ? [{ wert: "beide", name: T("Beide Modi") }]
-                  : [{ wert: "light", name: T("Hell") }, { wert: "dark", name: T("Dunkel") }],
+      modus: geteilt ? (this._feldModus === "dark" ? "dark" : "light") : "beide",
+      modi,
       sync: this.syncStand(f),
     });
   }
@@ -1388,9 +1417,13 @@ class HatsPanel extends HTMLElement {
   // ein Feld geschrieben wird.
   aendere(f, wert) {
     if (!ZUSTAND.modell) return;
-    const ebene = f.ebene === "getrennt"
-      ? (this._feldModus === "dark" ? "dark" : "light")
-      : "beide";
+    // Die Ebene kommt aus der WAHL im Dialog, nicht mehr aus f.ebene. Sonst
+    // fuehrte jede Aenderung an einem als "beide" definierten Feld es sofort
+    // wieder zusammen - der Nutzer haette umgeschaltet und trotzdem beide
+    // Modi ueberschrieben.
+    const ebene = this._feldModus === "dark" ? "dark"
+                : this._feldModus === "light" ? "light"
+                : "beide";
     const schreibe = (name, v) => {
       if (v === null || v === "") entferne(ZUSTAND.modell, name);
       else setze(ZUSTAND.modell, name, v, ebene);

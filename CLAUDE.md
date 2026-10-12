@@ -344,6 +344,31 @@ Hexwert `#5468e0` weiss auf durchsichtigem Grund im Farbwähler: Der Wert war da
 zu sehen war nichts. Dieselbe Falle wie `.modal-box` in HATG. Der Speichern-Knopf
 ist die Ausnahme — er ist dunkel und braucht weiter weisse Schrift.
 
+### Flach oder je Modus ist eine Wahl, keine Eigenschaft
+
+Gefragt am 12.10.2026: „wie kann ich hell und dunkel getrennt einstellen". Die
+Antwort war: gar nicht — ob ein Feld flach steht oder unter `modes`, stand fest
+in der Felddefinition. Jetzt ist es ein Umschalter, und der Stand kommt aus dem
+**Modell**, nicht aus `f.ebene`; die Definition sagt nur noch, womit begonnen
+wird.
+
+**Aufteilen muss erst kopieren.** `setze(modell, name, wert, "light")` löscht
+den flachen Eintrag und schreibt nur nach hell — der Dunkelmodus stünde danach
+ohne Wert da, still und ohne Meldung. `teileAuf()` kopiert den geltenden Wert
+deshalb in **beide** Modi, bevor der flache wegfällt. Ein Test hält das fest,
+und eine Gegenprobe hält fest, dass `setze` allein es wirklich verliert.
+
+**`aendere` folgt der Wahl, nicht der Definition.** Stünde dort weiter
+`f.ebene === "getrennt" ? … : "beide"`, führte jede Änderung an einem als
+„beide" definierten Feld es sofort wieder zusammen: Der Nutzer hätte
+umgeschaltet und trotzdem beide Modi überschrieben.
+
+**Die fünf Rollen bleiben flach.** Jede setzt elf Palettenstufen auf einmal,
+und HA rechnet daraus die RGB-Tripel, aus denen Mushroom lebt — eine halb
+aufgeteilte Rampe wäre in einem Modus unvollständig. Der Knopf steht dort
+allein und trägt die Begründung als `title`; ohne sie sähe es nach einem
+Versehen aus.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
