@@ -9,6 +9,8 @@
 // macht `binde()` nachtraeglich, damit die Elemente auch in einer Liste
 // erzeugt werden koennen, die erst spaeter in den Baum kommt.
 
+import { hexZuHsl, hslZuHex } from "./palette.js";
+
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
 // Zuruecksetzen heisst: Feld leeren. Leer ist kein Mangel, sondern der
@@ -49,26 +51,48 @@ export function hexFuegen(hex, alpha) {
   return h + Math.round((a / 100) * 255).toString(16).padStart(2, "0");
 }
 
+// Beide Schieber sind gleich gebaut und liegen in derselben Rasterspalte -
+// gleiche Laenge, gleiche Bahn, gleiches Ziehen. Die obere Bahn fuehrt durch
+// die Helligkeit des gewaehlten Tons, die untere durch seine Deckung.
 export function farbe({ id, wert, bahn = [], alpha = true }) {
   const { hex, alpha: a } = hexTeilen(wert);
+  const hsl = hexZuHsl(hex) || { h: 0, s: 0, l: 0.5 };
+  const dunkel = hslZuHex(hsl.h, hsl.s, 0.02), voll = hslZuHex(hsl.h, hsl.s, 0.5), hellster = hslZuHex(hsl.h, hsl.s, 0.98);
   const verlauf = bahn.length >= 2
     ? `linear-gradient(90deg, ${bahn.join(", ")})`
-    : `linear-gradient(90deg, #000, ${hex}, #fff)`;
-  // Das Karo zeigt die Durchsichtigkeit - ohne es sieht halbdurchsichtiges
-  // Weiss aus wie deckendes Weiss.
+    : `linear-gradient(90deg, ${dunkel}, ${voll}, ${hellster})`;
   const alphaTeil = alpha ? `
-      <span class="be-alpha">
-        <i class="be-karo"><b style="background:linear-gradient(90deg, ${hex}00, ${hex})"></b></i>
-        <input type="range" data-be-alpha="${esc(id)}" min="0" max="100" step="1" value="${a}">
-        <output data-be-alpha-aus="${esc(id)}">${a}%</output>
-      </span>` : "";
+      <input type="range" class="be-schiene be-karo" data-be-alpha="${esc(id)}"
+             min="0" max="100" step="1" value="${a}"
+             style="--bahn:linear-gradient(90deg, ${hex}00, ${hex})">
+      <span></span>
+      <output data-be-alpha-aus="${esc(id)}">${a}%</output>
+      <span></span>` : "";
   return `
-    <div class="be be-farbe${alpha ? " mit-alpha" : ""}">
-      <span class="be-bahn" style="background:${verlauf}"></span>
+    <div class="be be-farbe${alpha ? " mit-alpha" : ""}"
+         data-h="${hsl.h.toFixed(1)}" data-s="${hsl.s.toFixed(3)}">
+      <input type="range" class="be-schiene" data-be-hell="${esc(id)}"
+             min="2" max="98" step="1" value="${Math.round(hsl.l * 100)}"
+             style="--bahn:${verlauf}">
       <input type="color" data-be-farbe="${esc(id)}" value="${esc(hex)}">
       <code data-be-aus="${esc(id)}">${esc(wert || "nicht gesetzt")}</code>
       ${zuruecksetzen(id)}
       ${alphaTeil}
+    </div>`;
+}
+
+// Ein schmaler Streifen ueber dem Feld: in welchem Modus gearbeitet wird, ob
+// Bubble und Mushroom mitziehen, und ein Weg zurueck auf HAs Vorgabe.
+export function infostreifen({ id, modus = "beide", modi = [], sync = [], zurueck = true }) {
+  const knopf = (m) => `<button data-be-modus="${esc(id)}" data-wert="${esc(m.wert)}"
+      class="${m.wert === modus ? "an" : ""}" ${m.aus ? "disabled" : ""}>${esc(m.name)}</button>`;
+  const lampe = (s) => `<span class="ampel ${s.stand}" title="${esc(s.titel || "")}">
+      <i></i>${esc(s.name)}</span>`;
+  return `
+    <div class="infostreifen">
+      <div class="be-segmente klein">${modi.map(knopf).join("")}</div>
+      <div class="ampeln">${sync.map(lampe).join("")}</div>
+      ${zurueck ? zuruecksetzen(id, "Zurueck auf die Vorgabe von Home Assistant") : ""}
     </div>`;
 }
 
@@ -119,16 +143,31 @@ export function binde(wurzel, aendern) {
   // nicht die Haelfte davon.
   wurzel.querySelectorAll("[data-be-farbe]").forEach((el) => {
     const id = el.dataset.beFarbe;
+    const kasten = el.closest(".be");
     const schieber = wurzel.querySelector(`[data-be-alpha="${CSS.escape(id)}"]`);
+    const hellSch = wurzel.querySelector(`[data-be-hell="${CSS.escape(id)}"]`);
+
+    // Der Helligkeitsschieber faehrt durch den gewaehlten Ton. Hue und
+    // Saettigung bleiben, wo sie sind - sonst springt die Farbe beim Ziehen.
+    if (hellSch) hellSch.addEventListener("input", () => {
+      const h = parseFloat(kasten.dataset.h), sa = parseFloat(kasten.dataset.s);
+      el.value = hslZuHex(h, sa, hellSch.value / 100);
+      el.dispatchEvent(new Event("input"));
+    });
+
     const melde = () => {
+      const neu = hexZuHsl(el.value);
+      if (neu) { kasten.dataset.h = neu.h.toFixed(1); kasten.dataset.s = neu.s.toFixed(3);
+                 if (hellSch && document.activeElement !== hellSch) hellSch.value = Math.round(neu.l * 100);
+                 if (hellSch) hellSch.style.setProperty("--bahn",
+                   `linear-gradient(90deg, ${hslZuHex(neu.h, neu.s, 0.02)}, ${hslZuHex(neu.h, neu.s, 0.5)}, ${hslZuHex(neu.h, neu.s, 0.98)})`); }
       const v = hexFuegen(el.value, schieber ? schieber.value : 100);
       const aus = wurzel.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
       if (aus) aus.textContent = v;
       const aAus = wurzel.querySelector(`[data-be-alpha-aus="${CSS.escape(id)}"]`);
       if (aAus && schieber) aAus.textContent = schieber.value + "%";
-      const karo = wurzel.querySelector(`[data-be-farbe="${CSS.escape(id)}"]`)
-        ?.closest(".be")?.querySelector(".be-karo b");
-      if (karo) karo.style.background = `linear-gradient(90deg, ${el.value}00, ${el.value})`;
+      if (schieber) schieber.style.setProperty("--bahn",
+        `linear-gradient(90deg, ${el.value}00, ${el.value})`);
       aendern(id, v);
     };
     el.addEventListener("input", melde);
@@ -154,6 +193,15 @@ export function binde(wurzel, aendern) {
     el.addEventListener("input", melde);
     el.addEventListener("change", melde);
   });
+  wurzel.querySelectorAll("[data-be-modus]").forEach((b) =>
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      wurzel.querySelectorAll(`[data-be-modus="${CSS.escape(b.dataset.beModus)}"]`)
+        .forEach((x) => x.classList.remove("an"));
+      b.classList.add("an");
+      aendern(b.dataset.beModus, { modus: b.dataset.wert });
+    })
+  );
   wurzel.querySelectorAll("[data-be-reset]").forEach((b) =>
     b.addEventListener("click", () => aendern(b.dataset.beReset, null))
   );

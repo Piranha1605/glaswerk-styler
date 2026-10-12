@@ -20,7 +20,7 @@
 //
 // Beschriftung bewusst durchnummeriert: die Namen kommen spaeter.
 
-import { fuerFeld, binde } from "./bedienelemente.js";
+import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, STUFEN as PALETTENSTUFEN } from "./palette.js";
 
 const HATS_VERSION = "0.2.0b1";
@@ -61,15 +61,16 @@ const STUFEN = [
         // Begleiter sind dagegen feste Werte und bleiben sonst auf HAs Blau
         // stehen, waehrend alles andere umschwenkt - sie werden mitgeschrieben.
         { t: "Primaerfarbe", art: "farbe", rolle: "primary", v: "--ha-color-primary-60", ebene: "beide",
-          begleiter: true },
-        { t: "Neutral", art: "farbe", rolle: "neutral", v: "--ha-color-neutral-60", ebene: "beide" },
-        { t: "Erfolg",  art: "farbe", rolle: "green",   v: "--ha-color-green-60",   ebene: "beide" },
+          begleiter: true, sync: { bubble: "--bubble-accent-color", mush: "--mush-rgb-blue" } },
+        { t: "Neutral", art: "farbe", rolle: "neutral", v: "--ha-color-neutral-60", ebene: "beide", sync: { mush: "--mush-rgb-grey" } },
+        { t: "Erfolg",  art: "farbe", rolle: "green",   v: "--ha-color-green-60",   ebene: "beide", sync: { mush: "--mush-rgb-green" } },
         { t: "Warnung", art: "farbe", rolle: "orange",  v: "--ha-color-orange-60",  ebene: "beide" },
         { t: "Fehler",  art: "farbe", rolle: "red",     v: "--ha-color-red-60",     ebene: "beide" },
         // Der Akzent ist KEINE Rampe, sondern ein eigener Wert - von Haus aus
         // orange, nicht blau. Fremde Karten lesen ihn: die Horizon-Karten
         // ziehen --karten-akzent daraus.
-        { t: "Akzent", art: "farbe", v: "--accent-color", ebene: "beide" },
+        { t: "Akzent", art: "farbe", v: "--accent-color", ebene: "beide",
+          sync: { bubble: "--bubble-accent-color" } },
       ] },
 
       // Schrift wechselt mit dem Modus - im Hellen dunkel, im Dunkeln hell.
@@ -319,6 +320,7 @@ const TEXTE = {
     "Gruppen": "groups",
     "Ansicht": "View", "Gemischt": "Mixed", "Liste": "List", "Kacheln": "Tiles",
     "Jetzt in Kraft": "In effect now", "Hell": "Light", "Dunkel": "Dark",
+    "Beide Modi": "Both modes",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
     "Steht flach im Theme, gilt in beiden Modi": "Set at the flat level — applies in both modes",
     "Steht je Modus getrennt im Theme": "Set separately per mode",
@@ -586,6 +588,7 @@ class HatsPanel extends HTMLElement {
               : je.wo === "je Modus" ? T("Steht je Modus getrennt im Theme")
               : T("Steht nicht im Theme — Home Assistant leitet es ab")}</p>` : ""}
         </div>
+        ${this.streifen(f, T)}
         <div class="einstellen">
           <span class="mlabel">${T("Einstellen")}</span>
           ${fuerFeld(f, w.farbe || w.text)}
@@ -614,6 +617,45 @@ class HatsPanel extends HTMLElement {
     const o = this.shadowRoot.querySelector(".overlay.zwei");
     o.hidden = false;
     requestAnimationFrame(() => o.classList.add("da"));
+  }
+
+  // Sync heisst hier nicht "eingetragen", sondern "kommt an": der abhaengige
+  // Name wird aufgeloest und mit dem Feldwert verglichen. Nur das Berechnete
+  // beweist, dass eine Zuordnung wirklich wirkt.
+  syncStand(f) {
+    const cs = getComputedStyle(document.documentElement);
+    const eigen = cs.getPropertyValue(f.v || "").trim().toLowerCase();
+    const alsTripel = (hex) => {
+      const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(hex);
+      return m ? [1, 2, 3].map((i) => parseInt(m[i], 16)).join(",") : null;
+    };
+    const aus = [];
+    for (const [name, variable] of Object.entries(f.sync || {})) {
+      const v = cs.getPropertyValue(variable).trim().toLowerCase();
+      let stand = "leer";
+      if (v) {
+        const soll = name === "mush" ? alsTripel(eigen) : eigen;
+        const ist = v.replace(/\s+/g, "");
+        stand = soll && ist === soll.replace(/\s+/g, "") ? "an" : "aus";
+      }
+      aus.push({ name: name === "mush" ? "Mushroom" : "Bubble", stand,
+                 titel: `${variable}: ${v || "nicht gesetzt"}` });
+    }
+    return aus;
+  }
+
+  streifen(f, T) {
+    if (f.meta) return "";
+    const beide = f.ebene !== "getrennt";
+    return infostreifen({
+      id: f.v || f.t,
+      modus: beide ? "beide" : "light",
+      // Ein Feld, das flach steht, gilt in beiden Modi - die Wahl waere eine
+      // Luege. Deshalb hier nur ein Knopf, und der ist gesetzt.
+      modi: beide ? [{ wert: "beide", name: T("Beide Modi") }]
+                  : [{ wert: "light", name: T("Hell") }, { wert: "dark", name: T("Dunkel") }],
+      sync: this.syncStand(f),
+    });
   }
 
   rampeHtml(f, basis) {
@@ -897,55 +939,75 @@ class HatsPanel extends HTMLElement {
       .einstellen .mlabel { display: block; margin-bottom: 8px; font-size: 13px; }
 
       /* Bedienelemente - Formen nach der Vorlage, Farben die unseren. */
-      /* Weiss wie die Felder darueber - ein Bedienelement ist eine Karte, kein
-         eingelassener Trog. Nur die Segmente behalten ihren grauen Grund,
-         sonst waere die gewaehlte Option auf Weiss nicht zu sehen. */
-      .be { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
-            border-radius: 999px; background: var(--s-karte);
+      /* Weiss wie die Felder darueber, und dieselbe Rundung - ein
+         Bedienelement ist eine Karte, kein eingelassener Trog. */
+      .be { display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+            border-radius: var(--s-r); background: var(--s-karte);
             box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
-      .be-segmente { background: rgba(27,36,48,.06); box-shadow: none; border: 0; }
-      .be input[type="text"] { background: rgba(27,36,48,.05); }
-      .be input[type="range"] { flex: 1; accent-color: var(--s-tinte); }
-      .be output { min-width: 52px; text-align: right; font-size: 12px;
-                   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .be-bahn { flex: 1; height: 10px; border-radius: 999px;
-                 box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+
+      /* Beide Schieber liegen in derselben Rasterspalte: gleiche Laenge,
+         gleiche Bahn, gleiches Ziehen. Die Spalten rechts sind fest, damit
+         Hex-Wert und Prozentzahl untereinander stehen. */
+      .be-farbe { display: grid; grid-template-columns: 1fr 30px 76px 28px;
+                  gap: 10px; align-items: center; }
+
+      .be-schiene { -webkit-appearance: none; appearance: none; width: 100%; height: 14px;
+                    background: transparent; cursor: pointer; }
+      .be-schiene::-webkit-slider-runnable-track { height: 14px; border-radius: 999px;
+                    background: var(--bahn); box-shadow: inset 0 0 0 1px rgba(0,0,0,.14); }
+      .be-schiene::-moz-range-track { height: 14px; border-radius: 999px;
+                    background: var(--bahn); box-shadow: inset 0 0 0 1px rgba(0,0,0,.14); }
+      .be-schiene::-webkit-slider-thumb { -webkit-appearance: none; appearance: none;
+                    width: 18px; height: 18px; margin-top: -2px; border-radius: 50%;
+                    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.18); }
+      .be-schiene::-moz-range-thumb { width: 18px; height: 18px; border: 0; border-radius: 50%;
+                    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.18); }
+      /* Das Karo macht Durchsichtigkeit sichtbar - ohne es sieht
+         halbdurchsichtiges Weiss aus wie deckendes Weiss. */
+      .be-karo::-webkit-slider-runnable-track {
+        background-image: var(--bahn),
+          linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+          linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
+        background-size: auto, 8px 8px, 8px 8px; background-position: 0 0, 0 0, 4px 4px; }
+      .be-karo::-moz-range-track {
+        background-image: var(--bahn),
+          linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+          linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
+        background-size: auto, 8px 8px, 8px 8px; background-position: 0 0, 0 0, 4px 4px; }
+
       .be input[type="color"] { width: 30px; height: 30px; padding: 0; border: 0;
                                 background: none; border-radius: 9px; cursor: pointer; }
-      .be code { font-size: 12px; min-width: 76px;
+      .be code { font-size: 12px;
                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .be input[type="text"] { flex: 1; border: 0; font: inherit; font-size: 13px;
-                               padding: 7px 11px; border-radius: 999px; }
-      .be-segmente { gap: 3px; padding: 4px; }
+      .be output { font-size: 12px; color: var(--s-tinte-leise);
+                   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .be input[type="text"] { flex: 1; border: 0; background: rgba(27,36,48,.05); font: inherit;
+                               font-size: 13px; padding: 7px 11px; border-radius: 999px; }
+      .be-segmente { gap: 3px; padding: 4px; background: rgba(27,36,48,.06);
+                     box-shadow: none; border: 0; border-radius: 999px; }
       .be-segmente button { flex: 1; border: 0; cursor: pointer; font: inherit; font-size: 12.5px;
                             padding: 7px 12px; border-radius: 999px; background: transparent;
                             color: var(--s-tinte-leise); white-space: nowrap; }
       .be-segmente button.an { background: #fff; color: var(--s-tinte);
                                box-shadow: var(--s-schatten-klein); }
+      .be-segmente button[disabled] { cursor: default; }
       .be-zurueck { width: 28px; height: 28px; flex: none; border: 0; border-radius: 50%;
                     cursor: pointer; background: rgba(27,36,48,.08); color: var(--s-tinte-leise);
                     font-size: 14px; line-height: 1; }
       .be-zurueck:hover { background: rgba(27,36,48,.16); color: var(--s-tinte); }
 
-      .be-farbe.mit-alpha { flex-wrap: wrap; }
-      /* Die Alpha-Zeile endet dort, wo die Zeile darueber endet - also vor dem
-         Zurueck-Knopf. 28px Knopf + 10px Abstand = 38px. Damit steht die
-         Prozentzahl auf derselben Kante wie der Hex-Wert darueber, und beide
-         Spalten sind gleich breit. */
-      .be-alpha { flex: 1 1 100%; display: flex; align-items: center; gap: 10px;
-                  padding: 4px 0 0; margin-right: 38px; }
-      .be-alpha input[type="range"] { flex: 1; accent-color: var(--s-tinte); }
-      .be-alpha output { min-width: 76px; font-size: 12px; color: var(--s-tinte-leise);
-                         font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      /* Das Karo macht Durchsichtigkeit sichtbar - ohne es sieht
-         halbdurchsichtiges Weiss aus wie deckendes Weiss. */
-      .be-karo { position: relative; width: 44px; height: 14px; border-radius: 999px;
-                 overflow: hidden; flex: none;
-                 background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
-                                   linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
-                 background-size: 8px 8px; background-position: 0 0, 4px 4px;
-                 box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
-      .be-karo b { position: absolute; inset: 0; }
+      /* Der schmale Streifen ueber dem Feld: Modus, Sync-Stand, Rueckweg. */
+      .infostreifen { display: flex; align-items: center; gap: 12px; margin: 0 0 10px;
+                      padding: 6px 8px 6px 6px; border-radius: 999px;
+                      background: rgba(27,36,48,.05); }
+      .infostreifen .be-segmente.klein { padding: 3px; background: rgba(255,255,255,.7); }
+      .infostreifen .be-segmente.klein button { padding: 4px 11px; font-size: 12px; }
+      .ampeln { display: flex; gap: 12px; margin-left: auto; }
+      .ampel { display: flex; align-items: center; gap: 5px; font-size: 11.5px;
+               color: var(--s-tinte-leise); white-space: nowrap; }
+      .ampel i { width: 7px; height: 7px; border-radius: 50%; background: #c2c8d2; }
+      .ampel.an i  { background: #7bd14a; }
+      .ampel.aus i { background: #f0a23c; }
 
       /* Die elf Stufen, die aus einer Farbe entstehen. */
       .rampe { display: flex; gap: 3px; margin-top: 14px; }
