@@ -97,24 +97,44 @@ HAs eigenes Farbdenken, aus den Stylesheets auf `html` gelesen:
 | Lautstärken | `quiet`, `normal`, `loud` |
 | Zustände | `resting`, `hover`, `active` |
 
-Die Abstufung rechnet HA vor — sie muss nicht erfunden werden:
+Die Abstufung rechnet HA vor — sie muss nicht erfunden werden. Am 12.10.2026 aus
+`src/resources/theme/color/semantic.globals.ts` gelesen, nicht aus dem
+berechneten Stylesheet geraten.
 
-    quiet    hell  95 -> 90        dunkel  05 -> 10
-    normal   hell  90 -> 80        dunkel  10 -> 20
-    loud     hell  40 -> 30        dunkel  40 -> 30
+**`quiet` und `normal` sind für jede Rolle dieselben Stufen:**
 
-Überfahren ist eine Stufe kräftiger: im Hellen abwärts in der Zahl, im Dunkeln
-aufwärts. Die Schrift darauf folgt mechanisch — `loud` → Weiß, `normal` → Stufe
-40/60, `quiet` → 50/70.
+    quiet    hell  95 -> 90 -> 95        dunkel  05 -> 10 -> 05
+    normal   hell  90 -> 80 -> 90        dunkel  10 -> 20 -> 10
+
+Gelesen als `resting -> hover -> active`. Überfahren ist eine Stufe kräftiger:
+im Hellen abwärts in der Zahl, im Dunkeln aufwärts.
+
+**`active` ist gleich `resting`, und das ist Absicht.** Die Rückmeldung beim
+Drücken kommt aus der Klick-Welle (`--ha-ripple-*`), nicht aus der Fläche. Wer
+hier einen dritten Wert einbaut, weicht von HA ab.
+
+**Nur `loud` hängt an der Rolle:**
+
+    Rolle       hell                    dunkel
+    primary     primary-40 -> -30       (kein Eintrag - siehe unten)
+    neutral     neutral-40 -> -30       neutral-60 -> -70
+    danger      red-50 -> -40           red-40 -> -30
+    warning     orange-70 -> -50        orange-40 -> -30
+    success     green-50 -> -40         green-40 -> -30
+    disabled    neutral-80              neutral-30 -> -40
+
+**`fill-primary-loud-*` fehlt im Dunkelblock, weil es dort nichts zu ändern
+gibt** — hell steht es auf `primary-40`, und die Palette ist modusunabhängig, der
+Wert passt im Dunkeln schon. HAs Dunkelblock ist ein Minimal-Diff, genau wie die
+flache Ebene in `docs/beispiele/ha-blanko.yaml`. Ein fehlender Eintrag ist dort
+also eine Aussage, kein Loch.
+
+Die Schrift darauf folgt mechanisch: `loud` → Weiß, `normal` → Stufe 40/60,
+`quiet` → 50/70.
 
 Aus **15 Entscheidungen** werden damit 51 Füllfarben und 19 Schriftfarben
-gerechnet.
-
-**Noch nicht sauber, vor dem Einbau zu klären:** `active` kam in der Messung vom
-12.10.2026 meist gleich `resting` heraus, was nach einem Messfehler riecht (die
-zuletzt gefundene Regel gelesen, nicht die gültige); und
-`ha-color-fill-primary-loud-*` fehlt in HAs 143 Dunkelwerten ganz. Beides steht
-in `semantic.globals.ts`.
+gerechnet — und weil `quiet` und `normal` rollenunabhängig sind, reduziert sich
+die Eingabe weiter: je Rolle ein Farbton plus eine Entscheidung für `loud`.
 
 ### Die Farbvielfalt kommt nicht aus der neuen Ebene
 
