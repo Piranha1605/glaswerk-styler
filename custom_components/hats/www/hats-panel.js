@@ -103,134 +103,169 @@ const STUFEN = [
 
   { n: 2, titel: "Flaechen", kurz: "Hintergrund, Karten, Dialoge, Leisten",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
+      // Alles hier wechselt mit dem Modus - im Hellen hell, im Dunkeln dunkel.
+      // Deshalb durchweg getrennt, nicht flach.
       { name: "Grundflaechen", felder: [
-        { t: "Oberflaeche", v: "--ha-color-surface-default" },
-        { t: "Eine Stufe tiefer", v: "--ha-color-surface-low" },
-        { t: "Zwei Stufen tiefer", v: "--ha-color-surface-lower" } ] },
+        { t: "Oberflaeche", art: "farbe", v: "--ha-color-surface-default", ebene: "getrennt" },
+        { t: "Eine Stufe tiefer", art: "farbe", v: "--ha-color-surface-low", ebene: "getrennt" },
+        { t: "Zwei Stufen tiefer", art: "farbe", v: "--ha-color-surface-lower", ebene: "getrennt" } ] },
       { name: "Karten", felder: [
-        { t: "Kartenflaeche", v: "--ha-card-background" },
-        { t: "Weichzeichnung", v: "--ha-card-backdrop-filter" } ] },
+        { t: "Kartenflaeche", art: "farbe", v: "--ha-card-background", ebene: "getrennt",
+          sync: { bubble: "--bubble-main-background-color" } },
+        { t: "Weichzeichnung", art: "text", v: "--ha-card-backdrop-filter", ebene: "beide",
+          platzhalter: "blur(14px) saturate(1.4)" } ] },
       { name: "Dialoge", felder: [
-        { t: "Dialogflaeche", v: "--ha-dialog-surface-background" },
-        { t: "Abdunkelung", v: "--ha-dialog-scrim-color" } ] },
+        { t: "Dialogflaeche", art: "farbe", v: "--ha-dialog-surface-background", ebene: "getrennt",
+          sync: { bubble: "--bubble-pop-up-main-background-color" } },
+        { t: "Abdunkelung", art: "farbe", v: "--ha-dialog-scrim-color", ebene: "getrennt",
+          sync: { bubble: "--bubble-backdrop-background-color" } } ] },
       { name: "Leisten", felder: [
-        { t: "Seitenleiste", v: "--sidebar-background-color" },
-        { t: "Kopfleiste", v: "--app-header-background-color" } ] },
+        { t: "Seitenleiste", art: "farbe", v: "--sidebar-background-color", ebene: "getrennt" },
+        { t: "Kopfleiste", art: "farbe", v: "--app-header-background-color", ebene: "getrennt" } ] },
     ] },
 
   { n: 3, titel: "Form", kurz: "Rundung, Rahmen, Abstaende, Schatten",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
+      // Masse sind in beiden Modi gleich - HA setzt sie einmal in
+      // core.globals.ts. Nur die Schatten unterscheiden sich.
       { name: "Rundung", felder: [
-        { t: "Klein", v: "--ha-border-radius-sm" },
-        { t: "Mittel", v: "--ha-border-radius-md" },
-        { t: "Gross", v: "--ha-border-radius-lg" },
-        { t: "Karten", v: "--ha-border-radius-xl" } ] },
+        { t: "Klein", art: "mass", v: "--ha-border-radius-sm", ebene: "beide", min: 0, max: 16 },
+        { t: "Mittel", art: "mass", v: "--ha-border-radius-md", ebene: "beide", min: 0, max: 24 },
+        { t: "Gross", art: "mass", v: "--ha-border-radius-lg", ebene: "beide", min: 0, max: 32 },
+        { t: "Karten", art: "mass", v: "--ha-border-radius-xl", ebene: "beide", min: 0, max: 48 } ] },
       { name: "Rahmen", felder: [
-        { t: "Breite", v: "--ha-border-width-sm" },
-        { t: "Ruhig", v: "--ha-color-border-neutral-quiet" },
-        { t: "Deutlich", v: "--ha-color-border-neutral-normal" } ] },
+        { t: "Breite", art: "mass", v: "--ha-border-width-sm", ebene: "beide", min: 0, max: 4 },
+        { t: "Ruhig", art: "farbe", v: "--ha-color-border-neutral-quiet", ebene: "getrennt" },
+        { t: "Deutlich", art: "farbe", v: "--ha-color-border-neutral-normal", ebene: "getrennt" } ] },
       { name: "Abstaende", felder: [
-        { t: "Eng", v: "--ha-space-2" },
-        { t: "Normal", v: "--ha-space-4" },
-        { t: "Weit", v: "--ha-space-6" } ] },
+        { t: "Eng", art: "mass", v: "--ha-space-2", ebene: "beide", min: 0, max: 24 },
+        { t: "Normal", art: "mass", v: "--ha-space-4", ebene: "beide", min: 0, max: 40 },
+        { t: "Weit", art: "mass", v: "--ha-space-6", ebene: "beide", min: 0, max: 64 } ] },
+      // Schatten stehen in semantic.globals.ts zweimal, je Modus verschieden.
       { name: "Schatten", felder: [
-        { t: "Klein", v: "--ha-box-shadow-s" },
-        { t: "Mittel", v: "--ha-box-shadow-m" },
-        { t: "Gross", v: "--ha-box-shadow-l" } ] },
+        { t: "Klein", art: "text", v: "--ha-box-shadow-s", ebene: "getrennt" },
+        { t: "Mittel", art: "text", v: "--ha-box-shadow-m", ebene: "getrennt" },
+        { t: "Gross", art: "text", v: "--ha-box-shadow-l", ebene: "getrennt" } ] },
     ] },
 
   { n: 4, titel: "Zustaende", kurz: "Lautstaerken, Ueberfahren, Druecken",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
+      // Diese Felder leitet Home Assistant selbst aus der Palette ab. Wer sie
+      // setzt, friert sie ein und nimmt der Primaerfarbe ihre Wirkung - das
+      // lohnt nur, wo man bewusst ausbrechen will.
       { name: "Leise", felder: [
-        { t: "Ruhend", v: "--ha-color-fill-primary-quiet-resting" },
-        { t: "Ueberfahren", v: "--ha-color-fill-primary-quiet-hover" } ] },
+        { t: "Ruhend", art: "farbe", v: "--ha-color-fill-primary-quiet-resting", ebene: "getrennt", abgeleitet: true },
+        { t: "Ueberfahren", art: "farbe", v: "--ha-color-fill-primary-quiet-hover", ebene: "getrennt", abgeleitet: true } ] },
       { name: "Normal", felder: [
-        { t: "Ruhend", v: "--ha-color-fill-primary-normal-resting" },
-        { t: "Ueberfahren", v: "--ha-color-fill-primary-normal-hover" },
-        { t: "Schrift darauf", v: "--ha-color-on-primary-normal" } ] },
+        { t: "Ruhend", art: "farbe", v: "--ha-color-fill-primary-normal-resting", ebene: "getrennt", abgeleitet: true },
+        { t: "Ueberfahren", art: "farbe", v: "--ha-color-fill-primary-normal-hover", ebene: "getrennt", abgeleitet: true },
+        { t: "Schrift darauf", art: "farbe", v: "--ha-color-on-primary-normal", ebene: "getrennt", abgeleitet: true } ] },
       { name: "Laut", felder: [
-        { t: "Ruhend", v: "--ha-color-fill-primary-loud-resting" },
-        { t: "Ueberfahren", v: "--ha-color-fill-primary-loud-hover" },
-        { t: "Schrift darauf", v: "--ha-color-on-primary-loud" } ] },
+        { t: "Ruhend", art: "farbe", v: "--ha-color-fill-primary-loud-resting", ebene: "getrennt", abgeleitet: true },
+        { t: "Ueberfahren", art: "farbe", v: "--ha-color-fill-primary-loud-hover", ebene: "getrennt", abgeleitet: true },
+        { t: "Schrift darauf", art: "farbe", v: "--ha-color-on-primary-loud", ebene: "getrennt", abgeleitet: true } ] },
       { name: "Rueckmeldung", felder: [
-        { t: "Klick-Welle", v: "--ha-ripple-color" },
-        { t: "Dauer", v: "--ha-animation-duration-fast" } ] },
+        { t: "Klick-Welle", art: "farbe", v: "--ha-ripple-color", ebene: "getrennt" },
+        { t: "Dauer", art: "mass", v: "--ha-animation-duration-fast", ebene: "beide",
+          min: 0, max: 600, schritt: 10, einheit: "ms" } ] },
     ] },
 
   { n: 5, titel: "Symbole", kurz: "Form, Groesse, Zustandsfarben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
+      // Rundung erbt durch jede Shadow-Grenze: ein Wert erreicht Kacheln,
+      // Mushroom, Zeilen und Glance zugleich, ohne einen einzigen Pfad.
       { name: "Form", felder: [
-        { t: "Kachel", v: "--ha-tile-icon-border-radius" },
-        { t: "Abzeichen", v: "--state-badge-border-radius" },
-        { t: "Mushroom", v: "--mush-icon-border-radius" } ] },
+        { t: "Kachel", art: "mass", v: "--ha-tile-icon-border-radius", ebene: "beide", min: 0, max: 24 },
+        { t: "Abzeichen", art: "mass", v: "--state-badge-border-radius", ebene: "beide", min: 0, max: 24 },
+        { t: "Mushroom", art: "mass", v: "--mush-icon-border-radius", ebene: "beide", min: 0, max: 24 } ] },
       { name: "Groesse", felder: [
-        { t: "Symbolgroesse", v: "--mdc-icon-size" },
-        { t: "Knopfgroesse", v: "--ha-icon-button-size" } ] },
+        { t: "Symbolgroesse", art: "mass", v: "--mdc-icon-size", ebene: "beide", min: 12, max: 48 },
+        { t: "Knopfgroesse", art: "mass", v: "--ha-icon-button-size", ebene: "beide", min: 24, max: 64 } ] },
       { name: "Zustand", felder: [
-        { t: "Aktiv", v: "--state-active-color" },
-        { t: "Inaktiv", v: "--state-inactive-color" },
-        { t: "Symbolfarbe", v: "--state-icon-color" } ] },
+        { t: "Aktiv", art: "farbe", v: "--state-active-color", ebene: "getrennt" },
+        { t: "Inaktiv", art: "farbe", v: "--state-inactive-color", ebene: "getrennt" },
+        { t: "Symbolfarbe", art: "farbe", v: "--state-icon-color", ebene: "beide" } ] },
+      // Die klassischen Toene sind modusunabhaengig und die einzige Quelle
+      // fuer Farbvielfalt - HAs neue Ebene hat nur fuenf.
       { name: "Toene", felder: [
-        { t: "Gelb", v: "--yellow-color" },
-        { t: "Tuerkis", v: "--teal-color" },
-        { t: "Violett", v: "--purple-color" },
-        { t: "Bernstein", v: "--amber-color" } ] },
+        { t: "Gelb", art: "farbe", v: "--yellow-color", ebene: "beide", sync: { mush: "--mush-rgb-yellow" } },
+        { t: "Tuerkis", art: "farbe", v: "--teal-color", ebene: "beide", sync: { mush: "--mush-rgb-teal" } },
+        { t: "Violett", art: "farbe", v: "--purple-color", ebene: "beide", sync: { mush: "--mush-rgb-purple" } },
+        { t: "Bernstein", art: "farbe", v: "--amber-color", ebene: "beide", sync: { mush: "--mush-rgb-amber" } } ] },
     ] },
 
   { n: 6, titel: "Fremde Karten", kurz: "Bubble Card und Mushroom anbinden",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
+      // Hier stehen Verweise, keine Farben: ein Eintrag wie
+      // var(--ha-card-background) gilt in beiden Modi zugleich. Das ist der
+      // ganze Gewinn - Fremdfelder, die sich von selbst mitaendern.
       { name: "Bubble Flaechen", felder: [
-        { t: "Karte", v: "--bubble-main-background-color" },
-        { t: "Knopf", v: "--bubble-button-background-color" },
-        { t: "Pop-up", v: "--bubble-pop-up-main-background-color" } ] },
+        { t: "Karte", art: "text", v: "--bubble-main-background-color", ebene: "beide", platzhalter: "var(--ha-card-background)" },
+        { t: "Knopf", art: "text", v: "--bubble-button-background-color", ebene: "beide", platzhalter: "var(--ha-color-fill-neutral-quiet-resting)" },
+        { t: "Pop-up", art: "text", v: "--bubble-pop-up-main-background-color", ebene: "beide", platzhalter: "var(--ha-dialog-surface-background)" } ] },
       { name: "Bubble Zustand", felder: [
-        { t: "Akzent", v: "--bubble-accent-color" },
-        { t: "Licht", v: "--bubble-light-color" },
-        { t: "Symbol", v: "--bubble-icon-color" } ] },
+        { t: "Akzent", art: "text", v: "--bubble-accent-color", ebene: "beide", platzhalter: "var(--accent-color)" },
+        { t: "Licht", art: "text", v: "--bubble-light-color", ebene: "beide", platzhalter: "var(--ha-color-orange-60)" },
+        { t: "Symbol", art: "text", v: "--bubble-icon-color", ebene: "beide", platzhalter: "var(--ha-color-on-surface-default)" } ] },
+      // Mushroom rechnet mit Tripeln. Ein var(--rgb-...) gehoert hinein,
+      // keine Farbe - rgb(var(--mush-rgb-red)) braucht Zahlen.
       { name: "Mushroom Tripel", felder: [
-        { t: "Rot", v: "--mush-rgb-red" },
-        { t: "Gruen", v: "--mush-rgb-green" },
-        { t: "Orange", v: "--mush-rgb-orange" },
-        { t: "Blau", v: "--mush-rgb-blue" } ] },
+        { t: "Rot", art: "text", v: "--mush-rgb-red", ebene: "beide", platzhalter: "var(--rgb-ha-color-red-60)" },
+        { t: "Gruen", art: "text", v: "--mush-rgb-green", ebene: "beide", platzhalter: "var(--rgb-ha-color-green-60)" },
+        { t: "Orange", art: "text", v: "--mush-rgb-orange", ebene: "beide", platzhalter: "var(--rgb-ha-color-orange-60)" },
+        { t: "Blau", art: "text", v: "--mush-rgb-blue", ebene: "beide", platzhalter: "var(--rgb-ha-color-primary-60)" } ] },
       { name: "Mushroom Masse", felder: [
-        { t: "Symbol", v: "--mush-icon-size" },
-        { t: "Chip", v: "--mush-chip-height" },
-        { t: "Abstand", v: "--mush-spacing" } ] },
+        { t: "Symbol", art: "mass", v: "--mush-icon-size", ebene: "beide", min: 16, max: 56 },
+        { t: "Chip", art: "mass", v: "--mush-chip-height", ebene: "beide", min: 20, max: 64 },
+        { t: "Abstand", art: "mass", v: "--mush-spacing", ebene: "beide", min: 0, max: 32 } ] },
     ] },
 
   { n: 7, titel: "Feinschliff", kurz: "Karte, Diagramme, Code-Editor, Glas",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
+      // Die Kartentokens haben alle eine LEERE Vorgabe: ein Wert dort nagelt
+      // jede Theme auf eine Kartenfarbe fest. Leer heisst, HA behaelt seine
+      // eigene Kartografie.
       { name: "Vektorkarte", felder: [
-        { t: "Land", v: "--ha-color-map-land" },
-        { t: "Wasser", v: "--ha-color-map-water" },
-        { t: "Strassen", v: "--ha-color-map-road" } ] },
+        { t: "Land", art: "farbe", v: "--ha-color-map-land", ebene: "getrennt" },
+        { t: "Wasser", art: "farbe", v: "--ha-color-map-water", ebene: "getrennt" },
+        { t: "Strassen", art: "farbe", v: "--ha-color-map-road", ebene: "getrennt" } ] },
       { name: "Diagramme", felder: [
-        { t: "Erste Reihe", v: "--color-1" },
-        { t: "Zweite Reihe", v: "--color-2" },
-        { t: "Dritte Reihe", v: "--color-3" } ] },
+        { t: "Erste Reihe", art: "farbe", v: "--color-1", ebene: "beide" },
+        { t: "Zweite Reihe", art: "farbe", v: "--color-2", ebene: "beide" },
+        { t: "Dritte Reihe", art: "farbe", v: "--color-3", ebene: "beide" } ] },
       { name: "Code-Editor", felder: [
-        { t: "Schluesselwort", v: "--codemirror-keyword" },
-        { t: "Zeichenkette", v: "--codemirror-string" },
-        { t: "Kommentar", v: "--codemirror-comment" } ] },
+        { t: "Schluesselwort", art: "farbe", v: "--codemirror-keyword", ebene: "getrennt" },
+        { t: "Zeichenkette", art: "farbe", v: "--codemirror-string", ebene: "getrennt" },
+        { t: "Kommentar", art: "farbe", v: "--codemirror-comment", ebene: "getrennt" } ] },
+      // Die Weichzeichnung der Karten steht in Stufe 2, wo auch die
+      // Kartenflaeche steht - zwei Stufen, die dieselbe Variable schreiben,
+      // widersprechen sich.
+      //
+      // Die Dialogflaeche bekommt bewusst KEIN Feld: ein backdrop-filter auf
+      // ihr macht den Dialog zum Bezugsrahmen fuer position:fixed, und die
+      // Auswahllisten darin landen neben dem Bildschirm. Der Schleier davor
+      // darf dagegen weichzeichnen.
       { name: "Glas", felder: [
-        { t: "Weichzeichnung", v: "--ha-card-backdrop-filter" },
-        { t: "Kopfleiste", v: "--app-header-backdrop-filter" } ] },
+        { t: "Kopfleiste", art: "text", v: "--app-header-backdrop-filter", ebene: "beide",
+          platzhalter: "blur(18px) saturate(1.6)" },
+        { t: "Dialogschleier", art: "text", v: "--ha-dialog-scrim-backdrop-filter", ebene: "beide",
+          platzhalter: "blur(2px)" } ] },
     ] },
 
   { n: 8, titel: "Ausgabe", kurz: "Pruefen, Bericht, Theme schreiben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       { name: "Pruefen", felder: [
-        { t: "YAML gueltig", w: "noch nicht geprueft" },
-        { t: "Zweiter Durchlauf gleich", w: "noch nicht geprueft" },
-        { t: "Verweise ins Leere", w: "noch nicht geprueft" } ] },
+        { t: "YAML gueltig", art: "bericht", bericht: "yaml" },
+        { t: "Zweiter Durchlauf gleich", art: "bericht", bericht: "idempotent" },
+        { t: "Felder mit Wert", art: "bericht", bericht: "gefuellt" } ] },
       { name: "Bericht", felder: [
-        { t: "Geaenderte Felder", w: "0" },
-        { t: "Entfernte Felder", w: "0" } ] },
+        { t: "Geaenderte Felder", art: "bericht", bericht: "geaendert" },
+        { t: "Felder insgesamt", art: "bericht", bericht: "gesamt" } ] },
       { name: "Schreiben", felder: [
-        { t: "Dateiname", w: "noch offen" },
-        { t: "Ziel", w: "config/themes" } ] },
+        { t: "Dateiname", art: "bericht", bericht: "dateiname" },
+        { t: "Ziel", art: "bericht", bericht: "ziel" } ] },
       { name: "Sicherung", felder: [
-        { t: "Vorheriger Stand", w: "wird vor dem Schreiben gesichert" } ] },
+        { t: "Grundlage", art: "bericht", bericht: "grundlage" } ] },
     ] },
 ];
 
@@ -369,6 +404,7 @@ const ZUSTAND = {
   geaendert: new Set(),
   ladefehler: null,
   meldung: null,     // { text, art } - ueberlebt das Neuzeichnen
+  meta: { Grundlage: "ha_blanko", Modus: "beide" },
 };
 
 class HatsPanel extends HTMLElement {
@@ -592,11 +628,11 @@ class HatsPanel extends HTMLElement {
     return { hell, dunkel, wo };
   }
 
-  oeffneFeld(st, titel) {
+  oeffneFeld(st, schluessel) {
     const T = (s) => t(s, this.spr);
     let g = null, idx = -1;
     for (const gr of st.gruppen) {
-      const i = gr.felder.findIndex((x) => x.t === titel);
+      const i = gr.felder.findIndex((x) => (x.v || x.t) === schluessel);
       if (i >= 0) { g = gr; idx = i; break; }
     }
     if (!g) return;
@@ -648,10 +684,11 @@ class HatsPanel extends HTMLElement {
           return `<div class="modusliste">${kraft}${modi}</div>`;
         })()}
         ${this.streifen(f, T)}
+        ${f.art === "bericht" ? "" : `
         <div class="einstellen">
           <span class="mlabel">${T("Einstellen")}</span>
           ${fuerFeld(f, w.farbe || w.text)}
-        </div>
+        </div>`}
         ${f.rolle ? `<div class="rampe" data-rampe>${this.rampeHtml(f, w.farbe)}</div>
         <p class="herkunft">${T("Diese eine Farbe setzt elf Palettenstufen — HA nimmt die kraeftige Flaeche aus 40, die Ueberfahr-Stufe aus 30, die leise aus 95.")}</p>` : ""}
         <p class="noch">${T("Geaendert wird im Fenster, geschrieben noch nicht.")}</p>
@@ -659,13 +696,13 @@ class HatsPanel extends HTMLElement {
 
     d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
     const v = d.querySelector(".vor"), z = d.querySelector(".zurueck");
-    if (v) v.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx - 1].t));
-    if (z) z.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx + 1].t));
+    if (v) v.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx - 1].v || g.felder[idx - 1].t));
+    if (z) z.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx + 1].v || g.felder[idx + 1].t));
 
     this._feldModus = f.ebene === "getrennt" ? "light" : "beide";
     binde(d, (id, wert) => {
       // Der Modus-Umschalter liefert ein Objekt, kein Wert.
-      if (wert && typeof wert === "object" && wert.modus) { this._feldModus = wert.modus; this.oeffneFeld(st, f.t); return; }
+      if (wert && typeof wert === "object" && wert.modus) { this._feldModus = wert.modus; this.oeffneFeld(st, f.v || f.t); return; }
       if (f.rolle) {
         const r = d.querySelector("[data-rampe]");
         if (r) r.innerHTML = this.rampeHtml(f, wert);
@@ -748,6 +785,7 @@ class HatsPanel extends HTMLElement {
 
     if (f.meta) {
       if (f.t === "Name der Theme") ZUSTAND.name = String(wert || "").trim();
+      else ZUSTAND.meta[f.t] = wert;
       return;
     }
     const name = (f.v || "").replace(/^--/, "");
@@ -837,8 +875,35 @@ class HatsPanel extends HTMLElement {
     return wirksam(ZUSTAND.modell, modus)[name];
   }
 
+  // Was ein Berichtsfeld zeigt, steht nirgends im Theme - es wird gerechnet.
+  berichtWert(f) {
+    const m = ZUSTAND.modell;
+    const zahl = (o) => Object.values(o || {}).filter((v) => v !== "" && v !== undefined).length;
+    switch (f.bericht) {
+      case "geaendert": return String(ZUSTAND.geaendert.size);
+      case "gesamt": return m ? String(zahl(m.flach) + zahl(m.light) + zahl(m.dark)) : "-";
+      case "gefuellt": return m ? `${zahl(m.flach)} flach, ${zahl(m.light)} hell, ${zahl(m.dark)} dunkel` : "-";
+      case "dateiname": return ZUSTAND.name ? ZUSTAND.name + ".yaml" : "noch offen";
+      case "ziel": return "config/themes";
+      case "grundlage": return "ha_blanko";
+      // Diese beiden sagen erst nach dem Schreiben etwas - der Server prueft
+      // mit PyYAML, bevor er die Datei anlegt.
+      case "yaml": return ZUSTAND.meldung && ZUSTAND.meldung.art === "gut" ? "beim Speichern geprueft" : "noch nicht geprueft";
+      case "idempotent": return ZUSTAND.meldung && ZUSTAND.meldung.art === "gut" ? "beim Speichern geprueft" : "noch nicht geprueft";
+      default: return "-";
+    }
+  }
+
   wert(f) {
-    if (f.meta) return { text: f.t === "Name der Theme" ? (ZUSTAND.name || f.w) : f.w, farbe: null };
+    if (f.art === "bericht") return { text: this.berichtWert(f), farbe: null };
+    if (f.meta) {
+      if (f.t === "Name der Theme") return { text: ZUSTAND.name || "noch offen", farbe: null, leer: !ZUSTAND.name };
+      // Eine Auswahl zeigt den NAMEN der Wahl, nicht ihren Schluessel - und
+      // niemals "undefined", nur weil die Wahl noch nicht gefallen ist.
+      const wahl = ZUSTAND.meta[f.t];
+      const o = (f.optionen || []).find((x) => x.wert === wahl);
+      return { text: o ? o.name : (f.optionen && f.optionen[0] ? f.optionen[0].name : "-"), farbe: null };
+    }
     const ausModell = f.v ? this.modellWert(f.v.replace(/^--/, "")) : undefined;
     if (ausModell !== undefined && ausModell !== "") {
       const istFarbe = /^#|^rgba?\(|^hsla?\(/.test(ausModell);
@@ -855,7 +920,7 @@ class HatsPanel extends HTMLElement {
   feldZeile(f, T) {
     const w = this.wert(f);
     return `
-      <div class="feld" data-feld="${f.t}" tabindex="0" role="button">
+      <div class="feld" data-feld="${f.v || f.t}" tabindex="0" role="button">
         <div class="feldtext">
           <b>${T(f.t)}</b>
           <span>${f.v ? f.v : T("Angabe")}</span>
@@ -869,7 +934,7 @@ class HatsPanel extends HTMLElement {
   feldKachel(f, T) {
     const w = this.wert(f);
     return `
-      <article class="karte" data-feld="${f.t}" tabindex="0" role="button">
+      <article class="karte" data-feld="${f.v || f.t}" tabindex="0" role="button">
         <b>${T(f.t)}</b>
         <p>${f.v ? f.v : T("Angabe")}</p>
         <div class="kfuss">
