@@ -169,8 +169,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     module_url = await hass.async_add_executor_job(_modul_url)
 
+    # Dritter Parameter ist cache_headers. Bewusst False, solange entwickelt
+    # wird: Mit True liefert HA die Datei mit max-age=2678400 aus, also 31
+    # Tage. Der Cache-Buster oben haengt zwar am Inhalt, aber er wird nur
+    # HIER gerechnet - wer die Datei austauscht, ohne die Integration neu zu
+    # laden, bekommt im Browser wochenlang den alten Stand bei scheinbar
+    # richtiger Adresse. Genau das ist am 12.10.2026 passiert. Vor dem ersten
+    # Release wieder auf True.
     await hass.http.async_register_static_paths(
-        [StaticPathConfig(STATIC_PATH, str(www_path), True)]
+        [StaticPathConfig(STATIC_PATH, str(www_path), False)]
     )
 
     await panel_custom.async_register_panel(

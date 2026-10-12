@@ -383,12 +383,28 @@ class HatsPanel extends HTMLElement {
 
       .kachel { height: 128px; border-radius: var(--s-r); box-shadow: var(--s-schatten-klein); }
 
+      /* Schmal: die Leiste wird waagerecht und rueckt ueber den Inhalt.
+         Sie verschwindet NICHT - eine ausgeblendete Leiste ohne Ersatz macht
+         ihre Knoepfe unerreichbar. Der Rand bleibt auf allen vier Seiten
+         gleich, nur kleiner. */
       @media (max-width: 760px) {
-        .buehne { padding: 0; }
-        .fenster { border-radius: 0; min-height: 100%; }
-        .rail { display: none; }
+        :host { --s-rand: 12px; }
+        .fenster { flex-direction: column; }
+        .rail {
+          width: auto; flex-direction: row; align-items: center;
+          gap: 10px; padding: 10px 14px;
+          border-right: 0; border-bottom: 1px solid rgba(255,255,255,.35);
+        }
+        .marke { width: 34px; height: 34px; border-radius: 10px; margin-bottom: 0; }
+        .railknopf { width: 34px; height: 34px; }
+        .railfuss { margin-top: 0; margin-left: auto; }
         .inhalt { padding: 18px; }
+        .kopf { flex-direction: column; gap: 12px; }
         .kopf h1 { font-size: 24px; }
+        .kennzahlen { gap: 10px; }
+        .kennzahl { flex: 1 1 100%; }
+        .zeile { gap: 10px; padding: 12px; }
+        .punkte { opacity: 1; background: rgba(27,36,48,.06); }
       }
     `;
   }
