@@ -109,6 +109,26 @@ export function setze(modell, name, wert, ebene = "beide") {
   return modell;
 }
 
+// Einen var()-Verweis bis zur Farbe verfolgen.
+//
+// 86 Felder der Grundlage tragen einen Verweis auf eine Palettenstufe statt
+// eines Hexwertes - fill-primary-quiet-resting steht etwa auf
+// var(--ha-color-primary-05). Ohne Aufloesung bleibt der Farbtupfer grau, und
+// man sieht nicht, was das Feld tut.
+//
+// Nachgeschlagen wird im MODELL, nicht auf der Seite: Was gilt, ist die Theme,
+// die gerade gebaut wird. Die Tiefe ist begrenzt, weil eine Kette im Kreis
+// laufen kann - ohne das haengt die Oberflaeche.
+export function loeseFarbe(modell, wert, modus = "light", tiefe = 0) {
+  if (!wert || tiefe > 6) return null;
+  const w = String(wert).trim();
+  if (/^#|^rgba?\(|^hsla?\(/.test(w)) return w;
+  const m = /^var\(\s*--([a-z0-9-]+)/.exec(w);
+  if (!m || !modell) return null;
+  const ziel = wirksam(modell, modus === "dark" ? "dark" : "light")[m[1]];
+  return ziel === undefined ? null : loeseFarbe(modell, ziel, modus, tiefe + 1);
+}
+
 // Ein flaches Feld in zwei Modi aufteilen.
 //
 // Der geltende Wert wird in BEIDE Modi kopiert, erst dann faellt der flache

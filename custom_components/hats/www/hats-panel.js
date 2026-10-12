@@ -22,7 +22,7 @@
 
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
-import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen } from "./theme.js";
+import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 
 const HATS_VERSION = "0.2.0b1";
@@ -201,6 +201,14 @@ const STUFEN = [
       // Alles hier wechselt mit dem Modus - im Hellen hell, im Dunkeln dunkel.
       // Deshalb durchweg getrennt, nicht flach.
       { name: "Grundflaechen", felder: [
+
+        { t: "Card Flaeche Farbe", art: "farbe", v: "--card-background-color", ebene: "getrennt" },
+        { t: "Clear Flaeche Farbe", art: "farbe", v: "--clear-background-color", ebene: "getrennt" },
+        { t: "Default invertiert", art: "farbe", v: "--ha-color-surface-default-inverted", ebene: "getrennt" },
+        { t: "Low invertiert", art: "farbe", v: "--ha-color-surface-low-inverted", ebene: "getrennt" },
+        { t: "Lower invertiert", art: "farbe", v: "--ha-color-surface-lower-inverted", ebene: "getrennt" },
+        { t: "Primaer Flaeche Farbe", art: "farbe", v: "--primary-background-color", ebene: "getrennt" },
+        { t: "Secondary Flaeche Farbe", art: "farbe", v: "--secondary-background-color", ebene: "getrennt" },
         { t: "Oberflaeche", art: "farbe", v: "--ha-color-surface-default", ebene: "getrennt" },
         { t: "Eine Stufe tiefer", art: "farbe", v: "--ha-color-surface-low", ebene: "getrennt" },
         { t: "Zwei Stufen tiefer", art: "farbe", v: "--ha-color-surface-lower", ebene: "getrennt" },
@@ -240,15 +248,7 @@ const STUFEN = [
         { t: "Scrollbar thumb Farbe", art: "farbe", v: "--scrollbar-thumb-color", ebene: "getrennt" },
         { t: "Shadow Farbe", art: "farbe", v: "--shadow-color", ebene: "getrennt" },
       ] },
-      { name: "Grundflaechen", felder: [
-        { t: "Card Flaeche Farbe", art: "farbe", v: "--card-background-color", ebene: "getrennt" },
-        { t: "Clear Flaeche Farbe", art: "farbe", v: "--clear-background-color", ebene: "getrennt" },
-        { t: "Default invertiert", art: "farbe", v: "--ha-color-surface-default-inverted", ebene: "getrennt" },
-        { t: "Low invertiert", art: "farbe", v: "--ha-color-surface-low-inverted", ebene: "getrennt" },
-        { t: "Lower invertiert", art: "farbe", v: "--ha-color-surface-lower-inverted", ebene: "getrennt" },
-        { t: "Primaer Flaeche Farbe", art: "farbe", v: "--primary-background-color", ebene: "getrennt" },
-        { t: "Secondary Flaeche Farbe", art: "farbe", v: "--secondary-background-color", ebene: "getrennt" },
-      ] },
+      
       { name: "Kanten", felder: [
         { t: "Divider Farbe", art: "farbe", v: "--divider-color", ebene: "getrennt" },
         { t: "Fehler laut", art: "farbe", v: "--ha-color-border-danger-loud", ebene: "getrennt" },
@@ -275,7 +275,7 @@ const STUFEN = [
         { t: "Outlined ueberfahren border Farbe", art: "farbe", v: "--input-outlined-hover-border-color", ebene: "getrennt" },
         { t: "Outlined idle border Farbe", art: "farbe", v: "--input-outlined-idle-border-color", ebene: "getrennt" },
       ] },
-      { name: "Schrift auf Flaechen", felder: [
+      { name: "Schrift invertiert", felder: [
         { t: "Primaer invertiert", art: "farbe", v: "--ha-color-text-primary-inverted", ebene: "getrennt" },
         { t: "Secondary invertiert", art: "farbe", v: "--ha-color-text-secondary-inverted", ebene: "getrennt" },
       ] },
@@ -286,31 +286,7 @@ const STUFEN = [
       // Masse sind in beiden Modi gleich - HA setzt sie einmal in
       // core.globals.ts. Nur die Schatten unterscheiden sich.
       { name: "Rundung", felder: [
-        { t: "Klein", art: "mass", v: "--ha-border-radius-sm", ebene: "beide", min: 0, max: 16 },
-        { t: "Mittel", art: "mass", v: "--ha-border-radius-md", ebene: "beide", min: 0, max: 24 },
-        { t: "Gross", art: "mass", v: "--ha-border-radius-lg", ebene: "beide", min: 0, max: 32 },
-        { t: "Karten", art: "mass", v: "--ha-border-radius-xl", ebene: "beide", min: 0, max: 48 } ] },
-      { name: "Rahmen", felder: [
-        { t: "Breite", art: "mass", v: "--ha-border-width-sm", ebene: "beide", min: 0, max: 4 },
-        { t: "Ruhig", art: "farbe", v: "--ha-color-border-neutral-quiet", ebene: "getrennt" },
-        { t: "Deutlich", art: "farbe", v: "--ha-color-border-neutral-normal", ebene: "getrennt" } ] },
-      { name: "Abstaende", felder: [
-        { t: "Eng", art: "mass", v: "--ha-space-2", ebene: "beide", min: 0, max: 24 },
-        { t: "Normal", art: "mass", v: "--ha-space-4", ebene: "beide", min: 0, max: 40 },
-        { t: "Weit", art: "mass", v: "--ha-space-6", ebene: "beide", min: 0, max: 64 } ] },
-      // Schatten stehen in semantic.globals.ts zweimal, je Modus verschieden.
-      { name: "Schatten", felder: [
-        { t: "Klein", art: "text", v: "--ha-box-shadow-s", ebene: "getrennt" },
-        { t: "Mittel", art: "text", v: "--ha-box-shadow-m", ebene: "getrennt" },
-        { t: "Gross", art: "text", v: "--ha-box-shadow-l", ebene: "getrennt" } ] },
 
-      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
-      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
-      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
-      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
-      // das der einzige Weg ohne Tippfehler - der Generator liegt im
-      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
-      { name: "Rundung", felder: [
         { t: "2xl", art: "mass", v: "--ha-border-radius-2xl", ebene: "beide", min: 0, max: 60 },
         { t: "3xl", art: "mass", v: "--ha-border-radius-3xl", ebene: "beide", min: 0, max: 72 },
         { t: "4xl", art: "mass", v: "--ha-border-radius-4xl", ebene: "beide", min: 0, max: 84 },
@@ -319,23 +295,22 @@ const STUFEN = [
         { t: "Circle", art: "mass", v: "--ha-border-radius-circle", ebene: "beide", einheit: "%", min: 0, max: 150 },
         { t: "Pill", art: "mass", v: "--ha-border-radius-pill", ebene: "beide", min: 0, max: 29997 },
         { t: "Square", art: "zahl", v: "--ha-border-radius-square", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-      ] },
+        { t: "Klein", art: "mass", v: "--ha-border-radius-sm", ebene: "beide", min: 0, max: 16 },
+        { t: "Mittel", art: "mass", v: "--ha-border-radius-md", ebene: "beide", min: 0, max: 24 },
+        { t: "Gross", art: "mass", v: "--ha-border-radius-lg", ebene: "beide", min: 0, max: 32 },
+        { t: "Karten", art: "mass", v: "--ha-border-radius-xl", ebene: "beide", min: 0, max: 48 } ] },
       { name: "Rahmen", felder: [
+
         { t: "Lg", art: "mass", v: "--ha-border-width-lg", ebene: "beide", min: 0, max: 48 },
         { t: "Md", art: "mass", v: "--ha-border-width-md", ebene: "beide", min: 0, max: 48 },
         { t: "Border style", art: "text", v: "--wa-border-style", ebene: "beide" },
         { t: "Border style", art: "text", v: "--wa-panel-border-style", ebene: "beide" },
         { t: "Border width", art: "mass", v: "--wa-panel-border-width", ebene: "beide", min: 0, max: 48 },
-      ] },
-      { name: "Knoepfe", felder: [
-        { t: "Neutral Farbe", art: "farbe", v: "--ha-button-neutral-color", ebene: "getrennt" },
-        { t: "Neutral hell Farbe", art: "farbe", v: "--ha-button-neutral-light-color", ebene: "getrennt" },
-        { t: "Primaer hell Farbe", art: "farbe", v: "--ha-button-primary-light-color", ebene: "getrennt" },
-        { t: "Warnung hell Farbe", art: "farbe", v: "--ha-button-warning-light-color", ebene: "getrennt" },
-        { t: "Height", art: "mass", v: "--wa-form-control-height", ebene: "beide", min: 0, max: 120 },
-        { t: "Padding block", art: "mass", v: "--wa-form-control-padding-block", ebene: "beide", einheit: "em", min: 0, max: 48 },
-      ] },
+        { t: "Breite", art: "mass", v: "--ha-border-width-sm", ebene: "beide", min: 0, max: 4 },
+        { t: "Ruhig", art: "farbe", v: "--ha-color-border-neutral-quiet", ebene: "getrennt" },
+        { t: "Deutlich", art: "farbe", v: "--ha-color-border-neutral-normal", ebene: "getrennt" } ] },
       { name: "Abstaende", felder: [
+
         { t: "1", art: "mass", v: "--ha-space-1", ebene: "beide", min: 0, max: 48 },
         { t: "10", art: "mass", v: "--ha-space-10", ebene: "beide", min: 0, max: 120 },
         { t: "11", art: "mass", v: "--ha-space-11", ebene: "beide", min: 0, max: 132 },
@@ -353,7 +328,32 @@ const STUFEN = [
         { t: "7", art: "mass", v: "--ha-space-7", ebene: "beide", min: 0, max: 84 },
         { t: "8", art: "mass", v: "--ha-space-8", ebene: "beide", min: 0, max: 96 },
         { t: "9", art: "mass", v: "--ha-space-9", ebene: "beide", min: 0, max: 108 },
+        { t: "Eng", art: "mass", v: "--ha-space-2", ebene: "beide", min: 0, max: 24 },
+        { t: "Normal", art: "mass", v: "--ha-space-4", ebene: "beide", min: 0, max: 40 },
+        { t: "Weit", art: "mass", v: "--ha-space-6", ebene: "beide", min: 0, max: 64 } ] },
+      // Schatten stehen in semantic.globals.ts zweimal, je Modus verschieden.
+      { name: "Schatten", felder: [
+        { t: "Klein", art: "text", v: "--ha-box-shadow-s", ebene: "getrennt" },
+        { t: "Mittel", art: "text", v: "--ha-box-shadow-m", ebene: "getrennt" },
+        { t: "Gross", art: "text", v: "--ha-box-shadow-l", ebene: "getrennt" } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      
+      
+      { name: "Knoepfe", felder: [
+        { t: "Neutral Farbe", art: "farbe", v: "--ha-button-neutral-color", ebene: "getrennt" },
+        { t: "Neutral hell Farbe", art: "farbe", v: "--ha-button-neutral-light-color", ebene: "getrennt" },
+        { t: "Primaer hell Farbe", art: "farbe", v: "--ha-button-primary-light-color", ebene: "getrennt" },
+        { t: "Warnung hell Farbe", art: "farbe", v: "--ha-button-warning-light-color", ebene: "getrennt" },
+        { t: "Height", art: "mass", v: "--wa-form-control-height", ebene: "beide", min: 0, max: 120 },
+        { t: "Padding block", art: "mass", v: "--wa-form-control-padding-block", ebene: "beide", einheit: "em", min: 0, max: 48 },
       ] },
+      
     ] },
 
   { n: 4, titel: "Zustaende", kurz: "Lautstaerken, Ueberfahren, Druecken, Deckkraft, Fokus",
@@ -556,6 +556,22 @@ const STUFEN = [
         { t: "Zweite Reihe", art: "farbe", v: "--color-2", ebene: "beide" },
         { t: "Dritte Reihe", art: "farbe", v: "--color-3", ebene: "beide" } ] },
       { name: "Code-Editor", felder: [
+
+        { t: "Atom", art: "farbe", v: "--codemirror-atom", ebene: "getrennt" },
+        { t: "Attribute", art: "farbe", v: "--codemirror-attribute", ebene: "getrennt" },
+        { t: "Builtin", art: "farbe", v: "--codemirror-builtin", ebene: "getrennt" },
+        { t: "Def", art: "farbe", v: "--codemirror-def", ebene: "getrennt" },
+        { t: "Meta", art: "farbe", v: "--codemirror-meta", ebene: "getrennt" },
+        { t: "Number", art: "farbe", v: "--codemirror-number", ebene: "getrennt" },
+        { t: "Operator", art: "farbe", v: "--codemirror-operator", ebene: "getrennt" },
+        { t: "Property", art: "farbe", v: "--codemirror-property", ebene: "getrennt" },
+        { t: "Qualifier", art: "farbe", v: "--codemirror-qualifier", ebene: "getrennt" },
+        { t: "String 2", art: "farbe", v: "--codemirror-string-2", ebene: "getrennt" },
+        { t: "Tag", art: "farbe", v: "--codemirror-tag", ebene: "getrennt" },
+        { t: "Type", art: "farbe", v: "--codemirror-type", ebene: "getrennt" },
+        { t: "Variable", art: "farbe", v: "--codemirror-variable", ebene: "getrennt" },
+        { t: "Variable 2", art: "farbe", v: "--codemirror-variable-2", ebene: "getrennt" },
+        { t: "Variable 3", art: "farbe", v: "--codemirror-variable-3", ebene: "getrennt" },
         { t: "Schluesselwort", art: "farbe", v: "--codemirror-keyword", ebene: "getrennt" },
         { t: "Zeichenkette", art: "farbe", v: "--codemirror-string", ebene: "getrennt" },
         { t: "Kommentar", art: "farbe", v: "--codemirror-comment", ebene: "getrennt" } ] },
@@ -579,23 +595,7 @@ const STUFEN = [
       // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
-      { name: "Code-Editor", felder: [
-        { t: "Atom", art: "farbe", v: "--codemirror-atom", ebene: "getrennt" },
-        { t: "Attribute", art: "farbe", v: "--codemirror-attribute", ebene: "getrennt" },
-        { t: "Builtin", art: "farbe", v: "--codemirror-builtin", ebene: "getrennt" },
-        { t: "Def", art: "farbe", v: "--codemirror-def", ebene: "getrennt" },
-        { t: "Meta", art: "farbe", v: "--codemirror-meta", ebene: "getrennt" },
-        { t: "Number", art: "farbe", v: "--codemirror-number", ebene: "getrennt" },
-        { t: "Operator", art: "farbe", v: "--codemirror-operator", ebene: "getrennt" },
-        { t: "Property", art: "farbe", v: "--codemirror-property", ebene: "getrennt" },
-        { t: "Qualifier", art: "farbe", v: "--codemirror-qualifier", ebene: "getrennt" },
-        { t: "String 2", art: "farbe", v: "--codemirror-string-2", ebene: "getrennt" },
-        { t: "Tag", art: "farbe", v: "--codemirror-tag", ebene: "getrennt" },
-        { t: "Type", art: "farbe", v: "--codemirror-type", ebene: "getrennt" },
-        { t: "Variable", art: "farbe", v: "--codemirror-variable", ebene: "getrennt" },
-        { t: "Variable 2", art: "farbe", v: "--codemirror-variable-2", ebene: "getrennt" },
-        { t: "Variable 3", art: "farbe", v: "--codemirror-variable-3", ebene: "getrennt" },
-      ] },
+      
       { name: "Diagrammfarben", felder: [
         { t: "10", art: "farbe", v: "--color-10", ebene: "beide" },
         { t: "11", art: "farbe", v: "--color-11", ebene: "beide" },
@@ -702,6 +702,25 @@ const STUFEN = [
 // muss, was ein Feld bewirkt. Steht als Trenner ueber den Karten der Gruppe.
 const ZWECK = {
   "Start": "Wie die Theme heisst und worauf sie aufsetzt",
+  // --- die Gruppen aus der Nachtschicht vom 12.10.2026 ---
+  "Palette": "Die elf Stufen je Rolle. Die Rollen oben setzen sie - hier nur, wenn eine Stufe allein nicht passt",
+  "Klassische Textfarben": "Die alten Namen, die viele fremde Karten noch lesen",
+  "Schriftgroessen": "Groessen, Staerken und Zeilenhoehen - gelten erst ab Lovelace, nicht auf der Home-Seite",
+  "Schatten und Leisten": "Schatten, Scrollbalken und die Hoehe der Kopfleiste",
+  "Kanten": "Trennlinien und Rahmen, je Rolle und Lautstaerke",
+  "Eingabefelder": "Flaechen und Rahmen von Eingaben - die alten input-Namen liest HA 2026 nicht mehr",
+  "Schrift invertiert": "Schrift auf umgekehrtem Grund, etwa in einem Hinweisbalken",
+  "Knoepfe": "Die vier Knopffarben, die HA ausserhalb der Rollen fuehrt",
+  "Deckkraft": "Wie stark Deaktiviertes und Trennlinien durchscheinen, je Modus",
+  "Bewegung": "Dauer der Uebergaenge, von sofort bis langsam",
+  "Flaechen je Lautstaerke": "Die 44 Flaechen aus Rolle x Lautstaerke x Zustand. Sie folgen der Palette - hier nur eingreifen, wenn eine einzelne nicht passt",
+  "Schrift auf Flaechen": "Welche Schriftfarbe auf einer eingefaerbten Flaeche lesbar bleibt",
+  "Fokus": "Der Ring um das Element, das gerade die Tastatur hat",
+  "Zustandsfarben": "Graustufen und Sonderfaelle, die HA fuer Zustaende heranzieht",
+  "Diagrammfarben": "Die Reihenfolge der Linienfarben in Verlaufsdiagrammen",
+  "Energie": "Die Farben der Energieverteilung - Netz, Solar, Batterie, Gas",
+  "Karte und Reste": "Der Filter ueber der Rasterkarte und zwei verbliebene Material-Namen",
+  "Textrichtung": "Links nach rechts oder umgekehrt. Nur anfassen, wenn du weisst warum",
   "Farben": "Die fuenf Rollen. HA rechnet daraus 51 Flaechen und 19 Schriftfarben",
   "Textfarben": "Schrift auf ruhigem Grund, in vier Abstufungen",
   "Schrift": "Schriftart und Groessenskala fuer die ganze Oberflaeche",
@@ -1224,8 +1243,11 @@ class HatsPanel extends HTMLElement {
 
     const w = this.wert(f);
     const je = this.werteJeModus(f);
-    const probe = (v) => v && /^#|^rgba?\(|^hsla?\(/.test(String(v))
-      ? `<span class="probe gross" style="background:${v}"></span>` : "";
+    // Der Tupfer zeigt die Farbe, auch wenn im Feld ein Verweis steht.
+    const probe = (v, modus) => {
+      const farbe = this.loeseFarbe(v, modus);
+      return farbe ? `<span class="probe gross" style="background:${farbe}"></span>` : "";
+    };
 
     const d = this.shadowRoot.querySelector(".overlay.zwei .dialog");
     d.innerHTML = `
@@ -1252,11 +1274,11 @@ class HatsPanel extends HTMLElement {
           const modi = je ? `
             <div class="modus" data-modus="hell">
               <span class="mlabel">${T("Hell")}</span>
-              <div class="mwert">${probe(je.hell)}<code class="${je.hell === undefined ? "leer" : ""}">${je.hell === undefined ? T("nicht gesetzt") : je.hell}</code></div>
+              <div class="mwert">${probe(je.hell, "light")}<code class="${je.hell === undefined ? "leer" : ""}">${je.hell === undefined ? T("nicht gesetzt") : je.hell}</code></div>
             </div>
             <div class="modus" data-modus="dunkel">
               <span class="mlabel">${T("Dunkel")}</span>
-              <div class="mwert">${probe(je.dunkel)}<code class="${je.dunkel === undefined ? "leer" : ""}">${je.dunkel === undefined ? T("nicht gesetzt") : je.dunkel}</code></div>
+              <div class="mwert">${probe(je.dunkel, "dark")}<code class="${je.dunkel === undefined ? "leer" : ""}">${je.dunkel === undefined ? T("nicht gesetzt") : je.dunkel}</code></div>
             </div>` : "";
           return `<div class="modusliste">${modi}</div>`;
         })()}
@@ -1316,8 +1338,8 @@ class HatsPanel extends HTMLElement {
       if (neu) for (const [schl, v] of [["hell", neu.hell], ["dunkel", neu.dunkel]]) {
         const zeile = d.querySelector(`.modus[data-modus="${schl}"] .mwert`);
         if (!zeile) continue;
-        const istFarbe = v && /^#|^rgba?\(|^hsla?\(/.test(String(v));
-        zeile.innerHTML = `${istFarbe ? `<span class="probe gross" style="background:${v}"></span>` : ""}`
+        const farbe = this.loeseFarbe(v, schl === "dunkel" ? "dark" : "light");
+        zeile.innerHTML = `${farbe ? `<span class="probe gross" style="background:${farbe}"></span>` : ""}`
           + `<code class="${v === undefined ? "leer" : ""}">${v === undefined ? T("nicht gesetzt") : v}</code>`;
       }
       this.zeichneZaehler();
@@ -1546,6 +1568,17 @@ class HatsPanel extends HTMLElement {
   // beweist nichts, nur das Berechnete kommt wirklich an.
   // Erst das Modell, dann das Berechnete. Ohne das sieht man eine Aenderung
   // nicht, bis die Theme geschrieben UND geladen ist - man drehte blind.
+  // Einen var()-Verweis bis zur Farbe verfolgen.
+  //
+  // 86 Felder tragen einen Verweis auf eine Palettenstufe statt eines
+  // Hexwertes - fill-primary-quiet-resting steht etwa auf
+  // var(--ha-color-primary-05). Ohne Aufloesung bleibt der Farbtupfer grau,
+  // und man sieht nicht, was das Feld tut. Nachgeschlagen wird im MODELL,
+  // nicht auf der Seite: Was gilt, ist die Theme, die gerade gebaut wird.
+  loeseFarbe(wert, modus) {
+    return loeseFarbe(ZUSTAND.modell, wert, modus);
+  }
+
   modellWert(name) {
     if (!ZUSTAND.modell) return undefined;
     const modus = this._hass && this._hass.themes && this._hass.themes.darkMode ? "dark" : "light";
@@ -1583,9 +1616,11 @@ class HatsPanel extends HTMLElement {
     }
     const ausModell = f.v ? this.modellWert(f.v.replace(/^--/, "")) : undefined;
     if (ausModell !== undefined && ausModell !== "") {
-      const istFarbe = /^#|^rgba?\(|^hsla?\(/.test(ausModell);
+      // Der Text bleibt roh - er soll zeigen, WAS dort steht, auch wenn es ein
+      // Verweis ist. Nur der Tupfer wird aufgeloest.
+      const modus = this._hass && this._hass.themes && this._hass.themes.darkMode ? "dark" : "light";
       return { text: ausModell.length > 28 ? ausModell.slice(0, 27) + "…" : ausModell,
-               farbe: istFarbe ? ausModell : null };
+               farbe: this.loeseFarbe(ausModell, modus) };
     }
     if (f.w !== undefined) return { text: f.w, farbe: null };
     // Frueher stand hier ein Rueckfall auf getComputedStyle der Seite. Der

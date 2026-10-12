@@ -9,7 +9,7 @@ import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { teileAuf, fuehreZusammen, setze, wirksam, schreibeTheme } from "../custom_components/hats/www/theme.js";
+import { teileAuf, fuehreZusammen, setze, wirksam, schreibeTheme, loeseFarbe } from "../custom_components/hats/www/theme.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
 const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
@@ -98,5 +98,54 @@ pruefe("Die Begruendung steht IM en-Block", () => {
   assert.ok(enBlock.includes("A role sets eleven palette steps"), "Uebersetzung fehlt oder steht daneben");
 });
 
+
+// ---------------------------------------------------------------------------
+// Verweise bis zur Farbe verfolgen.
+
+pruefe("Ein var()-Verweis wird bis zur Farbe aufgeloest", () => {
+  const m = leer();
+  m.flach["ha-color-primary-05"] = "#eef1fc";
+  m.flach["ha-color-fill-primary-quiet-resting"] = "var(--ha-color-primary-05)";
+  assert.strictEqual(
+    loeseFarbe(m, m.flach["ha-color-fill-primary-quiet-resting"]), "#eef1fc");
+});
+
+pruefe("Eine Kette ueber mehrere Stufen auch", () => {
+  const m = leer();
+  m.flach.a = "#123456";
+  m.flach.b = "var(--a)";
+  m.flach.c = "var(--b)";
+  assert.strictEqual(loeseFarbe(m, "var(--c)"), "#123456");
+});
+
+pruefe("Je Modus wird der richtige Wert verfolgt", () => {
+  const m = leer();
+  m.light["ha-color-neutral-10"] = "#eeeeee";
+  m.dark["ha-color-neutral-10"] = "#202020";
+  assert.strictEqual(loeseFarbe(m, "var(--ha-color-neutral-10)", "light"), "#eeeeee");
+  assert.strictEqual(loeseFarbe(m, "var(--ha-color-neutral-10)", "dark"), "#202020");
+});
+
+pruefe("Ein Kreis haengt die Oberflaeche nicht auf", () => {
+  // Ohne Tiefenbegrenzung laeuft das endlos, und das Panel friert ein.
+  const m = leer();
+  m.flach.a = "var(--b)";
+  m.flach.b = "var(--a)";
+  assert.strictEqual(loeseFarbe(m, "var(--a)"), null);
+});
+
+pruefe("Was keine Farbe ist, bleibt null", () => {
+  const m = leer();
+  m.flach.x = "blur(18px)";
+  assert.strictEqual(loeseFarbe(m, "var(--x)"), null);
+  assert.strictEqual(loeseFarbe(m, "var(--gibtsnicht)"), null);
+  assert.strictEqual(loeseFarbe(m, ""), null);
+});
+
+pruefe("Ein direkter Hexwert kommt unveraendert zurueck", () => {
+  assert.strictEqual(loeseFarbe(leer(), "#8fd92a"), "#8fd92a");
+  assert.strictEqual(loeseFarbe(leer(), "rgba(0,0,0,.5)"), "rgba(0,0,0,.5)");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 9) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
