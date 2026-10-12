@@ -35,7 +35,7 @@ const HATS_VERSION = "0.2.0b1";
 // angezeigt wird) oder `w` (ein fester Text). Was hier steht, ist die
 // Gliederung; das Schreiben in die Theme kommt im naechsten Schritt.
 const STUFEN = [
-  { n: 1, titel: "Grundlagen", kurz: "Name, Grundlage, Akzent, Textfarben, Schrift",
+  { n: 1, titel: "Grundlagen", kurz: "Name, Palette, Akzent, Textfarben, Schrift",
     marke: "#7bd14a", stand: "offen", gruppen: [
       { name: "Start", felder: [
         // Der Name ist kein Theme-Feld, sondern der Schluessel der Datei.
@@ -104,9 +104,95 @@ const STUFEN = [
         { t: "Zeilenhoehe", art: "zahl", v: "--ha-line-height-normal", ebene: "beide",
           min: 1.2, max: 2, schritt: 0.05 },
       ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Palette", felder: [
+        { t: "Dunkel Primaer Farbe", art: "farbe", v: "--dark-primary-color", ebene: "beide" },
+        { t: "Darker Primaer Farbe", art: "farbe", v: "--darker-primary-color", ebene: "beide" },
+        { t: "Black", art: "farbe", v: "--ha-color-black", ebene: "beide" },
+        { t: "Green 05", art: "farbe", v: "--ha-color-green-05", ebene: "beide" },
+        { t: "Green 10", art: "farbe", v: "--ha-color-green-10", ebene: "beide" },
+        { t: "Green 20", art: "farbe", v: "--ha-color-green-20", ebene: "beide" },
+        { t: "Green 30", art: "farbe", v: "--ha-color-green-30", ebene: "beide" },
+        { t: "Green 40", art: "farbe", v: "--ha-color-green-40", ebene: "beide" },
+        { t: "Green 50", art: "farbe", v: "--ha-color-green-50", ebene: "beide" },
+        { t: "Green 70", art: "farbe", v: "--ha-color-green-70", ebene: "beide" },
+        { t: "Green 80", art: "farbe", v: "--ha-color-green-80", ebene: "beide" },
+        { t: "Green 90", art: "farbe", v: "--ha-color-green-90", ebene: "beide" },
+        { t: "Green 95", art: "farbe", v: "--ha-color-green-95", ebene: "beide" },
+        { t: "Neutral 05", art: "farbe", v: "--ha-color-neutral-05", ebene: "beide" },
+        { t: "Neutral 10", art: "farbe", v: "--ha-color-neutral-10", ebene: "beide" },
+        { t: "Neutral 20", art: "farbe", v: "--ha-color-neutral-20", ebene: "beide" },
+        { t: "Neutral 30", art: "farbe", v: "--ha-color-neutral-30", ebene: "beide" },
+        { t: "Neutral 40", art: "farbe", v: "--ha-color-neutral-40", ebene: "beide" },
+        { t: "Neutral 50", art: "farbe", v: "--ha-color-neutral-50", ebene: "beide" },
+        { t: "Neutral 70", art: "farbe", v: "--ha-color-neutral-70", ebene: "beide" },
+        { t: "Neutral 80", art: "farbe", v: "--ha-color-neutral-80", ebene: "beide" },
+        { t: "Neutral 90", art: "farbe", v: "--ha-color-neutral-90", ebene: "beide" },
+        { t: "Neutral 95", art: "farbe", v: "--ha-color-neutral-95", ebene: "beide" },
+        { t: "Orange 05", art: "farbe", v: "--ha-color-orange-05", ebene: "beide" },
+        { t: "Orange 10", art: "farbe", v: "--ha-color-orange-10", ebene: "beide" },
+        { t: "Orange 20", art: "farbe", v: "--ha-color-orange-20", ebene: "beide" },
+        { t: "Orange 30", art: "farbe", v: "--ha-color-orange-30", ebene: "beide" },
+        { t: "Orange 40", art: "farbe", v: "--ha-color-orange-40", ebene: "beide" },
+        { t: "Orange 50", art: "farbe", v: "--ha-color-orange-50", ebene: "beide" },
+        { t: "Orange 70", art: "farbe", v: "--ha-color-orange-70", ebene: "beide" },
+        { t: "Orange 80", art: "farbe", v: "--ha-color-orange-80", ebene: "beide" },
+        { t: "Orange 90", art: "farbe", v: "--ha-color-orange-90", ebene: "beide" },
+        { t: "Orange 95", art: "farbe", v: "--ha-color-orange-95", ebene: "beide" },
+        { t: "Primaer 05", art: "farbe", v: "--ha-color-primary-05", ebene: "beide" },
+        { t: "Primaer 10", art: "farbe", v: "--ha-color-primary-10", ebene: "beide" },
+        { t: "Primaer 20", art: "farbe", v: "--ha-color-primary-20", ebene: "beide" },
+        { t: "Primaer 30", art: "farbe", v: "--ha-color-primary-30", ebene: "beide" },
+        { t: "Primaer 40", art: "farbe", v: "--ha-color-primary-40", ebene: "beide" },
+        { t: "Primaer 50", art: "farbe", v: "--ha-color-primary-50", ebene: "beide" },
+        { t: "Primaer 70", art: "farbe", v: "--ha-color-primary-70", ebene: "beide" },
+        { t: "Primaer 80", art: "farbe", v: "--ha-color-primary-80", ebene: "beide" },
+        { t: "Primaer 90", art: "farbe", v: "--ha-color-primary-90", ebene: "beide" },
+        { t: "Primaer 95", art: "farbe", v: "--ha-color-primary-95", ebene: "beide" },
+        { t: "Red 05", art: "farbe", v: "--ha-color-red-05", ebene: "beide" },
+        { t: "Red 10", art: "farbe", v: "--ha-color-red-10", ebene: "beide" },
+        { t: "Red 20", art: "farbe", v: "--ha-color-red-20", ebene: "beide" },
+        { t: "Red 30", art: "farbe", v: "--ha-color-red-30", ebene: "beide" },
+        { t: "Red 40", art: "farbe", v: "--ha-color-red-40", ebene: "beide" },
+        { t: "Red 50", art: "farbe", v: "--ha-color-red-50", ebene: "beide" },
+        { t: "Red 70", art: "farbe", v: "--ha-color-red-70", ebene: "beide" },
+        { t: "Red 80", art: "farbe", v: "--ha-color-red-80", ebene: "beide" },
+        { t: "Red 90", art: "farbe", v: "--ha-color-red-90", ebene: "beide" },
+        { t: "Red 95", art: "farbe", v: "--ha-color-red-95", ebene: "beide" },
+        { t: "White", art: "farbe", v: "--ha-color-white", ebene: "beide" },
+        { t: "Hell Primaer Farbe", art: "farbe", v: "--light-primary-color", ebene: "beide" },
+      ] },
+      { name: "Klassische Textfarben", felder: [
+        { t: "Deaktiviert Farbe", art: "farbe", v: "--disabled-color", ebene: "getrennt" },
+        { t: "Deaktiviert text Farbe", art: "farbe", v: "--disabled-text-color", ebene: "getrennt" },
+        { t: "Error Farbe", art: "farbe", v: "--error-color", ebene: "beide" },
+        { t: "Info Farbe", art: "farbe", v: "--info-color", ebene: "beide" },
+        { t: "Primaer text Farbe", art: "farbe", v: "--primary-text-color", ebene: "getrennt" },
+        { t: "Secondary text Farbe", art: "farbe", v: "--secondary-text-color", ebene: "getrennt" },
+        { t: "Erfolg Farbe", art: "farbe", v: "--success-color", ebene: "beide" },
+        { t: "Text hell Primaer Farbe", art: "farbe", v: "--text-light-primary-color", ebene: "beide" },
+        { t: "Text Primaer Farbe", art: "farbe", v: "--text-primary-color", ebene: "beide" },
+        { t: "Warnung Farbe", art: "farbe", v: "--warning-color", ebene: "beide" },
+      ] },
+      { name: "Schriftgroessen", felder: [
+        { t: "Family longform", art: "text", v: "--ha-font-family-longform", ebene: "beide" },
+        { t: "Smoothing", art: "text", v: "--ha-font-smoothing", ebene: "beide" },
+        { t: "Weight bold", art: "zahl", v: "--ha-font-weight-bold", ebene: "beide", min: 0, max: 2100, schritt: 0.05 },
+        { t: "Weight hell", art: "zahl", v: "--ha-font-weight-light", ebene: "beide", min: 0, max: 900, schritt: 0.05 },
+        { t: "Weight medium", art: "zahl", v: "--ha-font-weight-medium", ebene: "beide", min: 0, max: 1500, schritt: 0.05 },
+        { t: "Weight normal", art: "zahl", v: "--ha-font-weight-normal", ebene: "beide", min: 0, max: 1200, schritt: 0.05 },
+        { t: "Condensed", art: "zahl", v: "--ha-line-height-condensed", ebene: "beide", min: 0, max: 4, schritt: 0.05 },
+        { t: "Expanded", art: "zahl", v: "--ha-line-height-expanded", ebene: "beide", min: 0, max: 6, schritt: 0.05 },
+      ] },
     ] },
 
-  { n: 2, titel: "Flaechen", kurz: "Hintergrund, Karten, Dialoge, Leisten",
+  { n: 2, titel: "Flaechen", kurz: "Hintergrund, Karten, Dialoge, Kanten, Eingaben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Alles hier wechselt mit dem Modus - im Hellen hell, im Dunkeln dunkel.
       // Deshalb durchweg getrennt, nicht flach.
@@ -122,14 +208,71 @@ const STUFEN = [
       { name: "Dialoge", felder: [
         { t: "Dialogflaeche", art: "farbe", v: "--ha-dialog-surface-background", ebene: "getrennt",
           sync: { bubble: "--bubble-pop-up-main-background-color" } },
-        { t: "Abdunkelung", art: "farbe", v: "--ha-dialog-scrim-color", ebene: "getrennt",
+        // --ha-dialog-scrim-color gibt es nicht - der Name war erfunden. Am
+        // 12.10.2026 aus ha-dialog.elementStyles gelesen: HA liest
+        // --mdc-dialog-scrim-color (Ausweichwert none), darunter Web Awesome
+        // mit --wa-color-overlay-modal.
+        { t: "Abdunkelung", art: "farbe", v: "--mdc-dialog-scrim-color", ebene: "getrennt",
           sync: { bubble: "--bubble-backdrop-background-color" } } ] },
       { name: "Leisten", felder: [
         { t: "Seitenleiste", art: "farbe", v: "--sidebar-background-color", ebene: "getrennt" },
         { t: "Kopfleiste", art: "farbe", v: "--app-header-background-color", ebene: "getrennt" } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Schatten und Leisten", felder: [
+        { t: "Bar box shadow", art: "text", v: "--bar-box-shadow", ebene: "getrennt" },
+        { t: "Shadow scrollable fade", art: "farbe", v: "--ha-color-shadow-scrollable-fade", ebene: "beide" },
+        { t: "Header height", art: "mass", v: "--header-height", ebene: "beide", min: 0, max: 168 },
+        { t: "Scrollbar thumb Farbe", art: "farbe", v: "--scrollbar-thumb-color", ebene: "getrennt" },
+        { t: "Shadow Farbe", art: "farbe", v: "--shadow-color", ebene: "getrennt" },
+      ] },
+      { name: "Grundflaechen", felder: [
+        { t: "Card Flaeche Farbe", art: "farbe", v: "--card-background-color", ebene: "getrennt" },
+        { t: "Clear Flaeche Farbe", art: "farbe", v: "--clear-background-color", ebene: "getrennt" },
+        { t: "Default invertiert", art: "farbe", v: "--ha-color-surface-default-inverted", ebene: "getrennt" },
+        { t: "Low invertiert", art: "farbe", v: "--ha-color-surface-low-inverted", ebene: "getrennt" },
+        { t: "Lower invertiert", art: "farbe", v: "--ha-color-surface-lower-inverted", ebene: "getrennt" },
+        { t: "Primaer Flaeche Farbe", art: "farbe", v: "--primary-background-color", ebene: "getrennt" },
+        { t: "Secondary Flaeche Farbe", art: "farbe", v: "--secondary-background-color", ebene: "getrennt" },
+      ] },
+      { name: "Kanten", felder: [
+        { t: "Divider Farbe", art: "farbe", v: "--divider-color", ebene: "getrennt" },
+        { t: "Fehler laut", art: "farbe", v: "--ha-color-border-danger-loud", ebene: "getrennt" },
+        { t: "Fehler normal", art: "farbe", v: "--ha-color-border-danger-normal", ebene: "getrennt" },
+        { t: "Neutral laut", art: "farbe", v: "--ha-color-border-neutral-loud", ebene: "getrennt" },
+        { t: "Normal", art: "farbe", v: "--ha-color-border-normal", ebene: "getrennt" },
+        { t: "Warnung laut", art: "farbe", v: "--ha-color-border-warning-loud", ebene: "getrennt" },
+        { t: "Warnung normal", art: "farbe", v: "--ha-color-border-warning-normal", ebene: "getrennt" },
+      ] },
+      { name: "Eingabefelder", felder: [
+        { t: "Flaeche", art: "farbe", v: "--ha-color-form-background", ebene: "getrennt" },
+        { t: "Flaeche Deaktiviert", art: "farbe", v: "--ha-color-form-background-disabled", ebene: "getrennt" },
+        { t: "Flaeche ueberfahren", art: "farbe", v: "--ha-color-form-background-hover", ebene: "getrennt" },
+        { t: "Deaktiviert fill Farbe", art: "farbe", v: "--input-disabled-fill-color", ebene: "getrennt" },
+        { t: "Deaktiviert ink Farbe", art: "farbe", v: "--input-disabled-ink-color", ebene: "getrennt" },
+        { t: "Deaktiviert line Farbe", art: "farbe", v: "--input-disabled-line-color", ebene: "getrennt" },
+        { t: "Dropdown icon Farbe", art: "farbe", v: "--input-dropdown-icon-color", ebene: "getrennt" },
+        { t: "Fill Farbe", art: "farbe", v: "--input-fill-color", ebene: "getrennt" },
+        { t: "Ueberfahren line Farbe", art: "farbe", v: "--input-hover-line-color", ebene: "getrennt" },
+        { t: "Idle line Farbe", art: "farbe", v: "--input-idle-line-color", ebene: "getrennt" },
+        { t: "Ink Farbe", art: "farbe", v: "--input-ink-color", ebene: "getrennt" },
+        { t: "Label ink Farbe", art: "farbe", v: "--input-label-ink-color", ebene: "getrennt" },
+        { t: "Outlined Deaktiviert border Farbe", art: "farbe", v: "--input-outlined-disabled-border-color", ebene: "getrennt" },
+        { t: "Outlined ueberfahren border Farbe", art: "farbe", v: "--input-outlined-hover-border-color", ebene: "getrennt" },
+        { t: "Outlined idle border Farbe", art: "farbe", v: "--input-outlined-idle-border-color", ebene: "getrennt" },
+      ] },
+      { name: "Schrift auf Flaechen", felder: [
+        { t: "Primaer invertiert", art: "farbe", v: "--ha-color-text-primary-inverted", ebene: "getrennt" },
+        { t: "Secondary invertiert", art: "farbe", v: "--ha-color-text-secondary-inverted", ebene: "getrennt" },
+      ] },
     ] },
 
-  { n: 3, titel: "Form", kurz: "Rundung, Rahmen, Abstaende, Schatten",
+  { n: 3, titel: "Form", kurz: "Rundung, Rahmen, Abstaende, Schatten, Knoepfe",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Masse sind in beiden Modi gleich - HA setzt sie einmal in
       // core.globals.ts. Nur die Schatten unterscheiden sich.
@@ -151,9 +294,60 @@ const STUFEN = [
         { t: "Klein", art: "text", v: "--ha-box-shadow-s", ebene: "getrennt" },
         { t: "Mittel", art: "text", v: "--ha-box-shadow-m", ebene: "getrennt" },
         { t: "Gross", art: "text", v: "--ha-box-shadow-l", ebene: "getrennt" } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Rundung", felder: [
+        { t: "2xl", art: "mass", v: "--ha-border-radius-2xl", ebene: "beide", min: 0, max: 60 },
+        { t: "3xl", art: "mass", v: "--ha-border-radius-3xl", ebene: "beide", min: 0, max: 72 },
+        { t: "4xl", art: "mass", v: "--ha-border-radius-4xl", ebene: "beide", min: 0, max: 84 },
+        { t: "5xl", art: "mass", v: "--ha-border-radius-5xl", ebene: "beide", min: 0, max: 96 },
+        { t: "6xl", art: "mass", v: "--ha-border-radius-6xl", ebene: "beide", min: 0, max: 108 },
+        { t: "Circle", art: "mass", v: "--ha-border-radius-circle", ebene: "beide", einheit: "%", min: 0, max: 150 },
+        { t: "Pill", art: "mass", v: "--ha-border-radius-pill", ebene: "beide", min: 0, max: 29997 },
+        { t: "Square", art: "zahl", v: "--ha-border-radius-square", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+      ] },
+      { name: "Rahmen", felder: [
+        { t: "Lg", art: "mass", v: "--ha-border-width-lg", ebene: "beide", min: 0, max: 48 },
+        { t: "Md", art: "mass", v: "--ha-border-width-md", ebene: "beide", min: 0, max: 48 },
+        { t: "Border style", art: "text", v: "--wa-border-style", ebene: "beide" },
+        { t: "Border style", art: "text", v: "--wa-panel-border-style", ebene: "beide" },
+        { t: "Border width", art: "mass", v: "--wa-panel-border-width", ebene: "beide", min: 0, max: 48 },
+      ] },
+      { name: "Knoepfe", felder: [
+        { t: "Neutral Farbe", art: "farbe", v: "--ha-button-neutral-color", ebene: "getrennt" },
+        { t: "Neutral hell Farbe", art: "farbe", v: "--ha-button-neutral-light-color", ebene: "getrennt" },
+        { t: "Primaer hell Farbe", art: "farbe", v: "--ha-button-primary-light-color", ebene: "getrennt" },
+        { t: "Warnung hell Farbe", art: "farbe", v: "--ha-button-warning-light-color", ebene: "getrennt" },
+        { t: "Height", art: "mass", v: "--wa-form-control-height", ebene: "beide", min: 0, max: 120 },
+        { t: "Padding block", art: "mass", v: "--wa-form-control-padding-block", ebene: "beide", einheit: "em", min: 0, max: 48 },
+      ] },
+      { name: "Abstaende", felder: [
+        { t: "1", art: "mass", v: "--ha-space-1", ebene: "beide", min: 0, max: 48 },
+        { t: "10", art: "mass", v: "--ha-space-10", ebene: "beide", min: 0, max: 120 },
+        { t: "11", art: "mass", v: "--ha-space-11", ebene: "beide", min: 0, max: 132 },
+        { t: "12", art: "mass", v: "--ha-space-12", ebene: "beide", min: 0, max: 144 },
+        { t: "13", art: "mass", v: "--ha-space-13", ebene: "beide", min: 0, max: 156 },
+        { t: "14", art: "mass", v: "--ha-space-14", ebene: "beide", min: 0, max: 168 },
+        { t: "15", art: "mass", v: "--ha-space-15", ebene: "beide", min: 0, max: 180 },
+        { t: "16", art: "mass", v: "--ha-space-16", ebene: "beide", min: 0, max: 192 },
+        { t: "17", art: "mass", v: "--ha-space-17", ebene: "beide", min: 0, max: 204 },
+        { t: "18", art: "mass", v: "--ha-space-18", ebene: "beide", min: 0, max: 216 },
+        { t: "19", art: "mass", v: "--ha-space-19", ebene: "beide", min: 0, max: 228 },
+        { t: "20", art: "mass", v: "--ha-space-20", ebene: "beide", min: 0, max: 240 },
+        { t: "3", art: "mass", v: "--ha-space-3", ebene: "beide", min: 0, max: 48 },
+        { t: "5", art: "mass", v: "--ha-space-5", ebene: "beide", min: 0, max: 60 },
+        { t: "7", art: "mass", v: "--ha-space-7", ebene: "beide", min: 0, max: 84 },
+        { t: "8", art: "mass", v: "--ha-space-8", ebene: "beide", min: 0, max: 96 },
+        { t: "9", art: "mass", v: "--ha-space-9", ebene: "beide", min: 0, max: 108 },
+      ] },
     ] },
 
-  { n: 4, titel: "Zustaende", kurz: "Lautstaerken, Ueberfahren, Druecken",
+  { n: 4, titel: "Zustaende", kurz: "Lautstaerken, Ueberfahren, Druecken, Deckkraft, Fokus",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Diese Felder leitet Home Assistant selbst aus der Palette ab. Wer sie
       // setzt, friert sie ein und nimmt der Primaerfarbe ihre Wirkung - das
@@ -173,6 +367,102 @@ const STUFEN = [
         { t: "Klick-Welle", art: "farbe", v: "--ha-ripple-color", ebene: "getrennt" },
         { t: "Dauer", art: "mass", v: "--ha-animation-duration-fast", ebene: "beide",
           min: 0, max: 600, schritt: 10, einheit: "ms" } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Deckkraft", felder: [
+        { t: "Dunkel Deaktiviert Deckkraft", art: "zahl", v: "--dark-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel divider Deckkraft", art: "zahl", v: "--dark-divider-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel Primaer Deckkraft", art: "zahl", v: "--dark-primary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel secondary Deckkraft", art: "zahl", v: "--dark-secondary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell Deaktiviert Deckkraft", art: "zahl", v: "--light-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell divider Deckkraft", art: "zahl", v: "--light-divider-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell Primaer Deckkraft", art: "zahl", v: "--light-primary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell secondary Deckkraft", art: "zahl", v: "--light-secondary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+      ] },
+      { name: "Bewegung", felder: [
+        { t: "Instant", art: "mass", v: "--ha-animation-duration-instant", ebene: "beide", einheit: "ms", min: 0, max: 225 },
+        { t: "None", art: "mass", v: "--ha-animation-duration-none", ebene: "beide", einheit: "ms", min: 0, max: 48 },
+        { t: "Normal", art: "mass", v: "--ha-animation-duration-normal", ebene: "beide", einheit: "s", min: 0, max: 48 },
+        { t: "Slow", art: "mass", v: "--ha-animation-duration-slow", ebene: "beide", einheit: "s", min: 0, max: 48 },
+        { t: "Transition easing", art: "text", v: "--wa-transition-easing", ebene: "beide" },
+      ] },
+      { name: "Flaechen je Lautstaerke", felder: [
+        { t: "Fehler laut gedrueckt", art: "farbe", v: "--ha-color-fill-danger-loud-active", ebene: "getrennt" },
+        { t: "Fehler laut ueberfahren", art: "farbe", v: "--ha-color-fill-danger-loud-hover", ebene: "getrennt" },
+        { t: "Fehler laut ruhend", art: "farbe", v: "--ha-color-fill-danger-loud-resting", ebene: "getrennt" },
+        { t: "Fehler normal gedrueckt", art: "farbe", v: "--ha-color-fill-danger-normal-active", ebene: "getrennt" },
+        { t: "Fehler normal ueberfahren", art: "farbe", v: "--ha-color-fill-danger-normal-hover", ebene: "getrennt" },
+        { t: "Fehler normal ruhend", art: "farbe", v: "--ha-color-fill-danger-normal-resting", ebene: "getrennt" },
+        { t: "Fehler leise gedrueckt", art: "farbe", v: "--ha-color-fill-danger-quiet-active", ebene: "getrennt" },
+        { t: "Fehler leise ueberfahren", art: "farbe", v: "--ha-color-fill-danger-quiet-hover", ebene: "getrennt" },
+        { t: "Fehler leise ruhend", art: "farbe", v: "--ha-color-fill-danger-quiet-resting", ebene: "getrennt" },
+        { t: "Deaktiviert laut ueberfahren", art: "farbe", v: "--ha-color-fill-disabled-loud-hover", ebene: "getrennt" },
+        { t: "Deaktiviert laut ruhend", art: "farbe", v: "--ha-color-fill-disabled-loud-resting", ebene: "getrennt" },
+        { t: "Deaktiviert normal ueberfahren", art: "farbe", v: "--ha-color-fill-disabled-normal-hover", ebene: "getrennt" },
+        { t: "Deaktiviert normal ruhend", art: "farbe", v: "--ha-color-fill-disabled-normal-resting", ebene: "getrennt" },
+        { t: "Deaktiviert leise ueberfahren", art: "farbe", v: "--ha-color-fill-disabled-quiet-hover", ebene: "getrennt" },
+        { t: "Deaktiviert leise ruhend", art: "farbe", v: "--ha-color-fill-disabled-quiet-resting", ebene: "getrennt" },
+        { t: "Neutral laut gedrueckt", art: "farbe", v: "--ha-color-fill-neutral-loud-active", ebene: "getrennt" },
+        { t: "Neutral laut ueberfahren", art: "farbe", v: "--ha-color-fill-neutral-loud-hover", ebene: "getrennt" },
+        { t: "Neutral laut ruhend", art: "farbe", v: "--ha-color-fill-neutral-loud-resting", ebene: "getrennt" },
+        { t: "Neutral normal gedrueckt", art: "farbe", v: "--ha-color-fill-neutral-normal-active", ebene: "getrennt" },
+        { t: "Neutral normal ueberfahren", art: "farbe", v: "--ha-color-fill-neutral-normal-hover", ebene: "getrennt" },
+        { t: "Neutral normal ruhend", art: "farbe", v: "--ha-color-fill-neutral-normal-resting", ebene: "getrennt" },
+        { t: "Neutral leise gedrueckt", art: "farbe", v: "--ha-color-fill-neutral-quiet-active", ebene: "getrennt" },
+        { t: "Neutral leise ueberfahren", art: "farbe", v: "--ha-color-fill-neutral-quiet-hover", ebene: "getrennt" },
+        { t: "Neutral leise ruhend", art: "farbe", v: "--ha-color-fill-neutral-quiet-resting", ebene: "getrennt" },
+        { t: "Primaer normal gedrueckt", art: "farbe", v: "--ha-color-fill-primary-normal-active", ebene: "getrennt" },
+        { t: "Primaer leise gedrueckt", art: "farbe", v: "--ha-color-fill-primary-quiet-active", ebene: "getrennt" },
+        { t: "Erfolg laut gedrueckt", art: "farbe", v: "--ha-color-fill-success-loud-active", ebene: "getrennt" },
+        { t: "Erfolg laut ueberfahren", art: "farbe", v: "--ha-color-fill-success-loud-hover", ebene: "getrennt" },
+        { t: "Erfolg laut ruhend", art: "farbe", v: "--ha-color-fill-success-loud-resting", ebene: "getrennt" },
+        { t: "Erfolg normal gedrueckt", art: "farbe", v: "--ha-color-fill-success-normal-active", ebene: "getrennt" },
+        { t: "Erfolg normal ueberfahren", art: "farbe", v: "--ha-color-fill-success-normal-hover", ebene: "getrennt" },
+        { t: "Erfolg normal ruhend", art: "farbe", v: "--ha-color-fill-success-normal-resting", ebene: "getrennt" },
+        { t: "Erfolg leise gedrueckt", art: "farbe", v: "--ha-color-fill-success-quiet-active", ebene: "getrennt" },
+        { t: "Erfolg leise ueberfahren", art: "farbe", v: "--ha-color-fill-success-quiet-hover", ebene: "getrennt" },
+        { t: "Erfolg leise ruhend", art: "farbe", v: "--ha-color-fill-success-quiet-resting", ebene: "getrennt" },
+        { t: "Warnung laut gedrueckt", art: "farbe", v: "--ha-color-fill-warning-loud-active", ebene: "getrennt" },
+        { t: "Warnung laut ueberfahren", art: "farbe", v: "--ha-color-fill-warning-loud-hover", ebene: "getrennt" },
+        { t: "Warnung laut ruhend", art: "farbe", v: "--ha-color-fill-warning-loud-resting", ebene: "getrennt" },
+        { t: "Warnung normal gedrueckt", art: "farbe", v: "--ha-color-fill-warning-normal-active", ebene: "getrennt" },
+        { t: "Warnung normal ueberfahren", art: "farbe", v: "--ha-color-fill-warning-normal-hover", ebene: "getrennt" },
+        { t: "Warnung normal ruhend", art: "farbe", v: "--ha-color-fill-warning-normal-resting", ebene: "getrennt" },
+        { t: "Warnung leise gedrueckt", art: "farbe", v: "--ha-color-fill-warning-quiet-active", ebene: "getrennt" },
+        { t: "Warnung leise ueberfahren", art: "farbe", v: "--ha-color-fill-warning-quiet-hover", ebene: "getrennt" },
+        { t: "Warnung leise ruhend", art: "farbe", v: "--ha-color-fill-warning-quiet-resting", ebene: "getrennt" },
+      ] },
+      { name: "Schrift auf Flaechen", felder: [
+        { t: "Fehler laut", art: "farbe", v: "--ha-color-on-danger-loud", ebene: "getrennt" },
+        { t: "Fehler normal", art: "farbe", v: "--ha-color-on-danger-normal", ebene: "getrennt" },
+        { t: "Fehler leise", art: "farbe", v: "--ha-color-on-danger-quiet", ebene: "getrennt" },
+        { t: "Deaktiviert laut", art: "farbe", v: "--ha-color-on-disabled-loud", ebene: "getrennt" },
+        { t: "Deaktiviert normal", art: "farbe", v: "--ha-color-on-disabled-normal", ebene: "getrennt" },
+        { t: "Deaktiviert leise", art: "farbe", v: "--ha-color-on-disabled-quiet", ebene: "getrennt" },
+        { t: "Neutral laut", art: "farbe", v: "--ha-color-on-neutral-loud", ebene: "getrennt" },
+        { t: "Neutral normal", art: "farbe", v: "--ha-color-on-neutral-normal", ebene: "getrennt" },
+        { t: "Neutral leise", art: "farbe", v: "--ha-color-on-neutral-quiet", ebene: "getrennt" },
+        { t: "Primaer leise", art: "farbe", v: "--ha-color-on-primary-quiet", ebene: "getrennt" },
+        { t: "Erfolg laut", art: "farbe", v: "--ha-color-on-success-loud", ebene: "getrennt" },
+        { t: "Erfolg normal", art: "farbe", v: "--ha-color-on-success-normal", ebene: "getrennt" },
+        { t: "Erfolg leise", art: "farbe", v: "--ha-color-on-success-quiet", ebene: "getrennt" },
+        { t: "Surface default", art: "farbe", v: "--ha-color-on-surface-default", ebene: "getrennt" },
+        { t: "Warnung laut", art: "farbe", v: "--ha-color-on-warning-loud", ebene: "getrennt" },
+        { t: "Warnung normal", art: "farbe", v: "--ha-color-on-warning-normal", ebene: "getrennt" },
+        { t: "Warnung leise", art: "farbe", v: "--ha-color-on-warning-quiet", ebene: "getrennt" },
+      ] },
+      { name: "Fokus", felder: [
+        { t: "Outline Farbe", art: "farbe", v: "--outline-color", ebene: "getrennt" },
+        { t: "Outline ueberfahren Farbe", art: "farbe", v: "--outline-hover-color", ebene: "getrennt" },
+        { t: "Offset", art: "mass", v: "--wa-focus-ring-offset", ebene: "beide", min: 0, max: 48 },
+        { t: "Style", art: "text", v: "--wa-focus-ring-style", ebene: "beide" },
+        { t: "Width", art: "mass", v: "--wa-focus-ring-width", ebene: "beide", min: 0, max: 48 },
+      ] },
     ] },
 
   { n: 5, titel: "Symbole", kurz: "Form, Groesse, Zustandsfarben",
@@ -197,6 +487,22 @@ const STUFEN = [
         { t: "Tuerkis", art: "farbe", v: "--teal-color", ebene: "beide", sync: { mush: "--mush-rgb-teal" } },
         { t: "Violett", art: "farbe", v: "--purple-color", ebene: "beide", sync: { mush: "--mush-rgb-purple" } },
         { t: "Bernstein", art: "farbe", v: "--amber-color", ebene: "beide", sync: { mush: "--mush-rgb-amber" } } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Zustandsfarben", felder: [
+        { t: "Black Farbe", art: "farbe", v: "--black-color", ebene: "beide" },
+        { t: "Dunkel grey Farbe", art: "farbe", v: "--dark-grey-color", ebene: "beide" },
+        { t: "History unavailable Farbe", art: "text", v: "--history-unavailable-color", ebene: "beide" },
+        { t: "Label badge grey", art: "farbe", v: "--label-badge-grey", ebene: "beide" },
+        { t: "Hell grey Farbe", art: "farbe", v: "--light-grey-color", ebene: "beide" },
+        { t: "State weather snowy Farbe", art: "farbe", v: "--state-weather-snowy-color", ebene: "beide" },
+        { t: "White Farbe", art: "farbe", v: "--white-color", ebene: "beide" },
+      ] },
     ] },
 
   { n: 6, titel: "Fremde Karten", kurz: "Bubble Card und Mushroom anbinden",
@@ -227,7 +533,7 @@ const STUFEN = [
         { t: "Abstand", art: "mass", v: "--mush-spacing", ebene: "beide", min: 0, max: 32 } ] },
     ] },
 
-  { n: 7, titel: "Feinschliff", kurz: "Karte, Diagramme, Code-Editor, Glas",
+  { n: 7, titel: "Feinschliff", kurz: "Karte, Diagramme, Energie, Code-Editor, Glas",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Die Kartentokens haben alle eine LEERE Vorgabe: ein Wert dort nagelt
       // jede Theme auf eine Kartenfarbe fest. Leer heisst, HA behaelt seine
@@ -257,9 +563,101 @@ const STUFEN = [
           platzhalter: "blur(18px) saturate(1.6)" },
         { t: "Dialogschleier", art: "text", v: "--ha-dialog-scrim-backdrop-filter", ebene: "beide",
           platzhalter: "blur(2px)" } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Code-Editor", felder: [
+        { t: "Atom", art: "farbe", v: "--codemirror-atom", ebene: "getrennt" },
+        { t: "Attribute", art: "farbe", v: "--codemirror-attribute", ebene: "getrennt" },
+        { t: "Builtin", art: "farbe", v: "--codemirror-builtin", ebene: "getrennt" },
+        { t: "Def", art: "farbe", v: "--codemirror-def", ebene: "getrennt" },
+        { t: "Meta", art: "farbe", v: "--codemirror-meta", ebene: "getrennt" },
+        { t: "Number", art: "farbe", v: "--codemirror-number", ebene: "getrennt" },
+        { t: "Operator", art: "farbe", v: "--codemirror-operator", ebene: "getrennt" },
+        { t: "Property", art: "farbe", v: "--codemirror-property", ebene: "getrennt" },
+        { t: "Qualifier", art: "farbe", v: "--codemirror-qualifier", ebene: "getrennt" },
+        { t: "String 2", art: "farbe", v: "--codemirror-string-2", ebene: "getrennt" },
+        { t: "Tag", art: "farbe", v: "--codemirror-tag", ebene: "getrennt" },
+        { t: "Type", art: "farbe", v: "--codemirror-type", ebene: "getrennt" },
+        { t: "Variable", art: "farbe", v: "--codemirror-variable", ebene: "getrennt" },
+        { t: "Variable 2", art: "farbe", v: "--codemirror-variable-2", ebene: "getrennt" },
+        { t: "Variable 3", art: "farbe", v: "--codemirror-variable-3", ebene: "getrennt" },
+      ] },
+      { name: "Diagrammfarben", felder: [
+        { t: "10", art: "farbe", v: "--color-10", ebene: "beide" },
+        { t: "11", art: "farbe", v: "--color-11", ebene: "beide" },
+        { t: "12", art: "farbe", v: "--color-12", ebene: "beide" },
+        { t: "13", art: "farbe", v: "--color-13", ebene: "beide" },
+        { t: "14", art: "farbe", v: "--color-14", ebene: "beide" },
+        { t: "15", art: "farbe", v: "--color-15", ebene: "beide" },
+        { t: "16", art: "farbe", v: "--color-16", ebene: "beide" },
+        { t: "17", art: "farbe", v: "--color-17", ebene: "beide" },
+        { t: "18", art: "farbe", v: "--color-18", ebene: "beide" },
+        { t: "19", art: "farbe", v: "--color-19", ebene: "beide" },
+        { t: "20", art: "farbe", v: "--color-20", ebene: "beide" },
+        { t: "21", art: "farbe", v: "--color-21", ebene: "beide" },
+        { t: "22", art: "farbe", v: "--color-22", ebene: "beide" },
+        { t: "23", art: "farbe", v: "--color-23", ebene: "beide" },
+        { t: "24", art: "farbe", v: "--color-24", ebene: "beide" },
+        { t: "25", art: "farbe", v: "--color-25", ebene: "beide" },
+        { t: "26", art: "farbe", v: "--color-26", ebene: "beide" },
+        { t: "27", art: "farbe", v: "--color-27", ebene: "beide" },
+        { t: "28", art: "farbe", v: "--color-28", ebene: "beide" },
+        { t: "29", art: "farbe", v: "--color-29", ebene: "beide" },
+        { t: "30", art: "farbe", v: "--color-30", ebene: "beide" },
+        { t: "31", art: "farbe", v: "--color-31", ebene: "beide" },
+        { t: "32", art: "farbe", v: "--color-32", ebene: "beide" },
+        { t: "33", art: "farbe", v: "--color-33", ebene: "beide" },
+        { t: "34", art: "farbe", v: "--color-34", ebene: "beide" },
+        { t: "35", art: "farbe", v: "--color-35", ebene: "beide" },
+        { t: "36", art: "farbe", v: "--color-36", ebene: "beide" },
+        { t: "37", art: "farbe", v: "--color-37", ebene: "beide" },
+        { t: "38", art: "farbe", v: "--color-38", ebene: "beide" },
+        { t: "39", art: "farbe", v: "--color-39", ebene: "beide" },
+        { t: "4", art: "farbe", v: "--color-4", ebene: "beide" },
+        { t: "40", art: "farbe", v: "--color-40", ebene: "beide" },
+        { t: "41", art: "farbe", v: "--color-41", ebene: "beide" },
+        { t: "42", art: "farbe", v: "--color-42", ebene: "beide" },
+        { t: "43", art: "farbe", v: "--color-43", ebene: "beide" },
+        { t: "44", art: "farbe", v: "--color-44", ebene: "beide" },
+        { t: "45", art: "farbe", v: "--color-45", ebene: "beide" },
+        { t: "46", art: "farbe", v: "--color-46", ebene: "beide" },
+        { t: "47", art: "farbe", v: "--color-47", ebene: "beide" },
+        { t: "48", art: "farbe", v: "--color-48", ebene: "beide" },
+        { t: "49", art: "farbe", v: "--color-49", ebene: "beide" },
+        { t: "5", art: "farbe", v: "--color-5", ebene: "beide" },
+        { t: "50", art: "farbe", v: "--color-50", ebene: "beide" },
+        { t: "51", art: "farbe", v: "--color-51", ebene: "beide" },
+        { t: "52", art: "farbe", v: "--color-52", ebene: "beide" },
+        { t: "53", art: "farbe", v: "--color-53", ebene: "beide" },
+        { t: "54", art: "farbe", v: "--color-54", ebene: "beide" },
+        { t: "6", art: "farbe", v: "--color-6", ebene: "beide" },
+        { t: "7", art: "farbe", v: "--color-7", ebene: "beide" },
+        { t: "8", art: "farbe", v: "--color-8", ebene: "beide" },
+        { t: "9", art: "farbe", v: "--color-9", ebene: "beide" },
+      ] },
+      { name: "Energie", felder: [
+        { t: "Battery in Farbe", art: "farbe", v: "--energy-battery-in-color", ebene: "beide" },
+        { t: "Battery out Farbe", art: "farbe", v: "--energy-battery-out-color", ebene: "beide" },
+        { t: "Gas Farbe", art: "farbe", v: "--energy-gas-color", ebene: "beide" },
+        { t: "Grid consumption Farbe", art: "farbe", v: "--energy-grid-consumption-color", ebene: "beide" },
+        { t: "Grid return Farbe", art: "farbe", v: "--energy-grid-return-color", ebene: "getrennt" },
+        { t: "Non fossil Farbe", art: "farbe", v: "--energy-non-fossil-color", ebene: "beide" },
+        { t: "Solar Farbe", art: "farbe", v: "--energy-solar-color", ebene: "beide" },
+        { t: "Water Farbe", art: "farbe", v: "--energy-water-color", ebene: "beide" },
+      ] },
+      { name: "Karte und Reste", felder: [
+        { t: "Map filter", art: "text", v: "--map-filter", ebene: "getrennt" },
+        { t: "Linear progress buffer Farbe", art: "farbe", v: "--mdc-linear-progress-buffer-color", ebene: "getrennt" },
+        { t: "Ripple Farbe", art: "farbe", v: "--mdc-ripple-color", ebene: "getrennt" },
+      ] },
     ] },
 
-  { n: 8, titel: "Ausgabe", kurz: "Pruefen, Bericht, Theme schreiben",
+  { n: 8, titel: "Ausgabe", kurz: "Pruefen, Bericht, Textrichtung, Theme schreiben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       { name: "Pruefen", felder: [
         { t: "YAML gueltig", art: "bericht", bericht: "yaml" },
@@ -273,6 +671,21 @@ const STUFEN = [
         { t: "Ziel", art: "bericht", bericht: "ziel" } ] },
       { name: "Sicherung", felder: [
         { t: "Grundlage", art: "bericht", bericht: "grundlage" } ] },
+
+      // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
+      // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die
+      // Art aus der Form des Wertes (#hex -> Farbe, 18px -> Mass, 0.5 -> Zahl),
+      // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
+      // das der einzige Weg ohne Tippfehler - der Generator liegt im
+      // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      { name: "Textrichtung", felder: [
+        { t: "Direction", art: "text", v: "--direction", ebene: "beide" },
+        { t: "Float end", art: "text", v: "--float-end", ebene: "beide" },
+        { t: "Float start", art: "text", v: "--float-start", ebene: "beide" },
+        { t: "Ha moz osx font smoothing", art: "text", v: "--ha-moz-osx-font-smoothing", ebene: "beide" },
+        { t: "Margin title ltr", art: "text", v: "--margin-title-ltr", ebene: "beide" },
+        { t: "Margin title rtl", art: "text", v: "--margin-title-rtl", ebene: "beide" },
+      ] },
     ] },
 ];
 

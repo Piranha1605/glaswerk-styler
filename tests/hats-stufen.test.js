@@ -94,3 +94,34 @@ pruefe("Jedes Mass-Feld hat eine Einheit oder nimmt die Vorgabe px", () => {
 });
 
 console.log(`\n${n} Pruefungen (mit Einheiten)`);
+
+pruefe("Die Oberflaeche deckt die ganze Grundlage ab", () => {
+  // Der Sinn der acht Stufen ist, eine komplette Theme durchzustylen. Ein Feld
+  // der Grundlage, das nirgends auftaucht, laesst sich nie aendern - und faellt
+  // nicht auf, weil die Datei trotzdem vollstaendig aussieht. Am 12.10.2026
+  // waren das 314 von 376.
+  const yaml = readFileSync(path.join(hier, "../docs/beispiele/ha-blanko.yaml"), "utf8");
+  let b = "flach";
+  const inBlanko = new Set();
+  for (const l of yaml.split("\n")) {
+    if (/^ {4}light:\s*$/.test(l)) { b = "hell"; continue; }
+    if (/^ {4}dark:\s*$/.test(l)) { b = "dunkel"; continue; }
+    const m = /^ +([a-z0-9-]+):\s*/.exec(l);
+    if (m && m[1] !== "modes") inBlanko.add(m[1]);
+  }
+  assert.ok(inBlanko.size > 300, `nur ${inBlanko.size} Felder gelesen - der Test prueft zu wenig`);
+
+  const inUi = new Set([...block.matchAll(/v: "--([a-z0-9-]+)"/g)].map((m) => m[1]));
+  // Was die Zuordnung automatisch schreibt, braucht kein Bedienelement.
+  const zu = readFileSync(path.join(hier, "../custom_components/hats/www/zuordnung.js"), "utf8");
+  const auto = new Set([...zu.matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]));
+
+  const fehlt = [...inBlanko].filter((k) => !inUi.has(k) && !auto.has(k));
+  assert.deepStrictEqual(fehlt, [], `${fehlt.length} Felder ohne Bedienelement: ${fehlt.slice(0, 8)}`);
+});
+
+pruefe("Gegenprobe: ein fehlendes Feld wird gefunden", () => {
+  const inUi = new Set([...block.matchAll(/v: "--([a-z0-9-]+)"/g)].map((m) => m[1]));
+  assert.ok(!inUi.has("gibt-es-nicht-xyz"), "die Menge ist nicht das, was sie sein soll");
+  assert.ok(inUi.size > 350, `nur ${inUi.size} Felder in der Oberflaeche`);
+});
