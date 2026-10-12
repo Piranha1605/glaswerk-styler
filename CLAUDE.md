@@ -275,6 +275,29 @@ Die Ausweichwerte gehören aus `customElements.get(tag).elementStyles` gelesen,
 nicht geraten. `--ha-dialog-scrim-color` gibt es übrigens gar nicht; HA liest
 `--mdc-dialog-scrim-color`, darunter `--wa-color-overlay-modal` mit `#00000040`.
 
+### Zwei Felder, die nur auf Lovelace ankommen
+
+Am 12.10.2026 beim Bau von `hats_studio` gemessen, beide sehen gesetzt aus und
+wirken trotzdem nicht überall:
+
+**`--ha-font-family-body` erreicht `body` nicht.** Im globalen Stylesheet von
+Home Assistant steht
+
+    body { font-family: Roboto, Noto, sans-serif }
+
+ohne Variable davor. Gelesen wird der Name nur von `hui-root` und `ha-tooltip`.
+Auf einem Lovelace-Dashboard kommt die Schrift also an, auf der neuen
+**Home-Seite** (`ha-panel-home`) und auf den Einstellungsseiten nicht.
+
+**`--lovelace-background` liest genau ein Bauteil**, `hui-view-background`. Das
+entsteht nur unter `ha-panel-lovelace`. Dazu: Ein Hintergrundbild aus der
+**Dashboard-Konfiguration** liegt darüber — der Theme-Wert ist dann zwar
+gesetzt und wird auch gelesen, man sieht ihn nur nicht. Wer den Verlauf sucht
+und das Bild vergisst, hält das Feld für kaputt.
+
+Das Feld steht nicht in `ha_blanko`, weil HA es nicht vorbelegt; aufgenommen ist
+es trotzdem, weil es der einzige Weg zu einem Verlauf hinter dem Dashboard ist.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter

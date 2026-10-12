@@ -95,7 +95,11 @@ const STUFEN = [
       { name: "Schrift", felder: [
         { t: "Schriftart", art: "auswahl", v: "--ha-font-family-body", ebene: "beide", optionen: [
           { wert: "Roboto, Noto, \"Noto Sans\", sans-serif", name: "Google", titel: "Roboto - liefert Home Assistant mit" },
-          { wert: "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Helvetica Neue\", sans-serif", name: "Apple", titel: "San Francisco - nur auf Apple-Geraeten" } ] },
+          { wert: "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Helvetica Neue\", sans-serif", name: "Apple", titel: "San Francisco - nur auf Apple-Geraeten" },
+          // Die Kette der HATS-Oberflaeche selbst. Sie bringt keine Datei mit,
+          // sondern nimmt, was da ist: Segoe auf Windows, sonst Inter oder
+          // Roboto, zuletzt die Systemschrift.
+          { wert: "\"Segoe UI\", Inter, Roboto, system-ui, sans-serif", name: "Studio", titel: "Die Schrift der HATS-Oberflaeche" } ] },
         { t: "Code", art: "auswahl", v: "--ha-font-family-code", ebene: "beide", optionen: [
           { wert: "\"Roboto Mono\", \"Noto Sans Mono\", monospace", name: "Google" },
           { wert: "ui-monospace, \"SF Mono\", Menlo, monospace", name: "Apple" } ] },
@@ -199,7 +203,12 @@ const STUFEN = [
       { name: "Grundflaechen", felder: [
         { t: "Oberflaeche", art: "farbe", v: "--ha-color-surface-default", ebene: "getrennt" },
         { t: "Eine Stufe tiefer", art: "farbe", v: "--ha-color-surface-low", ebene: "getrennt" },
-        { t: "Zwei Stufen tiefer", art: "farbe", v: "--ha-color-surface-lower", ebene: "getrennt" } ] },
+        { t: "Zwei Stufen tiefer", art: "farbe", v: "--ha-color-surface-lower", ebene: "getrennt" },
+        // Steht nicht in ha_blanko, weil HA es nicht vorbelegt - gelesen wird es
+        // trotzdem (hui-root). Als Text, nicht als Farbe: hier passt ein
+        // Verlauf oder ein url() hinein, nicht nur ein Hexwert.
+        { t: "Dashboard-Hintergrund", art: "text", v: "--lovelace-background", ebene: "getrennt",
+          platzhalter: "linear-gradient(160deg, #dcebfb, #8fbdea)" } ] },
       { name: "Karten", felder: [
         { t: "Kartenflaeche", art: "farbe", v: "--ha-card-background", ebene: "getrennt",
           sync: { bubble: "--bubble-main-background-color" } },
