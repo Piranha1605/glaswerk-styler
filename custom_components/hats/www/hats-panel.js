@@ -231,6 +231,24 @@ const ZWECK = {
   "Sicherung": "Der Stand davor, falls etwas schiefgeht",
 };
 
+// Drei Ansichten derselben Felder. Die Wahl liegt im localStorage - eine
+// Bequemlichkeit je Geraet, kein Zustand, der irgendwo ankommen muss.
+const ANSICHTEN = [
+  { id: "gemischt", name: "Gemischt" },
+  { id: "liste", name: "Liste" },
+  { id: "kacheln", name: "Kacheln" },
+];
+const ANSICHT_SPEICHER = "hats-ansicht";
+function ansichtLesen() {
+  try {
+    const v = localStorage.getItem(ANSICHT_SPEICHER);
+    return ANSICHTEN.some((a) => a.id === v) ? v : "gemischt";
+  } catch (e) { return "gemischt"; }
+}
+function ansichtSchreiben(v) {
+  try { localStorage.setItem(ANSICHT_SPEICHER, v); } catch (e) { /* privates Fenster */ }
+}
+
 const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 
 const felderZahl = (st) => st.gruppen.reduce((n, g) => n + g.felder.length, 0);
@@ -254,6 +272,7 @@ const TEXTE = {
     "gerade eben": "just now",
     "Entwurf": "Draft",
     "Gruppen": "groups",
+    "Ansicht": "View", "Gemischt": "Mixed", "Liste": "List", "Kacheln": "Tiles",
     "Angabe": "value",
     "nicht gesetzt": "not set",
     "Grundlagen": "Basics", "Flaechen": "Surfaces", "Form": "Shape",
@@ -283,6 +302,7 @@ class HatsPanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._offen = null;
     this._gezeichnet = false;
+    this._ansicht = ansichtLesen();
   }
 
   set hass(hass) {
@@ -375,10 +395,19 @@ class HatsPanel extends HTMLElement {
 
   // ---- Pop-up: die Einstellungsseite, Vorlage Bild 1 ----
   oeffne(nr) {
-    const T = (s) => t(s, this.spr);
-    const st = STUFEN.find((x) => x.n === nr);
-    if (!st) return;
     this._offen = nr;
+    this.zeichneDialog();
+    const o = this.shadowRoot.querySelector(".overlay");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+    document.addEventListener("keydown", this._esc);
+  }
+
+  zeichneDialog() {
+    const T = (s) => t(s, this.spr);
+    const st = STUFEN.find((x) => x.n === this._offen);
+    if (!st) return;
+    const kachelbrett = this._ansicht === "kacheln";
     const d = this.shadowRoot.querySelector(".dialog");
     d.innerHTML = `
       <header class="dkopf">
@@ -386,16 +415,22 @@ class HatsPanel extends HTMLElement {
           <h2>${st.n}. ${T(st.titel)}</h2>
           <p>${T(st.kurz)} · ${st.gruppen.length} ${T("Gruppen")} · ${felderZahl(st)} ${T("Felder")}</p>
         </div>
+        <div class="umschalter" role="group" aria-label="${T("Ansicht")}">
+          ${ANSICHTEN.map((a) => `<button data-ansicht="${a.id}" class="${a.id === this._ansicht ? "an" : ""}">${T(a.name)}</button>`).join("")}
+        </div>
         <button class="zu" aria-label="${T("Schließen")}">✕</button>
       </header>
-      <div class="brett">
-        ${st.gruppen.map((g, i) => this.gruppe(st, g, i, T)).join("")}
+      <div class="brett ${kachelbrett ? "spaltig" : ""}">
+        ${st.gruppen.map((g) => (kachelbrett ? this.spalte(st, g, T) : this.gruppe(st, g, T))).join("")}
       </div>`;
     d.querySelector(".zu").addEventListener("click", () => this.schliesse());
-    const o = this.shadowRoot.querySelector(".overlay");
-    o.hidden = false;
-    requestAnimationFrame(() => o.classList.add("da"));
-    document.addEventListener("keydown", this._esc);
+    d.querySelectorAll(".umschalter button").forEach((b) =>
+      b.addEventListener("click", () => {
+        this._ansicht = b.dataset.ansicht;
+        ansichtSchreiben(this._ansicht);
+        this.zeichneDialog();
+      })
+    );
   }
 
   // Den aktuellen Wert einer Variablen zeigen, nicht einen erfundenen. Was
@@ -409,32 +444,59 @@ class HatsPanel extends HTMLElement {
     return { text: v.length > 28 ? v.slice(0, 27) + "…" : v, farbe: istFarbe ? v : null };
   }
 
-  gruppe(st, g, i, T) {
-    const zeilen = g.felder.map((f) => {
-      const w = this.wert(f);
-      return `
-        <div class="feld">
-          <div class="feldtext">
-            <b>${T(f.t)}</b>
-            <span>${f.v ? f.v : T("Angabe")}</span>
-          </div>
+  feldZeile(f, T) {
+    const w = this.wert(f);
+    return `
+      <div class="feld">
+        <div class="feldtext">
+          <b>${T(f.t)}</b>
+          <span>${f.v ? f.v : T("Angabe")}</span>
+        </div>
+        ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
+        <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
+      </div>`;
+  }
+
+  feldKachel(f, T) {
+    const w = this.wert(f);
+    return `
+      <article class="karte">
+        <b>${T(f.t)}</b>
+        <p>${f.v ? f.v : T("Angabe")}</p>
+        <div class="kfuss">
           ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
           <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
-        </div>`;
-    }).join("");
-    // Die Farben der Gruppe als schmale Reihe neben der Ueberschrift - in der
-    // Vorlage war das die grosse Kachel, in einer Liste reicht ein Streifen.
+        </div>
+      </article>`;
+  }
+
+  gruppenkopf(g, T) {
     const toene = g.felder.map((f) => this.wert(f).farbe).filter(Boolean).slice(0, 6);
     const streifen = toene.map((c) => `<span class="tupfer" style="background:${c}"></span>`).join("");
     return `
-      <section class="gruppe">
-        <header>
-          <div class="gtitel"><b>${T(g.name)}</b><span>${g.felder.length} ${T("Felder")}</span></div>
-          <div class="streifen">${streifen}</div>
-          <button class="punkte klein"><span></span><span></span><span></span></button>
-        </header>
-        <p class="zweck">${T(ZWECK[g.name] || "")}</p>
-        <div class="feldliste">${zeilen}</div>
+      <header>
+        <div class="gtitel"><b>${T(g.name)}</b><span>${g.felder.length} ${T("Felder")}</span></div>
+        <div class="streifen">${streifen}</div>
+        <button class="punkte klein"><span></span><span></span><span></span></button>
+      </header>
+      <p class="zweck">${T(ZWECK[g.name] || "")}</p>`;
+  }
+
+  // Liste und Gemischt teilen sich die Ueberschrift mit Zweckzeile und Strich;
+  // nur darunter wird anders gezeigt - Zeilen oder Kacheln.
+  gruppe(st, g, T) {
+    const inhalt = this._ansicht === "liste"
+      ? `<div class="feldliste">${g.felder.map((f) => this.feldZeile(f, T)).join("")}</div>`
+      : `<div class="kachelraster">${g.felder.map((f) => this.feldKachel(f, T)).join("")}</div>`;
+    return `<section class="gruppe">${this.gruppenkopf(g, T)}${inhalt}</section>`;
+  }
+
+  // Reine Kachelansicht: jede Gruppe eine Spalte, wie in der Vorlage.
+  spalte(st, g, T) {
+    return `
+      <section class="spalte">
+        ${this.gruppenkopf(g, T)}
+        ${g.felder.map((f) => this.feldKachel(f, T)).join("")}
       </section>`;
   }
 
@@ -573,8 +635,8 @@ class HatsPanel extends HTMLElement {
                 transition: transform .2s ease, opacity .2s ease; }
       .overlay.da .dialog { transform: none; opacity: 1; }
 
-      .dkopf { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
-               gap: 16px; padding: 22px 26px 16px; background: #f7f8fb; border-bottom: 1px solid var(--s-linie); }
+      .dkopf { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; flex-wrap: wrap;
+               gap: 12px 16px; padding: 22px 26px 16px; background: #f7f8fb; border-bottom: 1px solid var(--s-linie); }
       .dkopf h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
       .dkopf p { margin: 3px 0 0; color: var(--s-tinte-leise); font-size: 13px; }
       .zu { width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer; font-size: 15px;
@@ -584,6 +646,32 @@ class HatsPanel extends HTMLElement {
       /* Listenansicht statt Kartenbrett: eine Gruppe untereinander, in
          derselben Sprache wie die Stufenliste der Hauptseite. */
       .brett { display: flex; flex-direction: column; gap: 22px; padding: 18px 26px 26px; }
+      /* Reine Kachelansicht: jede Gruppe eine Spalte, wie in der Vorlage. */
+      .brett.spaltig { display: grid; gap: 16px; align-items: start;
+                       grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+      .spalte { display: flex; flex-direction: column; gap: 10px; }
+
+      /* Gemischt: Ueberschrift wie in der Liste, Felder als Kacheln darunter. */
+      .kachelraster { display: grid; gap: 10px;
+                      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+      .karte { background: var(--s-karte); border-radius: var(--s-r); padding: 12px 13px;
+               box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
+      .karte b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+      .karte p { margin: 0 0 10px; color: var(--s-tinte-leise); font-size: 11.5px;
+                 font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .kfuss { display: flex; align-items: center; gap: 8px; }
+      .kfuss .wert { min-width: 0; }
+
+      /* Der Umschalter im Kopf des Pop-ups. */
+      .umschalter { display: flex; gap: 2px; margin-left: auto; padding: 3px;
+                    border-radius: 999px; background: rgba(27,36,48,.06); }
+      .umschalter button { border: 0; cursor: pointer; font: inherit; font-size: 12px;
+                           padding: 5px 12px; border-radius: 999px; background: transparent;
+                           color: var(--s-tinte-leise); }
+      .umschalter button:hover { color: var(--s-tinte); }
+      .umschalter button.an { background: #fff; color: var(--s-tinte);
+                              box-shadow: var(--s-schatten-klein); }
 
       .gruppe > header { display: flex; align-items: center; gap: 12px; padding: 0 4px 2px; }
       .gtitel { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
