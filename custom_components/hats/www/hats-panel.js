@@ -22,23 +22,175 @@
 
 const HATS_VERSION = "0.2.0b1";
 
+// Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
+// geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1
+// aendert, verschiebt alles darueber, weil Home Assistant den Rest ableitet.
+//
+// Ein Feld traegt entweder `v` (eine CSS-Variable, deren aktueller Wert
+// angezeigt wird) oder `w` (ein fester Text). Was hier steht, ist die
+// Gliederung; das Schreiben in die Theme kommt im naechsten Schritt.
 const STUFEN = [
-  { n: 1, marke: "#7bd14a", stand: "fertig" },
-  { n: 2, marke: "#7bd14a", stand: "fertig" },
-  { n: 3, marke: "#f0a23c", stand: "offen" },
-  { n: 4, marke: "#f0a23c", stand: "offen" },
-  { n: 5, marke: "#c2c8d2", stand: "wartet" },
-  { n: 6, marke: "#c2c8d2", stand: "wartet" },
-  { n: 7, marke: "#c2c8d2", stand: "wartet" },
-  { n: 8, marke: "#c2c8d2", stand: "wartet" },
+  { n: 1, titel: "Grundlagen", kurz: "Name, Grundlage, Akzent, Textfarben, Schrift",
+    marke: "#7bd14a", stand: "offen", gruppen: [
+      { name: "Start", felder: [
+        { t: "Name der Theme", w: "noch offen" },
+        { t: "Grundlage", w: "ha_blanko" },
+        { t: "Modus", w: "hell und dunkel" } ] },
+      { name: "Farben", felder: [
+        { t: "Akzent", v: "--ha-color-primary-40" },
+        { t: "Neutral", v: "--ha-color-neutral-40" },
+        { t: "Erfolg", v: "--ha-color-green-50" },
+        { t: "Warnung", v: "--ha-color-orange-70" },
+        { t: "Fehler", v: "--ha-color-red-50" } ] },
+      { name: "Textfarben", felder: [
+        { t: "Primaer", v: "--ha-color-text-primary" },
+        { t: "Sekundaer", v: "--ha-color-text-secondary" },
+        { t: "Deaktiviert", v: "--ha-color-text-disabled" },
+        { t: "Link", v: "--ha-color-text-link" } ] },
+      { name: "Schrift", felder: [
+        { t: "Schriftart", v: "--ha-font-family-body" },
+        { t: "Code", v: "--ha-font-family-code" },
+        { t: "Groesse", v: "--ha-font-size-scale" },
+        { t: "Zeilenhoehe", v: "--ha-line-height-normal" } ] },
+    ] },
+
+  { n: 2, titel: "Flaechen", kurz: "Hintergrund, Karten, Dialoge, Leisten",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Grundflaechen", felder: [
+        { t: "Oberflaeche", v: "--ha-color-surface-default" },
+        { t: "Eine Stufe tiefer", v: "--ha-color-surface-low" },
+        { t: "Zwei Stufen tiefer", v: "--ha-color-surface-lower" } ] },
+      { name: "Karten", felder: [
+        { t: "Kartenflaeche", v: "--ha-card-background" },
+        { t: "Weichzeichnung", v: "--ha-card-backdrop-filter" } ] },
+      { name: "Dialoge", felder: [
+        { t: "Dialogflaeche", v: "--ha-dialog-surface-background" },
+        { t: "Abdunkelung", v: "--ha-dialog-scrim-color" } ] },
+      { name: "Leisten", felder: [
+        { t: "Seitenleiste", v: "--sidebar-background-color" },
+        { t: "Kopfleiste", v: "--app-header-background-color" } ] },
+    ] },
+
+  { n: 3, titel: "Form", kurz: "Rundung, Rahmen, Abstaende, Schatten",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Rundung", felder: [
+        { t: "Klein", v: "--ha-border-radius-sm" },
+        { t: "Mittel", v: "--ha-border-radius-md" },
+        { t: "Gross", v: "--ha-border-radius-lg" },
+        { t: "Karten", v: "--ha-border-radius-xl" } ] },
+      { name: "Rahmen", felder: [
+        { t: "Breite", v: "--ha-border-width-sm" },
+        { t: "Ruhig", v: "--ha-color-border-neutral-quiet" },
+        { t: "Deutlich", v: "--ha-color-border-neutral-normal" } ] },
+      { name: "Abstaende", felder: [
+        { t: "Eng", v: "--ha-space-2" },
+        { t: "Normal", v: "--ha-space-4" },
+        { t: "Weit", v: "--ha-space-6" } ] },
+      { name: "Schatten", felder: [
+        { t: "Klein", v: "--ha-box-shadow-s" },
+        { t: "Mittel", v: "--ha-box-shadow-m" },
+        { t: "Gross", v: "--ha-box-shadow-l" } ] },
+    ] },
+
+  { n: 4, titel: "Zustaende", kurz: "Lautstaerken, Ueberfahren, Druecken",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Leise", felder: [
+        { t: "Ruhend", v: "--ha-color-fill-primary-quiet-resting" },
+        { t: "Ueberfahren", v: "--ha-color-fill-primary-quiet-hover" } ] },
+      { name: "Normal", felder: [
+        { t: "Ruhend", v: "--ha-color-fill-primary-normal-resting" },
+        { t: "Ueberfahren", v: "--ha-color-fill-primary-normal-hover" },
+        { t: "Schrift darauf", v: "--ha-color-on-primary-normal" } ] },
+      { name: "Laut", felder: [
+        { t: "Ruhend", v: "--ha-color-fill-primary-loud-resting" },
+        { t: "Ueberfahren", v: "--ha-color-fill-primary-loud-hover" },
+        { t: "Schrift darauf", v: "--ha-color-on-primary-loud" } ] },
+      { name: "Rueckmeldung", felder: [
+        { t: "Klick-Welle", v: "--ha-ripple-color" },
+        { t: "Dauer", v: "--ha-animation-duration-fast" } ] },
+    ] },
+
+  { n: 5, titel: "Symbole", kurz: "Form, Groesse, Zustandsfarben",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Form", felder: [
+        { t: "Kachel", v: "--ha-tile-icon-border-radius" },
+        { t: "Abzeichen", v: "--state-badge-border-radius" },
+        { t: "Mushroom", v: "--mush-icon-border-radius" } ] },
+      { name: "Groesse", felder: [
+        { t: "Symbolgroesse", v: "--mdc-icon-size" },
+        { t: "Knopfgroesse", v: "--ha-icon-button-size" } ] },
+      { name: "Zustand", felder: [
+        { t: "Aktiv", v: "--state-active-color" },
+        { t: "Inaktiv", v: "--state-inactive-color" },
+        { t: "Symbolfarbe", v: "--state-icon-color" } ] },
+      { name: "Toene", felder: [
+        { t: "Gelb", v: "--yellow-color" },
+        { t: "Tuerkis", v: "--teal-color" },
+        { t: "Violett", v: "--purple-color" },
+        { t: "Bernstein", v: "--amber-color" } ] },
+    ] },
+
+  { n: 6, titel: "Fremde Karten", kurz: "Bubble Card und Mushroom anbinden",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Bubble Flaechen", felder: [
+        { t: "Karte", v: "--bubble-main-background-color" },
+        { t: "Knopf", v: "--bubble-button-background-color" },
+        { t: "Pop-up", v: "--bubble-pop-up-main-background-color" } ] },
+      { name: "Bubble Zustand", felder: [
+        { t: "Akzent", v: "--bubble-accent-color" },
+        { t: "Licht", v: "--bubble-light-color" },
+        { t: "Symbol", v: "--bubble-icon-color" } ] },
+      { name: "Mushroom Tripel", felder: [
+        { t: "Rot", v: "--mush-rgb-red" },
+        { t: "Gruen", v: "--mush-rgb-green" },
+        { t: "Orange", v: "--mush-rgb-orange" },
+        { t: "Blau", v: "--mush-rgb-blue" } ] },
+      { name: "Mushroom Masse", felder: [
+        { t: "Symbol", v: "--mush-icon-size" },
+        { t: "Chip", v: "--mush-chip-height" },
+        { t: "Abstand", v: "--mush-spacing" } ] },
+    ] },
+
+  { n: 7, titel: "Feinschliff", kurz: "Karte, Diagramme, Code-Editor, Glas",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Vektorkarte", felder: [
+        { t: "Land", v: "--ha-color-map-land" },
+        { t: "Wasser", v: "--ha-color-map-water" },
+        { t: "Strassen", v: "--ha-color-map-road" } ] },
+      { name: "Diagramme", felder: [
+        { t: "Erste Reihe", v: "--color-1" },
+        { t: "Zweite Reihe", v: "--color-2" },
+        { t: "Dritte Reihe", v: "--color-3" } ] },
+      { name: "Code-Editor", felder: [
+        { t: "Schluesselwort", v: "--codemirror-keyword" },
+        { t: "Zeichenkette", v: "--codemirror-string" },
+        { t: "Kommentar", v: "--codemirror-comment" } ] },
+      { name: "Glas", felder: [
+        { t: "Weichzeichnung", v: "--ha-card-backdrop-filter" },
+        { t: "Kopfleiste", v: "--app-header-backdrop-filter" } ] },
+    ] },
+
+  { n: 8, titel: "Ausgabe", kurz: "Pruefen, Bericht, Theme schreiben",
+    marke: "#c2c8d2", stand: "wartet", gruppen: [
+      { name: "Pruefen", felder: [
+        { t: "YAML gueltig", w: "noch nicht geprueft" },
+        { t: "Zweiter Durchlauf gleich", w: "noch nicht geprueft" },
+        { t: "Verweise ins Leere", w: "noch nicht geprueft" } ] },
+      { name: "Bericht", felder: [
+        { t: "Geaenderte Felder", w: "0" },
+        { t: "Entfernte Felder", w: "0" } ] },
+      { name: "Schreiben", felder: [
+        { t: "Dateiname", w: "noch offen" },
+        { t: "Ziel", w: "config/themes" } ] },
+      { name: "Sicherung", felder: [
+        { t: "Vorheriger Stand", w: "wird vor dem Schreiben gesichert" } ] },
+    ] },
 ];
 
 const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 
-// Die Spalten einer Einstellungsseite. Vier Stueck, wie in der Vorlage.
-const GRUPPEN = [1, 2, 3, 4];
-const ZUSTAENDE = ["fertig", "arbeit", "pruefen", "offen"];
-const ZUSTAND_TEXT = { fertig: "FERTIG", arbeit: "IN ARBEIT", pruefen: "PRUEFEN", offen: "OFFEN" };
+const felderZahl = (st) => st.gruppen.reduce((n, g) => n + g.felder.length, 0);
+const felderGesamt = STUFEN.reduce((n, st) => n + felderZahl(st), 0);
 
 const TEXTE = {
   en: {
@@ -57,6 +209,26 @@ const TEXTE = {
     "zuletzt geändert": "last changed",
     "gerade eben": "just now",
     "Entwurf": "Draft",
+    "Gruppen": "groups",
+    "Angabe": "value",
+    "nicht gesetzt": "not set",
+    "Grundlagen": "Basics", "Flaechen": "Surfaces", "Form": "Shape",
+    "Zustaende": "States", "Symbole": "Icons", "Fremde Karten": "Third-party cards",
+    "Feinschliff": "Polish", "Ausgabe": "Output",
+    "Name, Grundlage, Akzent, Textfarben, Schrift": "Name, base, accent, text colours, font",
+    "Hintergrund, Karten, Dialoge, Leisten": "Background, cards, dialogs, bars",
+    "Rundung, Rahmen, Abstaende, Schatten": "Radius, borders, spacing, shadows",
+    "Lautstaerken, Ueberfahren, Druecken": "Loudness, hover, press",
+    "Form, Groesse, Zustandsfarben": "Shape, size, state colours",
+    "Bubble Card und Mushroom anbinden": "Wire up Bubble Card and Mushroom",
+    "Karte, Diagramme, Code-Editor, Glas": "Map, charts, code editor, glass",
+    "Pruefen, Bericht, Theme schreiben": "Check, report, write the theme",
+    "Start": "Start", "Farben": "Colours", "Textfarben": "Text colours", "Schrift": "Font",
+    "Name der Theme": "Theme name", "Grundlage": "Base", "Modus": "Mode",
+    "Akzent": "Accent", "Neutral": "Neutral", "Erfolg": "Success",
+    "Warnung": "Warning", "Fehler": "Error",
+    "Primaer": "Primary", "Sekundaer": "Secondary", "Deaktiviert": "Disabled", "Link": "Link",
+    "Schriftart": "Font family", "Code": "Code", "Groesse": "Size", "Zeilenhoehe": "Line height",
   },
 };
 const t = (s, spr) => (TEXTE[spr] && TEXTE[spr][s]) || s;
@@ -110,7 +282,7 @@ class HatsPanel extends HTMLElement {
 
             <div class="kennzahlen">
               <div class="kennzahl"><b>${fertig}/${STUFEN.length}</b><span>${T("Stufen fertig")}</span></div>
-              <div class="kennzahl"><b>${GRUPPEN.length * 6}</b><span>${T("Felder")}</span></div>
+              <div class="kennzahl"><b>${felderGesamt}</b><span>${T("Felder")}</span></div>
               <div class="kennzahl"><b>${T("gerade eben")}</b><span>${T("zuletzt geändert")}</span></div>
             </div>
 
@@ -147,8 +319,8 @@ class HatsPanel extends HTMLElement {
         </div>
         <span class="balken" style="background:${s.marke}"></span>
         <div class="text">
-          <b>${T("Stufe")} ${s.n}</b>
-          <span>${T("Stufe")} ${s.n} — ${GRUPPEN.length} ${T("Gruppe")}n, ${GRUPPEN.length * 6} ${T("Felder")}</span>
+          <b>${s.n}. ${T(s.titel)}</b>
+          <span>${T(s.kurz)} — ${s.gruppen.length} ${T("Gruppen")}, ${felderZahl(s)} ${T("Felder")}</span>
         </div>
         <span class="stand ${s.stand}">${T(STAND_TEXT[s.stand])}</span>
         <button class="punkte" data-stufe="${s.n}" title="${T("Einstellungen öffnen")}" aria-label="${T("Einstellungen öffnen")}">
@@ -160,18 +332,20 @@ class HatsPanel extends HTMLElement {
   // ---- Pop-up: die Einstellungsseite, Vorlage Bild 1 ----
   oeffne(nr) {
     const T = (s) => t(s, this.spr);
+    const st = STUFEN.find((x) => x.n === nr);
+    if (!st) return;
     this._offen = nr;
     const d = this.shadowRoot.querySelector(".dialog");
     d.innerHTML = `
       <header class="dkopf">
         <div>
-          <h2>${T("Stufe")} ${nr}</h2>
-          <p>${GRUPPEN.length} ${T("Gruppe")}n · ${GRUPPEN.length * 6} ${T("Felder")}</p>
+          <h2>${st.n}. ${T(st.titel)}</h2>
+          <p>${T(st.kurz)} · ${st.gruppen.length} ${T("Gruppen")} · ${felderZahl(st)} ${T("Felder")}</p>
         </div>
         <button class="zu" aria-label="${T("Schließen")}">✕</button>
       </header>
       <div class="brett">
-        ${GRUPPEN.map((g) => this.spalte(nr, g, T)).join("")}
+        ${st.gruppen.map((g, i) => this.spalte(st, g, i, T)).join("")}
       </div>`;
     d.querySelector(".zu").addEventListener("click", () => this.schliesse());
     const o = this.shadowRoot.querySelector(".overlay");
@@ -180,40 +354,45 @@ class HatsPanel extends HTMLElement {
     document.addEventListener("keydown", this._esc);
   }
 
-  spalte(nr, g, T) {
-    const karten = [];
-    for (let k = 1; k <= 6; k++) {
-      const z = ZUSTAENDE[(g + k) % ZUSTAENDE.length];
-      // Eine Kachel je Spalte steht fuer eine Vorschau - in der Vorlage das
-      // Mood-Board. Spaeter die Farbprobe der Stufe.
-      if (k === 3) { karten.push(`<div class="kachel" style="background:${this.verlauf(nr, g)}"></div>`); continue; }
-      karten.push(`
+  // Den aktuellen Wert einer Variablen zeigen, nicht einen erfundenen. Was
+  // Home Assistant gerade liefert, steht in getComputedStyle - das Theme-Objekt
+  // beweist nichts, nur das Berechnete kommt wirklich an.
+  wert(f) {
+    if (f.w !== undefined) return { text: f.w, farbe: null };
+    const v = getComputedStyle(document.documentElement).getPropertyValue(f.v).trim();
+    if (!v) return { text: "nicht gesetzt", farbe: null, leer: true };
+    const istFarbe = /^#|^rgba?\(|^hsla?\(|^color\(/.test(v);
+    return { text: v.length > 28 ? v.slice(0, 27) + "…" : v, farbe: istFarbe ? v : null };
+  }
+
+  spalte(st, g, i, T) {
+    const karten = g.felder.map((f) => {
+      const w = this.wert(f);
+      return `
         <article class="karte">
-          <b>${T("Feld")} ${g}.${k}</b>
-          <p>${T("Feld")} ${g}.${k} — ${T("Entwurf")}</p>
+          <b>${T(f.t)}</b>
+          <p>${f.v ? f.v : T("Angabe")}</p>
           <div class="fuss">
-            <span class="badge ${z}">${T(ZUSTAND_TEXT[z])}</span>
-            <span class="probe" style="background:${this.probe(nr, g, k)}"></span>
-            <span class="wert">#${(nr * 100 + g * 10 + k).toString(16).padStart(4, "0")}</span>
+            ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
+            <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
           </div>
-        </article>`);
-    }
+        </article>`;
+    }).join("");
+    // Eine Kachel je Spalte - in der Vorlage das Mood-Board. Sie zeigt die
+    // Farben dieser Gruppe, nicht einen Zufallsverlauf.
+    const toene = g.felder.map((f) => this.wert(f).farbe).filter(Boolean);
+    const kachel = toene.length >= 2
+      ? `<div class="kachel" style="background:linear-gradient(135deg, ${toene.slice(0, 4).join(", ")})"></div>`
+      : "";
     return `
       <section class="spalte">
         <header>
-          <div><b>${T("Gruppe")} ${g}</b><span>6 ${T("Felder")}</span></div>
+          <div><b>${T(g.name)}</b><span>${g.felder.length} ${T("Felder")}</span></div>
           <button class="punkte klein"><span></span><span></span><span></span></button>
         </header>
-        ${karten.join("")}
+        ${karten}
+        ${kachel}
       </section>`;
-  }
-
-  verlauf(nr, g) {
-    const a = (nr * 47 + g * 61) % 360;
-    return `linear-gradient(135deg, hsl(${a} 85% 68%), hsl(${(a + 48) % 360} 88% 62%), hsl(${(a + 96) % 360} 80% 70%))`;
-  }
-  probe(nr, g, k) {
-    return `hsl(${(nr * 47 + g * 61 + k * 9) % 360} 70% 62%)`;
   }
 
   schliesse() {
@@ -379,7 +558,11 @@ class HatsPanel extends HTMLElement {
       .badge.offen  { background: #e8eaef; color: #5c6775; }
       .probe { width: 15px; height: 15px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
       .wert { margin-left: auto; font-size: 11px; color: var(--s-tinte-leise);
-              font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+              font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      /* Ein leeres Feld ist eine Aussage, kein Fehler: Home Assistant setzt
+         es in diesem Modus nicht. Deshalb kursiv und blass, nicht rot. */
+      .wert.leer { font-style: italic; opacity: .6; }
 
       .kachel { height: 128px; border-radius: var(--s-r); box-shadow: var(--s-schatten-klein); }
 
