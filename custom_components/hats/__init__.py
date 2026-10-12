@@ -39,6 +39,12 @@ _LOGGER = logging.getLogger(__name__)
 _WS_REGISTERED_FLAG = f"{DOMAIN}_ws_registered"
 _SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
+# Woran eine von HATS gebaute Datei zu erkennen ist. Dieselbe Zeichenfolge
+# schreibt schreibeTheme() in den Kopf - stimmen beide nicht ueberein, findet
+# die Oberflaeche ihre eigenen Dateien nicht mehr. Ein Test vergleicht sie.
+HATS_MARKE = "# Erzeugt mit HATS "
+KOPF_BYTES = 512
+
 
 def _ist_sicherer_name(name: str) -> bool:
     """Ein Theme-Name darf keinen Pfad enthalten."""
@@ -49,15 +55,47 @@ def _ist_sicherer_name(name: str) -> bool:
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_list_themes(hass: HomeAssistant, connection, msg) -> None:
-    """Die Dateien in config/themes auflisten."""
+    """Die Dateien in config/themes auflisten, mit Herkunft.
+
+    Ob eine Datei von HATS stammt, steht in ihrer ersten Zeile - schreibeTheme
+    setzt dort "# Erzeugt mit HATS <version> am <datum>". Geprueft wird nur der
+    Dateianfang: Eine Theme kann einige hundert Zeilen haben, und fuer die
+    Antwort brauchen wir nur den Kopf.
+
+    Fremde Dateien werden MITGELIEFERT, nicht weggelassen - die Oberflaeche
+    zeigt sie ausgegraut mit Grund. Wer seine Datei in der Liste nicht findet,
+    sucht sonst den Fehler bei sich.
+    """
     themes_dir = Path(hass.config.path(THEMES_SUBDIR))
 
-    def _lies() -> list[str]:
+    def _lies() -> list[dict]:
         if not themes_dir.is_dir():
             return []
-        return sorted(p.name for p in themes_dir.glob("*.yaml") if p.is_file())
+        aus = []
+        for p in sorted(themes_dir.glob("*.yaml")):
+            if not p.is_file():
+                continue
+            try:
+                kopf = p.open("r", encoding="utf-8").read(KOPF_BYTES)
+            except OSError:
+                continue
+            marke = next(
+                (z for z in kopf.splitlines() if z.startswith(HATS_MARKE)), None
+            )
+            aus.append({
+                "name": p.name,
+                "hats": marke is not None,
+                "kopf": marke[2:] if marke else None,
+                "bytes": p.stat().st_size,
+            })
+        return aus
 
-    connection.send_result(msg["id"], {"files": await hass.async_add_executor_job(_lies)})
+    dateien = await hass.async_add_executor_job(_lies)
+    connection.send_result(msg["id"], {
+        "dateien": dateien,
+        # Die alte Form bleibt, damit nichts bricht, was sie schon liest.
+        "files": [d["name"] for d in dateien],
+    })
 
 
 @websocket_api.websocket_command(
@@ -140,9 +178,18 @@ async def ws_save_theme(hass: HomeAssistant, connection, msg) -> None:
 
 
 def _registriere_websocket(hass: HomeAssistant) -> None:
-    """Die Befehle nur einmal anmelden, auch bei mehreren Eintraegen."""
-    if hass.data.get(_WS_REGISTERED_FLAG):
-        return
+    """Die Befehle anmelden - bei jedem Setup neu.
+
+    Frueher stand hier eine Sperre, die beim zweiten Mal heraussprang. Gedacht
+    war sie gegen doppelte Anmeldungen bei mehreren Eintraegen; sie hatte aber
+    eine Folge, die beim Entwickeln teuer ist: Ein Reload der Integration liess
+    die ALTE Funktion registriert. Wer einen Websocket-Befehl aendert, bekam
+    nach dem Reload weiter die alte Antwort - ohne Fehlermeldung, weil nichts
+    kaputt war. Am 12.10.2026 eine halbe Stunde damit verloren.
+
+    Mehrfaches Anmelden ist unschaedlich: async_register_command schreibt in
+    ein Dict und ueberschreibt den Eintrag einfach.
+    """
     hass.data[_WS_REGISTERED_FLAG] = True
     websocket_api.async_register_command(hass, ws_list_themes)
     websocket_api.async_register_command(hass, ws_load_theme_file)

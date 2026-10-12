@@ -768,6 +768,18 @@ const felderGesamt = STUFEN.reduce((n, st) => n + felderZahl(st), 0);
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Womit faengst du an?": "Where do you want to start?",
+    "Eine neue Theme oder eine vorhandene weiterbauen": "A new theme, or carry on with an existing one",
+    "Neue Theme": "New theme",
+    "Leere Grundlage auf HA 2026.10, ohne Altlasten": "Blank base on HA 2026.10, no legacy fields",
+    "Vorhandene oeffnen": "Open an existing one",
+    "Diese Dateien hat HATS gebaut": "These files were built with HATS",
+    "Noch keine - die erste entsteht beim Speichern": "None yet - the first appears when you save",
+    "Mit HATS gebaut": "Built with HATS",
+    "oeffnen": "open",
+    "Mit einem anderen Werkzeug gebaut - der Import dafuer kommt spaeter:": "Built with another tool - importing those comes later:",
+    "Kein HATS-Kopf in der Datei": "No HATS header in the file",
+    "Lade...": "Loading...",
     "Dein Theme im Überblick": "Your theme at a glance",
     "Stufen fertig": "stages done",
     "brauchen noch Arbeit": "still need work",
@@ -829,6 +841,11 @@ const ICON = {
 // genau so gemessen: gleiche Instanz blieb stabil, aber nach einer Navigation
 // war das Modell null, waehrend das Eingabefeld seinen Text noch trug.
 const ZUSTAND = {
+  // Solange true, ist noch nichts gewaehlt: weder Vorlage noch vorhandene
+  // Datei. Vorher eine Grundlage zu laden waere bequem und falsch - wer
+  // danach eine Datei oeffnet, haette die Vorlage schon drunterliegen.
+  start: true,
+  dateien: null,     // null = noch nicht geholt, [] = geholt und leer
   modell: null,
   name: "",
   geaendert: new Set(),
@@ -853,9 +870,10 @@ class HatsPanel extends HTMLElement {
     if (!this._gezeichnet) {
       this._gezeichnet = true;
       this.zeichne();
-      // Nur beim ersten Mal laden - ein Seitenwechsel darf die Arbeit nicht
-      // wegwerfen.
-      if (!ZUSTAND.modell) this.ladeGrundlage();
+      // Nur beim ersten Mal - ein Seitenwechsel darf die Arbeit nicht
+      // wegwerfen. Geladen wird jetzt nichts von allein: erst fragen, womit
+      // angefangen wird.
+      if (ZUSTAND.start && ZUSTAND.dateien === null) this.ladeListe();
     }
   }
 
@@ -875,6 +893,101 @@ class HatsPanel extends HTMLElement {
       this._grundlage = JSON.parse(JSON.stringify(ZUSTAND.modell));
       ZUSTAND.ladefehler = String(e.message || e.code || e);
     }
+    this.zeichne();
+  }
+
+  // Das Startbild: zwei Wege, und darunter die vorhandenen Dateien.
+  startbild(T) {
+    const d = ZUSTAND.dateien;
+    if (d === null) return `<div class="liste"><p class="leer">${T("Lade...")}</p></div>`;
+
+    const meine = d.filter((x) => x.hats && x.name !== "ha_blanko.yaml");
+    const fremde = d.filter((x) => !x.hats && x.name !== "ha_blanko.yaml");
+    const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
+
+    return `
+      <div class="startwege">
+        <button class="weg neu">
+          <span class="wegtitel">${T("Neue Theme")}</span>
+          <span class="wegtext">${T("Leere Grundlage auf HA 2026.10, ohne Altlasten")}</span>
+        </button>
+        <div class="weg ${meine.length ? "" : "aus"}">
+          <span class="wegtitel">${T("Vorhandene oeffnen")}</span>
+          <span class="wegtext">${meine.length
+            ? T("Diese Dateien hat HATS gebaut")
+            : T("Noch keine - die erste entsteht beim Speichern")}</span>
+        </div>
+      </div>
+
+      ${meine.length ? `<div class="liste schmal">
+        ${meine.map((x) => `
+          <div class="zeile datei" data-datei="${x.name}">
+            <span class="punkt"></span>
+            <div class="zeilentext">
+              <b>${x.name.replace(/\.yaml$/, "")}</b>
+              <small>${x.kopf || T("Mit HATS gebaut")} &middot; ${kb(x.bytes)}</small>
+            </div>
+            <span class="stempel">${T("oeffnen")}</span>
+          </div>`).join("")}
+      </div>` : ""}
+
+      ${fremde.length ? `<div class="liste schmal fremd">
+        <p class="leer">${T("Mit einem anderen Werkzeug gebaut - der Import dafuer kommt spaeter:")}</p>
+        ${fremde.map((x) => `
+          <div class="zeile datei gesperrt" title="${T("Kein HATS-Kopf in der Datei")}">
+            <span class="punkt"></span>
+            <div class="zeilentext"><b>${x.name.replace(/\.yaml$/, "")}</b><small>${kb(x.bytes)}</small></div>
+          </div>`).join("")}
+      </div>` : ""}
+    `;
+  }
+
+  // Die Liste der vorhandenen Themes. Der Server sagt je Datei, ob sie von
+  // HATS stammt - erkannt am Kopf, den schreibeTheme hineinschreibt.
+  async ladeListe() {
+    try {
+      const r = await this._hass.connection.sendMessagePromise({ type: "hats/list_themes" });
+      ZUSTAND.dateien = r.dateien || [];
+    } catch (e) {
+      // Ohne Liste bleibt der Weg ueber die Vorlage offen - das wird gesagt,
+      // nicht verschwiegen.
+      ZUSTAND.dateien = [];
+      ZUSTAND.ladefehler = String(e.message || e.code || e);
+    }
+    this.zeichne();
+  }
+
+  // Eine vorhandene Theme oeffnen. Nur solche, die HATS selbst gebaut hat:
+  // Eine fremde Datei kann Felder und Stilziele tragen, die dieses Werkzeug
+  // nicht kennt, und beim naechsten Speichern waeren sie weg. Der Import
+  // fremder Dateien kommt spaeter und braucht einen Bericht, was passiert.
+  async oeffneDatei(name) {
+    try {
+      const r = await this._hass.connection.sendMessagePromise({
+        type: "hats/load_theme_file", filename: name });
+      const m = leseTheme(r.content || "");
+      if (m.fehler) throw new Error(m.fehler);
+      ZUSTAND.modell = m;
+      ZUSTAND.name = m.name || name.replace(/\.yaml$/, "");
+      ZUSTAND.meta.Grundlage = name.replace(/\.yaml$/, "");
+      // Die Grundlage zum Vergleichen ist hier die Datei selbst - "geaendert"
+      // heisst ab jetzt: anders als beim Oeffnen.
+      this._grundlage = JSON.parse(JSON.stringify(m));
+      ZUSTAND.geaendert.clear();
+      ZUSTAND.start = false;
+      ZUSTAND.meldung = { text: `Geoeffnet: ${name}`, art: "gut" };
+    } catch (e) {
+      ZUSTAND.meldung = { text: "Nicht geoeffnet: " + (e.message || e.code || e), art: "fehler" };
+    }
+    this.zeichne();
+  }
+
+  async neuBeginnen() {
+    await this.ladeGrundlage();
+    ZUSTAND.name = "";
+    ZUSTAND.meta.Grundlage = "ha_blanko";
+    ZUSTAND.geaendert.clear();
+    ZUSTAND.start = false;
     this.zeichne();
   }
 
@@ -903,28 +1016,31 @@ class HatsPanel extends HTMLElement {
           <section class="inhalt">
             <header class="kopf">
               <div>
-                <h1>${T("Guten Tag")}</h1>
-                <p>${T("Dein Theme im Überblick")}</p>
+                <h1>${ZUSTAND.start ? T("Womit faengst du an?") : T("Guten Tag")}</h1>
+                <p>${ZUSTAND.start ? T("Eine neue Theme oder eine vorhandene weiterbauen") : T("Dein Theme im Überblick")}</p>
               </div>
+              ${ZUSTAND.start ? "" : `
               <div class="sichern">
                 <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
                        placeholder="${T("Name der Theme")}" spellcheck="false">
                 <span class="zaehlerbox"><b class="zaehler">${ZUSTAND.geaendert.size}</b> ${T("Aenderungen")}</span>
                 <button class="speichern">${T("Speichern")}</button>
-              </div>
+              </div>`}
             </header>
 
+            ${ZUSTAND.start ? "" : `
             <div class="kennzahlen">
               <div class="kennzahl"><b>${fertig}/${STUFEN.length}</b><span>${T("Stufen fertig")}</span></div>
               <div class="kennzahl"><b>${felderGesamt}</b><span>${T("Felder")}</span></div>
               <div class="kennzahl"><b>${T("gerade eben")}</b><span>${T("zuletzt geändert")}</span></div>
-            </div>
+            </div>`}
 
             <p class="meldung ${ZUSTAND.meldung ? ZUSTAND.meldung.art : ""}">${ZUSTAND.ladefehler ? T("Grundlage nicht geladen: ") + ZUSTAND.ladefehler : (ZUSTAND.meldung ? ZUSTAND.meldung.text : "")}</p>
 
+            ${ZUSTAND.start ? this.startbild(T) : `
             <div class="liste">
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
-            </div>
+            </div>`}
           </section>
         </div>
       </div>
@@ -950,6 +1066,12 @@ class HatsPanel extends HTMLElement {
     if (nf) nf.addEventListener("input", () => { ZUSTAND.name = nf.value.trim(); });
     const sp = this.shadowRoot.querySelector(".speichern");
     if (sp) sp.addEventListener("click", () => this.speichern());
+
+    const neuKnopf = this.shadowRoot.querySelector(".weg.neu");
+    if (neuKnopf) neuKnopf.addEventListener("click", () => this.neuBeginnen());
+    this.shadowRoot.querySelectorAll(".zeile.datei:not(.gesperrt)").forEach((z) =>
+      z.addEventListener("click", () => this.oeffneDatei(z.dataset.datei))
+    );
 
     this.shadowRoot.querySelectorAll(".punkte").forEach((b) =>
       b.addEventListener("click", (e) => { e.stopPropagation(); this.oeffne(Number(b.dataset.stufe)); })
@@ -1050,19 +1172,20 @@ class HatsPanel extends HTMLElement {
   //
   // Ein Farbfeld hat ZWEI Werte, hell und dunkel. Das ist der Grund, weshalb
   // die Kachel nur zeigt und nicht einstellt: in eine Kachel passt einer.
+  // Hell und Dunkel kommen aus dem MODELL, nicht aus der laufenden Theme.
+  // Bis zum 12.10.2026 stand hier hass.themes.themes[...] - also das, was
+  // Home Assistant gerade anwendet. Das ist etwas voellig anderes als das,
+  // was gerade gebaut wird: Wer eine Theme oeffnet, waehrend eine andere
+  // aktiv ist, bekam fremde Werte angezeigt und haette sie fuer seine
+  // gehalten.
   werteJeModus(f) {
-    const hass = this._hass;
-    if (!f.v || !hass || !hass.themes) return null;
-    const theme = hass.themes.themes[hass.themes.theme];
-    if (!theme) return null;
+    if (!f.v || !ZUSTAND.modell) return null;
+    const m = ZUSTAND.modell;
     const name = f.v.replace(/^--/, "");
-    const flach = { ...theme };
-    delete flach.modes;
-    const m = theme.modes || {};
-    const hell = (m.light && m.light[name]) !== undefined ? m.light[name] : flach[name];
-    const dunkel = (m.dark && m.dark[name]) !== undefined ? m.dark[name] : flach[name];
-    const wo = flach[name] !== undefined ? "flach"
-             : (m.light && m.light[name]) !== undefined ? "je Modus" : null;
+    const hell = m.light[name] !== undefined ? m.light[name] : m.flach[name];
+    const dunkel = m.dark[name] !== undefined ? m.dark[name] : m.flach[name];
+    const wo = m.flach[name] !== undefined ? "flach"
+             : m.light[name] !== undefined || m.dark[name] !== undefined ? "je Modus" : null;
     return { hell, dunkel, wo };
   }
 
@@ -1077,6 +1200,22 @@ class HatsPanel extends HTMLElement {
     this._feld = { st, g, idx };
 
     const f = g.felder[idx];
+
+    // Der Modus gehoert zum FELD, nicht zum Dialog. Bis zum 12.10.2026 stand
+    // die Zuweisung weiter unten, NACH dem Zeichnen, und sie war
+    // bedingungslos: Der Umschalter setzte "dark", loeste ein Neuzeichnen aus
+    // - und das machte die Wahl sofort wieder zunichte. Ueber die Oberflaeche
+    // liess sich damit kein einziger Dunkel-Wert setzen, weil aendere() den
+    // Modus aus genau dieser Eigenschaft liest.
+    // Nicht "schluessel" nennen - so heisst schon der Parameter dieser
+    // Methode, und eine zweite Deklaration im selben Gueltigkeitsbereich ist
+    // ein SyntaxError. Die Datei laedt dann gar nicht mehr.
+    const feldId = f.v || f.t;
+    if (this._feldModusFuer !== feldId) {
+      this._feldModus = f.ebene === "getrennt" ? "light" : "beide";
+      this._feldModusFuer = feldId;
+    }
+
     const w = this.wert(f);
     const je = this.werteJeModus(f);
     const probe = (v) => v && /^#|^rgba?\(|^hsla?\(/.test(String(v))
@@ -1100,32 +1239,33 @@ class HatsPanel extends HTMLElement {
         <p class="zweck">${T(ZWECK[g.name] || "")}</p>
         ${f.v ? `<div class="variable">${f.v}</div>` : ""}
         ${(() => {
-          // "Jetzt in Kraft" nur zeigen, wenn es etwas sagt. Bei einem flachen
-          // Feld steht derselbe Wert schon zweimal darunter; steht das Feld
-          // dagegen gar nicht im Theme, ist es die EINZIGE Zeile mit einem
-          // Wert - Hell und Dunkel melden dann "nicht gesetzt".
-          const doppelt = je && (String(je.hell) === w.text || String(je.dunkel) === w.text);
-          const kraft = doppelt ? "" : `
-            <div class="modus">
-              <span class="mlabel">${T("Jetzt in Kraft")}</span>
-              <div class="mwert">${probe(w.farbe)}<code class="${w.leer ? "leer" : ""}">${w.text}</code></div>
-            </div>`;
+          // "Jetzt in Kraft" ist am 12.10.2026 entfallen. Die Zeile zeigte,
+          // was Home Assistant GERADE anwendet - eine andere Theme also,
+          // sobald man an einer arbeitet, die nicht aktiv ist. Sie stand
+          // ueber Hell und Dunkel und sah damit aus wie der gueltige Wert.
           const modi = je ? `
-            <div class="modus">
+            <div class="modus" data-modus="hell">
               <span class="mlabel">${T("Hell")}</span>
               <div class="mwert">${probe(je.hell)}<code class="${je.hell === undefined ? "leer" : ""}">${je.hell === undefined ? T("nicht gesetzt") : je.hell}</code></div>
             </div>
-            <div class="modus">
+            <div class="modus" data-modus="dunkel">
               <span class="mlabel">${T("Dunkel")}</span>
               <div class="mwert">${probe(je.dunkel)}<code class="${je.dunkel === undefined ? "leer" : ""}">${je.dunkel === undefined ? T("nicht gesetzt") : je.dunkel}</code></div>
             </div>` : "";
-          return `<div class="modusliste">${kraft}${modi}</div>`;
+          return `<div class="modusliste">${modi}</div>`;
         })()}
         ${this.streifen(f, T)}
         ${f.art === "bericht" ? "" : `
         <div class="einstellen">
           <span class="mlabel">${T("Einstellen")}</span>
-          ${fuerFeld(f, w.farbe || w.text)}
+          ${fuerFeld(f, (() => {
+            // Der Regler startet bei dem Wert, den dieses Feld IM MODELL hat,
+            // und zwar fuer den Modus, der oben gewaehlt ist. Alles andere
+            // waere ein Startwert aus einer fremden Theme.
+            if (!je) return w.farbe || (w.leer ? "" : w.text);
+            const v = this._feldModus === "dark" ? je.dunkel : je.hell;
+            return v === undefined ? "" : v;
+          })())}
         </div>`}
         ${f.rolle ? `<div class="rampe" data-rampe>${this.rampeHtml(f, w.farbe)}</div>
         <p class="herkunft">${T("Diese eine Farbe setzt elf Palettenstufen — HA nimmt die kraeftige Flaeche aus 40, die Ueberfahr-Stufe aus 30, die leise aus 95.")}</p>` : ""}
@@ -1137,7 +1277,6 @@ class HatsPanel extends HTMLElement {
     if (v) v.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx - 1].v || g.felder[idx - 1].t));
     if (z) z.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx + 1].v || g.felder[idx + 1].t));
 
-    this._feldModus = f.ebene === "getrennt" ? "light" : "beide";
     binde(d, (id, wert) => {
       // Der Modus-Umschalter liefert ein Objekt, kein Wert.
       if (wert && typeof wert === "object" && wert.modus) { this._feldModus = wert.modus; this.oeffneFeld(st, f.v || f.t); return; }
@@ -1146,8 +1285,21 @@ class HatsPanel extends HTMLElement {
         if (r) r.innerHTML = this.rampeHtml(f, wert);
       }
       const aus = d.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
-      if (aus && wert === null) aus.textContent = T("nicht gesetzt");
+      if (aus && wert === null) {
+        if (aus.tagName === "INPUT") aus.value = ""; else aus.textContent = T("nicht gesetzt");
+      }
       this.aendere(f, wert);
+      // Hell und Dunkel gleich nachziehen. Stehen sie auf dem alten Wert,
+      // waehrend unten der neue steht, ist das genau die Verwirrung, wegen der
+      // "Jetzt in Kraft" entfallen ist - nur eine Zeile tiefer.
+      const neu = this.werteJeModus(f);
+      if (neu) for (const [schl, v] of [["hell", neu.hell], ["dunkel", neu.dunkel]]) {
+        const zeile = d.querySelector(`.modus[data-modus="${schl}"] .mwert`);
+        if (!zeile) continue;
+        const istFarbe = v && /^#|^rgba?\(|^hsla?\(/.test(String(v));
+        zeile.innerHTML = `${istFarbe ? `<span class="probe gross" style="background:${v}"></span>` : ""}`
+          + `<code class="${v === undefined ? "leer" : ""}">${v === undefined ? T("nicht gesetzt") : v}</code>`;
+      }
       this.zeichneZaehler();
     });
 
@@ -1219,7 +1371,9 @@ class HatsPanel extends HTMLElement {
     const beide = f.ebene !== "getrennt";
     return infostreifen({
       id: f.v || f.t,
-      modus: beide ? "beide" : "light",
+      // Nicht fest "light": sonst springt die Markierung beim Umschalten
+      // zurueck, und man sieht nicht, in welchen Modus man gerade schreibt.
+      modus: beide ? "beide" : (this._feldModus === "dark" ? "dark" : "light"),
       // Ein Feld, das flach steht, gilt in beiden Modi - die Wahl waere eine
       // Luege. Deshalb hier nur ein Knopf, und der ist gesetzt.
       modi: beide ? [{ wert: "beide", name: T("Beide Modi") }]
@@ -1401,10 +1555,12 @@ class HatsPanel extends HTMLElement {
                farbe: istFarbe ? ausModell : null };
     }
     if (f.w !== undefined) return { text: f.w, farbe: null };
-    const v = getComputedStyle(document.documentElement).getPropertyValue(f.v).trim();
-    if (!v) return { text: "nicht gesetzt", farbe: null, leer: true };
-    const istFarbe = /^#|^rgba?\(|^hsla?\(|^color\(/.test(v);
-    return { text: v.length > 28 ? v.slice(0, 27) + "…" : v, farbe: istFarbe ? v : null };
+    // Frueher stand hier ein Rueckfall auf getComputedStyle der Seite. Der
+    // zeigte den Wert der GERADE ANGEWENDETEN Theme - also HAs Vorgabe oder
+    // eine fremde Theme - und sah aus wie der eigene. Am 12.10.2026 gemeldet:
+    // "die theme hat gruen und die einstellung zeigt orange an". Ein Feld, das
+    // nicht im Modell steht, ist nicht gesetzt, und das wird auch so gesagt.
+    return { text: "nicht gesetzt", farbe: null, leer: true };
   }
 
   feldZeile(f, T) {
@@ -1561,6 +1717,14 @@ class HatsPanel extends HTMLElement {
       .hinweis span { color: var(--s-tinte-leise); font-size: 13px; }
 
       .sichern { display: flex; align-items: center; gap: 10px; }
+      /* Jedes Eingabefeld bekommt seine Schriftfarbe ausdruecklich. Ohne das
+         erbt es aus Home Assistant - und in einem dunklen Theme ist das Weiss.
+         Am 12.10.2026 stand der Hexwert #5468e0 weiss auf durchsichtigem Grund
+         im Farbwaehler: der Wert war da, zu sehen war nichts. Dieselbe Falle
+         wie bei .modal-box in HATG. */
+      input, textarea, select, button { color: var(--s-tinte); }
+      input::placeholder, textarea::placeholder { color: var(--s-tinte-leise); }
+
       .namensfeld { border: 0; background: rgba(255,255,255,.75); font: inherit; font-size: 14px;
                     padding: 9px 14px; border-radius: 999px; min-width: 190px;
                     box-shadow: inset 0 0 0 1px rgba(27,36,48,.08); }
@@ -1592,6 +1756,36 @@ class HatsPanel extends HTMLElement {
                padding: 14px 16px; border-radius: var(--s-r); cursor: pointer;
                transition: background .18s ease, box-shadow .18s ease; }
       .zeile:hover { background: #fff; box-shadow: var(--s-schatten-klein); }
+
+      /* ---- Startbild ---- */
+      .startwege { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+      .weg { display: flex; flex-direction: column; gap: 6px; text-align: left;
+             padding: 18px 20px; border: 0; border-radius: var(--s-r-gross);
+             background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
+             color: var(--s-tinte); font: inherit; cursor: pointer;
+             transition: background .18s ease, box-shadow .18s ease, transform .18s ease; }
+      .weg:hover { background: #fff; box-shadow: var(--s-schatten); transform: translateY(-1px); }
+      /* Der rechte Weg ist kein Knopf, sondern die Ueberschrift der Liste
+         darunter - er darf sich nicht anfuehlen wie einer. */
+      .weg:not(button) { cursor: default; }
+      .weg:not(button):hover { background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante); transform: none; }
+      .weg.aus { opacity: .55; }
+      .wegtitel { font-size: 16px; font-weight: 600; }
+      .wegtext { font-size: 13px; color: var(--s-tinte-leise); }
+      .liste.schmal { margin-top: 10px; }
+      .liste.fremd { background: rgba(255,255,255,.34); }
+      .zeilentext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .zeilentext b { font-size: 15px; font-weight: 600; }
+      .zeilentext small { font-size: 12px; color: var(--s-tinte-leise);
+                          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .zeile.datei .stempel { margin-left: auto; font-size: 12px; padding: 4px 12px;
+                              border-radius: 999px; background: rgba(27,36,48,.06);
+                              color: var(--s-tinte-leise); }
+      /* Gesperrt heisst sichtbar, aber nicht anklickbar. Wegzulassen waere
+         schlimmer: wer seine Datei nicht findet, sucht den Fehler bei sich. */
+      .zeile.gesperrt { cursor: not-allowed; opacity: .5; }
+      .zeile.gesperrt:hover { background: none; box-shadow: none; }
+      @media (max-width: 620px) { .startwege { grid-template-columns: 1fr; } }
       .spur { position: relative; width: 14px; flex: none; align-self: stretch; display: flex;
               align-items: center; justify-content: center; }
       .punkt { width: 9px; height: 9px; border-radius: 50%; background: #fff;
@@ -1746,6 +1940,21 @@ class HatsPanel extends HTMLElement {
                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
       .be input[type="text"] { flex: 1; border: 0; background: rgba(27,36,48,.05); font: inherit;
                                font-size: 13px; padding: 7px 11px; border-radius: 999px; }
+      /* Der Hexwert im Farbwaehler: eintippbar, sieht aber nicht aus wie ein
+         zweites Textfeld - er steht in der Spalte, in der vorher der reine
+         Text stand, und bekommt seinen Rahmen erst beim Anfassen. */
+      .speichern { color: #fff; }
+      .be-hex { color: var(--s-tinte); font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+                font-size: 12px !important; background: transparent !important;
+                padding: 6px 8px !important; width: 100%; min-width: 0;
+                box-shadow: inset 0 0 0 1px transparent;
+                transition: background .15s ease, box-shadow .15s ease; }
+      .be-hex:hover { background: rgba(27,36,48,.05) !important; }
+      .be-hex:focus { outline: none; background: #fff !important;
+                      box-shadow: inset 0 0 0 1px rgba(27,36,48,.22); }
+      /* Waehrend etwas Halbes dasteht, wird nichts gemeldet - der Rahmen sagt
+         warum, statt dass die Eingabe stumm ignoriert wird. */
+      .be-hex.falsch { box-shadow: inset 0 0 0 1px #d9534f; }
       .be-segmente { gap: 3px; padding: 4px; background: rgba(27,36,48,.06);
                      box-shadow: none; border: 0; border-radius: 999px; }
       .be-segmente button { flex: 1; border: 0; cursor: pointer; font: inherit; font-size: 12.5px;

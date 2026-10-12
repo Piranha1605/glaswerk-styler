@@ -40,8 +40,10 @@ pruefe("Die Farbbahn zeigt den Verlauf, der Waehler den Wert", () => {
 pruefe("Ein nicht gesetzter Wert wird als solcher gezeigt, nicht erfunden", () => {
   const h = farbe({ id: "f", wert: "" });
   assert.match(h, /nicht gesetzt/);
-  // Gegenprobe: ein gesetzter Wert steht da auch wirklich
-  assert.match(farbe({ id: "f", wert: "#abcdef" }), />#abcdef</);
+  // Gegenprobe: ein gesetzter Wert steht da auch wirklich.
+  // Seit dem 12.10.2026 steht er in einem Eingabefeld, nicht mehr als Text
+  // zwischen Tags - deshalb value="…" statt >…<.
+  assert.match(farbe({ id: "f", wert: "#abcdef" }), /value="#abcdef"/);
 });
 
 pruefe("Segmente markieren genau die gewaehlte Option", () => {
@@ -188,4 +190,28 @@ pruefe("Jede Einheit aus STUFEN ueberlebt den Rundlauf", () => {
     const roh = /value="([^"]*)"/.exec(html)[1];
     assert.strictEqual(roh + e, "42" + e, `Einheit ${e} bricht den Rundlauf`);
   }
+});
+
+pruefe("Der Hexwert ist eintippbar, nicht nur lesbar", () => {
+  // Bis zum 12.10.2026 stand dort ein <code>. Die einzige Art, einen Ton zu
+  // wechseln, war ein Klick auf das Farbquadrat - also der Waehler des
+  // Betriebssystems. Gefragt wurde: "und wie kann ich die farbe anpassen?"
+  const h = farbe({ id: "x", wert: "#8fd92a" });
+  assert.match(h, /<input type="text"[^>]*class="be-hex"/, "kein Eingabefeld fuer den Hexwert");
+  assert.match(h, /data-be-hex="x"/, "ohne data-be-hex findet binde() es nicht");
+  assert.match(h, /value="#8fd92a"/, "der Wert steht nicht im Feld");
+  assert.doesNotMatch(h, /<code data-be-aus/, "der Wert steht wieder nur als Text da");
+});
+
+pruefe("Das Farbquadrat bleibt daneben", () => {
+  // Eintippen ERSETZT den Waehler nicht - wer eine Farbe sucht statt sie zu
+  // kennen, braucht ihn weiter.
+  const h = farbe({ id: "x", wert: "#8fd92a" });
+  assert.match(h, /<input type="color" data-be-farbe="x"/);
+});
+
+pruefe("Ein leerer Wert erfindet keinen", () => {
+  const h = farbe({ id: "x", wert: "" });
+  assert.match(h, /value=""/, "statt leer steht dort etwas");
+  assert.match(h, /placeholder="nicht gesetzt"/);
 });

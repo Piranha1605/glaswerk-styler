@@ -298,6 +298,52 @@ und das Bild vergisst, hält das Feld für kaputt.
 Das Feld steht nicht in `ha_blanko`, weil HA es nicht vorbelegt; aufgenommen ist
 es trotzdem, weil es der einzige Weg zu einem Verlauf hinter dem Dashboard ist.
 
+### Drei Fallen beim Einspielen, alle am 12.10.2026 bezahlt
+
+**`node --check` fängt nicht alles.** Eine doppelte Deklaration im selben
+Gültigkeitsbereich — ein `const` mit dem Namen eines Parameters — kam damit
+durch. Erst der Browser warf
+
+    Uncaught SyntaxError: Identifier 'schluessel' has already been declared
+
+und das Panel war eine leere blaue Fläche. Dieselbe Quelle über stdin geprüft
+fällt sofort auf:
+
+```bash
+node --input-type=module --check < custom_components/hats/www/hats-panel.js
+```
+
+`tests/hats-syntax.test.js` fährt das über alle Dateien, mit Gegenprobe — und
+mit einer zweiten Prüfung, die festhält, dass `node --check` es wirklich nicht
+findet. Wird node irgendwann strenger, fällt die um, und der Umweg kann weg.
+
+**Python lädt Home Assistant nur beim Start.** Ein Reload des
+Konfigurationseintrags ruft `async_unload_entry` und `async_setup_entry` auf
+demselben, schon importierten Modul auf. Geänderter Python-Code kommt damit
+nicht an. Dazu kam eine selbstgebaute Falle: `_registriere_websocket` hatte
+eine Sperre, die beim zweiten Mal heraussprang — ein Reload liess die **alte**
+Funktion registriert, und ein geänderter Websocket-Befehl antwortete weiter
+wie vorher, ohne Fehlermeldung. Die Sperre ist weg; mehrfaches Anmelden ist
+unschädlich, weil `async_register_command` nur in ein Dict schreibt.
+
+Und: **`config_entries/reload` gibt es als Websocket-Befehl nicht** („Unknown
+command"). Der Weg ist der Dienst `homeassistant.reload_config_entry`. Für
+Python-Änderungen hilft ohnehin nur `homeassistant.restart`.
+
+**Der Terminal im Studio Code Server verfremdet `;` zu `\;`.** Eine Schleife
+zerlegt es damit, und die Shell hängt in ihrer Fortsetzungszeile fest — aus der
+kommt man nicht mit Ctrl+C heraus, weil der Browser das abfängt, sondern nur,
+indem man ihr das fehlende `done` gibt. Also: **keine Semikolons, keine
+Schleifen, nur `&&`.**
+
+### Das Panel setzt seine Schriftfarbe selbst
+
+`input`, `textarea`, `select` und `button` erben ihre Farbe sonst aus Home
+Assistant, und in einem dunklen Theme ist das Weiss. Am 12.10.2026 stand der
+Hexwert `#5468e0` weiss auf durchsichtigem Grund im Farbwähler: Der Wert war da,
+zu sehen war nichts. Dieselbe Falle wie `.modal-box` in HATG. Der Speichern-Knopf
+ist die Ausnahme — er ist dunkel und braucht weiter weisse Schrift.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter

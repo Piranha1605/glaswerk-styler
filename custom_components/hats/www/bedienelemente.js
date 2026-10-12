@@ -75,7 +75,13 @@ export function farbe({ id, wert, bahn = [], alpha = true }) {
              min="2" max="98" step="1" value="${Math.round(hsl.l * 100)}"
              style="--bahn:${verlauf}">
       <input type="color" data-be-farbe="${esc(id)}" value="${esc(hex)}">
-      <code data-be-aus="${esc(id)}">${esc(wert || "nicht gesetzt")}</code>
+      <!-- Eintippbar, nicht nur lesbar. Vorher stand hier ein <code>, und die
+           einzige Art, einen Ton zu wechseln, war ein Klick auf das Quadrat -
+           also der Farbwaehler des Betriebssystems. Wer eine Farbe aus einem
+           Entwurf uebernehmen will, hat sie als Hexwert und nicht als Mausweg. -->
+      <input type="text" class="be-hex" data-be-aus="${esc(id)}" data-be-hex="${esc(id)}"
+             value="${esc(wert || "")}" placeholder="nicht gesetzt"
+             spellcheck="false" autocapitalize="off" autocomplete="off">
       ${zuruecksetzen(id)}
       ${alphaTeil}
     </div>`;
@@ -138,7 +144,44 @@ export function fuerFeld(f, wert) {
 
 // Ereignisse nachtraeglich binden. `aendern(id, wert)` bekommt immer einen
 // String oder null - null heisst "zuruecksetzen", also Feld leeren.
+// Ein Ausgabeziel kann ein <code> oder ein <input> sein.
+function setzeAus(el, v) {
+  if (el.tagName === "INPUT") {
+    if (document.activeElement !== el) el.value = v;
+  } else {
+    el.textContent = v;
+  }
+}
+
+// Was als Farbe durchgeht. Drei, vier, sechs oder acht Stellen - dieselbe
+// Spanne, die auch hexTeilen kennt.
+const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
 export function binde(wurzel, aendern) {
+  // Der Hexwert laesst sich eintippen. Geprueft wird bei jedem Zeichen, aber
+  // gemeldet nur, was gueltig ist - sonst stuende nach dem ersten Tastendruck
+  // "#" im Theme.
+  wurzel.querySelectorAll("[data-be-hex]").forEach((el) => {
+    const id = el.dataset.beHex;
+    const farbEl = wurzel.querySelector(`[data-be-farbe="${CSS.escape(id)}"]`);
+    const alphaEl = wurzel.querySelector(`[data-be-alpha="${CSS.escape(id)}"]`);
+    const pruefe = () => {
+      const roh = el.value.trim();
+      const mitRaute = roh && !roh.startsWith("#") ? "#" + roh : roh;
+      el.classList.toggle("falsch", Boolean(mitRaute) && !HEX_RE.test(mitRaute));
+      if (!HEX_RE.test(mitRaute)) return;
+      const { hex, alpha } = hexTeilen(mitRaute);
+      if (farbEl) { farbEl.value = hex; }
+      if (alphaEl) { alphaEl.value = alpha; }
+      // Ueber das Farbfeld melden, damit Bahn, Helligkeitsregler und Rampe
+      // denselben Weg nehmen wie bei jeder anderen Aenderung.
+      if (farbEl) farbEl.dispatchEvent(new Event("input"));
+      else aendern(id, mitRaute);
+    };
+    el.addEventListener("input", pruefe);
+    el.addEventListener("change", pruefe);
+  });
+
   // Farbe und Alpha gehoeren zusammen: jede Bewegung meldet den fertigen Wert,
   // nicht die Haelfte davon.
   wurzel.querySelectorAll("[data-be-farbe]").forEach((el) => {
@@ -163,7 +206,10 @@ export function binde(wurzel, aendern) {
                    `linear-gradient(90deg, ${hslZuHex(neu.h, neu.s, 0.02)}, ${hslZuHex(neu.h, neu.s, 0.5)}, ${hslZuHex(neu.h, neu.s, 0.98)})`); }
       const v = hexFuegen(el.value, schieber ? schieber.value : 100);
       const aus = wurzel.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
-      if (aus) aus.textContent = v;
+      // Das Ausgabefeld ist bei Farben ein Eingabefeld - dort gehoert der Wert
+      // in .value, nicht in .textContent. Waehrend getippt wird, bleibt es in
+      // Ruhe, sonst springt der Cursor.
+      if (aus) setzeAus(aus, v);
       const aAus = wurzel.querySelector(`[data-be-alpha-aus="${CSS.escape(id)}"]`);
       if (aAus && schieber) aAus.textContent = schieber.value + "%";
       if (schieber) schieber.style.setProperty("--bahn",
@@ -187,7 +233,7 @@ export function binde(wurzel, aendern) {
     }
     const melde = () => {
       const aus = wurzel.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
-      if (aus) aus.textContent = el.value + (el.type === "range" ? (el.dataset.einheit || "") : "");
+      if (aus) setzeAus(aus, el.value + (el.type === "range" ? (el.dataset.einheit || "") : ""));
       aendern(id, el.value);
     };
     el.addEventListener("input", melde);
