@@ -829,6 +829,15 @@ class HatsPanel extends HTMLElement {
     const name = (f.v || "").replace(/^--/, "");
     if (!name) return;
 
+    // Ein Mass braucht seine Einheit. Der Regler liefert eine nackte Zahl, und
+    // "border-radius: 18" ist ungueltiges CSS - der Browser verwirft die Regel
+    // stillschweigend, die Rundung kaeme nie an. Am 12.10.2026 in der ersten
+    // fertigen Theme gefunden.
+    if (f.art === "mass" && wert !== null && wert !== "" && /^-?[\d.]+$/.test(String(wert)))
+      wert = String(wert) + (f.einheit ?? "px");
+    // Eine Zahl ohne Einheit ist dagegen richtig so: Skala und Zeilenhoehe
+    // sind Verhaeltnisse, kein Mass.
+
     if (f.rolle && wert) {
       const r = rampe(wert, f.rolle);
       if (r) for (const [k, v] of Object.entries(r)) schreibe(k, v);

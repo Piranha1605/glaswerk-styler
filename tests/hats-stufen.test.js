@@ -79,3 +79,18 @@ pruefe("Rollenfarben stehen flach, Textfarben je Modus", () => {
 
 assert.ok(n >= 6, `nur ${n} Pruefungen gelaufen - der Test prueft nichts`);
 console.log(`\n${n} Pruefungen`);
+
+pruefe("Jedes Mass-Feld hat eine Einheit oder nimmt die Vorgabe px", () => {
+  // "border-radius: 18" ist ungueltiges CSS und wird stillschweigend
+  // verworfen. Der Regler liefert eine nackte Zahl, also muss die Einheit
+  // beim Schreiben dazukommen.
+  assert.match(quelle, /f\.art === "mass".*\n.*wert = String\(wert\) \+ \(f\.einheit \?\? "px"\)/,
+    "die Einheit wird beim Schreiben nicht angehaengt");
+  // Gegenprobe: zahl-Felder duerfen KEINE Einheit bekommen - Skala und
+  // Zeilenhoehe sind Verhaeltnisse.
+  const zahlFelder = stufen.flatMap(felder).filter((f) => /art: "zahl"/.test(f.rest));
+  assert.ok(zahlFelder.length >= 2, "keine zahl-Felder zum Gegenpruefen");
+  for (const f of zahlFelder) assert.ok(!/einheit:/.test(f.rest), `${f.t} hat eine Einheit, ist aber ein Verhaeltnis`);
+});
+
+console.log(`\n${n} Pruefungen (mit Einheiten)`);
