@@ -76,3 +76,37 @@ pruefe("HTML in Werten wird maskiert", () => {
 
 assert.ok(n >= 10, `nur ${n} Pruefungen gelaufen - der Test prueft nichts`);
 console.log(`\n${n} Pruefungen`);
+
+// --- Nachtrag: der Alpha-Regler ---
+import { hexTeilen, hexFuegen } from "../custom_components/hats/www/bedienelemente.js";
+
+pruefe("Alpha wird als achtstelliges Hex geschrieben, nicht als rgba()", () => {
+  // Home Assistant leitet --rgb-<name> nur aus Werten ab, die mit # beginnen.
+  // Aus rgba() entsteht kein Tripel - und Mushroom baut daraus seine
+  // Zustandsfarben.
+  assert.strictEqual(hexFuegen("#ff9800", 50), "#ff980080");
+  assert.strictEqual(hexFuegen("#ff9800", 0), "#ff980000");
+  assert.ok(hexFuegen("#ff9800", 50).startsWith("#"), "kein # am Anfang - kein Tripel");
+});
+
+pruefe("Bei voller Deckung bleibt es sechsstellig", () => {
+  // Sonst stuende ueberall ein ff, das niemand gebeten hat.
+  assert.strictEqual(hexFuegen("#ff9800", 100), "#ff9800");
+});
+
+pruefe("hexTeilen und hexFuegen sind zueinander umkehrbar", () => {
+  for (const v of ["#ff9800", "#ff980080", "#00000000", "#ffffffff"]) {
+    const { hex, alpha } = hexTeilen(v);
+    assert.strictEqual(hexFuegen(hex, alpha), v.length === 9 && alpha === 100 ? hex : v.toLowerCase());
+  }
+});
+
+pruefe("Eine Rolle bekommt keinen Alpha-Regler", () => {
+  // Die elf Stufen entstehen deckend; eine durchsichtige Grundfarbe wirkte
+  // nur auf den Grundton und nicht auf die Rampe - das waere irrefuehrend.
+  assert.ok(!fuerFeld({ art: "farbe", v: "--x", rolle: "primary" }, "#ff9800").includes("data-be-alpha"));
+  // Gegenprobe: ohne Rolle ist er da
+  assert.ok(fuerFeld({ art: "farbe", v: "--y" }, "#ff9800").includes("data-be-alpha"));
+});
+
+console.log(`\n${n} Pruefungen (mit Alpha)`);

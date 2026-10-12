@@ -71,3 +71,21 @@ export function rampe(basisHex, rolle) {
   });
   return aus;
 }
+
+// Die klassischen Begleiter der Primaerfarbe.
+//
+// --primary-color braucht hier nichts: Home Assistant deklariert es selbst als
+// var(--ha-color-primary-40), es folgt der Rampe also von allein (am
+// 12.10.2026 im Stylesheet nachgelesen). Diese drei dagegen sind FESTE Werte
+// und blieben sonst auf HAs Blau stehen, waehrend alles andere umschwenkt -
+// dieselbe Falle wie bei HATG, wo gefuellte Knoepfe trotz grauem Akzent blau
+// blieben.
+export function begleiter(basisHex) {
+  const r = rampe(basisHex, "primary");
+  if (!r) return null;
+  return {
+    "dark-primary-color": r["ha-color-primary-30"],
+    "light-primary-color": r["ha-color-primary-80"],
+    "state-icon-color": r["ha-color-primary-40"],
+  };
+}

@@ -92,3 +92,24 @@ pruefe("hexZuHsl und hslZuHex sind zueinander umkehrbar", () => {
 
 assert.ok(n >= 9, `nur ${n} Pruefungen gelaufen - der Test prueft nichts`);
 console.log(`\n${n} Pruefungen`);
+
+// --- Nachtrag: die klassischen Begleiter ---
+import { begleiter } from "../custom_components/hats/www/palette.js";
+
+pruefe("Die Begleiter folgen der Rampe, nicht dem alten Blau", () => {
+  const b = begleiter("#cc3388");
+  const r = rampe("#cc3388", "primary");
+  assert.strictEqual(b["dark-primary-color"], r["ha-color-primary-30"]);
+  assert.strictEqual(b["light-primary-color"], r["ha-color-primary-80"]);
+  assert.strictEqual(b["state-icon-color"], r["ha-color-primary-40"]);
+  // Gegenprobe: nichts davon ist noch HAs Blau
+  for (const v of Object.values(b)) assert.notStrictEqual(v, "#0288d1");
+});
+
+pruefe("primary-color ist NICHT dabei - HA leitet es selbst ab", () => {
+  // --primary-color: var(--ha-color-primary-40). Wer es trotzdem schreibt,
+  // friert es ein und nimmt HA die Ableitung weg.
+  assert.strictEqual(begleiter("#cc3388")["primary-color"], undefined);
+});
+
+console.log(`\n${n} Pruefungen (mit Begleitern)`);

@@ -55,11 +55,21 @@ const STUFEN = [
       // Die Palette ist modusunabhaengig und gehoert deshalb flach - nur dort
       // leitet HA in BEIDEN Modi die RGB-Tripel ab, aus denen Mushroom lebt.
       { name: "Farben", felder: [
-        { t: "Akzent",  art: "farbe", rolle: "primary", v: "--ha-color-primary-60", ebene: "beide" },
+        // Die Primaerfarbe IST die Rampe. --primary-color deklariert Home
+        // Assistant selbst als var(--ha-color-primary-40) und folgt damit von
+        // allein (am 12.10.2026 im Stylesheet nachgelesen). Drei klassische
+        // Begleiter sind dagegen feste Werte und bleiben sonst auf HAs Blau
+        // stehen, waehrend alles andere umschwenkt - sie werden mitgeschrieben.
+        { t: "Primaerfarbe", art: "farbe", rolle: "primary", v: "--ha-color-primary-60", ebene: "beide",
+          begleiter: true },
         { t: "Neutral", art: "farbe", rolle: "neutral", v: "--ha-color-neutral-60", ebene: "beide" },
         { t: "Erfolg",  art: "farbe", rolle: "green",   v: "--ha-color-green-60",   ebene: "beide" },
         { t: "Warnung", art: "farbe", rolle: "orange",  v: "--ha-color-orange-60",  ebene: "beide" },
         { t: "Fehler",  art: "farbe", rolle: "red",     v: "--ha-color-red-60",     ebene: "beide" },
+        // Der Akzent ist KEINE Rampe, sondern ein eigener Wert - von Haus aus
+        // orange, nicht blau. Fremde Karten lesen ihn: die Horizon-Karten
+        // ziehen --karten-akzent daraus.
+        { t: "Akzent", art: "farbe", v: "--accent-color", ebene: "beide" },
       ] },
 
       // Schrift wechselt mit dem Modus - im Hellen dunkel, im Dunkeln hell.
@@ -331,7 +341,7 @@ const TEXTE = {
     "Pruefen, Bericht, Theme schreiben": "Check, report, write the theme",
     "Start": "Start", "Farben": "Colours", "Textfarben": "Text colours", "Schrift": "Font",
     "Name der Theme": "Theme name", "Grundlage": "Base", "Modus": "Mode",
-    "Akzent": "Accent", "Neutral": "Neutral", "Erfolg": "Success",
+    "Akzent": "Accent", "Primaerfarbe": "Primary colour", "Neutral": "Neutral", "Erfolg": "Success",
     "Warnung": "Warning", "Fehler": "Error",
     "Primaer": "Primary", "Sekundaer": "Secondary", "Deaktiviert": "Disabled", "Link": "Link",
     "Schriftart": "Font family", "Code": "Code", "Groesse": "Size", "Zeilenhoehe": "Line height",
@@ -887,8 +897,14 @@ class HatsPanel extends HTMLElement {
       .einstellen .mlabel { display: block; margin-bottom: 8px; font-size: 13px; }
 
       /* Bedienelemente - Formen nach der Vorlage, Farben die unseren. */
+      /* Weiss wie die Felder darueber - ein Bedienelement ist eine Karte, kein
+         eingelassener Trog. Nur die Segmente behalten ihren grauen Grund,
+         sonst waere die gewaehlte Option auf Weiss nicht zu sehen. */
       .be { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
-            border-radius: 999px; background: rgba(27,36,48,.06); }
+            border-radius: 999px; background: var(--s-karte);
+            box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
+      .be-segmente { background: rgba(27,36,48,.06); box-shadow: none; border: 0; }
+      .be input[type="text"] { background: rgba(27,36,48,.05); }
       .be input[type="range"] { flex: 1; accent-color: var(--s-tinte); }
       .be output { min-width: 52px; text-align: right; font-size: 12px;
                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -898,7 +914,7 @@ class HatsPanel extends HTMLElement {
                                 background: none; border-radius: 9px; cursor: pointer; }
       .be code { font-size: 12px; min-width: 76px;
                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .be input[type="text"] { flex: 1; border: 0; background: #fff; font: inherit; font-size: 13px;
+      .be input[type="text"] { flex: 1; border: 0; font: inherit; font-size: 13px;
                                padding: 7px 11px; border-radius: 999px; }
       .be-segmente { gap: 3px; padding: 4px; }
       .be-segmente button { flex: 1; border: 0; cursor: pointer; font: inherit; font-size: 12.5px;
@@ -910,6 +926,26 @@ class HatsPanel extends HTMLElement {
                     cursor: pointer; background: rgba(27,36,48,.08); color: var(--s-tinte-leise);
                     font-size: 14px; line-height: 1; }
       .be-zurueck:hover { background: rgba(27,36,48,.16); color: var(--s-tinte); }
+
+      .be-farbe.mit-alpha { flex-wrap: wrap; }
+      /* Die Alpha-Zeile endet dort, wo die Zeile darueber endet - also vor dem
+         Zurueck-Knopf. 28px Knopf + 10px Abstand = 38px. Damit steht die
+         Prozentzahl auf derselben Kante wie der Hex-Wert darueber, und beide
+         Spalten sind gleich breit. */
+      .be-alpha { flex: 1 1 100%; display: flex; align-items: center; gap: 10px;
+                  padding: 4px 0 0; margin-right: 38px; }
+      .be-alpha input[type="range"] { flex: 1; accent-color: var(--s-tinte); }
+      .be-alpha output { min-width: 76px; font-size: 12px; color: var(--s-tinte-leise);
+                         font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      /* Das Karo macht Durchsichtigkeit sichtbar - ohne es sieht
+         halbdurchsichtiges Weiss aus wie deckendes Weiss. */
+      .be-karo { position: relative; width: 44px; height: 14px; border-radius: 999px;
+                 overflow: hidden; flex: none;
+                 background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+                                   linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%);
+                 background-size: 8px 8px; background-position: 0 0, 4px 4px;
+                 box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+      .be-karo b { position: absolute; inset: 0; }
 
       /* Die elf Stufen, die aus einer Farbe entstehen. */
       .rampe { display: flex; gap: 3px; margin-top: 14px; }
