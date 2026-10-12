@@ -110,3 +110,82 @@ pruefe("Eine Rolle bekommt keinen Alpha-Regler", () => {
 });
 
 console.log(`\n${n} Pruefungen (mit Alpha)`);
+
+// ---------------------------------------------------------------------------
+// Der Vertrag zwischen Bedienelement und Schreiber.
+//
+// Hier sass der Fehler vom 12.10.2026: Das Bedienelement streift die Einheit
+// ab (ein <input type="range"> kann nur Zahlen), und der Schreiber muss sie
+// wieder anhaengen. Tut er es nicht, steht "border-radius: 18" im Theme - der
+// Browser verwirft die Regel stumm, und in der Oberflaeche sieht alles richtig
+// aus, weil die Kachel die 18 ja anzeigt.
+//
+// Beide Seiten einzeln zu pruefen reicht nicht. Geprueft wird der Rundlauf,
+// und die Regel des Schreibers wird aus seinem Quelltext gelesen statt
+// nachgebaut - sonst prueft der Test seine eigene Kopie.
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath as fuP } from "node:url";
+import path2 from "node:path";
+
+const quelle = readFileSync(
+  path2.join(path2.dirname(fuP(import.meta.url)), "../custom_components/hats/www/hats-panel.js"), "utf8");
+
+pruefe("Der Schreiber haengt die Einheit an, und zwar genau einmal", () => {
+  const regel = /if \(f\.art === "mass"[\s\S]{0,260}?f\.einheit \?\? "px"\)/.exec(quelle);
+  assert.ok(regel, "Die Einheiten-Regel steht nicht mehr in aendere()");
+  // Nur Zahlen bekommen eine Einheit - ein Wert, der schon eine traegt, nicht.
+  assert.match(regel[0], /\/\^-\?\[\\d\.\]\+\$\//, "Die Regel prueft nicht mehr auf eine nackte Zahl");
+});
+
+pruefe("Rundlauf Wert -> Regler -> Schreiber -> Wert", () => {
+  // Die Regel des Schreibers, wie sie oben im Quelltext steht.
+  const schreibe = (wert, einheit) =>
+    (wert !== null && wert !== "" && /^-?[\d.]+$/.test(String(wert)))
+      ? String(wert) + (einheit ?? "px") : wert;
+
+  for (const [wert, einheit] of [["18px", undefined], ["14px", "px"], ["1.5rem", "rem"],
+                                 ["250ms", "ms"], ["90vh", "vh"]]) {
+    const html = fuerFeld({ t: "T", art: "mass", v: "--x", min: 0, max: 999, einheit }, wert);
+    const m = /value="([^"]*)"/.exec(html);
+    assert.ok(m, `kein Wert im Regler fuer ${wert}`);
+    assert.doesNotMatch(m[1], /[a-z%]/i, `der Regler gibt ${m[1]} mit Einheit heraus`);
+    assert.strictEqual(schreibe(m[1], einheit), wert,
+      `Rundlauf gebrochen: ${wert} -> ${m[1]} -> ${schreibe(m[1], einheit)}`);
+  }
+
+  // Die eine Ausnahme, vom Test selbst gefunden: Eine nackte Null kommt als
+  // "0px" zurueck. ha_blanko traegt ha-border-radius-square: "0", und wer den
+  // Regler anfasst, macht "0px" daraus. In CSS ist das dasselbe - die Null
+  // braucht als einzige Groesse keine Einheit, vertraegt sie aber. Deshalb
+  // steht hier kein Rundlauf, sondern die Gleichwertigkeit.
+  const nullHtml = fuerFeld({ t: "T", art: "mass", v: "--x", min: 0, max: 48 }, "0");
+  assert.strictEqual(schreibe(/value="([^"]*)"/.exec(nullHtml)[1], undefined), "0px");
+});
+
+pruefe("Gegenprobe: ohne das Anhaengen bricht der Rundlauf", () => {
+  // Ohne sie koennte die Pruefung oben gruen sein, weil beide Seiten denselben
+  // Fehler machen.
+  const html = fuerFeld({ t: "T", art: "mass", v: "--x", min: 0, max: 48 }, "18px");
+  const roh = /value="([^"]*)"/.exec(html)[1];
+  assert.notStrictEqual(roh, "18px", "der Regler streift die Einheit gar nicht ab");
+  assert.strictEqual(roh, "18");
+});
+
+pruefe("Jede Einheit aus STUFEN ueberlebt den Rundlauf", () => {
+  // Nicht nur px: in den Stufen steht auch ms. Waere dort eine Einheit, die
+  // der Regler anders abstreift als der Schreiber anhaengt, liefe es
+  // auseinander, ohne dass es jemand saehe.
+  const blk = quelle.slice(quelle.indexOf("const STUFEN = ["), quelle.indexOf("const STAND_TEXT"));
+  const einheiten = new Set();
+  for (const m of blk.matchAll(/art: "mass"[^}]*/g)) {
+    const e = /einheit: "([^"]*)"/.exec(m[0]);
+    einheiten.add(e ? e[1] : "px");
+  }
+  assert.ok(einheiten.size >= 2, `nur ${einheiten.size} Einheit(en) gefunden - prueft zu wenig`);
+  for (const e of einheiten) {
+    const html = fuerFeld({ t: "T", art: "mass", v: "--x", min: 0, max: 999, einheit: e }, "42" + e);
+    const roh = /value="([^"]*)"/.exec(html)[1];
+    assert.strictEqual(roh + e, "42" + e, `Einheit ${e} bricht den Rundlauf`);
+  }
+});
