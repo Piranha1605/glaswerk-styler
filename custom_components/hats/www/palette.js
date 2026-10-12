@@ -87,11 +87,18 @@ export function begleiter(basisHex) {
   // var(--ha-color-primary-40) und folgt der Rampe von allein. Wer es schreibt,
   // friert es ein.
   //
-  // rgb-primary-color dagegen MUSS mitgeschrieben werden. Home Assistant
-  // leitet --rgb-<name> nur ab, wenn das Theme nicht schon ein eigenes rgb-
-  // Feld mitbringt ("Theme has it's own rgb value", apply_themes_on_element.ts)
-  // - und ha_blanko bringt eines mit. Ohne diese Zeile bliebe das Tripel auf
-  // HAs Blau stehen, waehrend alle Farben umschwenken.
+  // rgb-primary-color dagegen MUSS mitgeschrieben werden, und zwar aus einem
+  // anderen Grund als lange hier stand. Home Assistant rechnet --rgb-<name>
+  // nur aus Feldern, die IM THEME stehen und mit # anfangen
+  // (apply_themes_on_element.ts). primary-color steht nach obigem gerade nicht
+  // im Theme - also leitet HA auch kein Tripel dafuer ab, und es bliebe auf
+  // der Vorgabe aus HAs eigenem Stylesheet stehen: "0, 154, 199", HAs altes
+  // Cyan. Am 12.10.2026 dort nachgelesen.
+  //
+  // Ein fester Wert ist hier richtig, weil die Palette in beiden Modi dieselbe
+  // ist (CLAUDE.md). Fuer Felder, deren Quelle je Modus wechselt, waere er
+  // falsch - genau daran ist ha_blanko gescheitert, siehe
+  // tests/hats-blanko.test.js.
   return {
     "dark-primary-color": r["ha-color-primary-30"],
     "darker-primary-color": r["ha-color-primary-20"],

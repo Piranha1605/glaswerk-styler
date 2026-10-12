@@ -180,6 +180,57 @@ Ausführlich in `docs/uebergabe-neues-projekt.md` von HATG, hier das Nötigste:
   Sections-Dashboard nicht auf, und dann ist jede DOM-Messung wertlos — erkennbar
   daran, dass alles leer aussieht, auch das Funktionierende.
 
+### Kein eigenes `rgb-`Feld — es blockiert HAs Ableitung
+
+Gemeldet am 12.10.2026: „im Dunkelmodus ist die Menüleiste dunkel". Gemessen war
+es schlimmer, als es klingt — HAs Seitenleiste färbt ihre Symbole mit
+
+    --sidebar-icon-color: rgba(var(--rgb-primary-text-color), .6)
+
+und `--rgb-primary-text-color` stand im Dunkeln auf `33, 33, 33`, obwohl
+`--primary-text-color` auf `#e1e1e1` stand. Dunkelgrau auf `#1c1c1c`: Kontrast
+**1.19 : 1**, also unsichtbar.
+
+**Der Grund.** Home Assistant rechnet die Tripel selbst, je Modus
+(`apply_themes_on_element.ts`) — und überspringt einen Namen, sobald die Theme
+ihn mitbringt:
+
+```js
+if (!value.startsWith("#")) continue;
+if (combinedTheme[`rgb-${key}`] !== undefined) continue;   // ← hier
+styles[`--rgb-${key}`] = hex2rgb(value).join(",");
+```
+
+`ha_blanko` brachte **zehn** solche Felder flach mit, mit festen Hell-Werten.
+Drei davon haben eine modusabhängige Quelle (`primary-text-color`,
+`secondary-text-color`, `card-background-color`) — die nagelten den Hell-Wert in
+den Dunkelmodus. Sechs waren nur redundant, gingen aber schief, sobald der
+Nutzer die Farbe änderte: `rgb-accent-color` stand auf `255, 152, 0`, während
+`--accent-color` längst `#e8833a` war.
+
+**Die Regel: gar kein `rgb-`Feld schreiben.** HA definiert alle zehn Namen
+ohnehin selbst auf `html` (am 12.10.2026 aus `document.styleSheets` gelesen), es
+geht also nichts verloren. Woran man eine Ableitung erkennt: HAs eigene Werte
+tragen Leerzeichen (`33, 33, 33`), abgeleitete nicht (`232,131,58`).
+
+**Die eine Ausnahme ist `rgb-primary-color`**, und zwar aus dem umgekehrten
+Grund: `primary-color` steht als `var(--ha-color-primary-40)` in HAs Stylesheet
+und **nicht** im Theme, also leitet HA auch kein Tripel dafür ab — es bliebe auf
+HAs altem Cyan `0, 154, 199`. Ein fester Wert ist dort richtig, weil die Palette
+in beiden Modi dieselbe ist. Für alles mit modusabhängiger Quelle wäre er falsch.
+
+Dabei gefunden, beide stumm: `var(--ha-color-90)` statt `--ha-color-neutral-90`
+und `var(--ha-color-neutral-00)` — die Palette hat keine Stufe `00`, sie fängt
+bei `05` an. Beide lösen zu nichts auf, ohne Meldung.
+`tests/hats-blanko.test.js` hält alles fest, mit Gegenproben.
+
+**Den Modus umzuschalten geht von außen nicht.** Weder `frontend.set_theme`
+(setzt nur die globale Zuordnung) noch `frontend/set_user_data` noch
+`localStorage` noch die `prefers-color-scheme`-Emulation des Browsers greifen
+durch: HA schreibt seinen aufgelösten Stand bei jedem Laden zurück. Der einzige
+Weg wäre das `settheme`-Ereignis, und das ist verboten. Wer im Dunkeln messen
+will, lässt den Nutzer einmal im Profil umschalten.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
