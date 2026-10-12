@@ -322,9 +322,6 @@ const TEXTE = {
     "Jetzt in Kraft": "In effect now", "Hell": "Light", "Dunkel": "Dark",
     "Beide Modi": "Both modes",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
-    "Steht flach im Theme, gilt in beiden Modi": "Set at the flat level — applies in both modes",
-    "Steht je Modus getrennt im Theme": "Set separately per mode",
-    "Steht nicht im Theme — Home Assistant leitet es ab": "Not in the theme — Home Assistant derives it",
     "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
     "Einstellen": "Adjust",
     "Diese eine Farbe setzt elf Palettenstufen — HA nimmt die kraeftige Flaeche aus 40, die Ueberfahr-Stufe aus 30, die leise aus 95.": "This one colour sets eleven palette steps — HA takes the loud fill from 40, hover from 30, the quiet one from 95.",
@@ -570,24 +567,28 @@ class HatsPanel extends HTMLElement {
       <div class="feldseite">
         <p class="zweck">${T(ZWECK[g.name] || "")}</p>
         ${f.v ? `<div class="variable">${f.v}</div>` : ""}
-        <div class="modusliste">
-          <div class="modus">
-            <span class="mlabel">${T("Jetzt in Kraft")}</span>
-            <div class="mwert">${probe(w.farbe)}<code class="${w.leer ? "leer" : ""}">${w.text}</code></div>
-          </div>
-          ${je ? `
-          <div class="modus">
-            <span class="mlabel">${T("Hell")}</span>
-            <div class="mwert">${probe(je.hell)}<code class="${je.hell === undefined ? "leer" : ""}">${je.hell === undefined ? T("nicht gesetzt") : je.hell}</code></div>
-          </div>
-          <div class="modus">
-            <span class="mlabel">${T("Dunkel")}</span>
-            <div class="mwert">${probe(je.dunkel)}<code class="${je.dunkel === undefined ? "leer" : ""}">${je.dunkel === undefined ? T("nicht gesetzt") : je.dunkel}</code></div>
-          </div>
-          <p class="herkunft">${je.wo === "flach" ? T("Steht flach im Theme, gilt in beiden Modi")
-              : je.wo === "je Modus" ? T("Steht je Modus getrennt im Theme")
-              : T("Steht nicht im Theme — Home Assistant leitet es ab")}</p>` : ""}
-        </div>
+        ${(() => {
+          // "Jetzt in Kraft" nur zeigen, wenn es etwas sagt. Bei einem flachen
+          // Feld steht derselbe Wert schon zweimal darunter; steht das Feld
+          // dagegen gar nicht im Theme, ist es die EINZIGE Zeile mit einem
+          // Wert - Hell und Dunkel melden dann "nicht gesetzt".
+          const doppelt = je && (String(je.hell) === w.text || String(je.dunkel) === w.text);
+          const kraft = doppelt ? "" : `
+            <div class="modus">
+              <span class="mlabel">${T("Jetzt in Kraft")}</span>
+              <div class="mwert">${probe(w.farbe)}<code class="${w.leer ? "leer" : ""}">${w.text}</code></div>
+            </div>`;
+          const modi = je ? `
+            <div class="modus">
+              <span class="mlabel">${T("Hell")}</span>
+              <div class="mwert">${probe(je.hell)}<code class="${je.hell === undefined ? "leer" : ""}">${je.hell === undefined ? T("nicht gesetzt") : je.hell}</code></div>
+            </div>
+            <div class="modus">
+              <span class="mlabel">${T("Dunkel")}</span>
+              <div class="mwert">${probe(je.dunkel)}<code class="${je.dunkel === undefined ? "leer" : ""}">${je.dunkel === undefined ? T("nicht gesetzt") : je.dunkel}</code></div>
+            </div>` : "";
+          return `<div class="modusliste">${kraft}${modi}</div>`;
+        })()}
         ${this.streifen(f, T)}
         <div class="einstellen">
           <span class="mlabel">${T("Einstellen")}</span>
