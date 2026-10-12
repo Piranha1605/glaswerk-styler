@@ -113,3 +113,22 @@ pruefe("primary-color ist NICHT dabei - HA leitet es selbst ab", () => {
 });
 
 console.log(`\n${n} Pruefungen (mit Begleitern)`);
+
+pruefe("darker-primary-color und rgb-primary-color folgen mit", () => {
+  // Beide blieben sonst auf HAs Blau stehen. Beim Tripel ist es besonders
+  // tueckisch: Home Assistant leitet --rgb-<name> NICHT ab, wenn das Theme
+  // schon ein eigenes rgb-Feld mitbringt - und ha_blanko bringt eines mit.
+  const b = begleiter("#2e9e4f");
+  const r = rampe("#2e9e4f", "primary");
+  assert.strictEqual(b["darker-primary-color"], r["ha-color-primary-20"]);
+  assert.match(b["rgb-primary-color"], /^\d{1,3}, \d{1,3}, \d{1,3}$/);
+  // und das Tripel gehoert zu Stufe 40, denn --primary-color ist var(--ha-color-primary-40)
+  const h = r["ha-color-primary-40"];
+  const soll = [1, 2, 3].map((i) => parseInt(h.slice(1 + (i - 1) * 2, 1 + i * 2), 16)).join(", ");
+  assert.strictEqual(b["rgb-primary-color"], soll);
+  // Gegenprobe: nichts davon ist noch HAs Blau
+  assert.notStrictEqual(b["darker-primary-color"], "#016194");
+  assert.notStrictEqual(b["rgb-primary-color"], "0, 154, 199");
+});
+
+console.log(`\n${n} Pruefungen (vollstaendig)`);

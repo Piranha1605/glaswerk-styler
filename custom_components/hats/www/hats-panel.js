@@ -21,7 +21,8 @@
 // Beschriftung bewusst durchnummeriert: die Namen kommen spaeter.
 
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
-import { rampe, STUFEN as PALETTENSTUFEN } from "./palette.js";
+import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
+import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne } from "./theme.js";
 
 const HATS_VERSION = "0.2.0b1";
 
@@ -320,7 +321,8 @@ const TEXTE = {
     "Gruppen": "groups",
     "Ansicht": "View", "Gemischt": "Mixed", "Liste": "List", "Kacheln": "Tiles",
     "Jetzt in Kraft": "In effect now", "Hell": "Light", "Dunkel": "Dark",
-    "Beide Modi": "Both modes",
+    "Beide Modi": "Both modes", "Aenderungen": "changes", "Speichern": "Save",
+    "Grundlage nicht geladen: ": "Base not loaded: ",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
     "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
     "Einstellen": "Adjust",
@@ -356,6 +358,19 @@ const ICON = {
   mush: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6c3.3 0 5.9 2.3 5.9 4.7 0 .6-.5 1-1.1 1H3.2c-.6 0-1.1-.4-1.1-1C2.1 3.9 4.7 1.6 8 1.6Z"/><path d="M6.5 8.6h3v4.1a1.5 1.5 0 0 1-3 0V8.6Z"/></svg>',
 };
 
+// Der Zustand liegt NEBEN der Instanz, nicht darin. Home Assistant erzeugt das
+// Panel bei jedem Wechsel der Seite neu - mit dem Zustand in der Instanz waere
+// jede Aenderung weg, sobald jemand kurz woanders hinklickt. Am 12.10.2026
+// genau so gemessen: gleiche Instanz blieb stabil, aber nach einer Navigation
+// war das Modell null, waehrend das Eingabefeld seinen Text noch trug.
+const ZUSTAND = {
+  modell: null,
+  name: "",
+  geaendert: new Set(),
+  ladefehler: null,
+  meldung: null,     // { text, art } - ueberlebt das Neuzeichnen
+};
+
 class HatsPanel extends HTMLElement {
   constructor() {
     super();
@@ -364,11 +379,37 @@ class HatsPanel extends HTMLElement {
     this._gezeichnet = false;
     this._ansicht = ansichtLesen();
     this._feld = null;
+
   }
 
   set hass(hass) {
     this._hass = hass;
-    if (!this._gezeichnet) { this._gezeichnet = true; this.zeichne(); }
+    if (!this._gezeichnet) {
+      this._gezeichnet = true;
+      this.zeichne();
+      // Nur beim ersten Mal laden - ein Seitenwechsel darf die Arbeit nicht
+      // wegwerfen.
+      if (!ZUSTAND.modell) this.ladeGrundlage();
+    }
+  }
+
+  // Die Grundlage ist ha_blanko: HA 2026.10 ohne Altlasten. Alles, was der
+  // Nutzer einstellt, wird darauf gelegt - nicht auf eine gewachsene Theme,
+  // in der niemand mehr weiss, was woher kommt.
+  async ladeGrundlage() {
+    try {
+      const r = await this._hass.connection.sendMessagePromise({
+        type: "hats/load_theme_file", filename: "ha_blanko.yaml" });
+      const m = leseTheme(r.content || "");
+      ZUSTAND.modell = m.fehler ? leeresModell("neu") : m;
+      this._grundlage = JSON.parse(JSON.stringify(ZUSTAND.modell));
+    } catch (e) {
+      // Ohne Grundlage wird nicht geraten, sondern leer begonnen - und gesagt.
+      ZUSTAND.modell = leeresModell("neu");
+      this._grundlage = JSON.parse(JSON.stringify(ZUSTAND.modell));
+      ZUSTAND.ladefehler = String(e.message || e.code || e);
+    }
+    this.zeichne();
   }
 
   get spr() {
@@ -399,9 +440,11 @@ class HatsPanel extends HTMLElement {
                 <h1>${T("Guten Tag")}</h1>
                 <p>${T("Dein Theme im Überblick")}</p>
               </div>
-              <div class="hinweis">
-                <b>${offen} ${T("Stufe")}${offen === 1 ? "" : "n"}</b>
-                <span>${T("brauchen noch Arbeit")}</span>
+              <div class="sichern">
+                <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
+                       placeholder="${T("Name der Theme")}" spellcheck="false">
+                <span class="zaehlerbox"><b class="zaehler">${ZUSTAND.geaendert.size}</b> ${T("Aenderungen")}</span>
+                <button class="speichern">${T("Speichern")}</button>
               </div>
             </header>
 
@@ -410,6 +453,8 @@ class HatsPanel extends HTMLElement {
               <div class="kennzahl"><b>${felderGesamt}</b><span>${T("Felder")}</span></div>
               <div class="kennzahl"><b>${T("gerade eben")}</b><span>${T("zuletzt geändert")}</span></div>
             </div>
+
+            <p class="meldung ${ZUSTAND.meldung ? ZUSTAND.meldung.art : ""}">${ZUSTAND.ladefehler ? T("Grundlage nicht geladen: ") + ZUSTAND.ladefehler : (ZUSTAND.meldung ? ZUSTAND.meldung.text : "")}</p>
 
             <div class="liste">
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
@@ -434,6 +479,11 @@ class HatsPanel extends HTMLElement {
         <div class="dialog klein" role="dialog" aria-modal="true"></div>
       </div>
     `;
+
+    const nf = this.shadowRoot.querySelector(".namensfeld");
+    if (nf) nf.addEventListener("input", () => { ZUSTAND.name = nf.value.trim(); });
+    const sp = this.shadowRoot.querySelector(".speichern");
+    if (sp) sp.addEventListener("click", () => this.speichern());
 
     this.shadowRoot.querySelectorAll(".punkte").forEach((b) =>
       b.addEventListener("click", (e) => { e.stopPropagation(); this.oeffne(Number(b.dataset.stufe)); })
@@ -612,15 +662,19 @@ class HatsPanel extends HTMLElement {
     if (v) v.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx - 1].t));
     if (z) z.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx + 1].t));
 
+    this._feldModus = f.ebene === "getrennt" ? "light" : "beide";
     binde(d, (id, wert) => {
-      // Noch wird nichts geschrieben - aber die Vorschau zeigt sofort, was
-      // die Wahl bedeutet. Elf Stufen aus einer Farbe sind schwer zu raten.
+      // Der Modus-Umschalter liefert ein Objekt, kein Wert.
+      if (wert && typeof wert === "object" && wert.modus) { this._feldModus = wert.modus; this.oeffneFeld(st, f.t); return; }
       if (f.rolle) {
         const r = d.querySelector("[data-rampe]");
         if (r) r.innerHTML = this.rampeHtml(f, wert);
       }
       const aus = d.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
       if (aus && wert === null) aus.textContent = T("nicht gesetzt");
+      this.aendere(f, wert);
+      const z = this.shadowRoot.querySelector(".zaehler");
+      if (z) z.textContent = ZUSTAND.geaendert.size;
     });
 
     const o = this.shadowRoot.querySelector(".overlay.zwei");
@@ -677,6 +731,82 @@ class HatsPanel extends HTMLElement {
     });
   }
 
+  // Eine Rollenfarbe setzt ELF Stufen, nicht eine - und bei der Primaerfarbe
+  // dazu die drei klassischen Begleiter, die sonst auf HAs Blau stehen
+  // blieben. Das ist der ganze Grund, warum hier nicht einfach ein Wert in
+  // ein Feld geschrieben wird.
+  aendere(f, wert) {
+    if (!ZUSTAND.modell) return;
+    const ebene = f.ebene === "getrennt"
+      ? (this._feldModus === "dark" ? "dark" : "light")
+      : "beide";
+    const schreibe = (name, v) => {
+      if (v === null || v === "") entferne(ZUSTAND.modell, name);
+      else setze(ZUSTAND.modell, name, v, ebene);
+      ZUSTAND.geaendert.add(name);
+    };
+
+    if (f.meta) {
+      if (f.t === "Name der Theme") ZUSTAND.name = String(wert || "").trim();
+      return;
+    }
+    const name = (f.v || "").replace(/^--/, "");
+    if (!name) return;
+
+    if (f.rolle && wert) {
+      const r = rampe(wert, f.rolle);
+      if (r) for (const [k, v] of Object.entries(r)) schreibe(k, v);
+      if (f.begleiter) {
+        const b = begleiter(wert);
+        if (b) for (const [k, v] of Object.entries(b)) schreibe(k, v);
+      }
+      return;
+    }
+    schreibe(name, wert);
+  }
+
+  async speichern() {
+    const knopf = this.shadowRoot.querySelector(".speichern");
+    // Die Meldung muss das Neuzeichnen ueberleben - sonst bestaetigt nichts,
+    // dass gespeichert wurde.
+    const melde = (t, art) => {
+      ZUSTAND.meldung = { text: t, art: art || "" };
+      const m = this.shadowRoot.querySelector(".meldung");
+      if (m) { m.textContent = t; m.className = "meldung " + (art || ""); }
+    };
+    // Den Namen aus dem Feld lesen, nicht aus dem Gedaechtnis: das Feld ist
+    // das, was der Nutzer sieht.
+    const nf = this.shadowRoot.querySelector(".namensfeld");
+    if (nf) ZUSTAND.name = nf.value.trim();
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(ZUSTAND.name)) {
+      // Dieselbe Regel wie auf dem Server. Waere der Client grosszuegiger,
+      // scheiterte das Speichern dort mit einer Meldung, die niemand erwartet.
+      melde("Der Name darf nur Buchstaben, Ziffern, - und _ enthalten", "fehler");
+      return;
+    }
+    if (knopf) knopf.disabled = true;
+    try {
+      ZUSTAND.modell.name = ZUSTAND.name;
+      ZUSTAND.modell.kopf = [
+        `Erzeugt mit HATS ${HATS_VERSION} am ` + new Date().toLocaleString("de-DE"),
+        "Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)",
+      ];
+      const yaml = schreibeTheme(ZUSTAND.modell);
+      const r = await this._hass.connection.sendMessagePromise({
+        type: "hats/save_theme", name: ZUSTAND.name, yaml, overwrite: true });
+      await this._hass.callService("frontend", "reload_themes");
+      ZUSTAND.geaendert.clear();
+      melde(`Gespeichert: ${r.path}`, "gut");
+      this.zeichne();
+    } catch (e) {
+      // Der Server prueft mit PyYAML, bevor er schreibt. Seine Meldung
+      // woertlich zeigen - umschrieben waere sie nicht mehr nachschlagbar.
+      melde("Nicht gespeichert: " + (e.message || e.code || e), "fehler");
+    } finally {
+      if (knopf) knopf.disabled = false;
+    }
+  }
+
   rampeHtml(f, basis) {
     const r = basis ? rampe(basis, f.rolle) : null;
     if (!r) return "";
@@ -693,12 +823,28 @@ class HatsPanel extends HTMLElement {
     o.classList.remove("da");
     setTimeout(() => { o.hidden = true; }, 180);
     this._feld = null;
+
   }
 
   // Den aktuellen Wert einer Variablen zeigen, nicht einen erfundenen. Was
   // Home Assistant gerade liefert, steht in getComputedStyle - das Theme-Objekt
   // beweist nichts, nur das Berechnete kommt wirklich an.
+  // Erst das Modell, dann das Berechnete. Ohne das sieht man eine Aenderung
+  // nicht, bis die Theme geschrieben UND geladen ist - man drehte blind.
+  modellWert(name) {
+    if (!ZUSTAND.modell) return undefined;
+    const modus = this._hass && this._hass.themes && this._hass.themes.darkMode ? "dark" : "light";
+    return wirksam(ZUSTAND.modell, modus)[name];
+  }
+
   wert(f) {
+    if (f.meta) return { text: f.t === "Name der Theme" ? (ZUSTAND.name || f.w) : f.w, farbe: null };
+    const ausModell = f.v ? this.modellWert(f.v.replace(/^--/, "")) : undefined;
+    if (ausModell !== undefined && ausModell !== "") {
+      const istFarbe = /^#|^rgba?\(|^hsla?\(/.test(ausModell);
+      return { text: ausModell.length > 28 ? ausModell.slice(0, 27) + "…" : ausModell,
+               farbe: istFarbe ? ausModell : null };
+    }
     if (f.w !== undefined) return { text: f.w, farbe: null };
     const v = getComputedStyle(document.documentElement).getPropertyValue(f.v).trim();
     if (!v) return { text: "nicht gesetzt", farbe: null, leer: true };
@@ -858,6 +1004,22 @@ class HatsPanel extends HTMLElement {
       .hinweis { border-left: 3px solid #7bd14a; padding-left: 12px; }
       .hinweis b { display: block; font-size: 15px; }
       .hinweis span { color: var(--s-tinte-leise); font-size: 13px; }
+
+      .sichern { display: flex; align-items: center; gap: 10px; }
+      .namensfeld { border: 0; background: rgba(255,255,255,.75); font: inherit; font-size: 14px;
+                    padding: 9px 14px; border-radius: 999px; min-width: 190px;
+                    box-shadow: inset 0 0 0 1px rgba(27,36,48,.08); }
+      .namensfeld::placeholder { color: var(--s-tinte-leise); }
+      .zaehlerbox { font-size: 12px; color: var(--s-tinte-leise); white-space: nowrap; }
+      .zaehlerbox b { font-size: 14px; color: var(--s-tinte); }
+      .speichern { border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500;
+                   padding: 10px 20px; border-radius: 999px; background: var(--s-tinte);
+                   color: #fff; box-shadow: var(--s-schatten-klein); }
+      .speichern:hover { background: #000; }
+      .speichern[disabled] { opacity: .5; cursor: default; }
+      .meldung { margin: 0 0 12px; min-height: 18px; font-size: 13px; }
+      .meldung.gut { color: #2f6b22; }
+      .meldung.fehler { color: #a31f1f; }
 
       .kennzahlen { display: flex; gap: 14px; margin: 22px 0 18px; flex-wrap: wrap; }
       .kennzahl { flex: 1 1 180px; display: flex; align-items: center; gap: 12px;

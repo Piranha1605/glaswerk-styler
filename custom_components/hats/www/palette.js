@@ -83,9 +83,26 @@ export function rampe(basisHex, rolle) {
 export function begleiter(basisHex) {
   const r = rampe(basisHex, "primary");
   if (!r) return null;
+  // primary-color selbst steht NICHT dabei: Home Assistant deklariert es als
+  // var(--ha-color-primary-40) und folgt der Rampe von allein. Wer es schreibt,
+  // friert es ein.
+  //
+  // rgb-primary-color dagegen MUSS mitgeschrieben werden. Home Assistant
+  // leitet --rgb-<name> nur ab, wenn das Theme nicht schon ein eigenes rgb-
+  // Feld mitbringt ("Theme has it's own rgb value", apply_themes_on_element.ts)
+  // - und ha_blanko bringt eines mit. Ohne diese Zeile bliebe das Tripel auf
+  // HAs Blau stehen, waehrend alle Farben umschwenken.
   return {
     "dark-primary-color": r["ha-color-primary-30"],
+    "darker-primary-color": r["ha-color-primary-20"],
     "light-primary-color": r["ha-color-primary-80"],
     "state-icon-color": r["ha-color-primary-40"],
+    "rgb-primary-color": alsTripel(r["ha-color-primary-40"]),
   };
+}
+
+// "r, g, b" wie Home Assistant es schreibt - mit Leerzeichen nach dem Komma.
+export function alsTripel(hex) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex).trim());
+  return m ? [1, 2, 3].map((i) => parseInt(m[i], 16)).join(", ") : null;
 }
