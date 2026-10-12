@@ -187,6 +187,50 @@ const STUFEN = [
     ] },
 ];
 
+// Wofuer jede Gruppe da ist - eine Zeile, damit man beim Oeffnen nicht raten
+// muss, was ein Feld bewirkt. Steht als Trenner ueber den Karten der Gruppe.
+const ZWECK = {
+  "Start": "Wie die Theme heisst und worauf sie aufsetzt",
+  "Farben": "Die fuenf Rollen. HA rechnet daraus 51 Flaechen und 19 Schriftfarben",
+  "Textfarben": "Schrift auf ruhigem Grund, in vier Abstufungen",
+  "Schrift": "Schriftart und Groessenskala fuer die ganze Oberflaeche",
+
+  "Grundflaechen": "Die drei Ebenen, auf denen alles liegt",
+  "Karten": "Flaeche und Weichzeichnung jeder Karte",
+  "Dialoge": "Fenster, die sich ueber das Dashboard legen",
+  "Leisten": "Seitenleiste und Kopfleiste",
+
+  "Rundung": "Wie weich die Ecken sind, von klein bis Karte",
+  "Rahmen": "Breite und Farbe der Kanten",
+  "Abstaende": "Luft zwischen den Dingen",
+  "Schatten": "Tiefe in drei Stufen, je Modus verschieden",
+
+  "Leise": "Kaum sichtbare Flaeche, etwa hinter einem Eintrag",
+  "Normal": "Die uebliche gefuellte Flaeche",
+  "Laut": "Der kraeftige Knopf, der auffallen soll",
+  "Rueckmeldung": "Was passiert, wenn man drueckt",
+
+  "Form": "Rund, Pille oder Kachel - gilt fuer alle Symbolbehaelter",
+  "Groesse": "Wie gross Symbole und Symbolknoepfe sind",
+  "Zustand": "Farben fuer an, aus und dazwischen",
+  "Toene": "Die klassischen Farbtoene. HAs neue Ebene hat nur fuenf",
+
+  "Bubble Flaechen": "Worauf Bubble Card seine Flaechen zeigt",
+  "Bubble Zustand": "Akzent, Licht und Symbolfarbe bei Bubble",
+  "Mushroom Tripel": "Mushroom rechnet mit RGB-Tripeln, nicht mit Farben",
+  "Mushroom Masse": "Groessen und Abstaende bei Mushroom",
+
+  "Vektorkarte": "Die vierzehn Tokens der Karte in HA 2026.10",
+  "Diagramme": "Die Reihenfolge der Linienfarben",
+  "Code-Editor": "Syntaxfarben im YAML-Editor",
+  "Glas": "Weichzeichnung hinter Karten und Kopfleiste",
+
+  "Pruefen": "Laeuft die Datei durch, und zweimal gleich?",
+  "Bericht": "Was sich gegenueber dem letzten Stand geaendert hat",
+  "Schreiben": "Wohin die fertige Theme geht",
+  "Sicherung": "Der Stand davor, falls etwas schiefgeht",
+};
+
 const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 
 const felderZahl = (st) => st.gruppen.reduce((n, g) => n + g.felder.length, 0);
@@ -345,7 +389,7 @@ class HatsPanel extends HTMLElement {
         <button class="zu" aria-label="${T("Schließen")}">✕</button>
       </header>
       <div class="brett">
-        ${st.gruppen.map((g, i) => this.spalte(st, g, i, T)).join("")}
+        ${st.gruppen.map((g, i) => this.gruppe(st, g, i, T)).join("")}
       </div>`;
     d.querySelector(".zu").addEventListener("click", () => this.schliesse());
     const o = this.shadowRoot.querySelector(".overlay");
@@ -365,33 +409,32 @@ class HatsPanel extends HTMLElement {
     return { text: v.length > 28 ? v.slice(0, 27) + "…" : v, farbe: istFarbe ? v : null };
   }
 
-  spalte(st, g, i, T) {
-    const karten = g.felder.map((f) => {
+  gruppe(st, g, i, T) {
+    const zeilen = g.felder.map((f) => {
       const w = this.wert(f);
       return `
-        <article class="karte">
-          <b>${T(f.t)}</b>
-          <p>${f.v ? f.v : T("Angabe")}</p>
-          <div class="fuss">
-            ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
-            <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
+        <div class="feld">
+          <div class="feldtext">
+            <b>${T(f.t)}</b>
+            <span>${f.v ? f.v : T("Angabe")}</span>
           </div>
-        </article>`;
+          ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
+          <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
+        </div>`;
     }).join("");
-    // Eine Kachel je Spalte - in der Vorlage das Mood-Board. Sie zeigt die
-    // Farben dieser Gruppe, nicht einen Zufallsverlauf.
-    const toene = g.felder.map((f) => this.wert(f).farbe).filter(Boolean);
-    const kachel = toene.length >= 2
-      ? `<div class="kachel" style="background:linear-gradient(135deg, ${toene.slice(0, 4).join(", ")})"></div>`
-      : "";
+    // Die Farben der Gruppe als schmale Reihe neben der Ueberschrift - in der
+    // Vorlage war das die grosse Kachel, in einer Liste reicht ein Streifen.
+    const toene = g.felder.map((f) => this.wert(f).farbe).filter(Boolean).slice(0, 6);
+    const streifen = toene.map((c) => `<span class="tupfer" style="background:${c}"></span>`).join("");
     return `
-      <section class="spalte">
+      <section class="gruppe">
         <header>
-          <div><b>${T(g.name)}</b><span>${g.felder.length} ${T("Felder")}</span></div>
+          <div class="gtitel"><b>${T(g.name)}</b><span>${g.felder.length} ${T("Felder")}</span></div>
+          <div class="streifen">${streifen}</div>
           <button class="punkte klein"><span></span><span></span><span></span></button>
         </header>
-        ${karten}
-        ${kachel}
+        <p class="zweck">${T(ZWECK[g.name] || "")}</p>
+        <div class="feldliste">${zeilen}</div>
       </section>`;
   }
 
@@ -538,33 +581,36 @@ class HatsPanel extends HTMLElement {
             background: rgba(27,36,48,.06); color: var(--s-tinte-leise); }
       .zu:hover { background: rgba(27,36,48,.12); }
 
-      .brett { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-               gap: 16px; padding: 18px 26px 26px; align-items: start; }
-      .spalte { display: flex; flex-direction: column; gap: 10px; }
-      .spalte > header { display: flex; align-items: center; justify-content: space-between;
-                         padding: 2px 4px 6px; }
-      .spalte > header b { display: block; font-size: 14px; }
-      .spalte > header span { color: var(--s-tinte-leise); font-size: 12px; }
+      /* Listenansicht statt Kartenbrett: eine Gruppe untereinander, in
+         derselben Sprache wie die Stufenliste der Hauptseite. */
+      .brett { display: flex; flex-direction: column; gap: 22px; padding: 18px 26px 26px; }
 
-      .karte { background: var(--s-karte); border-radius: var(--s-r); padding: 12px 13px;
-               box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
-      .karte b { display: block; font-size: 13.5px; margin-bottom: 3px; }
-      .karte p { margin: 0 0 10px; color: var(--s-tinte-leise); font-size: 12.5px; line-height: 1.45; }
-      .fuss { display: flex; align-items: center; gap: 8px; }
-      .badge { font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 3px 7px; border-radius: 5px; }
-      .badge.fertig { background: #d8f5d3; color: #2f6b22; }
-      .badge.arbeit { background: #ffe2c9; color: #a2561a; }
-      .badge.pruefen { background: #e7ddfb; color: #5b3aa8; }
-      .badge.offen  { background: #e8eaef; color: #5c6775; }
-      .probe { width: 15px; height: 15px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
-      .wert { margin-left: auto; font-size: 11px; color: var(--s-tinte-leise);
+      .gruppe > header { display: flex; align-items: center; gap: 12px; padding: 0 4px 2px; }
+      .gtitel { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+      .gtitel b { font-size: 15px; }
+      .gtitel span { color: var(--s-tinte-leise); font-size: 12px; white-space: nowrap; }
+      .streifen { display: flex; gap: 4px; margin-left: auto; }
+      .tupfer { width: 14px; height: 14px; border-radius: 4px;
+                box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+
+      .feldliste { border-radius: var(--s-r); background: var(--s-karte); padding: 6px;
+                   box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
+      .feld { display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+              border-radius: var(--s-r-klein); transition: background .15s ease; }
+      .feld:hover { background: rgba(27,36,48,.04); }
+      .feld + .feld { box-shadow: inset 0 1px 0 var(--s-linie); }
+      .feldtext { flex: 1; min-width: 0; }
+      .feldtext b { display: block; font-size: 13.5px; }
+      .feldtext span { font-size: 11.5px; color: var(--s-tinte-leise);
+                       font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .probe { width: 18px; height: 18px; border-radius: 6px; flex: none;
+               box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+      .wert { min-width: 108px; text-align: right; font-size: 12px; color: var(--s-tinte-leise);
               font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      /* Ein leeres Feld ist eine Aussage, kein Fehler: Home Assistant setzt
-         es in diesem Modus nicht. Deshalb kursiv und blass, nicht rot. */
+      /* Ein leeres Feld ist eine Aussage, kein Fehler: Home Assistant setzt es
+         in diesem Modus nicht. Deshalb kursiv und blass, nicht rot. */
       .wert.leer { font-style: italic; opacity: .6; }
-
-      .kachel { height: 128px; border-radius: var(--s-r); box-shadow: var(--s-schatten-klein); }
 
       /* Schmal: die Leiste wird waagerecht und rueckt ueber den Inhalt.
          Sie verschwindet NICHT - eine ausgeblendete Leiste ohne Ersatz macht
