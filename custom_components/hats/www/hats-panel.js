@@ -348,6 +348,14 @@ const TEXTE = {
 };
 const t = (s, spr) => (TEXTE[spr] && TEXTE[spr][s]) || s;
 
+// Zwei kleine Zeichen, selbst gezeichnet. MDI-Pfaddaten aus dem Gedaechtnis
+// waeren zu einem Teil falsch, und ein halb falscher Pfad sieht kaputt aus.
+// Bubble: drei Blasen. Mushroom: Hut und Stiel.
+const ICON = {
+  bubble: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="10.5" cy="5.5" r="4"/><circle cx="4.5" cy="10" r="2.6"/><circle cx="11" cy="12.5" r="1.9"/></svg>',
+  mush: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6c3.3 0 5.9 2.3 5.9 4.7 0 .6-.5 1-1.1 1H3.2c-.6 0-1.1-.4-1.1-1C2.1 3.9 4.7 1.6 8 1.6Z"/><path d="M6.5 8.6h3v4.1a1.5 1.5 0 0 1-3 0V8.6Z"/></svg>',
+};
+
 class HatsPanel extends HTMLElement {
   constructor() {
     super();
@@ -706,6 +714,7 @@ class HatsPanel extends HTMLElement {
           <b>${T(f.t)}</b>
           <span>${f.v ? f.v : T("Angabe")}</span>
         </div>
+        ${this.syncIcons(f)}
         ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
         <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
       </div>`;
@@ -718,10 +727,24 @@ class HatsPanel extends HTMLElement {
         <b>${T(f.t)}</b>
         <p>${f.v ? f.v : T("Angabe")}</p>
         <div class="kfuss">
-          ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
-          <span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>
+          ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>`
+                    : `<span class="wert ${w.leer ? "leer" : ""}">${w.text}</span>`}
+          ${this.syncIcons(f)}
         </div>
       </article>`;
+  }
+
+  // Auf der Kachel zaehlt der Stand, nicht der Wert: die Farbe sieht man an
+  // der Probe, den Hexwert braucht man erst beim Einstellen. Dafuer ist hier
+  // Platz fuer das, was man sonst nirgends sieht - ob Bubble und Mushroom
+  // mitziehen.
+  syncIcons(f) {
+    const stand = this.syncStand(f);
+    if (!stand.length) return "";
+    return `<span class="syncicons">` + stand.map((s) => {
+      const schluessel = s.name === "Mushroom" ? "mush" : "bubble";
+      return `<i class="si ${s.stand}" title="${s.name}: ${s.titel}">${ICON[schluessel]}</i>`;
+    }).join("") + `</span>`;
   }
 
   gruppenkopf(g, T) {
@@ -911,11 +934,23 @@ class HatsPanel extends HTMLElement {
       .karte { background: var(--s-karte); border-radius: var(--s-r); padding: 12px 13px;
                box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
       .karte b { display: block; font-size: 13.5px; margin-bottom: 2px; }
-      .karte p { margin: 0 0 10px; color: var(--s-tinte-leise); font-size: 11.5px;
+      /* Der Variablenname ist Beiwerk, nicht Inhalt - klein und leise. */
+      .karte p { margin: 0 0 10px; color: var(--s-tinte-leise); font-size: 10.5px;
                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .kfuss { display: flex; align-items: center; gap: 8px; }
       .kfuss .wert { min-width: 0; }
+
+      /* Bubble und Mushroom als Zeichen, nicht als Wort - auf einer Kachel
+         ist kein Platz fuer beides, und die Farbe sagt den Stand. */
+      .syncicons { display: flex; gap: 5px; margin-left: auto; }
+      .si { display: block; width: 15px; height: 15px; }
+      .si svg { width: 100%; height: 100%; display: block; }
+      .si.leer   { color: #c2c8d2; }
+      .si.an     { color: #5aab2f; }
+      .si.aus    { color: #e08a1e; }
+      .si.nichts { color: #c2c8d2; opacity: .4; }
+      .si svg * { fill: currentColor; }
 
       /* Kacheln und Zeilen sind Menuepunkte - das muss man ihnen ansehen. */
       .karte[data-feld], .feld[data-feld] { cursor: pointer; }
@@ -942,7 +977,7 @@ class HatsPanel extends HTMLElement {
       .mwert code { font-size: 12px; color: var(--s-tinte-leise);
                     font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
       .mwert code.leer { font-style: italic; opacity: .6; }
-      .probe.gross { width: 22px; height: 22px; border-radius: 7px; }
+      .probe.gross { width: 22px; height: 22px; }
       .herkunft { margin: 2px 12px 8px; font-size: 11.5px; color: var(--s-tinte-leise); }
       .noch { margin: 16px 2px 0; font-size: 12px; color: var(--s-tinte-leise); font-style: italic; }
 
@@ -1066,7 +1101,8 @@ class HatsPanel extends HTMLElement {
       .feldtext b { display: block; font-size: 13.5px; }
       .feldtext span { font-size: 11.5px; color: var(--s-tinte-leise);
                        font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .probe { width: 18px; height: 18px; border-radius: 6px; flex: none;
+      /* Rund, nicht eckig - eine Farbe ist ein Punkt, kein Feld. */
+      .probe { width: 18px; height: 18px; border-radius: 50%; flex: none;
                box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
       .wert { min-width: 108px; text-align: right; font-size: 12px; color: var(--s-tinte-leise);
               font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
