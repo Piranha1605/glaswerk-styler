@@ -231,6 +231,50 @@ durch: HA schreibt seinen aufgelösten Stand bei jedem Laden zurück. Der einzig
 Weg wäre das `settheme`-Ereignis, und das ist verboten. Wer im Dunkeln messen
 will, lässt den Nutzer einmal im Profil umschalten.
 
+### Erst Bubbles eigene Rückfallkette lesen, dann zuordnen
+
+Am 12.10.2026 an `bubble-card.js` 3.2.0 nachgelesen (1 MB, klammernzählend
+gesucht). Zwei Dinge, die die Zuordnungstabelle um sechs Einträge kürzer und um
+einiges richtiger gemacht haben:
+
+**Bubble ist an vielen Stellen schon an HA gebunden.** Die Kette lautet
+
+    var(--bubble-state-climate-auto-color, var(--state-climate-auto-color, …))
+
+Bubble fällt also von sich aus auf HAs Zustandsfarbe zurück. Eine eigene
+Zuordnung dorthin ist nicht nur überflüssig, sie **überschreibt** einen
+richtigen Wert — in diesem Fall HAs `#4caf50` mit einem Fast-Schwarz. Dasselbe
+innerhalb von Bubble selbst: `--bubble-button-accent-color` fällt auf
+`--bubble-accent-color` zurück, das muss man nicht dreimal setzen.
+
+**Ein Akzent ist ein Vordergrund, eine Fläche ist ein Hintergrund.**
+`--ha-color-fill-<rolle>-normal-*` ist bei HA eine dezent getönte Fläche für
+Überfahr-Zustände. Bubble benutzt seine `--bubble-*-accent-color` dagegen als
+Füllfarbe — Slider-Füllung, Rahmen, Dropdown-Pfeil, Sub-Button. Sieben Einträge
+zeigten auf die Fläche; im Dunkeln ergab das
+
+    #090f35 auf einer Karte in #1c1c1c   ->  Kontrast 1.09 : 1
+
+also unsichtbar. Zum Vergleich an derselben Stelle: `fill-primary-loud-resting`
+1.68 : 1, `--accent-color` **6.28 : 1**. Bei einem blauen Primärton reicht auch
+die laute Stufe nicht — Blau hat von allen Farbtönen die geringste
+Wahrnehmungshelligkeit, und eine HSL-Rampe gleicht das nicht aus.
+
+Die Unterscheidung macht der **Name des Ziels**, nicht der Wert:
+`bubble-button-background-color` auf `fill-neutral-quiet-resting` ist genau
+richtig. `tests/hats-zuordnung.test.js` prüft deshalb nur Namen mit „accent",
+mit Gegenprobe.
+
+**Und: der Ausweichwert steht im Bauteil, nicht in der Variablen.**
+`--ha-card-background`, `--ha-dialog-surface-background` und
+`--ha-card-backdrop-filter` setzt HA **nirgends** — `ha-card` liest
+`var(--ha-card-background, var(--card-background-color))`. Ein nacktes
+`var(--ha-card-background)` in der Zuordnung löste deshalb zu nichts auf, und
+Bubble nahm seine eigene Vorgabe statt der Theme. Sechs Einträge waren so tot.
+Die Ausweichwerte gehören aus `customElements.get(tag).elementStyles` gelesen,
+nicht geraten. `--ha-dialog-scrim-color` gibt es übrigens gar nicht; HA liest
+`--mdc-dialog-scrim-color`, darunter `--wa-color-overlay-modal` mit `#00000040`.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
