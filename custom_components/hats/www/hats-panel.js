@@ -20,6 +20,9 @@
 //
 // Beschriftung bewusst durchnummeriert: die Namen kommen spaeter.
 
+import { fuerFeld, binde } from "./bedienelemente.js";
+import { rampe, STUFEN as PALETTENSTUFEN } from "./palette.js";
+
 const HATS_VERSION = "0.2.0b1";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
@@ -33,25 +36,57 @@ const STUFEN = [
   { n: 1, titel: "Grundlagen", kurz: "Name, Grundlage, Akzent, Textfarben, Schrift",
     marke: "#7bd14a", stand: "offen", gruppen: [
       { name: "Start", felder: [
-        { t: "Name der Theme", w: "noch offen" },
-        { t: "Grundlage", w: "ha_blanko" },
-        { t: "Modus", w: "hell und dunkel" } ] },
+        // Der Name ist kein Theme-Feld, sondern der Schluessel der Datei.
+        // Die Regel ist dieselbe wie auf dem Server (ws_save_theme): waere
+        // der Client grosszuegiger, scheiterte das Speichern spaeter mit
+        // einer Meldung, die niemand erwartet.
+        { t: "Name der Theme", art: "text", meta: true, platzhalter: "mein_theme",
+          regel: "^[A-Za-z0-9_-]{1,64}$" },
+        { t: "Grundlage", art: "auswahl", meta: true, optionen: [
+          { wert: "ha_blanko", name: "Leer" }, { wert: "import", name: "Vorhandene" } ] },
+        { t: "Modus", art: "auswahl", meta: true, optionen: [
+          { wert: "beide", name: "Hell + dunkel" }, { wert: "hell", name: "Nur hell" },
+          { wert: "dunkel", name: "Nur dunkel" } ] },
+      ] },
+
+      // Die fuenf Rollen. Jede setzt ELF Palettenstufen, nicht eine: HA nimmt
+      // die kraeftige Flaeche aus Stufe 40, die Ueberfahr-Stufe aus 30, die
+      // leise aus 95. Ein einzelner Wert liesse die halbe Oberflaeche stehen.
+      // Die Palette ist modusunabhaengig und gehoert deshalb flach - nur dort
+      // leitet HA in BEIDEN Modi die RGB-Tripel ab, aus denen Mushroom lebt.
       { name: "Farben", felder: [
-        { t: "Akzent", v: "--ha-color-primary-40" },
-        { t: "Neutral", v: "--ha-color-neutral-40" },
-        { t: "Erfolg", v: "--ha-color-green-50" },
-        { t: "Warnung", v: "--ha-color-orange-70" },
-        { t: "Fehler", v: "--ha-color-red-50" } ] },
+        { t: "Akzent",  art: "farbe", rolle: "primary", v: "--ha-color-primary-60", ebene: "beide" },
+        { t: "Neutral", art: "farbe", rolle: "neutral", v: "--ha-color-neutral-60", ebene: "beide" },
+        { t: "Erfolg",  art: "farbe", rolle: "green",   v: "--ha-color-green-60",   ebene: "beide" },
+        { t: "Warnung", art: "farbe", rolle: "orange",  v: "--ha-color-orange-60",  ebene: "beide" },
+        { t: "Fehler",  art: "farbe", rolle: "red",     v: "--ha-color-red-60",     ebene: "beide" },
+      ] },
+
+      // Schrift wechselt mit dem Modus - im Hellen dunkel, im Dunkeln hell.
+      // Deshalb getrennt, nicht flach.
       { name: "Textfarben", felder: [
-        { t: "Primaer", v: "--ha-color-text-primary" },
-        { t: "Sekundaer", v: "--ha-color-text-secondary" },
-        { t: "Deaktiviert", v: "--ha-color-text-disabled" },
-        { t: "Link", v: "--ha-color-text-link" } ] },
+        { t: "Primaer",     art: "farbe", v: "--ha-color-text-primary",   ebene: "getrennt" },
+        { t: "Sekundaer",   art: "farbe", v: "--ha-color-text-secondary", ebene: "getrennt" },
+        { t: "Deaktiviert", art: "farbe", v: "--ha-color-text-disabled",  ebene: "getrennt" },
+        { t: "Link",        art: "farbe", v: "--ha-color-text-link",      ebene: "getrennt" },
+      ] },
+
+      // Apple und Google zuerst. Eine Schrift, die nicht auf dem Geraet liegt,
+      // wird nicht gezeigt - die Apple-Kette greift nur auf Apple-Geraeten,
+      // Roboto liefert Home Assistant selbst mit. Exoten brauchen deshalb
+      // spaeter uix-fonts, das die Datei ueber die CSS Font Loading API holt.
       { name: "Schrift", felder: [
-        { t: "Schriftart", v: "--ha-font-family-body" },
-        { t: "Code", v: "--ha-font-family-code" },
-        { t: "Groesse", v: "--ha-font-size-scale" },
-        { t: "Zeilenhoehe", v: "--ha-line-height-normal" } ] },
+        { t: "Schriftart", art: "auswahl", v: "--ha-font-family-body", ebene: "beide", optionen: [
+          { wert: "Roboto, Noto, \"Noto Sans\", sans-serif", name: "Google", titel: "Roboto - liefert Home Assistant mit" },
+          { wert: "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Helvetica Neue\", sans-serif", name: "Apple", titel: "San Francisco - nur auf Apple-Geraeten" } ] },
+        { t: "Code", art: "auswahl", v: "--ha-font-family-code", ebene: "beide", optionen: [
+          { wert: "\"Roboto Mono\", \"Noto Sans Mono\", monospace", name: "Google" },
+          { wert: "ui-monospace, \"SF Mono\", Menlo, monospace", name: "Apple" } ] },
+        { t: "Groesse", art: "zahl", v: "--ha-font-size-scale", ebene: "beide",
+          min: 0.8, max: 1.4, schritt: 0.05 },
+        { t: "Zeilenhoehe", art: "zahl", v: "--ha-line-height-normal", ebene: "beide",
+          min: 1.2, max: 2, schritt: 0.05 },
+      ] },
     ] },
 
   { n: 2, titel: "Flaechen", kurz: "Hintergrund, Karten, Dialoge, Leisten",
@@ -278,7 +313,9 @@ const TEXTE = {
     "Steht flach im Theme, gilt in beiden Modi": "Set at the flat level — applies in both modes",
     "Steht je Modus getrennt im Theme": "Set separately per mode",
     "Steht nicht im Theme — Home Assistant leitet es ab": "Not in the theme — Home Assistant derives it",
-    "Einstellen kommt als Naechstes — dieser Stand zeigt nur.": "Editing comes next — this build only shows.",
+    "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
+    "Einstellen": "Adjust",
+    "Diese eine Farbe setzt elf Palettenstufen — HA nimmt die kraeftige Flaeche aus 40, die Ueberfahr-Stufe aus 30, die leise aus 95.": "This one colour sets eleven palette steps — HA takes the loud fill from 40, hover from 30, the quiet one from 95.",
     "Angabe": "value",
     "nicht gesetzt": "not set",
     "Grundlagen": "Basics", "Flaechen": "Surfaces", "Form": "Shape",
@@ -539,7 +576,13 @@ class HatsPanel extends HTMLElement {
               : je.wo === "je Modus" ? T("Steht je Modus getrennt im Theme")
               : T("Steht nicht im Theme — Home Assistant leitet es ab")}</p>` : ""}
         </div>
-        <p class="noch">${T("Einstellen kommt als Naechstes — dieser Stand zeigt nur.")}</p>
+        <div class="einstellen">
+          <span class="mlabel">${T("Einstellen")}</span>
+          ${fuerFeld(f, w.farbe || w.text)}
+        </div>
+        ${f.rolle ? `<div class="rampe" data-rampe>${this.rampeHtml(f, w.farbe)}</div>
+        <p class="herkunft">${T("Diese eine Farbe setzt elf Palettenstufen — HA nimmt die kraeftige Flaeche aus 40, die Ueberfahr-Stufe aus 30, die leise aus 95.")}</p>` : ""}
+        <p class="noch">${T("Geaendert wird im Fenster, geschrieben noch nicht.")}</p>
       </div>`;
 
     d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
@@ -547,9 +590,30 @@ class HatsPanel extends HTMLElement {
     if (v) v.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx - 1].t));
     if (z) z.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx + 1].t));
 
+    binde(d, (id, wert) => {
+      // Noch wird nichts geschrieben - aber die Vorschau zeigt sofort, was
+      // die Wahl bedeutet. Elf Stufen aus einer Farbe sind schwer zu raten.
+      if (f.rolle) {
+        const r = d.querySelector("[data-rampe]");
+        if (r) r.innerHTML = this.rampeHtml(f, wert);
+      }
+      const aus = d.querySelector(`[data-be-aus="${CSS.escape(id)}"]`);
+      if (aus && wert === null) aus.textContent = T("nicht gesetzt");
+    });
+
     const o = this.shadowRoot.querySelector(".overlay.zwei");
     o.hidden = false;
     requestAnimationFrame(() => o.classList.add("da"));
+  }
+
+  rampeHtml(f, basis) {
+    const r = basis ? rampe(basis, f.rolle) : null;
+    if (!r) return "";
+    return PALETTENSTUFEN.map((st) => {
+      const hex = r[`ha-color-${f.rolle}-${st}`];
+      return `<span class="stufe" title="${f.rolle}-${st}  ${hex}">
+                <i style="background:${hex}"></i><em>${st}</em></span>`;
+    }).join("");
   }
 
   schliesseFeld() {
@@ -818,6 +882,42 @@ class HatsPanel extends HTMLElement {
       .probe.gross { width: 22px; height: 22px; border-radius: 7px; }
       .herkunft { margin: 2px 12px 8px; font-size: 11.5px; color: var(--s-tinte-leise); }
       .noch { margin: 16px 2px 0; font-size: 12px; color: var(--s-tinte-leise); font-style: italic; }
+
+      .einstellen { margin-top: 18px; }
+      .einstellen .mlabel { display: block; margin-bottom: 8px; font-size: 13px; }
+
+      /* Bedienelemente - Formen nach der Vorlage, Farben die unseren. */
+      .be { display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+            border-radius: 999px; background: rgba(27,36,48,.06); }
+      .be input[type="range"] { flex: 1; accent-color: var(--s-tinte); }
+      .be output { min-width: 52px; text-align: right; font-size: 12px;
+                   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .be-bahn { flex: 1; height: 10px; border-radius: 999px;
+                 box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+      .be input[type="color"] { width: 30px; height: 30px; padding: 0; border: 0;
+                                background: none; border-radius: 9px; cursor: pointer; }
+      .be code { font-size: 12px; min-width: 76px;
+                 font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .be input[type="text"] { flex: 1; border: 0; background: #fff; font: inherit; font-size: 13px;
+                               padding: 7px 11px; border-radius: 999px; }
+      .be-segmente { gap: 3px; padding: 4px; }
+      .be-segmente button { flex: 1; border: 0; cursor: pointer; font: inherit; font-size: 12.5px;
+                            padding: 7px 12px; border-radius: 999px; background: transparent;
+                            color: var(--s-tinte-leise); white-space: nowrap; }
+      .be-segmente button.an { background: #fff; color: var(--s-tinte);
+                               box-shadow: var(--s-schatten-klein); }
+      .be-zurueck { width: 28px; height: 28px; flex: none; border: 0; border-radius: 50%;
+                    cursor: pointer; background: rgba(27,36,48,.08); color: var(--s-tinte-leise);
+                    font-size: 14px; line-height: 1; }
+      .be-zurueck:hover { background: rgba(27,36,48,.16); color: var(--s-tinte); }
+
+      /* Die elf Stufen, die aus einer Farbe entstehen. */
+      .rampe { display: flex; gap: 3px; margin-top: 14px; }
+      .stufe { flex: 1; text-align: center; }
+      .stufe i { display: block; height: 30px; border-radius: 6px;
+                 box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
+      .stufe em { display: block; margin-top: 4px; font-style: normal; font-size: 10px;
+                  color: var(--s-tinte-leise); }
 
       .blaettern { display: flex; align-items: center; gap: 6px; margin-left: auto; }
       .blaettern span { font-size: 12px; color: var(--s-tinte-leise); min-width: 42px; text-align: center; }
