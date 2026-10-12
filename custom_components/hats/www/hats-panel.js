@@ -273,6 +273,12 @@ const TEXTE = {
     "Entwurf": "Draft",
     "Gruppen": "groups",
     "Ansicht": "View", "Gemischt": "Mixed", "Liste": "List", "Kacheln": "Tiles",
+    "Jetzt in Kraft": "In effect now", "Hell": "Light", "Dunkel": "Dark",
+    "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
+    "Steht flach im Theme, gilt in beiden Modi": "Set at the flat level — applies in both modes",
+    "Steht je Modus getrennt im Theme": "Set separately per mode",
+    "Steht nicht im Theme — Home Assistant leitet es ab": "Not in the theme — Home Assistant derives it",
+    "Einstellen kommt als Naechstes — dieser Stand zeigt nur.": "Editing comes next — this build only shows.",
     "Angabe": "value",
     "nicht gesetzt": "not set",
     "Grundlagen": "Basics", "Flaechen": "Surfaces", "Form": "Shape",
@@ -303,6 +309,7 @@ class HatsPanel extends HTMLElement {
     this._offen = null;
     this._gezeichnet = false;
     this._ansicht = ansichtLesen();
+    this._feld = null;
   }
 
   set hass(hass) {
@@ -361,6 +368,17 @@ class HatsPanel extends HTMLElement {
         <div class="schleier"></div>
         <div class="dialog" role="dialog" aria-modal="true"></div>
       </div>
+
+      <!-- Die Feldseite liegt NEBEN der Stufenseite, nicht darin. Beide sind
+           Geschwister von .buehne. Ein Pop-up im Pop-up waere ein Kind eines
+           Elements mit backdrop-filter - und das wird zum Bezugsrahmen fuer
+           position:fixed. Genau daran sind Bubble-Pop-ups auf Hoehe 0
+           geschrumpft und HA-Dialoge haben ihre Auswahllisten neben den
+           Bildschirm gelegt. -->
+      <div class="overlay zwei" hidden>
+        <div class="schleier"></div>
+        <div class="dialog klein" role="dialog" aria-modal="true"></div>
+      </div>
     `;
 
     this.shadowRoot.querySelectorAll(".punkte").forEach((b) =>
@@ -369,8 +387,16 @@ class HatsPanel extends HTMLElement {
     this.shadowRoot.querySelectorAll(".zeile").forEach((z) =>
       z.addEventListener("click", () => this.oeffne(Number(z.dataset.stufe)))
     );
-    this.shadowRoot.querySelector(".schleier").addEventListener("click", () => this.schliesse());
-    this._esc = (e) => { if (e.key === "Escape") this.schliesse(); };
+    this.shadowRoot.querySelectorAll(".overlay").forEach((o) =>
+      o.querySelector(".schleier").addEventListener("click", () => {
+        if (o.classList.contains("zwei")) this.schliesseFeld(); else this.schliesse();
+      })
+    );
+    // Escape schliesst immer nur das oberste Fenster.
+    this._esc = (e) => {
+      if (e.key !== "Escape") return;
+      if (this._feld) this.schliesseFeld(); else this.schliesse();
+    };
   }
 
   zeile(s, i, T) {
@@ -431,6 +457,107 @@ class HatsPanel extends HTMLElement {
         this.zeichneDialog();
       })
     );
+    // Jede Kachel und jede Zeile ist ein Menuepunkt: sie zeigt den Stand und
+    // fuehrt auf die Seite, auf der sich das Feld einstellen laesst.
+    d.querySelectorAll("[data-feld]").forEach((el) => {
+      const auf = () => this.oeffneFeld(st, el.dataset.feld);
+      el.addEventListener("click", auf);
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); auf(); }
+      });
+    });
+  }
+
+  // ---- Zweite Ebene: die Seite eines einzelnen Feldes ----
+  //
+  // Ein Farbfeld hat ZWEI Werte, hell und dunkel. Das ist der Grund, weshalb
+  // die Kachel nur zeigt und nicht einstellt: in eine Kachel passt einer.
+  werteJeModus(f) {
+    const hass = this._hass;
+    if (!f.v || !hass || !hass.themes) return null;
+    const theme = hass.themes.themes[hass.themes.theme];
+    if (!theme) return null;
+    const name = f.v.replace(/^--/, "");
+    const flach = { ...theme };
+    delete flach.modes;
+    const m = theme.modes || {};
+    const hell = (m.light && m.light[name]) !== undefined ? m.light[name] : flach[name];
+    const dunkel = (m.dark && m.dark[name]) !== undefined ? m.dark[name] : flach[name];
+    const wo = flach[name] !== undefined ? "flach"
+             : (m.light && m.light[name]) !== undefined ? "je Modus" : null;
+    return { hell, dunkel, wo };
+  }
+
+  oeffneFeld(st, titel) {
+    const T = (s) => t(s, this.spr);
+    let g = null, idx = -1;
+    for (const gr of st.gruppen) {
+      const i = gr.felder.findIndex((x) => x.t === titel);
+      if (i >= 0) { g = gr; idx = i; break; }
+    }
+    if (!g) return;
+    this._feld = { st, g, idx };
+
+    const f = g.felder[idx];
+    const w = this.wert(f);
+    const je = this.werteJeModus(f);
+    const probe = (v) => v && /^#|^rgba?\(|^hsla?\(/.test(String(v))
+      ? `<span class="probe gross" style="background:${v}"></span>` : "";
+
+    const d = this.shadowRoot.querySelector(".overlay.zwei .dialog");
+    d.innerHTML = `
+      <header class="dkopf">
+        <div>
+          <h2>${T(f.t)}</h2>
+          <p>${st.n}. ${T(st.titel)} · ${T(g.name)}</p>
+        </div>
+        <div class="blaettern">
+          <button class="vor" ${idx === 0 ? "disabled" : ""} aria-label="${T("Voriges Feld")}">‹</button>
+          <span>${idx + 1} / ${g.felder.length}</span>
+          <button class="zurueck" ${idx === g.felder.length - 1 ? "disabled" : ""} aria-label="${T("Naechstes Feld")}">›</button>
+        </div>
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+      <div class="feldseite">
+        <p class="zweck">${T(ZWECK[g.name] || "")}</p>
+        ${f.v ? `<div class="variable">${f.v}</div>` : ""}
+        <div class="modusliste">
+          <div class="modus">
+            <span class="mlabel">${T("Jetzt in Kraft")}</span>
+            <div class="mwert">${probe(w.farbe)}<code class="${w.leer ? "leer" : ""}">${w.text}</code></div>
+          </div>
+          ${je ? `
+          <div class="modus">
+            <span class="mlabel">${T("Hell")}</span>
+            <div class="mwert">${probe(je.hell)}<code class="${je.hell === undefined ? "leer" : ""}">${je.hell === undefined ? T("nicht gesetzt") : je.hell}</code></div>
+          </div>
+          <div class="modus">
+            <span class="mlabel">${T("Dunkel")}</span>
+            <div class="mwert">${probe(je.dunkel)}<code class="${je.dunkel === undefined ? "leer" : ""}">${je.dunkel === undefined ? T("nicht gesetzt") : je.dunkel}</code></div>
+          </div>
+          <p class="herkunft">${je.wo === "flach" ? T("Steht flach im Theme, gilt in beiden Modi")
+              : je.wo === "je Modus" ? T("Steht je Modus getrennt im Theme")
+              : T("Steht nicht im Theme — Home Assistant leitet es ab")}</p>` : ""}
+        </div>
+        <p class="noch">${T("Einstellen kommt als Naechstes — dieser Stand zeigt nur.")}</p>
+      </div>`;
+
+    d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    const v = d.querySelector(".vor"), z = d.querySelector(".zurueck");
+    if (v) v.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx - 1].t));
+    if (z) z.addEventListener("click", () => this.oeffneFeld(st, g.felder[idx + 1].t));
+
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+  }
+
+  schliesseFeld() {
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    if (!o || o.hidden) return;
+    o.classList.remove("da");
+    setTimeout(() => { o.hidden = true; }, 180);
+    this._feld = null;
   }
 
   // Den aktuellen Wert einer Variablen zeigen, nicht einen erfundenen. Was
@@ -447,7 +574,7 @@ class HatsPanel extends HTMLElement {
   feldZeile(f, T) {
     const w = this.wert(f);
     return `
-      <div class="feld">
+      <div class="feld" data-feld="${f.t}" tabindex="0" role="button">
         <div class="feldtext">
           <b>${T(f.t)}</b>
           <span>${f.v ? f.v : T("Angabe")}</span>
@@ -460,7 +587,7 @@ class HatsPanel extends HTMLElement {
   feldKachel(f, T) {
     const w = this.wert(f);
     return `
-      <article class="karte">
+      <article class="karte" data-feld="${f.t}" tabindex="0" role="button">
         <b>${T(f.t)}</b>
         <p>${f.v ? f.v : T("Angabe")}</p>
         <div class="kfuss">
@@ -662,6 +789,42 @@ class HatsPanel extends HTMLElement {
                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .kfuss { display: flex; align-items: center; gap: 8px; }
       .kfuss .wert { min-width: 0; }
+
+      /* Kacheln und Zeilen sind Menuepunkte - das muss man ihnen ansehen. */
+      .karte[data-feld], .feld[data-feld] { cursor: pointer; }
+      .karte[data-feld]:hover { box-shadow: 0 4px 14px rgba(26,44,74,.14); transform: translateY(-1px); }
+      .karte[data-feld] { transition: box-shadow .15s ease, transform .15s ease; }
+      .karte[data-feld]:focus-visible, .feld[data-feld]:focus-visible {
+        outline: 2px solid var(--s-tinte); outline-offset: 2px; }
+
+      /* Zweite Ebene: die Seite eines Feldes. Schmaler als die Stufenseite. */
+      .dialog.klein { width: min(560px, 100%); }
+      .overlay.zwei { z-index: 60; }
+      .overlay.zwei .schleier { background: rgba(16,28,45,.3); }
+      .feldseite { padding: 18px 26px 26px; }
+      .feldseite .zweck { margin: 0 0 14px; }
+      .variable { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+                  color: var(--s-tinte-leise); background: rgba(27,36,48,.05);
+                  padding: 8px 11px; border-radius: var(--s-r-klein); margin-bottom: 16px; }
+      .modusliste { background: var(--s-karte); border-radius: var(--s-r); padding: 6px;
+                    box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
+      .modus { display: flex; align-items: center; gap: 12px; padding: 11px 12px; }
+      .modus + .modus { box-shadow: inset 0 1px 0 var(--s-linie); }
+      .mlabel { font-size: 13px; }
+      .mwert { margin-left: auto; display: flex; align-items: center; gap: 9px; }
+      .mwert code { font-size: 12px; color: var(--s-tinte-leise);
+                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .mwert code.leer { font-style: italic; opacity: .6; }
+      .probe.gross { width: 22px; height: 22px; border-radius: 7px; }
+      .herkunft { margin: 2px 12px 8px; font-size: 11.5px; color: var(--s-tinte-leise); }
+      .noch { margin: 16px 2px 0; font-size: 12px; color: var(--s-tinte-leise); font-style: italic; }
+
+      .blaettern { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+      .blaettern span { font-size: 12px; color: var(--s-tinte-leise); min-width: 42px; text-align: center; }
+      .blaettern button { width: 28px; height: 28px; border: 0; border-radius: 50%; cursor: pointer;
+                          background: rgba(27,36,48,.06); color: var(--s-tinte); font-size: 15px; line-height: 1; }
+      .blaettern button:hover:not([disabled]) { background: rgba(27,36,48,.12); }
+      .blaettern button[disabled] { opacity: .35; cursor: default; }
 
       /* Der Umschalter im Kopf des Pop-ups. */
       .umschalter { display: flex; gap: 2px; margin-left: auto; padding: 3px;
