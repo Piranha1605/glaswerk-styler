@@ -402,6 +402,38 @@ sondern die ganze Datei.
 Nach der Korrektur: dieselbe Datei, **null unlesbare Zeilen**, 287 bedienbar,
 400 mitgenommen, 13 Stilziele.
 
+## Werkzeuge
+
+```bash
+werkzeuge/pruefen.sh                   alles ohne Instanz: Syntax, Tests, Versionen
+werkzeuge/einspielen.sh                Dateien auf die Instanz, mit Gegenprobe
+werkzeuge/einspielen.sh www/theme.js   nur eine
+```
+
+`werkzeuge/README.md` hält die Schleife und die Fallen fest — angelegt am
+13.10.2026 auf Ansage: *„kannst du die Werkzeuge die du ständig brauchst mal
+dokumentieren. Du machst immer die selben fehler."* Zu Recht; es waren immer
+dieselben vier.
+
+**Die Schleife:** ändern → `pruefen.sh` → `einspielen.sh` → Befehl in den
+Terminal → **Integration neu laden** → im Browser messen. Schritt fünf ist der,
+den man vergisst; dann sucht man den Fehler im Code, und er liegt im Cache.
+
+**Was die Skripte abnehmen**, statt dass man es sich merken muss:
+
+- Der erzeugte Befehl enthält **keine Semikolons und keine Schleife** — der
+  Terminal im Studio Code Server verfremdet ein getipptes `;` zu `\;`.
+- „Ist es angekommen?" war Raten. `/hats_static` ist vom Mac aus **ohne
+  Anmeldung lesbar**, also wird byteweise verglichen statt gehofft.
+- `pruefen.sh` parst jede Datei **als Modul über stdin**, nicht mit
+  `node --check` — das lässt eine doppelte Deklaration durch, und dann lädt das
+  Panel gar nicht.
+- Ein Test mit **null** Prüfungen gilt als Fehlschlag, nicht als bestanden.
+
+**Was vom Mac aus nicht geht:** schreiben. Port 22 und 445 sind zu, die
+REST-API will einen Token. Lesen geht über Port 80. Würde SSH oder Samba
+eingerichtet, fiele der Terminal-Umweg weg.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
