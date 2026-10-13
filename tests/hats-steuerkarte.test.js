@@ -245,15 +245,14 @@ pruefe("Beide Sprachen tragen dieselben Texte", () => {
 
 // ---- Die Anmeldung --------------------------------------------------------
 
-pruefe("Die Integration meldet die Karte an und wieder ab", () => {
+pruefe("Die Datei der Karte gibt es, und ihre Adresse traegt keine eigene Version", () => {
+  // WIE sie angemeldet wird, prueft tests/hats-kartenanmeldung.test.js.
   const init = lies("custom_components/hats/__init__.py");
   const konst = lies("custom_components/hats/const.py");
   const datei = /^CARD_FILE\s*=\s*"([^"]+)"/m.exec(konst);
   assert.ok(datei, "CARD_FILE fehlt in const.py");
   assert.ok(existsSync(path.join(wurzel, "custom_components/hats/www", datei[1])),
     `${datei[1]} liegt nicht in www`);
-  assert.ok(/frontend\.add_extra_js_url\(hass, karten_url\)/.test(init), "nicht angemeldet");
-  assert.ok(/frontend\.remove_extra_js_url\(hass, karten_url\)/.test(init), "nicht abgemeldet");
   // Die Versionsnummer steht an vier Stellen. Die Adresse der Karte darf
   // keine fuenfte sein.
   assert.ok(!/hats-control-card\.js\?v=\d/.test(konst + init), "eine fuenfte Versionsnummer");

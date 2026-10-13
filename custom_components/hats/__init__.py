@@ -3,9 +3,9 @@
 Registriert das Panel und die drei Websocket-Befehle, die HATS braucht:
 Themes auflisten, eine Theme-Datei lesen, eine Theme-Datei schreiben.
 
-Dazu die Steuerkarte fuer Dashboards (hats-control-card.js). Sie wird als
-zusaetzliches Modul der Oberflaeche angemeldet und steht damit auf jedem
-Dashboard bereit, ohne dass jemand eine Ressource eintragen muss.
+Dazu die Steuerkarte fuer Dashboards (hats-control-card.js). HATS traegt sie
+selbst in die Ressourcenliste ein und nimmt sie beim Entfernen der Integration
+wieder heraus - warum eine Ressource, steht in karte.py.
 
 Mehr ist absichtlich nicht drin. Vorlagen, Marker und Shadow-DOM-Pfade bleiben
 bei HATG - HATS schreibt gewoehnliche Theme-Felder, und die erben durch jede
@@ -26,6 +26,7 @@ import yaml as yaml_lib
 
 from homeassistant.components import frontend, panel_custom, websocket_api
 from homeassistant.components.http import StaticPathConfig
+from homeassistant.components.lovelace.const import LOVELACE_DATA, MODE_STORAGE
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -44,6 +45,7 @@ from .const import (
     VERSION,
     WWW_SUBDIR,
 )
+from .karte import ressource_abgleichen, ressource_entfernen
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -444,26 +446,80 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         require_admin=True,
     )
 
-    # Die Steuerkarte als zusaetzliches Modul der Oberflaeche - NICHT als
-    # Lovelace-Ressource. Eine Ressource stuende in der Konfiguration des
-    # Nutzers und bliebe dort liegen, wenn HATS wieder geht; das Modul hier
-    # verschwindet mit dem Eintrag. Dieselbe Regel wie bei den Theme-Feldern:
-    # nichts hinterlassen, was spaeter ins Leere zeigt.
-    #
+    await _karte_anmelden(hass, karten_url)
+
+    _registriere_websocket(hass)
+    return True
+
+
+async def _karte_anmelden(hass: HomeAssistant, karten_url: str) -> None:
+    """Die Steuerkarte so anmelden, dass ein einziges Neuladen genuegt.
+
+    Der Weg ist die Ressourcenliste - siehe karte.py. Bis zum 13.10.2026 stand
+    hier frontend.add_extra_js_url, mit der Begruendung, eine Ressource bliebe
+    in der Konfiguration des Nutzers liegen. Das Liegenbleiben erledigt jetzt
+    async_remove_entry; der Preis des anderen Wegs war dagegen eine Karte, die
+    nach dem ersten Neuladen noch fehlt.
+
+    Das zusaetzliche Modul bleibt als Ausweg: wenn die Ressourcen in YAML
+    stehen (dann ist die Liste nicht beschreibbar) und falls Home Assistant
+    seine Liste einmal anders baut. HATS soll dann trotzdem starten - das Panel
+    haengt nicht an der Karte.
+    """
+    lovelace = hass.data.get(LOVELACE_DATA)
+    if lovelace is not None and lovelace.resource_mode == MODE_STORAGE:
+        try:
+            was = await ressource_abgleichen(lovelace.resources, karten_url)
+        except Exception:  # noqa: BLE001 - die Liste gehoert Home Assistant
+            _LOGGER.exception(
+                "Die Steuerkarte liess sich nicht in die Ressourcen eintragen. "
+                "Sie wird stattdessen als zusaetzliches Modul geladen"
+            )
+        else:
+            if was != "unveraendert":
+                _LOGGER.info("Steuerkarte in den Ressourcen %s: %s", was, karten_url)
+            return
+    else:
+        _LOGGER.info(
+            "Die Ressourcen stehen in YAML. Die Steuerkarte wird als zusaetzliches "
+            "Modul geladen; verlaesslicher ist ein eigener Eintrag: "
+            "url: %s, type: module",
+            karten_url,
+        )
+
     # Die Adresse wird gemerkt, weil async_unload_entry genau DIESE wieder
     # abmelden muss: Nach einem Reload mit geaenderter Datei ist die Pruefsumme
     # eine andere, und eine neu gerechnete Adresse traefe die alte nicht.
     frontend.add_extra_js_url(hass, karten_url)
     hass.data[_KARTEN_URL] = karten_url
 
-    _registriere_websocket(hass)
-    return True
-
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Panel und Steuerkarte wieder abmelden."""
+    """Panel wieder abmelden.
+
+    Der Eintrag in den Ressourcen BLEIBT: Ein Reload ist kein Abschied, und
+    eine Karte, die waehrend des Reloads aus der Liste faellt, zeigte auf jedem
+    offenen Dashboard kurz einen Fehler. Er geht erst mit async_remove_entry.
+    """
     frontend.async_remove_panel(hass, PANEL_URL)
     karten_url = hass.data.pop(_KARTEN_URL, None)
     if karten_url:
         frontend.remove_extra_js_url(hass, karten_url)
     return True
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Beim Entfernen der Integration den Eintrag in den Ressourcen mitnehmen.
+
+    Dieselbe Regel wie bei den Theme-Feldern: nichts hinterlassen, was spaeter
+    ins Leere zeigt. Wer nur den Ordner loescht, statt die Integration zu
+    entfernen, behaelt den Eintrag - er laedt dann nichts mehr und schadet
+    nicht, steht aber noch in der Liste.
+    """
+    lovelace = hass.data.get(LOVELACE_DATA)
+    if lovelace is None or lovelace.resource_mode != MODE_STORAGE:
+        return
+    try:
+        await ressource_entfernen(lovelace.resources, f"{STATIC_PATH}/{CARD_FILE}")
+    except Exception:  # noqa: BLE001 - die Liste gehoert Home Assistant
+        _LOGGER.exception("Der Eintrag der Steuerkarte liess sich nicht entfernen")

@@ -67,6 +67,7 @@ custom_components/hats/
 ├── __init__.py           Einstiegspunkt, Panel-Registrierung, Websocket
 ├── config_flow.py        Einrichtung über die Oberfläche
 ├── const.py              Domain, Version, Pfade
+├── karte.py              traegt die Steuerkarte in HAs Ressourcenliste ein
 ├── manifest.json         Domain hats
 ├── translations/         de.json und en.json
 └── www/
@@ -819,11 +820,11 @@ controls: [mode, fullscreen]    # Auswahl und Reihenfolge; fehlt die Zeile: beid
 kiosk_only: false               # true: kein Vollbild des Browsers
 ```
 
-Sie liegt in `custom_components/hats/www/hats-control-card.js` und wird mit
-`frontend.add_extra_js_url` angemeldet, **nicht** als Lovelace-Ressource: Eine
-Ressource stünde in der Konfiguration des Nutzers und bliebe liegen, wenn HATS
-geht. Der Name `hats-control-card` steht in jedem Dashboard, das die Karte
-benutzt — wie die Domain ist er **bis zum ersten Release** frei, danach nicht.
+Sie liegt in `custom_components/hats/www/hats-control-card.js`. HATS trägt sie
+selbst in Home Assistants Ressourcenliste ein und nimmt sie beim Entfernen der
+Integration wieder heraus — warum so und nicht anders, steht weiter unten. Der
+Name `hats-control-card` steht in jedem Dashboard, das die Karte benutzt — wie
+die Domain ist er **bis zum ersten Release** frei, danach nicht.
 
 **Im Kartenwähler steht sie nur unter „Nach Karte".** Gemeldet am 13.10.2026:
 *„kannst du die karte hier einbauen ich find sie nicht"*. Der Dialog „Zum
@@ -1008,6 +1009,90 @@ leeres Auswahlfeld neben einer Karte mit beiden Teilen.
 
 Ein unbekannter Name in `controls` ist ein **Fehler**, kein stilles Nichts —
 sonst verschwände bei einem Tippfehler einfach ein Knopf.
+
+### Angemeldet als Ressource — der erste Weg scheiterte am Service Worker
+
+Zuerst war die Karte ein zusätzliches Modul der Oberfläche
+(`frontend.add_extra_js_url`), mit der Begründung, eine Ressource bliebe in der
+Konfiguration des Nutzers liegen. Eine Stunde später die Meldung, mit Bild:
+
+    Custom element doesn't exist: hats-control-card.
+
+Der Server lieferte alles richtig aus, und in meinem Browser lief die Karte.
+**Der Unterschied war der Browser.** Ein zusätzliches Modul steht als Zeile
+**in der Seite**, die Home Assistant ausliefert:
+
+```js
+import("/hats_static/hats-control-card.js?v=0.2.0b3.6fa5ce2e")
+```
+
+Und die Seite gibt Home Assistants Service Worker beim ersten Laden aus dem
+Zwischenspeicher zurück. Aus `sw-modern.js` von 2026.10.1 gelesen:
+
+    /(api|auth)/…                    nur Netz
+    manifest.json, onboarding.html   nur Netz
+    /                                erst Zwischenspeicher, im Hintergrund neu
+    alles andere                     erst Zwischenspeicher, im Hintergrund neu
+                                     ("file-cache", höchstens einen Tag alt)
+
+„Erst Zwischenspeicher, im Hintergrund neu" heißt: Wer die Seite neu lädt,
+bekommt die von **vorher** — ohne die Zeile, also ohne die Karte. Erst das
+**zweite** Neuladen bringt sie. Genau das sieht aus wie „geht nicht": Man lädt
+neu, und nichts ändert sich.
+
+**Im eingebauten Browser der Claude-App läuft der Service Worker nicht**
+(`Failed to register a ServiceWorker` in der Konsole). Dort ist jede Seite
+frisch, und der Fehler ist nicht zu sehen. Was ich dort messe, gilt also nicht
+ohne Weiteres für den Browser des Nutzers — bei allem, was mit Laden und
+Zwischenspeichern zu tun hat.
+
+Gemessen ist der Mechanismus, nicht der Zwischenspeicher im Browser des
+Nutzers: Den sehe ich nicht. Die Erklärung passt auf alles, was zu sehen war.
+
+**Die Ressourcenliste holt die Oberfläche über den Websocket**
+(`lovelace/resources`), und der geht am Service Worker vorbei. Sie kann nicht
+veraltet sein; ein Neuladen genügt immer. Es ist der Weg, auf dem jede Karte
+aus HACS ankommt. `custom_components/hats/karte.py` gleicht ab:
+
+    kein Eintrag         anlegen
+    andere Prüfsumme     denselben Eintrag erneuern
+    alles stimmt         nichts schreiben
+    doppelt              einer bleibt
+    fremde Einträge      bleiben, auch `/local/hats-control-card.js`
+
+An der Testmaschine: 8 Ressourcen vorher, 9 nachher, nach zwei Reloads der
+Integration immer noch 9, und in der Seite steht keine Zeile mehr.
+
+Was dabei zu wissen ist:
+
+- **`async_items()` lädt die Liste nicht.** Vor dem ersten Laden ist sie leer —
+  ein Abgleich ohne `async_get_info()` davor trüge die Karte bei jedem Start
+  ein weiteres Mal ein. Ein Test hält es fest, mit einer Mutation gegengeprüft.
+- **Beim Reload bleibt der Eintrag, beim Entfernen geht er**
+  (`async_remove_entry`). Fiele er bei jedem Reload heraus, zeigte jedes offene
+  Dashboard kurz einen Fehler. Wer nur den Ordner löscht, statt die Integration
+  zu entfernen, behält den Eintrag; er lädt dann nichts mehr.
+- **`lovelace` steht in den Abhängigkeiten.** Sonst kann HATS vor Lovelace
+  starten, und die Liste gibt es noch nicht.
+- **Stehen die Ressourcen in YAML**, ist die Liste nicht beschreibbar. Dann
+  bleibt das zusätzliche Modul als Ausweg, mit dem Nachteil von oben; im Log
+  steht die Zeile, die man selbst eintragen kann. Nicht an einer Instanz
+  gemessen — die Testmaschine führt ihre Ressourcen im Speicher.
+- **Die Liste ist nicht Teil einer öffentlichen Schnittstelle.** Baut Home
+  Assistant sie einmal um, fängt `_karte_anmelden` den Fehler, schreibt ihn ins
+  Log und nimmt den Ausweg. Das Panel startet in jedem Fall.
+
+`karte.py` importiert Home Assistant absichtlich nicht.
+`tests/hats-kartenanmeldung.test.js` fährt den Abgleich mit python3 gegen einen
+Nachbau der Liste, vierzehn Prüfungen.
+
+**Zwei Fehler im Test, bevor er saß — beide im Nachbau, keiner im Abgleich.**
+`neustart()` gab für eine nie geladene Liste eine leere zurück. Und ich habe
+die Ursache zuerst falsch geraten: IDs aus `uuid4().hex` können mit `f`
+beginnen, mein Filter für fremde Einträge prüfte auf genau diesen Buchstaben.
+Das war eine echte Schwäche, einer von sechzehn Läufen wäre daran gescheitert —
+nur war es nicht der Fehler, der vorlag. Vierzig Läufe rot statt zwei oder drei
+haben es gezeigt. Erst die Stelle ausgeben, dann die Ursache nennen.
 
 ### Dabei gefunden: `ws.mjs` hielt jedes Skript zwei Minuten fest
 

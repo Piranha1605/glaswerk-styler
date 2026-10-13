@@ -54,10 +54,15 @@ Oben dreimal die Karte, darunter zum Vergleich zwei Kacheln von Home Assistant.
 type: custom:hats-control-card
 ```
 
-Sie steht im Kartenwähler, sobald die Integration eingerichtet ist — unter
-dem Reiter **„Nach Karte"**, Suche „HATS". Der Dialog öffnet auf „Nach
-Entität", und dort steht sie nicht: Sie hat keine Entität. Eine Ressource muss
-niemand eintragen.
+Sie steht im Kartenwähler, sobald die Integration eingerichtet und die Seite
+einmal neu geladen ist — unter dem Reiter **„Nach Karte"**, Suche „HATS". Der
+Dialog öffnet auf „Nach Entität", und dort steht sie nicht: Sie hat keine
+Entität.
+
+Eine Ressource muss niemand eintragen. HATS trägt die Karte selbst in die Liste
+unter Einstellungen → Dashboards → Ressourcen ein und nimmt sie wieder heraus,
+wenn die Integration entfernt wird. Nur wer seine Ressourcen in YAML führt,
+trägt sie von Hand ein; die Zeile dafür steht im Log.
 
 | Feld | Vorgabe | |
 |---|---|---|

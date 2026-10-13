@@ -194,6 +194,19 @@ Ein Reload ruft `async_unload_entry` und `async_setup_entry` auf demselben,
 schon importierten Modul auf. Geänderter Python-Code kommt damit **nicht** an.
 Dafür `homeassistant.restart`.
 
+### Der eingebaute Browser hat keinen Service Worker, deiner schon
+
+Home Assistants Service Worker gibt jede Seite beim ersten Laden aus dem
+Zwischenspeicher zurück und holt die neue im Hintergrund. Im eingebauten
+Browser der Claude-App läuft er nicht — dort ist jede Seite frisch. Was mit
+Laden und Zwischenspeichern zu tun hat, kann dort also richtig aussehen und im
+Browser des Nutzers fehlen. Am 13.10.2026 so geschehen: Die Steuerkarte lief
+bei mir und zeigte bei ihm „Custom element doesn't exist".
+
+Woran man es erkennt: Der Server liefert richtig aus (mit `curl` nachsehen),
+und trotzdem fehlt etwas, das **in der Seite** stehen müsste. Dann zweimal neu
+laden lassen, oder einmal mit gedrückter Umschalttaste.
+
 ### `node --check` reicht nicht
 
 Eine doppelte Deklaration im selben Gültigkeitsbereich — ein `const` mit dem

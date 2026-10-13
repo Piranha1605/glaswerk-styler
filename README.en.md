@@ -53,9 +53,15 @@ The card three times at the top, two Home Assistant tiles below for comparison.
 type: custom:hats-control-card
 ```
 
-It appears in the card picker as soon as the integration is set up — on the
-**"By card"** tab, search for "HATS". The dialog opens on "By entity", and the
-card is not listed there: it has no entity. There is no resource to register.
+It appears in the card picker as soon as the integration is set up and the
+page has been reloaded once — on the **"By card"** tab, search for "HATS". The
+dialog opens on "By entity", and the card is not listed there: it has no
+entity.
+
+There is no resource to register. HATS adds the card to the list under
+Settings → Dashboards → Resources itself and removes it again when the
+integration is removed. Only if you keep your resources in YAML do you add it
+by hand; the log shows the line.
 
 | Field | Default | |
 |---|---|---|
