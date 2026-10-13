@@ -629,6 +629,22 @@ Wirkung der laufenden Theme, die genau diese Stufe belegt hatte — nicht die de
 eigenen Vorlage. Deshalb legt `werkzeuge/vorschau.js` die `uix-node`-Knoten der
 aktiven Theme still, bevor es misst.
 
+**Und dasselbe gilt für die Kartenfläche.** Am 13.10.2026 an acht
+Bubble-Karten durchprobiert — je Variable einzeln gesetzt, den berechneten
+Radius an `.bubble-container` abgelesen (nicht an der `ha-card` darüber, die
+trägt `--ha-card-border-radius`):
+
+    --bubble-card-type-border-radius       0 von 8   wirkungslos
+    --bubble-border-radius                 8 von 8
+    --bubble-button-border-radius          3 von 8   genau die button-Karten
+    --bubble-separator-border-radius       3 von 8   genau die Separatoren
+    --bubble-climate-border-radius         1 von 8   genau die Klimakarte
+    --bubble-media-player-border-radius    1 von 8   genau der Player
+
+Jeder Kartentyp hat seinen eigenen Namen, und jeder trifft genau seinen Typ.
+Die allgemeine Stufe erreicht alle. Die `card-type`-Stufe ist von außen in
+beiden Fällen — Icons wie Flächen — wirkungslos.
+
 ### Eine Theme lässt sich von außen nicht aktivieren
 
 Alle drei Wege am 13.10.2026 gemessen, keiner greift durch: `frontend.set_theme`
