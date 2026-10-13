@@ -299,7 +299,11 @@ Auf einem Lovelace-Dashboard kommt die Schrift also an, auf der neuen
 **Home-Seite** (`ha-panel-home`) und auf den Einstellungsseiten nicht.
 
 **`--lovelace-background` liest genau ein Bauteil**, `hui-view-background`. Das
-entsteht nur unter `ha-panel-lovelace`. Dazu: Ein Hintergrundbild aus der
+entsteht unter `hui-root` — und den gibt es unter `ha-panel-lovelace` **und**
+unter `ha-panel-home`. Hier stand „nur unter `ha-panel-lovelace`"; am 13.10.2026
+an 2026.10.1 nachgemessen, lag der Verlauf der Theme auch hinter der Home-Seite.
+Auf den Einstellungsseiten gibt es das Bauteil nicht. Mehr dazu im Abschnitt
+*Der Hintergrund*. Dazu: Ein Hintergrundbild aus der
 **Dashboard-Konfiguration** liegt darüber — der Theme-Wert ist dann zwar
 gesetzt und wird auch gelesen, man sieht ihn nur nicht. Wer den Verlauf sucht
 und das Bild vergisst, hält das Feld für kaputt.
@@ -1102,6 +1106,179 @@ war nach 60 Millisekunden fertig und kehrte nach 120 Sekunden zurück — und mi
 gehalten und abgebrochen, obwohl beide Läufe längst geschrieben hatten. Die
 Uhr wird jetzt mit der Antwort gelöscht. Und `{type: "ping"}` beantwortet Home
 Assistant mit `pong`, nicht mit `result`; `ruf()` kannte nur das zweite.
+
+## Der Hintergrund
+
+Seit dem 13.10.2026 hat der Hintergrund ein eigenes Modul,
+`custom_components/hats/www/hintergrund.js`: fest oder mitlaufend, bewegt, im
+Farbwechsel, nach Wetter. Es steht noch **nicht im Panel**; es liefert Vorlagen
+in der Form von `vorlagen.js`, die `vorlageAn()` und `vorlageAus()` ohne
+Sonderweg schalten. Gemessen an der Testmaschine, HA 2026.10.1 und UIX 8.4.0.
+
+### Wer malt, und wie groß
+
+`hui-view-background` liegt unter `hui-view-container` im Shadow Root von
+`hui-root` — erreichbar über das Stilziel `uix-root`, über kein anderes. Aus
+seinem eigenen Stylesheet:
+
+```css
+:host([fixed-background]) { z-index:-1; display:block; position:fixed;
+                            background-attachment:scroll !important }
+:host(:not([fixed-background])) { z-index:-1; position:absolute }
+:host { background: var(--view-background, var(--lovelace-background,
+                    var(--primary-background-color)));
+        width:100%; height:100%; opacity:var(--view-background-opacity); inset:0 }
+```
+
+`--view-background` setzt das Bauteil selbst, aus dem Hintergrund der Ansicht.
+Deshalb gewinnt der über die Theme.
+
+**Von sich aus läuft die Fläche mit und ist so hoch wie der ganze Inhalt.** Auf
+`/hats-test/alles`: 757 × 1774 px bei 768 px Fensterhöhe. Prozentangaben in
+einem Verlauf beziehen sich auf diese Höhe — von den vier Farbinseln lagen zwei
+unter dem ersten Bildschirm (Mittelpunkte bei 1383 und 1525 px). Auf einer
+kurzen Ansicht sitzen sie dicht, auf einer langen weit auseinander.
+
+### Fest wird sie durch ein Wort
+
+```js
+_isFixedBackground(e) { return "string" == typeof e
+  ? e.split(" ").includes("fixed") : "object" == typeof e && "fixed" === e.attachment }
+```
+
+Geprüft wird der berechnete Wert von `--lovelace-background`. Steht darin das
+Wort `fixed`, **von Leerzeichen umgeben**, setzt Home Assistant das Attribut:
+Die Fläche steht dann fest, ist so groß wie das Fenster und liegt auch unter
+der Seitenleiste (gemessen: 1013 × 768 ab x = 0 statt 757 × 1774 ab x = 256).
+
+Getrennt wird am Leerzeichen und an nichts sonst. Mit Home Assistants eigener
+Methode `_applyTheme()` am Bauteil durchgespielt:
+
+    <Verlauf> fixed              Attribut gesetzt, position: fixed
+    url(…) fixed, <Verlauf>      kein Attribut, position: absolute
+    <Verlauf>⏎fixed              kein Attribut, position: absolute
+
+In den beiden unteren Fällen ist die Ebene nach CSS fest
+(`background-attachment: fixed`), das Bauteil aber nicht — das Bild steht still,
+während seine Fläche weiter mitläuft. `stelleFest()` hängt das Wort ans Ende,
+`festUnerkannt()` meldet den anderen Fall.
+
+### Bewegung und Farbwechsel brauchen UIX
+
+Ein Theme-Feld trägt einen Wert, keine Regel; `@keyframes` passt nicht hinein.
+Ein Block mit `@keyframes` im Shadow Root von `hui-root` läuft dagegen sofort.
+
+- **Ein Block für beides.** Zwei Blöcke mit je einem `animation:` auf demselben
+  Bauteil überschreiben einander, es liefe nur der letzte.
+- **Nur `transform` und `filter`.** Beides rechnet die Grafikkarte.
+- **`@property` geht in einem Shadow Root nicht.** Die Regel wird dort nicht
+  registriert (im Dokument ja, im Shadow Root von `hui-root` nein), und jedes
+  Stilziel liegt in einem. Die Farben eines Verlaufs lassen sich so also nicht
+  überblenden; der Farbwechsel dreht stattdessen den Farbton der ganzen Fläche.
+- **`max-width: none !important`.** `hui-root` deckelt mit
+  `hui-view-container > * { max-width: 100% }`, und das Stylesheet des Bauteils
+  liegt in der Kaskade *hinter* einem `<style>` im selben Shadow Root.
+- **Fest am Fenster, rundum 14 % größer.** Die Zahl stammt aus HATG. Nachgemessen
+  über den ganzen Weg: kleinster Überstand 65 px bei 1009 × 768. Anders als in
+  HATG braucht es kein `overflow: clip` am Behälter — eine feste Fläche zählt
+  nicht zum rollbaren Bereich.
+
+### Wetter: UIX rechnet Jinja, und ein Fehler leert das ganze Feld
+
+UIX schickt ein Stilziel durch `render_template`, sobald `{{` oder `{%` darin
+vorkommt. Ein Himmel nach Wetter braucht also **kein eigenes JavaScript** und
+bleibt in der Theme-Datei.
+
+**Die Vorlage gilt für das ganze Feld, nicht für ihren Block.** Gemessen mit
+drei Regeln hintereinander, die mittlere kaputt:
+
+    .probe { --davor: 1 }  .probe { --kaputt: {{ states('sun.sun' }} }  .probe { --danach: 2 }
+
+Angekommen ist **keine** der drei. Ein Tippfehler oder ein unbekannter Filter
+im Himmel nimmt also die Kopfleiste der Glas-Vorlagen mit, die im selben
+Stilziel liegt.
+
+**Und gültiges CSS wird plötzlich falsch.** `{#` beginnt in Jinja einen
+Kommentar. `@media (min-width: 1px) {#view { … }}` ist gewöhnliches CSS — steht
+eine Vorlage im selben Feld, kommt davon nichts mehr an, ohne Vorlage alles.
+`vertraegtVorlage()` prüft den Rest des Feldes auf `{#`, `{{` und `{%`, bevor
+der Himmel eingeschaltet wird.
+
+Was daraus folgt, und was die Vorlage deshalb tut:
+
+- Nur `states()`, `is_state()` und `in`. Eine Entität, die es nicht gibt,
+  liefert `unknown`, keinen Fehler — die Lage heißt dann `ohne`, kein Schleier.
+- Die Entität kommt nur als `weather.<name>` in die Vorlage. Alles andere liefe
+  ungeprüft in Code, den der Server ausführt.
+- Die Zuordnung Wetter → Lage steht zweimal da, in Jinja und in JavaScript
+  (`himmelLage()`, für die Vorschau). `werkzeuge/test/hintergrund-messen.mjs`
+  lässt die Testmaschine alle 36 Fälle rechnen und vergleicht.
+
+**Welche Wetter-Entität „die erste" ist, lässt sich nicht vorhersagen.**
+`states.weather | map(attribute='state') | list` lieferte Süd, Nord, Zuhause —
+nicht nach ID sortiert. Die Entität gehört gewählt, nicht geraten.
+
+### Der Himmel ist ein Schleier, kein Ersatz
+
+Zwei Scheinelemente über `hui-view-background`, jedes mit **einer** Farbe und
+einer festen Maske. Ein Verlauf mit zwei Farben wäre kürzer, aber ein Verlauf
+blendet nicht über: Beim Wetterwechsel spränge das Bild. `background-color`
+blendet von selbst (gemessen: nach 1,5 s weder alte noch neue Farbe, nach 4,7 s
+die neue).
+
+Die Lagen und Anteile stammen aus der Wetterkachel der Horizon-Cards
+(`ha-karten/docs/himmel-verlauf.md`). Zwei Abweichungen, beide mit Grund:
+
+- **Das Nachtblau zieht in `--primary-background-color`**, nicht in ein festes
+  Dunkelblau. Die Kachel stellt über dem Nachthimmel ihre Schrift auf Weiß; ein
+  Hintergrund liegt unter *jeder* Karte und kann das nicht. Gemessen, klare
+  Nacht: Helligkeit 0,02 im Dunkelmodus, 0,79 im Hellmodus.
+- **Eine Stärke von 1 bis 10**, Vorgabe 6. Die Anteile sind für 119 px Kachel
+  gemacht; über einen ganzen Bildschirm ist volle Stärke viel.
+
+### UIX bringt eine eigene Hintergrundschicht mit
+
+Aus dem Bündel von UIX 8.4.0 gelesen und an der Instanz ausgelöst: `ha-drawer`
+liest `--uix-view-background` (dazu `-image`, `-video`, `-image-entity`,
+`-camera-entity`, `-cover`) und legt daraus ein festes `div[uix-view-background]`
+vorn in `<body>`. Die Schicht liegt über `hui-view-background` und unter den
+Karten — und sie war die einzige, die auch hinter den **Einstellungsseiten**
+zu sehen war.
+
+HATS benutzt sie noch nicht. Der Name ist doppelt belegt: `uix-view-background`
+ist zugleich das Stilziel dieser Schicht und ihr Wert. Und die Notiz in HATGs
+CLAUDE.md, die Variable gehöre zu `hui-root` und nicht zum Drawer, stimmt für
+8.4.0 nicht mehr.
+
+### Messen
+
+```bash
+node tests/hats-hintergrund.test.js            ohne Instanz, 25 Prüfungen
+node werkzeuge/test/hintergrund-messen.mjs     Testmaschine und Chrome, 23 Prüfungen
+```
+
+Das zweite lässt erst die Testmaschine die Vorlage rechnen und hängt das
+Ergebnis dann in einen kopflosen Chrome. Die Seite dort ist ein **Nachbau** mit
+den Regeln von `hui-view-background` und `hui-view-container`, wörtlich aus dem
+Bündel — kein Home Assistant.
+
+**Der eingebaute Browser der Claude-App misst nur, solange sein Fenster zu
+sehen ist.** Verdeckt zeichnet die Seite nicht, das Dashboard baut nicht auf
+(die Fläche maß 768 statt 1774 px), und UIX schreibt seine Knoten nicht: Ein
+Stil kam mit 16 Zeichen an statt mit 1345. `document.visibilityState` sagt es
+vorher.
+
+**Der Nachbau im Chrome braucht einen Dokumenttyp.** `about:blank` läuft im
+Quirks-Modus; dort ist `clientHeight` von `<html>` die Höhe des Inhalts, nicht
+die des Fensters. Und Prozentwerte einer festen Fläche beziehen sich auf das
+Fenster **ohne** Rollbalken — `innerWidth` liegt 15 px daneben.
+
+**Nicht gemessen:** die Vorlagen über eine echte Theme an der Instanz (dort
+gemessen sind die Bausteine einzeln: `@keyframes` im Shadow Root von `hui-root`,
+Jinja in einem UIX-Knoten, die Zuordnung auf dem Server). Was Bewegung unter
+Glas an Rechenzeit kostet. Ob `render_template` für Nutzer ohne
+Administratorrechte antwortet — wenn nicht, wäre für sie das ganze Stilziel
+leer. Safari, Firefox und die Companion-Apps.
 
 ## Zustand im DOM: drei Familien, drei Marken
 
