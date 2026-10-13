@@ -215,5 +215,16 @@ pruefe("Die Texte der Schalter stehen IM en-Block", () => {
     assert.ok(en.includes(JSON.stringify(x)), `${x} fehlt im en-Block`);
 });
 
+
+pruefe("Deaktiviert heisst leiser, nicht unsichtbar", () => {
+  // Erst stand hier opacity .35 - auf hellem Glas war davon nichts mehr zu
+  // sehen, und gemeldet wurde "ich hab keine knoepfe". Der Kreis bleibt voll
+  // da, nur das Symbol tritt zurueck.
+  const css = panel.slice(panel.indexOf(".schalterknopf[disabled]"),
+                          panel.indexOf(".schalterknopf[disabled]") + 400);
+  assert.doesNotMatch(css, /opacity:\s*0?\.[0-4]/, "die Knoepfe sind wieder fast durchsichtig");
+  assert.match(css, /background:/, "der Kreis selbst verschwindet");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 22) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 23) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

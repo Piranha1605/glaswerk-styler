@@ -2138,10 +2138,13 @@ class HatsPanel extends HTMLElement {
       .schalterknopf ha-icon { --mdc-icon-size: 19px; color: var(--s-tinte); }
       .schalterknopf:hover:not([disabled]) { background: #fff; box-shadow: var(--s-schatten-klein);
                                              transform: translateY(-1px); }
-      /* Gedaempft statt weg: Ein Knopf, der mal da ist und mal nicht, laesst
-         einen suchen. */
-      .schalterknopf[disabled] { cursor: default; opacity: .35; }
-      .schalterknopf[disabled] ha-icon { color: var(--s-tinte-leise); }
+      /* Nicht verfuegbar heisst LEISER, nicht unsichtbar.
+         Erst stand hier opacity .35 - auf hellem Glas war davon nichts mehr
+         zu sehen, und genau das widerspricht "immer sichtbar". Jetzt bleibt
+         der Kreis voll da, nur das Symbol tritt zurueck. */
+      .schalterknopf[disabled] { cursor: default; background: rgba(255,255,255,.45);
+                                 box-shadow: inset 0 0 0 1px rgba(27,36,48,.07); }
+      .schalterknopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
 
       /* ---- Bericht nach dem Einlesen ---- */
       .berichtzahlen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
