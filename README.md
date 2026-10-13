@@ -132,8 +132,10 @@ Dieselbe Steuerung gibt es in klein, für die Badge-Reihe über den Karten:
 type: custom:hats-control-badge
 ```
 
-Die Felder sind dieselben. Im Badge-Wähler steht es unter **„Nach Badge"**,
-Abschnitt Community-Badges, als „HATS Steuerung":
+Das Badge ist die kleine Steuerung, nicht die Leiste: Es kennt `controls`
+(`mode`, `fullscreen`) und `kiosk_only`. Ziele, Schalter und Wetter gehören in
+die Karte. Im Badge-Wähler steht es unter **„Nach Badge"**, Abschnitt
+Community-Badges, als „HATS Steuerung":
 
 ![Der Badge-Wähler mit HATS Steuerung](docs/bilder/steuerbadge-waehler.jpg)
 

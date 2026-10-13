@@ -10,6 +10,11 @@
 //     type: custom:hats-control-card      als Karte
 //     type: custom:hats-control-badge     als Badge, in der Reihe ueber den Karten
 //
+// DAS BADGE BLEIBT, WIE ES WAR: Modus und Vollbild in klein, eingestellt ueber
+// die Kurzform `controls`. Ziele, Schalter und Wetter sind eine Erweiterung
+// der KARTE. Ansage vom 13.10.2026: "erst einmal nur uebernehmen und als
+// erweiterung zu unserer sehen. die badgets bleiben wie sie sind."
+//
 // ZUSAMMENGEFUEGT am 13.10.2026 aus zwei Dingen: der Steuerkarte (Modus und
 // Vollbild) und der Menueleiste der Horizon-Cards (Ziele, Kapsel, Schalter,
 // Wetter, Einklappen). Die Felder der Menueleiste gelten hier unveraendert -
@@ -95,12 +100,13 @@ const TEXTE = {
       `Die Theme „${theme}“ bringt nur den ${modus === "dark" ? "dunklen" : "hellen"} Modus mit.`,
     leer: "Kein Knopf eingerichtet.",
     feld: {
-      buttons: "Knöpfe", kiosk_only: "Vollbild nur in Home Assistant",
+      buttons: "Knöpfe", controls: "Bedienteile", kiosk_only: "Vollbild nur in Home Assistant",
       menu_shape: "Form", menu_size: "Größe", collapse: "Ziele einklappen",
       collapse_width: "Einklappen unter dieser Kartenbreite", show_highlight: "Kapsel auf der aktuellen Ansicht",
     },
     hilfe: {
       buttons: "Ein Ziel, ein Schalter oder eine Funktion - in dieser Reihenfolge.",
+      controls: "Angezeigt in dieser Reihenfolge.",
       kiosk_only: "Blendet nur Seitenleiste und Kopfzeile aus. Das Browserfenster bleibt, wie es ist.",
       collapse_width: "Gemessen wird die Karte, nicht das Fenster.",
     },
@@ -110,6 +116,8 @@ const TEXTE = {
       align_end: "Ans Ende der Leiste", separator_before: "Trennstrich davor",
     },
     funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter" },
+    teil: { mode: "Modus", fullscreen: "Vollbild" },
+    nurKurzform: "Das Badge kennt nur `controls` - Ziele und Schalter gehören in die Karte.",
     wahl: {
       theme: "Rundung der Theme", pill: "ganz rund",
       small: "klein", normal: "normal", large: "groß",
@@ -133,12 +141,13 @@ const TEXTE = {
       `The theme "${theme}" only has a ${modus === "dark" ? "dark" : "light"} mode.`,
     leer: "No button set up.",
     feld: {
-      buttons: "Buttons", kiosk_only: "Fullscreen in Home Assistant only",
+      buttons: "Buttons", controls: "Controls", kiosk_only: "Fullscreen in Home Assistant only",
       menu_shape: "Shape", menu_size: "Size", collapse: "Collapse targets",
       collapse_width: "Collapse below this card width", show_highlight: "Pill on the current view",
     },
     hilfe: {
       buttons: "A target, a switch or a function - in this order.",
+      controls: "Shown in this order.",
       kiosk_only: "Only hides the sidebar and the header. The browser window stays as it is.",
       collapse_width: "The card is measured, not the window.",
     },
@@ -148,6 +157,8 @@ const TEXTE = {
       align_end: "At the end of the bar", separator_before: "Separator before",
     },
     funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather" },
+    teil: { mode: "Mode", fullscreen: "Fullscreen" },
+    nurKurzform: "The badge only takes `controls` - targets and switches belong in the card.",
     wahl: {
       theme: "theme radius", pill: "fully round",
       small: "small", normal: "normal", large: "large",
@@ -781,9 +792,9 @@ const STIL_BADGE = `
     --_h: 28px; --_polster: 8px; --_knopfrund: var(--ha-border-radius-pill, 9999px);
     padding: 0 var(--ha-space-1, 4px);
   }
-  .reihe { gap: 2px; }
+  .reihe { gap: var(--ha-space-1, 4px); }
+  .trenner { margin: 0; }
   ha-icon, ha-state-icon { --mdc-icon-size: var(--ha-badge-icon-size, 18px); }
-  .knopf { font-size: var(--ha-font-size-s, 12px); gap: 4px; }
   .modus { gap: 2px; }
   .wahl { flex: none; width: 28px; height: 28px; border-radius: var(--_knopfrund); }
 `;
@@ -813,54 +824,6 @@ class Steuerung extends Basis {
     // schliesst.
     this._beiAussen = (ev) => { if (!ev.composedPath().includes(this)) this._listeZu(); };
     this._beiTaste = (ev) => { if (ev.key === "Escape") this._listeZu(); };
-  }
-
-  // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
-  // eine leere Liste, waehrend die Vorgabe - Modus und Vollbild - gezeichnet
-  // wird.
-  static getStubConfig() {
-    return { buttons: BEDIENTEILE.map((funktion) => ({ function: funktion })) };
-  }
-
-  // Home Assistant baut den Editor aus diesem Schema selbst.
-  //
-  // kiosk_only ist absichtlich so herum benannt, dass "aus" die Vorgabe ist:
-  // Ein Schalter im Formular zeigt ein fehlendes Feld als aus. Hiesse es
-  // browser_fullscreen mit Vorgabe an, staende der Schalter auf aus, waehrend
-  // die Karte das Gegenteil taete.
-  static getConfigForm() {
-    const t = TEXTE[sprache()];
-    const wahl = (werte) => ({ select: { mode: "dropdown",
-      options: werte.map((wert) => ({ value: wert, label: t.wahl[wert] })) } });
-    return {
-      schema: [
-        // Eine Liste von Objekten, jedes mit eigenem Unterformular - auch das
-        // zeichnet Home Assistant selbst (am 13.10.2026 an 2026.10.1 gesehen:
-        // Zeilen mit Griff, Stift und Papierkorb, darunter "Hinzufuegen").
-        // Die Kurzform `controls` steht hier absichtlich nicht mehr: Sie gilt
-        // im YAML weiter, aber zwei Wege im selben Formular waeren einer zu viel.
-        { name: "buttons",
-          selector: { object: { multiple: true, label_field: "name", description_field: "link",
-            fields: {
-              name: { label: t.knopffeld.name, selector: { text: {} } },
-              icon: { label: t.knopffeld.icon, selector: { icon: {} } },
-              link: { label: t.knopffeld.link, selector: { navigation: {} } },
-              entity: { label: t.knopffeld.entity, selector: { entity: {} } },
-              function: { label: t.knopffeld.function, selector: { select: { mode: "dropdown",
-                options: FUNKTIONEN.map((wert) => ({ value: wert, label: t.funktion[wert] })) } } },
-              temperature: { label: t.knopffeld.temperature, selector: { entity: { domain: "sensor" } } },
-              align_end: { label: t.knopffeld.align_end, selector: { boolean: {} } },
-              separator_before: { label: t.knopffeld.separator_before, selector: { boolean: {} } },
-            } } } },
-        { name: "kiosk_only", selector: { boolean: {} } },
-        { name: "menu_shape", selector: wahl(FORMEN) },
-        { name: "menu_size", selector: wahl(GROESSEN) },
-        { name: "collapse", selector: wahl(EINKLAPPEN) },
-        { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
-      ],
-      computeLabel: (feld) => t.feld[feld.name],
-      computeHelper: (feld) => t.hilfe[feld.name],
-    };
   }
 
   // Drei Dinge haengen ausserhalb der Leiste und halten sie fest: die
@@ -909,7 +872,7 @@ class Steuerung extends Basis {
   }
 
   setConfig(config) {
-    this._config = pruefeConfig(config);
+    this._config = this._liesConfig(config);
     // Nur diese Entitaeten loesen ein Zeichnen aus.
     this._beobachtet = [...new Set(this._config.knoepfe
       .flatMap((k) => [k.entity, k.temperature]).filter(Boolean))];
@@ -1295,6 +1258,55 @@ class Steuerung extends Basis {
 }
 
 class HatsControlCard extends Steuerung {
+  // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
+  // eine leere Liste, waehrend die Vorgabe - Modus und Vollbild - gezeichnet
+  // wird.
+  static getStubConfig() {
+    return { buttons: BEDIENTEILE.map((funktion) => ({ function: funktion })) };
+  }
+
+  // Home Assistant baut den Editor aus diesem Schema selbst.
+  //
+  // kiosk_only ist absichtlich so herum benannt, dass "aus" die Vorgabe ist:
+  // Ein Schalter im Formular zeigt ein fehlendes Feld als aus. Hiesse es
+  // browser_fullscreen mit Vorgabe an, staende der Schalter auf aus, waehrend
+  // die Karte das Gegenteil taete.
+  static getConfigForm() {
+    const t = TEXTE[sprache()];
+    const wahl = (werte) => ({ select: { mode: "dropdown",
+      options: werte.map((wert) => ({ value: wert, label: t.wahl[wert] })) } });
+    return {
+      schema: [
+        // Eine Liste von Objekten, jedes mit eigenem Unterformular - auch das
+        // zeichnet Home Assistant selbst (am 13.10.2026 an 2026.10.1 gesehen:
+        // Zeilen mit Griff, Stift und Papierkorb, darunter "Hinzufuegen").
+        // Die Kurzform `controls` steht hier absichtlich nicht mehr: Sie gilt
+        // im YAML weiter, aber zwei Wege im selben Formular waeren einer zu viel.
+        { name: "buttons",
+          selector: { object: { multiple: true, label_field: "name", description_field: "link",
+            fields: {
+              name: { label: t.knopffeld.name, selector: { text: {} } },
+              icon: { label: t.knopffeld.icon, selector: { icon: {} } },
+              link: { label: t.knopffeld.link, selector: { navigation: {} } },
+              entity: { label: t.knopffeld.entity, selector: { entity: {} } },
+              function: { label: t.knopffeld.function, selector: { select: { mode: "dropdown",
+                options: FUNKTIONEN.map((wert) => ({ value: wert, label: t.funktion[wert] })) } } },
+              temperature: { label: t.knopffeld.temperature, selector: { entity: { domain: "sensor" } } },
+              align_end: { label: t.knopffeld.align_end, selector: { boolean: {} } },
+              separator_before: { label: t.knopffeld.separator_before, selector: { boolean: {} } },
+            } } } },
+        { name: "kiosk_only", selector: { boolean: {} } },
+        { name: "menu_shape", selector: wahl(FORMEN) },
+        { name: "menu_size", selector: wahl(GROESSEN) },
+        { name: "collapse", selector: wahl(EINKLAPPEN) },
+        { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
+      ],
+      computeLabel: (feld) => t.feld[feld.name],
+      computeHelper: (feld) => t.hilfe[feld.name],
+    };
+  }
+
+  _liesConfig(config) { return pruefeConfig(config); }
   _stil() { return STIL_KARTE; }
   _einklappbar() { return true; }
   _gruppenstrich() { return false; }
@@ -1314,6 +1326,33 @@ class HatsControlCard extends Steuerung {
 }
 
 class HatsControlBadge extends Steuerung {
+  // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
+  // ein leeres Auswahlfeld, waehrend beide Teile gezeichnet werden.
+  static getStubConfig() {
+    return { controls: [...BEDIENTEILE] };
+  }
+
+  static getConfigForm() {
+    const t = TEXTE[sprache()];
+    return {
+      schema: [
+        { name: "controls", required: true,
+          selector: { select: { multiple: true, reorder: true,
+            options: BEDIENTEILE.map((wert) => ({ value: wert, label: t.teil[wert] })) } } },
+        { name: "kiosk_only", selector: { boolean: {} } },
+      ],
+      computeLabel: (feld) => t.feld[feld.name],
+      computeHelper: (feld) => t.hilfe[feld.name],
+    };
+  }
+
+  // Das Badge liest NUR die Kurzform. `buttons` ist hier ein Fehler und kein
+  // stilles Nichts: Ein Feld, das angenommen und nie gelesen wird, sieht aus
+  // wie eine Karte, die nicht tut, was man eingestellt hat.
+  _liesConfig(config) {
+    if (config?.buttons !== undefined) throw new Error(TEXTE[sprache()].nurKurzform);
+    return pruefeConfig({ controls: config?.controls, kiosk_only: config?.kiosk_only });
+  }
   _stil() { return STIL_BADGE; }
   _einklappbar() { return false; }
   // Zwischen der Modus-Gruppe und einem Knopf daneben steht im Badge von

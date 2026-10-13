@@ -210,7 +210,7 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     // fuer das Badge dazugekommen
     "--ha-space-1", "--ha-border-radius-pill", "--divider-color",
     // mit der Menueleiste dazugekommen
-    "--ha-space-3", "--ha-font-size-s", "--ha-font-weight-medium",
+    "--ha-space-3", "--ha-font-weight-medium",
     "--white-color", "--black-color", "--state-active-color",
     "--card-background-color", "--ha-card-border-radius", "--ha-card-box-shadow",
   ];
@@ -295,16 +295,45 @@ pruefe("Karte und Badge teilen Verhalten und unterscheiden sich nur im Rahmen", 
   };
   // Klicks, Zustand und Konfiguration stehen genau einmal, in Steuerung. Eine
   // Form, die davon etwas ueberschreibt, liefe der anderen davon.
+  // _liesConfig ist die eine Stelle, an der sie sich im INHALT unterscheiden:
+  // Die Karte nimmt alles, das Badge nur die Kurzform (siehe die Pruefung
+  // darunter). Die uebrigen Namen sind Rahmen und Stilblatt.
   assert.deepStrictEqual(rumpf("HatsControlBadge"),
-    ["_einklappbar", "_gruppenstrich", "_rahmen", "_stil"]);
+    ["_einklappbar", "_gruppenstrich", "_liesConfig", "_rahmen", "_stil"]);
   assert.deepStrictEqual(rumpf("HatsControlCard"),
-    ["_einklappbar", "_gruppenstrich", "_rahmen", "_stil", "getCardSize", "getGridOptions"]);
+    ["_einklappbar", "_gruppenstrich", "_liesConfig", "_rahmen", "_stil", "getCardSize", "getGridOptions"]);
   // Gegenprobe: Die Basis traegt, was die Formen nicht tragen.
   const basis = /class Steuerung extends Basis \{([\s\S]*?)\n\}/.exec(quelle);
   assert.ok(basis, "Steuerung nicht gefunden");
   for (const m of ["setConfig", "_klick", "_stelle", "_baue"]) {
     assert.ok(new RegExp(`^  ${m}\\(`, "m").test(basis[1]), `${m} fehlt in Steuerung`);
   }
+});
+
+pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formular", () => {
+  // Ansage vom 13.10.2026: "die badgets bleiben wie sie sind." Ziele, Schalter
+  // und Wetter sind eine Erweiterung der KARTE.
+  const klasse = (name) => {
+    const m = new RegExp(`class ${name} extends Steuerung \\{([\\s\\S]*?)\\n\\}`).exec(quelle);
+    assert.ok(m, `${name} nicht gefunden`);
+    return m[1];
+  };
+  const badge = klasse("HatsControlBadge");
+  const karte = klasse("HatsControlCard");
+
+  // Das Badge reicht nur controls und kiosk_only weiter ...
+  assert.ok(/pruefeConfig\(\{ controls: config\?\.controls, kiosk_only: config\?\.kiosk_only \}\)/.test(badge));
+  // ... und `buttons` ist dort ein Fehler, kein Feld, das still verschwindet.
+  assert.ok(/if \(config\?\.buttons !== undefined\) throw new Error\(/.test(badge));
+  // Gegenprobe: Die Karte reicht alles durch.
+  assert.ok(/_liesConfig\(config\) \{ return pruefeConfig\(config\); \}/.test(karte));
+
+  // Jede Form hat IHR Formular: das Badge die Auswahl der Bedienteile, die
+  // Karte die Liste der Knoepfe. Und der Waehler legt an, was dazu passt.
+  assert.ok(/\{ name: "controls", required: true,/.test(badge) && !/name: "buttons"/.test(badge));
+  assert.ok(/\{ name: "buttons",/.test(karte) && !/name: "controls"/.test(karte));
+  assert.ok(/return \{ controls: \[\.\.\.BEDIENTEILE\] \};/.test(badge));
+  assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(karte));
 });
 
 pruefe("Das Badge steht in Home Assistants Badge-Liste, die Karte in der Kartenliste", () => {
@@ -343,4 +372,4 @@ pruefe("Die Karte steht in der Einspielliste", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 21) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 23) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

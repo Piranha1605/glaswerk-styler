@@ -1228,9 +1228,10 @@ Klicks, Zustand oder Konfiguration überschreibt — sonst liefen sie auseinande
 badgets immer mitziehen."* Gefragt war, ob die Freigabe zum Drücken der Karte
 auch für das Badge gilt — die Antwort reicht weiter, und so lese ich sie:
 
-- Was die Karte bekommt, bekommt das Badge im selben Zug. Ein neues Bedienteil
-  kommt in `BEDIENTEILE` und in `Steuerung._baue`, also in beide Formen auf
-  einmal; ein Stilblatt allein reicht dann nicht, **beide** brauchen ihre Maße.
+- Was die **Steuerung** bekommt, bekommt das Badge im selben Zug. Ein neues
+  Bedienteil kommt in `BEDIENTEILE` und in `Steuerung._baue`, also in beide
+  Formen auf einmal; ein Stilblatt allein reicht dann nicht, **beide** brauchen
+  ihre Maße.
 - Was für die Karte geprüft wird, wird am Badge mitgeprüft — an der
   Testmaschine beide drücken, nicht nur eine.
 - Was für die Karte freigegeben ist, ist es für das Badge (steht so in
@@ -1240,6 +1241,24 @@ auch für das Badge gilt — die Antwort reicht weiter, und so lese ich sie:
 
 Der erste Punkt ist durch den Aufbau gesichert, nicht durch guten Willen: Die
 beiden Formen können kein Bedienteil für sich allein haben.
+
+**Die Grenze dazu, noch am selben Abend:** *„erst einmal nur übernehmen und
+als erweiterung zu unserer sehen. die badgets bleiben wie sie sind."* Das war
+die Antwort auf die zusammengefügte Menüleiste. Ziele, Schalter, Wetter und
+das Einklappen sind eine **Erweiterung der Karte**; das Badge bleibt die kleine
+Steuerung — Modus und Vollbild, eingestellt über `controls`. Es liest
+`buttons` nicht nur nicht, es weist sie ab: Ein Feld, das angenommen und nie
+gelesen wird, sähe aus wie ein Badge, das nicht tut, was man eingestellt hat.
+
+Mitgezogen wird also die Steuerung, nicht alles, was die Karte kann. Beim
+Zusammenfügen hatte das Badge kurz beides bekommen — die Liste der Knöpfe im
+Editor und vier Pixel mehr Breite durch einen geteilten Abstand. Beides ist
+zurück: 133 Pixel, das Formular mit der Auswahl der Bedienteile.
+
+Was **nicht** zurück ist, weil es ein und dieselbe Sache ist: das Vollbild.
+Kopfzeile und Merken gelten für Karte und Badge gleich. Zwei Knöpfe für
+denselben Zustand, von denen einer die Kopfzeile nimmt und der andere nicht,
+wären auf derselben Seite nicht zu erklären.
 
 **Die Fläche zeichnet `ha-badge`.** An der Instanz gemessen:
 

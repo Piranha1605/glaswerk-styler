@@ -130,8 +130,10 @@ The same control exists in a small form, for the badge row above the cards:
 type: custom:hats-control-badge
 ```
 
-The fields are the same. In the badge picker it is listed on the **"By
-badge"** tab, section Community badges, as "HATS control":
+The badge is the small control, not the bar: it takes `controls` (`mode`,
+`fullscreen`) and `kiosk_only`. Targets, switches and weather belong in the
+card. In the badge picker it is listed on the **"By badge"** tab, section
+Community badges, as "HATS control":
 
 ![The badge picker showing the HATS control](docs/bilder/steuerbadge-waehler.jpg)
 
