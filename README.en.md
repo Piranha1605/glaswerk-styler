@@ -41,17 +41,54 @@ instead of working it out again.
 
 ## The control card
 
-HATS ships a card for dashboards. It switches the mode (auto, light, dark) and
-fullscreen.
+HATS ships a card for dashboards: a bar of buttons. Each one is a target, a
+switch or a built-in function — mode, light/dark, fullscreen, weather.
 
-![The control card in light mode](docs/bilder/steuerkarte-hell.jpg)
-![The control card in dark mode](docs/bilder/steuerkarte-dunkel.jpg)
-
-The card three times at the top, two Home Assistant tiles below for comparison.
+![The bar in dark mode](docs/bilder/steuerleiste-dunkel.jpg)
+![The bar in light mode, in fullscreen](docs/bilder/steuerleiste-hell.jpg)
 
 ```yaml
 type: custom:hats-control-card
+buttons:
+  - name: Home
+    icon: mdi:home-outline
+    link: /dashboard-home
+  - name: Lights
+    icon: mdi:ceiling-light-multiple
+    link: /dashboard-home/lights
+  - entity: light.kitchen         # lit while the lamp is on
+    align_end: true
+    separator_before: true
+  - function: weather
+    entity: weather.forecast_home
+    align_end: true
+  - function: fullscreen
+    align_end: true
+  - function: mode
+    align_end: true
+collapse: narrow
 ```
+
+Without `buttons` it shows mode and fullscreen — the short form:
+
+![The short form in light mode](docs/bilder/steuerkarte-hell.jpg)
+![The short form in dark mode](docs/bilder/steuerkarte-dunkel.jpg)
+
+**Buttons**
+
+| Field | |
+|---|---|
+| `name`, `icon` | label and icon; one of them is enough |
+| `link` | a path changes the view. The pill sits on the button whose target is open |
+| `entity` | turns the button into a switch: a tap toggles it, and it is lit while the entity is on |
+| `tap_action` | any Home Assistant action; it wins over `link` and over toggling |
+| `state_background` | default `true`: a button that is on is filled |
+| `light_background` | default `true`: in the lamp's colour, otherwise in Home Assistant's state colour |
+| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather` |
+| `temperature`, `temperature_source` | `weather` only: a sensor of your own, and whether the value comes from it (`sensor`) or from the weather entity (`weather`) |
+| `align_end`, `separator_before` | at the end of the bar; a thin line before it |
+
+**The bar**
 
 It appears in the card picker as soon as the integration is set up and the
 page has been reloaded once — on the **"By card"** tab, search for "HATS". The
@@ -65,8 +102,22 @@ by hand; the log shows the line.
 
 | Field | Default | |
 |---|---|---|
-| `controls` | `[mode, fullscreen]` | which controls, in which order |
+| `collapse` | `never` | `narrow` or `always`: the targets move into a list under a menu button |
+| `collapse_width` | `500` | with `narrow`: below this **card width**, not window width |
+| `menu_shape` | `theme` | `pill` for fully round ends |
+| `menu_size` | `normal` | `small`, `normal`, `large` |
+| `show_highlight` | `true` | the pill on the current view |
 | `kiosk_only` | `false` | `true`: fullscreen in Home Assistant only, the browser window stays |
+| `controls` | `[mode, fullscreen]` | the short form, when there are no `buttons` |
+
+The editor lets you add, sort and edit the buttons:
+
+![The editor with the list of buttons](docs/bilder/steuerleiste-editor.jpg)
+
+The fields are those of the menu card from the Horizon Cards. A bar from there
+keeps working once `type` is `custom:hats-control-card`. Not taken over yet:
+`visibility`, `#anchor` links, `hold_action`, `double_tap_action` and
+`placement: bottom`.
 
 ### As a badge
 
@@ -95,13 +146,12 @@ Worth knowing:
   wall tablet also switches every other device the same user is logged in on.
 - **A theme with only one mode cannot be switched.** The card then locks the
   choice and says why when pressed.
-- **Fullscreen means two things.** Home Assistant hides the sidebar and the
-  header buttons (its kiosk mode), and the browser goes fullscreen where it
-  offers that. The header row with the view tabs stays — Home Assistant has no
-  switch for it.
-- **Fullscreen is not stored.** Reloading the page resets everything. That is
-  also the way out after moving to a view without the card while in
-  fullscreen: there is no menu button any more.
+- **Fullscreen means three things.** Home Assistant hides the sidebar (its
+  kiosk mode), the card takes the header away, and the browser goes fullscreen
+  where it offers that. In edit mode the header stays.
+- **Fullscreen is remembered per device.** A wall tablet starts in fullscreen
+  again after a reload, as soon as the card is on the view. The same button or
+  Esc leads back.
 
 ## Installation
 

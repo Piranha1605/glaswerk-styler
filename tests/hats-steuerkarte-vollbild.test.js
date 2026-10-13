@@ -45,7 +45,48 @@ const doc = {
 globalThis.document = doc;
 globalThis.window = { dispatchEvent(e) { kiosk.push(`${e.type}:${e.detail.enable}`); return true; } };
 
-const { schalteVollbild } = await import("../custom_components/hats/www/hats-control-card.js");
+// Der Speicher des Browsers, in dem sich die Leiste das Vollbild je Geraet
+// merkt. Als Eigenschaft definiert, nicht zugewiesen: node bringt unter
+// diesem Namen etwas Eigenes mit.
+const speicher = new Map();
+Object.defineProperty(globalThis, "localStorage", { configurable: true, value: {
+  getItem: (k) => (speicher.has(k) ? speicher.get(k) : null),
+  setItem: (k, v) => { speicher.set(k, String(v)); },
+} });
+
+const { schalteVollbild, vollbildGemerkt, gleicheVollbildAb } =
+  await import("../custom_components/hats/www/hats-control-card.js");
+
+// Vor allem anderen, denn der Abgleich laeuft nur EINMAL je Seite: Wer von
+// der Menueleiste der Horizon-Cards kommt, hat seine Wahl unter deren Namen
+// liegen und soll weiter im Vollbild starten.
+await pruefe("Der gemerkte Zustand der Menueleiste wird uebernommen und einmal eingeschaltet", () => {
+  assert.strictEqual(vollbildGemerkt(), false, "ein leerer Speicher gilt als gemerkt");
+  speicher.set("menue-leiste:kiosk", "1");
+  assert.strictEqual(vollbildGemerkt(), true);
+  gleicheVollbildAb({ kioskMode: false });
+  assert.deepStrictEqual(kiosk, ["hass-kiosk-mode:true"]);
+  // Nur einmal - und nie ein "aus": Das loeschte einen Kiosk-Modus, den
+  // jemand anders gesetzt hat.
+  gleicheVollbildAb({ kioskMode: false });
+  speicher.set("hats-control:fullscreen", "0");
+  gleicheVollbildAb({ kioskMode: true });
+  assert.deepStrictEqual(kiosk, ["hass-kiosk-mode:true"]);
+  kiosk.length = 0;
+});
+
+await pruefe("Die eigene Wahl schlaegt die uebernommene, und jedes Schalten wird gemerkt", () => {
+  // Der eigene Schluessel steht auf "0", der alte noch auf "1".
+  assert.strictEqual(vollbildGemerkt(), false);
+  schalteVollbild(true, true);
+  assert.strictEqual(speicher.get("hats-control:fullscreen"), "1");
+  assert.strictEqual(vollbildGemerkt(), true);
+  schalteVollbild(false, true);
+  assert.strictEqual(speicher.get("hats-control:fullscreen"), "0");
+  // Den Schluessel der Menueleiste fasst die Leiste nicht an.
+  assert.strictEqual(speicher.get("menue-leiste:kiosk"), "1");
+  kiosk.length = 0;
+});
 
 // Was der Browser bei Esc tut: Element weg, dann das Ereignis.
 const esc = () => { doc.fullscreenElement = null; hoerer.fullscreenchange(); };
@@ -66,10 +107,14 @@ await pruefe("Einschalten: Kiosk an und eine Anfrage an den Browser", async () =
   antwort.erfuelle(); await gleich();
 });
 
-await pruefe("Esc beendet auch den Kiosk-Modus", async () => {
+await pruefe("Esc beendet auch den Kiosk-Modus - und das wird gemerkt", async () => {
   kiosk.length = 0;
+  assert.strictEqual(speicher.get("hats-control:fullscreen"), "1");
   esc();
   assert.deepStrictEqual(kiosk, ["hass-kiosk-mode:false"]);
+  // Sonst startete das Wandtablett nach dem naechsten Neuladen wieder im
+  // Vollbild, obwohl jemand es verlassen hat.
+  assert.strictEqual(speicher.get("hats-control:fullscreen"), "0");
   // Und nur einmal: Ein zweites Ereignis ohne unser Vollbild tut nichts mehr.
   esc();
   assert.deepStrictEqual(kiosk, ["hass-kiosk-mode:false"]);
@@ -171,4 +216,4 @@ await pruefe("Kann der Browser kein Vollbild, bleibt der Kiosk-Modus", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 12) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 14) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

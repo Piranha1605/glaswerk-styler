@@ -42,17 +42,55 @@ statt es neu zu erarbeiten.
 
 ## Die Steuerkarte
 
-HATS bringt eine Karte für Dashboards mit. Sie schaltet den Modus
-(automatisch, hell, dunkel) und das Vollbild.
+HATS bringt eine Karte für Dashboards mit: eine Leiste aus Knöpfen. Jeder ist
+ein Ziel, ein Schalter oder eine eingebaute Funktion — Modus, Hell/Dunkel,
+Vollbild, Wetter.
 
-![Die Steuerkarte im hellen Modus](docs/bilder/steuerkarte-hell.jpg)
-![Die Steuerkarte im dunklen Modus](docs/bilder/steuerkarte-dunkel.jpg)
-
-Oben dreimal die Karte, darunter zum Vergleich zwei Kacheln von Home Assistant.
+![Die Leiste im dunklen Modus](docs/bilder/steuerleiste-dunkel.jpg)
+![Die Leiste im hellen Modus, im Vollbild](docs/bilder/steuerleiste-hell.jpg)
 
 ```yaml
 type: custom:hats-control-card
+buttons:
+  - name: Home
+    icon: mdi:home-outline
+    link: /dashboard-home
+  - name: Licht
+    icon: mdi:ceiling-light-multiple
+    link: /dashboard-home/licht
+  - entity: light.kueche          # leuchtet, solange die Lampe an ist
+    align_end: true
+    separator_before: true
+  - function: weather
+    entity: weather.forecast_home
+    align_end: true
+  - function: fullscreen
+    align_end: true
+  - function: mode
+    align_end: true
+collapse: narrow
 ```
+
+Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form:
+
+![Die kurze Form im hellen Modus](docs/bilder/steuerkarte-hell.jpg)
+![Die kurze Form im dunklen Modus](docs/bilder/steuerkarte-dunkel.jpg)
+
+**Knöpfe**
+
+| Feld | |
+|---|---|
+| `name`, `icon` | Beschriftung und Symbol; eins von beiden genügt |
+| `link` | ein Pfad wechselt die Ansicht. Die Kapsel sitzt auf dem Knopf, dessen Ziel offen ist |
+| `entity` | macht den Knopf zum Schalter: Antippen schaltet um, und er leuchtet, solange sie an ist |
+| `tap_action` | jede Aktion von Home Assistant; sie schlägt `link` und das Umschalten |
+| `state_background` | Vorgabe `true`: ein eingeschalteter Knopf wird gefüllt |
+| `light_background` | Vorgabe `true`: in der Farbe der Lampe, sonst in Home Assistants Zustandsfarbe |
+| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather` |
+| `temperature`, `temperature_source` | nur bei `weather`: eigener Sensor, und ob der Wert von dort (`sensor`) oder aus der Wetterentität (`weather`) kommt |
+| `align_end`, `separator_before` | ans Ende der Leiste; dünner Strich davor |
+
+**Die Leiste**
 
 Sie steht im Kartenwähler, sobald die Integration eingerichtet und die Seite
 einmal neu geladen ist — unter dem Reiter **„Nach Karte"**, Suche „HATS". Der
@@ -66,8 +104,22 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 
 | Feld | Vorgabe | |
 |---|---|---|
-| `controls` | `[mode, fullscreen]` | welche Bedienteile, in welcher Reihenfolge |
+| `collapse` | `never` | `narrow` oder `always`: die Ziele wandern in eine Liste unter einem Menüknopf |
+| `collapse_width` | `500` | bei `narrow`: unter dieser **Kartenbreite**, nicht Fensterbreite |
+| `menu_shape` | `theme` | `pill` für ganz runde Enden |
+| `menu_size` | `normal` | `small`, `normal`, `large` |
+| `show_highlight` | `true` | die Kapsel auf der aktuellen Ansicht |
 | `kiosk_only` | `false` | `true`: Vollbild nur in Home Assistant, das Browserfenster bleibt |
+| `controls` | `[mode, fullscreen]` | die kurze Form, wenn es keine `buttons` gibt |
+
+Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten:
+
+![Der Editor mit der Liste der Knöpfe](docs/bilder/steuerleiste-editor.jpg)
+
+Die Felder sind die der Menü-Karte aus den Horizon-Cards. Eine Leiste von dort
+läuft weiter, wenn `type` auf `custom:hats-control-card` steht. Noch nicht
+übernommen sind `visibility`, `#anker`-Links, `hold_action`,
+`double_tap_action` und `placement: bottom`.
 
 ### Als Badge
 
@@ -97,13 +149,12 @@ Was man wissen sollte:
   angemeldet ist.
 - **Eine Theme mit nur einem Modus lässt sich nicht umschalten.** Die Karte
   sperrt die Wahl dann und sagt beim Drücken, warum.
-- **Vollbild heißt zweierlei.** Home Assistant blendet Seitenleiste und
-  Kopfknöpfe aus (sein Kiosk-Modus), und der Browser geht ins Vollbild, wo er
-  das anbietet. Die Kopfzeile mit den Reitern bleibt stehen — dafür hat Home
-  Assistant keinen Schalter.
-- **Das Vollbild wird nicht gespeichert.** Ein Neuladen der Seite stellt alles
-  zurück. Das ist auch der Ausweg, wenn man im Vollbild auf eine Ansicht ohne
-  die Karte gewechselt ist: Einen Menüknopf gibt es dort nicht mehr.
+- **Vollbild heißt dreierlei.** Home Assistant blendet die Seitenleiste aus
+  (sein Kiosk-Modus), die Karte nimmt die Kopfzeile weg, und der Browser geht
+  ins Vollbild, wo er das anbietet. Im Bearbeitungsmodus bleibt die Kopfzeile.
+- **Das Vollbild wird je Gerät gemerkt.** Ein Wandtablett startet nach dem
+  Neuladen wieder im Vollbild, sobald die Karte auf der Ansicht steht. Zurück
+  geht es über denselben Knopf oder mit Esc.
 
 ## Installation
 

@@ -891,14 +891,28 @@ dabei nötig, sonst lügt die Messung:
 
 ## Die Steuerkarte
 
-Seit dem 13.10.2026 bringt HATS eine Karte für Dashboards mit. Sie schaltet im
-Moment zwei Dinge: den Modus (automatisch, hell, dunkel) und das Vollbild.
+Seit dem 13.10.2026 bringt HATS eine Karte für Dashboards mit. Zuerst schaltete
+sie zwei Dinge, den Modus und das Vollbild; am selben Abend ist die Menüleiste
+der Horizon-Cards dazugekommen (siehe *Zusammengefügt mit der Menüleiste*).
+Seitdem ist sie eine Leiste aus Knöpfen:
 
 ```yaml
 type: custom:hats-control-card
-controls: [mode, fullscreen]    # Auswahl und Reihenfolge; fehlt die Zeile: beide
-kiosk_only: false               # true: kein Vollbild des Browsers
+buttons:
+  - name: Home                    # ein Ziel - die Kapsel zeigt, wo du bist
+    icon: mdi:home-outline
+    link: /dashboard-home
+  - entity: light.kueche          # ein Schalter - leuchtet, solange sie an ist
+    align_end: true
+  - function: weather             # mode | theme | fullscreen | weather
+    entity: weather.forecast_home
+    align_end: true
+collapse: narrow                  # never | narrow | always
+kiosk_only: false                 # true: kein Vollbild des Browsers
 ```
+
+Die Kurzform von vorher gilt weiter: `controls: [mode, fullscreen]`, und ohne
+`buttons` und `controls` genau diese beiden.
 
 Sie liegt in `custom_components/hats/www/hats-control-card.js`. HATS trägt sie
 selbst in Home Assistants Ressourcenliste ein und nimmt sie beim Entfernen der
@@ -1089,6 +1103,112 @@ leeres Auswahlfeld neben einer Karte mit beiden Teilen.
 
 Ein unbekannter Name in `controls` ist ein **Fehler**, kein stilles Nichts —
 sonst verschwände bei einem Tippfehler einfach ein Knopf.
+
+### Zusammengefügt mit der Menüleiste
+
+Auf Ansage vom 13.10.2026, mit der Übergabe der `menue-karte` der
+Horizon-Cards in der Hand: *„zusammenfügen und den Rest danach das Design an
+die neue anpassen."* Und nach den ersten Probekarten, mit einem Bild der
+Leiste, wie sie auf dem Haupt-Dashboard steht: *„wir arbeiten mit der karte."*
+
+**Was herübergekommen ist**, mit den Feldnamen der Menüleiste — eine Leiste von
+dort läuft mit anderem `type` weiter (das Feld `card: menu` stört nicht):
+
+    link                    Ziel; Home Assistant navigiert selbst (hass-action)
+    entity                  Schalter; ohne Aktion wird umgeschaltet
+    tap_action              jede Aktion, die Home Assistant kennt
+    state_background        eingeschaltet wird der Knopf gefüllt
+    light_background        in der Farbe der Lampe, sonst HAs Zustandsfarbe
+    function                mode (neu), theme, fullscreen, weather
+    temperature(_source)    woher der Wert des Wetterknopfs kommt
+    align_end, separator_before
+    collapse, collapse_width, collapse_icon
+    menu_shape, menu_size, show_highlight
+
+**Was dabei von Home Assistant kommt statt aus eigenem Unterbau** — die
+Menüleiste brachte für das meiste eigene Module mit:
+
+| Menüleiste | hier |
+|---|---|
+| `aktionen.js`, 1:1 aus Bubble Card | das Ereignis `hass-action` — HA führt `tap_action` selbst aus |
+| gezeichnetes Wettersymbol mit Verläufen | `ha-state-icon` — HA wählt das Symbol zur Wetterlage |
+| `formatNumericValue` | `hass.formatEntityState`, `hass.formatEntityAttributeValue` |
+| `flaechenfarbe()` mit Abdunkeln | `rgb_color` der Lampe, sonst `--state-<domäne>-active-color` |
+| eigenes Einstellungsmenü, 324 Zeilen | `getConfigForm` mit einer Objektliste — HA zeichnet Liste und Unterformular |
+
+Gemessen an der Testmaschine, an den beiden Leisten aus dem Dashboard des
+Nutzers (aus `werkzeuge/sicherungen/dashboards/`, auf die Testmaschine
+umgeschrieben):
+
+    Kapsel            sitzt auf dem Knopf der Adresse, Abweichung 0 px
+    Ziel antippen     hass-action {navigate} -> /hats-test/vergleich
+    Zurück-Knopf      Kapsel wieder auf "Eigene"
+    Schalter          light.bed_light aus -> an -> aus; gefüllt in #ffc107,
+                      Symbol schwarz, weil die Fläche hell ist
+    Wetter            "Bösel 14,9 °C" mit HAs Symbol; Antippen öffnet die Details
+    Einklappen        always: Liste mit drei Zielen unter dem Menüknopf,
+                      Escape schließt sie
+    Editor            Liste der Knöpfe mit Griff, Stift und Papierkorb,
+                      Unterformular mit HAs Auswahlfeldern
+
+**Wo die Karte mit Absicht ANDERS antwortet als die Menüleiste:**
+
+- **Eine unbekannte `function` ist ein Fehler.** Dort blieb der Knopf stumm
+  ein gewöhnlicher — ein Tippfehler stand dann als Knopf ohne Wirkung da.
+- **Ohne `buttons` ist sie nicht leer**, sondern die Steuerkarte von vorher.
+- **Die Vorgabe der Form ist `theme`, nicht `pill`.** Das Aussehen folgt der
+  neuen Karte; `menu_shape: pill` gibt die runden Enden zurück.
+- **`istHell()` rechnet, statt zu schätzen.** Ab Leuchtdichte 0,179 steht
+  Schwarz besser als Weiß. Ich hatte im Test zuerst erwartet, auf HAs Cyan
+  bleibe die Schrift weiß — falsch: 6,4 : 1 gegen 3,3 : 1.
+
+**Das Vollbild ist jetzt das der Menüleiste**, mit dem, was die Steuerkarte
+schon konnte:
+
+- **Die Kopfzeile geht mit**, über ein eingefügtes `<style data-hats-vollbild>`
+  in `hui-root`. Gemessen: `.header` auf `display: none`, `--header-height` von
+  56px auf 0, die erste Karte rückt von y=114 auf y=58. Das ist die **zweite
+  Ausnahme** von „alles von HA gestellt" — im Bearbeitungsmodus nie, sonst
+  säße man fest.
+- **Die Wahl überlebt das Neuladen**, je Gerät im `localStorage`
+  (`hats-control:fullscreen`). Gemessen: neu geladen, Kiosk wieder an,
+  Kopfzeile weg. Einmal je Seite, und nur **ein** — ein „aus" löschte einen
+  Kiosk-Modus, den jemand anders gesetzt hat.
+- **Wer von der Menüleiste kommt, startet weiter im Vollbild**: Ihr Schlüssel
+  `menue-leiste:kiosk` wird gelesen, solange der eigene noch nie geschrieben
+  wurde. Geschrieben wird er nicht.
+- **Angezeigt wird `hass.kioskMode`**, nicht das Gemerkte. Die Menüleiste
+  zeigte ihren eigenen Zustand; zwei Leisten auf einer Seite konnten damit
+  Verschiedenes behaupten.
+- **Esc verlässt alles und wird gemerkt.** Sonst startete das Wandtablett nach
+  dem nächsten Neuladen wieder im Vollbild.
+
+**Die Kapsel saß 200 Pixel neben ihrem Knopf.** Home Assistant holt die
+Zeichnung eines Symbols nach; bis dahin war der Knopf schmaler, und gemessen
+wurde in genau dem Moment. Zwei Dinge dagegen: Das Symbol hat seine Größe von
+Anfang an (`width: var(--mdc-icon-size)`), und ein `ResizeObserver` liegt auf
+jedem Knopf — denn ein Knopf, der breiter wird, verschiebt alle hinter ihm, und
+nichts sonst meldet das. Die Karte ist so breit wie vorher.
+
+**Nicht herübergekommen — „den Rest danach":**
+
+    visibility              Bedingungen je Knopf
+    link: "#anker"          Pop-ups über die Adresse
+    double_tap_action, hold_action
+    placement: bottom       die schwebende Leiste
+    menu_glass, full_width
+    Scroll-Schatten an den Rändern der Reihe
+
+Im Dashboard des Nutzers kommt davon nichts vor; deshalb steht es hinten.
+
+**Die beiden vertragen sich nicht auf demselben Dashboard.** Die Menüleiste
+führt ihren eigenen Vollbild-Zustand und wendet ihn bei jedem Durchlauf neu an.
+Aus dem Code gelesen, nicht gemessen — die Antwort ist ohnehin, die alte durch
+die neue zu ersetzen, nicht beide zu betreiben.
+
+`tests/hats-steuerleiste.test.js` trägt die Erwartungen aus den Tests der
+Menüleiste (`ha-karten`, `helpers.test.js`) als Maßstab: 21 Prüfungen, darunter
+die Leiste des Nutzers mit dem richtigen Knopf auf jeder Ansicht.
 
 ### Die kleine Form: das Badge
 

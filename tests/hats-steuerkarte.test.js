@@ -124,21 +124,28 @@ pruefe("Das Ereignis traegt nur dark - und fuer automatisch den Schluessel mit u
   assert.strictEqual({ ...vorher, ...{} }.dark, true);
 });
 
+// Seit dem Zusammenfuegen mit der Menueleiste ist `controls` die KURZFORM:
+// Aus ihr werden Knoepfe mit einer Funktion. Was hier steht, haelt fest, dass
+// eine Steuerkarte von vorher weiter meint, was sie meinte.
+const funktionen = (config) => pruefeConfig(config).knoepfe.map((k) => k.function);
+
 pruefe("Die Vorgabe sind alle Bedienteile, in der Reihenfolge der Liste", () => {
   assert.deepStrictEqual(BEDIENTEILE, ["mode", "fullscreen"]);
-  assert.deepStrictEqual(pruefeConfig({}), { controls: ["mode", "fullscreen"], kiosk_only: false });
-  assert.deepStrictEqual(pruefeConfig(undefined).controls, ["mode", "fullscreen"]);
+  assert.deepStrictEqual(funktionen({}), ["mode", "fullscreen"]);
+  assert.deepStrictEqual(funktionen(undefined), ["mode", "fullscreen"]);
+  assert.strictEqual(pruefeConfig({}).kiosk_only, false);
   // Die Vorgabe ist eine Kopie - wer sie aendert, aendert nicht die Liste.
-  pruefeConfig({}).controls.push("x");
+  pruefeConfig({}).knoepfe.push("x");
   assert.deepStrictEqual(BEDIENTEILE, ["mode", "fullscreen"]);
+  assert.deepStrictEqual(funktionen({}), ["mode", "fullscreen"]);
 });
 
 pruefe("Reihenfolge und Auswahl kommen aus der Konfiguration", () => {
-  assert.deepStrictEqual(pruefeConfig({ controls: ["fullscreen", "mode"] }).controls, ["fullscreen", "mode"]);
-  assert.deepStrictEqual(pruefeConfig({ controls: ["mode"] }).controls, ["mode"]);
-  assert.deepStrictEqual(pruefeConfig({ controls: ["mode", "mode"] }).controls, ["mode"]);
+  assert.deepStrictEqual(funktionen({ controls: ["fullscreen", "mode"] }), ["fullscreen", "mode"]);
+  assert.deepStrictEqual(funktionen({ controls: ["mode"] }), ["mode"]);
+  assert.deepStrictEqual(funktionen({ controls: ["mode", "mode"] }), ["mode"]);
   // Eine leere Liste ist erlaubt: Im Editor entsteht sie mitten im Umbauen.
-  assert.deepStrictEqual(pruefeConfig({ controls: [] }).controls, []);
+  assert.deepStrictEqual(funktionen({ controls: [] }), []);
 });
 
 pruefe("Ein unbekanntes Bedienteil ist ein Fehler, kein stilles Nichts", () => {
@@ -174,13 +181,24 @@ pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
   // Ohne die Kommentarzeilen: Dort steht <home-assistant> als Wort, nicht als
   // Bauteil, das die Karte anlegt.
   const code = quelle.split("\n").filter((z) => !/^\s*\/\//.test(z)).join("\n");
-  const tags = [...new Set([...code.matchAll(/<([a-z]+(?:-[a-z]+)+)[\s>]/g)].map((m) => m[1]))].sort();
-  // Gegenprobe: Der Ausdruck findet ueberhaupt etwas.
+  // Zwei Wege, auf denen ein Bauteil entsteht: im Rahmen als <tag>, und ueber
+  // neu("tag") - seit dem Zusammenfuegen entstehen die Knoepfe so.
+  const gefunden = [
+    ...[...code.matchAll(/<([a-z]+(?:-[a-z]+)+)[\s>]/g)].map((m) => m[1]),
+    ...[...code.matchAll(/"((?:ha|hui)-[a-z-]+)"/g)].map((m) => m[1]),
+  ];
+  const tags = [...new Set(gefunden)].sort();
+  // Gegenprobe: Beide Ausdruecke finden ueberhaupt etwas.
   assert.ok(tags.includes("ha-card"), "der Ausdruck findet ha-card nicht - die Pruefung waere leer");
+  assert.ok(tags.includes("ha-ripple"), "neu(\"ha-ripple\") wird nicht gefunden");
   // ha-badge war an der Testinstanz auch auf einer Ansicht ohne ein einziges
   // Badge angemeldet. Ob das auf jeder Instanz so ist, ist nicht bewiesen -
   // fehlt es, zeichnet die Reihe sich trotzdem, nur ohne Pille darum.
-  assert.deepStrictEqual(tags, ["ha-badge", "ha-card", "ha-icon", "ha-ripple"]);
+  const angelegt = ["ha-badge", "ha-card", "ha-icon", "ha-ripple", "ha-state-icon"];
+  // Diese beiden legt die Leiste nicht an. Sie SUCHT sie, von sich aus nach
+  // oben, um die Kopfzeile im Vollbild wegzunehmen.
+  const gesucht = ["ha-top-app-bar-fixed", "hui-root"];
+  assert.deepStrictEqual(tags, [...angelegt, ...gesucht].sort());
 });
 
 pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
@@ -191,12 +209,22 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     "--secondary-text-color", "--ha-font-size-m",
     // fuer das Badge dazugekommen
     "--ha-space-1", "--ha-border-radius-pill", "--divider-color",
+    // mit der Menueleiste dazugekommen
+    "--ha-space-3", "--ha-font-size-s", "--ha-font-weight-medium",
+    "--white-color", "--black-color", "--state-active-color",
+    "--card-background-color", "--ha-card-border-radius", "--ha-card-box-shadow",
   ];
-  // Home Assistant liest die Namen (hui-card-features, ha-badge), belegt sie
-  // aber nicht.
-  const nurGelesen = ["--ha-card-features-border-radius", "--ha-badge-icon-size"];
-  // Lebt nur in der Karte selbst und kommt in keiner Theme vor.
-  const eigen = ["--_rund"];
+  // Home Assistant liest die Namen (hui-card-features, ha-badge, hui-root),
+  // belegt sie aber nicht - oder nur auf Geraeten mit Aussparung.
+  const nurGelesen = ["--ha-card-features-border-radius", "--ha-badge-icon-size",
+    "--safe-area-inset-top"];
+  // Leben nur in der Leiste selbst und kommen in keiner Theme vor. "--state-"
+  // ist der Anfang von --state-<domaene>-active-color: Der Name wird zur
+  // Laufzeit aus der Entitaet gebaut, so wie Home Assistant ihn selbst baut.
+  // --mdc-icon-size ist der Name, aus dem Home Assistants Symbol seine Groesse
+  // liest (gemessen: 20 und 18 Pixel folgten ihm). Die Leiste SETZT ihn in
+  // ihren Stilblaettern und liest ihn fuer den Kasten des Symbols zurueck.
+  const eigen = ["--_rund", "--_knopfrund", "--_h", "--_polster", "--state-", "--mdc-icon-size"];
 
   const gelesen = [...new Set([...quelle.matchAll(/var\(\s*(--[a-z0-9_-]+)/g)].map((m) => m[1]))];
   assert.ok(gelesen.length >= 8, `nur ${gelesen.length} Variablen gefunden - der Ausdruck greift nicht`);
@@ -214,22 +242,28 @@ pruefe("Keine eigene Farbe ausser HAs Weiss auf der Auswahl", () => {
   const stil = [null, blaetter.map((b) => b[2]).join("\n")];
   const farben = stil[1].match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/g) || [];
   // #fff steht in ha-control-select fest (.option.selected{color:#fff}); hier
-  // ist es nur noch der Ausweichwert hinter --ha-color-on-primary-loud.
-  assert.deepStrictEqual([...new Set(farben)], ["#fff"]);
+  // sind Weiss und Schwarz nur noch Ausweichwerte HINTER einer Variablen von
+  // Home Assistant - nie eine Farbe, die fuer sich steht.
+  assert.deepStrictEqual([...new Set(farben)].sort(), ["#000", "#fff"]);
+  const nackt = stil[1].match(/(?<!var\(--[a-z-]+, )#[0-9a-fA-F]{3,8}\b/g) || [];
+  assert.deepStrictEqual(nackt, [], "eine Farbe ohne Variable davor: " + nackt.join(", "));
   assert.ok(/var\(--ha-color-on-primary-loud, #fff\)/.test(stil[1]));
 });
 
-pruefe("Genau die drei Ereignisse von Home Assistant, und die richtigen steigen auf", () => {
-  const namen = [...new Set([...quelle.matchAll(/new CustomEvent\("([^"]+)"/g)].map((m) => m[1]))].sort();
-  assert.deepStrictEqual(namen, ["hass-kiosk-mode", "hass-notification", "settheme"]);
+pruefe("Genau die fuenf Ereignisse von Home Assistant, und die richtigen steigen auf", () => {
+  // Vier gehen ueber _sende, eins haengt an window.
+  const ueberSende = [...new Set([...quelle.matchAll(/this\._sende\("([^"]+)"/g)].map((m) => m[1]))].sort();
+  assert.deepStrictEqual(ueberSende, ["hass-action", "hass-more-info", "hass-notification", "settheme"]);
+  const direkt = [...new Set([...quelle.matchAll(/new CustomEvent\("([^"]+)"/g)].map((m) => m[1]))].sort();
+  assert.deepStrictEqual(direkt, ["hass-kiosk-mode"]);
 
-  // settheme und die Meldung hoert Home Assistant am Element <home-assistant>.
-  // Ohne composed bleiben sie im Shadow Root der Karte stecken.
-  for (const name of ["settheme", "hass-notification"]) {
-    const stelle = quelle.indexOf(`new CustomEvent("${name}"`);
-    const aufruf = quelle.slice(stelle, quelle.indexOf("));", stelle));
-    assert.ok(/bubbles: true/.test(aufruf) && /composed: true/.test(aufruf), `${name} steigt nicht auf`);
-  }
+  // Home Assistant hoert die vier am Element <home-assistant>. Ohne composed
+  // bleiben sie im Shadow Root der Leiste stecken - und nichts passiert, ohne
+  // Meldung. _sende ist die eine Stelle, an der das stimmen muss.
+  const sende = /_sende\(name, detail\) \{([\s\S]*?)\n  \}/.exec(quelle);
+  assert.ok(sende, "_sende nicht gefunden");
+  assert.ok(/bubbles: true/.test(sende[1]) && /composed: true/.test(sende[1]), "_sende steigt nicht auf");
+  assert.ok(/this\.dispatchEvent\(new CustomEvent\(name,/.test(sende[1]));
   // Der Kiosk-Modus haengt an window, nicht an einem Element.
   assert.ok(/window\.dispatchEvent\(new CustomEvent\("hass-kiosk-mode"/.test(quelle));
 });
@@ -238,7 +272,7 @@ pruefe("Symbole kommen aus Home Assistants eigenem Satz", () => {
   const block = /const SYMBOL = \{([\s\S]*?)\};/.exec(quelle);
   assert.ok(block, "SYMBOL nicht gefunden");
   const symbole = [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(symbole.length >= 5, `nur ${symbole.length} Symbole gefunden`);
+  assert.ok(symbole.length >= 9, `nur ${symbole.length} Symbole gefunden`);
   for (const s of symbole) assert.match(s, /^mdi:[a-z-]+$/, s);
 });
 
@@ -261,9 +295,10 @@ pruefe("Karte und Badge teilen Verhalten und unterscheiden sich nur im Rahmen", 
   };
   // Klicks, Zustand und Konfiguration stehen genau einmal, in Steuerung. Eine
   // Form, die davon etwas ueberschreibt, liefe der anderen davon.
-  assert.deepStrictEqual(rumpf("HatsControlBadge"), ["_rahmen", "_stil", "_trenner"]);
+  assert.deepStrictEqual(rumpf("HatsControlBadge"),
+    ["_einklappbar", "_gruppenstrich", "_rahmen", "_stil"]);
   assert.deepStrictEqual(rumpf("HatsControlCard"),
-    ["_rahmen", "_stil", "_trenner", "getCardSize", "getGridOptions"]);
+    ["_einklappbar", "_gruppenstrich", "_rahmen", "_stil", "getCardSize", "getGridOptions"]);
   // Gegenprobe: Die Basis traegt, was die Formen nicht tragen.
   const basis = /class Steuerung extends Basis \{([\s\S]*?)\n\}/.exec(quelle);
   assert.ok(basis, "Steuerung nicht gefunden");
@@ -282,7 +317,7 @@ pruefe("Das Badge steht in Home Assistants Badge-Liste, die Karte in der Kartenl
 pruefe("Das Badge sitzt im Steckplatz icon eines ha-badge mit icon-only", () => {
   // An ha-badge gemessen: Mit icon-only zeichnet es NUR diesen Steckplatz,
   // und das Attribut heisst mit Bindestrich.
-  assert.ok(/<ha-badge icon-only><div class="reihe" slot="icon">/.test(quelle));
+  assert.ok(/<ha-badge icon-only><div class="leiste" slot="icon">/.test(quelle));
   assert.ok(!/<ha-badge icononly/.test(quelle));
 });
 
