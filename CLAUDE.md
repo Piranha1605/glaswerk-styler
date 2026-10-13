@@ -9,6 +9,10 @@ Entwickelt von Enrico Fischer (GitHub `Piranha1605`), MIT-Lizenz.
 soll mit 15 Entscheidungen dasselbe erreichen, weil Home Assistant seit 2026
 selbst so rechnet.
 
+> **Mehrere Sitzungen arbeiten hier.** Die Absprache steht in
+> `/Users/enricofischer/Projekte/TEAM.md` — wer koordiniert, wo gearbeitet wird
+> und was angemeldet gehört, bevor es losgeht. Zuerst lesen.
+
 ## Das Schwesterprojekt: HATG
 
 HATS entsteht **getrennt** von HATG, in einem eigenen Repository. Entschieden am
