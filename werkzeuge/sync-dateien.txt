@@ -12,6 +12,7 @@ translations/en.json
 www/baukasten.js
 www/bedienelemente.js
 www/hats-control-card.js
+www/hintergrund-seite.js
 www/hintergrund.js
 www/hats-panel.js
 www/palette.js

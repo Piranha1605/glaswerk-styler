@@ -86,6 +86,80 @@ export function stelleFest(wert, an) {
   return an ? `${ohne} fixed` : ohne;
 }
 
+// Derselbe Wert ohne das Wort - zum Vergleichen. Der Baukasten erkennt ein Teil
+// an seinen Werten wieder; mit und ohne "fixed" ist es derselbe Hintergrund,
+// nur anders aufgehaengt.
+export function ohneFest(wert) {
+  return typeof wert === "string" ? stelleFest(wert, false) : wert;
+}
+
+// ---------------------------------------------------------------------------
+// Die Hintergruende des Baukastens
+//
+// Am 13.10.2026 von der Sitzung "HATS Aufbau" hierher uebergeben, auf Ansage
+// des Maintainers. baukasten.js fuehrt sie weiter unter demselben Namen - es
+// liest sie von hier.
+//
+// Jeder Teil setzt genau ein Feld, --lovelace-background, je Modus. Ein leerer
+// Wert heisst "Feld weg", nicht "Feld leer": Das Panel entfernt es dann, statt
+// Home Assistants Vorgabe mit nichts zu ueberschreiben.
+//
+// Die Farbinseln stehen FEST. Ohne das Wort haengt die Flaeche absolut und ist
+// so hoch wie der ganze Inhalt - gemessen 1774 px bei 768 px Fensterhoehe. Die
+// Inseln bei 86 % und 78 % sassen dann bei 1525 und 1383 px, zwei von vier
+// unter dem ersten Bildschirm. Der ruhige Verlauf bleibt mitlaufend: Zwei Toene
+// ueber die ganze Seite gezogen sind immer noch zwei Toene.
+//
+// Die vier Farben der Inseln sind die der Projektwerkbank, damit Panel und
+// Theme dieselbe Sprache sprechen.
+//
+// Glas braucht einen dieser Hintergruende: Eine durchscheinende Flaeche vor
+// einer einfarbigen Wand sieht aus wie eine etwas hellere Wand. Der Kartenstil
+// "glas" in baukasten.js traegt dafuer braucht.hintergrund, und das Panel
+// warnt, wenn dazu "keiner" gewaehlt ist.
+//
+// Und: Ein Bild aus der DASHBOARD-Konfiguration liegt ueber allem hier. Der
+// Theme-Wert ist dann gesetzt, wird gelesen und ist trotzdem nicht zu sehen.
+
+const INSELN_HELL =
+  "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), " +
+  "radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), " +
+  "radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), " +
+  "radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), " +
+  "linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)";
+const INSELN_DUNKEL =
+  "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), " +
+  "radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), " +
+  "radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), " +
+  "radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), " +
+  "linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%)";
+
+export const HINTERGRUENDE = [
+  {
+    id: "keiner",
+    de: "Keiner", en: "None",
+    zweckDe: "Home Assistants eigener Hintergrund.",
+    zweckEn: "Home Assistant's own background.",
+    light: { "--lovelace-background": "" }, dark: { "--lovelace-background": "" },
+  },
+  {
+    id: "inseln",
+    de: "Farbinseln", en: "Colour islands",
+    zweckDe: "Vier weiche Farbflecke in den Ecken. Glas braucht etwas, das es bricht.",
+    zweckEn: "Four soft colour patches in the corners. Glass needs something to refract.",
+    light: { "--lovelace-background": stelleFest(INSELN_HELL, true) },
+    dark: { "--lovelace-background": stelleFest(INSELN_DUNKEL, true) },
+  },
+  {
+    id: "verlauf",
+    de: "Ruhiger Verlauf", en: "Quiet gradient",
+    zweckDe: "Ein schraeger Verlauf, zwei Toene. Genug fuer Glas, ruhiger als die Inseln.",
+    zweckEn: "One diagonal gradient, two tones. Enough for glass, calmer than the islands.",
+    light: { "--lovelace-background": "linear-gradient(155deg, #e9eef7 0%, #f4f1f8 55%, #eaf4f2 100%)" },
+    dark:  { "--lovelace-background": "linear-gradient(155deg, #0e1220 0%, #151225 55%, #0c1d1f 100%)" },
+  },
+];
+
 // ---------------------------------------------------------------------------
 // Bewegung und Farbwechsel
 //

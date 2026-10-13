@@ -312,64 +312,18 @@ export const KARTENSTILE = [
 // ---------------------------------------------------------------------------
 // Hintergruende
 //
-// UEBERGEBEN AM 13.10.2026 an die Sitzung, die den bewegten Hintergrund baut -
-// auf Ansage des Maintainers. Wer hier etwas aendert, stimmt sich vorher ab;
-// die Absprache liegt in /Users/enricofischer/Projekte/briefkasten/.
+// Die Teile selbst stehen seit dem 13.10.2026 in hintergrund.js - uebergeben
+// an die Sitzung, die den Hintergrund baut, auf Ansage des Maintainers. Dort
+// steht auch, was gemessen ist: wo --lovelace-background ankommt, warum die
+// Farbinseln "fixed" tragen, und was ueber allem liegt.
 //
-// Offen und dort schon gemessen: hui-view-background haengt absolut und ist so
-// hoch wie der ganze Inhalt - auf einer langen Ansicht 1774 px bei 768 px
-// Fensterhoehe. Die Inseln bei 86 % und 78 % liegen damit unter dem ersten
-// Bildschirm, zwei von vier sind unsichtbar. Das Wort "fixed" am Ende des
-// Wertes stellt die Flaeche fest ans Fenster und holt sie zurueck.
-//
-// Gehoeren zum Kartenstil: Glas vor einer einfarbigen Wand sieht aus wie eine
-// etwas hellere Wand. Wer "Glas" waehlt und keinen Hintergrund hat, bekommt
-// nichts zu sehen - deshalb traegt der Stil oben ein braucht.hintergrund.
-//
-// --lovelace-background liest genau EIN Bauteil, hui-view-background. Es liegt
-// unter hui-root - und hui-root gibt es unter ha-panel-lovelace UND unter
-// ha-panel-home. Auf der Home-Seite kommt der Hintergrund also an; am
-// 13.10.2026 an 2026.10.1 nachgemessen, der Verlauf lag sichtbar dahinter.
-// (Hier stand bis dahin, die Home-Seite sei ausgenommen. Das war falsch.) Auf
-// den Einstellungsseiten gibt es das Bauteil weiterhin nicht. Und: Ein Bild aus der
-// DASHBOARD-Konfiguration liegt darueber - der Theme-Wert ist dann gesetzt,
-// gelesen und trotzdem nicht zu sehen.
+// Hier bleiben sie unter demselben Namen erreichbar, weil der Baukasten sie
+// als Sorte fuehrt. Und hier bleibt, was zum Kartenstil gehoert: Glas vor
+// einer einfarbigen Wand sieht aus wie eine etwas hellere Wand - deshalb
+// traegt der Stil oben ein braucht.hintergrund.
 
-export const HINTERGRUENDE = [
-  {
-    id: "keiner",
-    de: "Keiner", en: "None",
-    zweckDe: "Home Assistants eigener Hintergrund.",
-    zweckEn: "Home Assistant's own background.",
-    light: { "--lovelace-background": "" }, dark: { "--lovelace-background": "" },
-  },
-  {
-    id: "inseln",
-    de: "Farbinseln", en: "Colour islands",
-    zweckDe: "Vier weiche Farbflecke in den Ecken. Glas braucht etwas, das es bricht.",
-    zweckEn: "Four soft colour patches in the corners. Glass needs something to refract.",
-    light: { "--lovelace-background":
-      "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), " +
-      "radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), " +
-      "radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), " +
-      "radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), " +
-      "linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)" },
-    dark: { "--lovelace-background":
-      "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), " +
-      "radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), " +
-      "radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), " +
-      "radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), " +
-      "linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%)" },
-  },
-  {
-    id: "verlauf",
-    de: "Ruhiger Verlauf", en: "Quiet gradient",
-    zweckDe: "Ein schraeger Verlauf, zwei Toene. Genug fuer Glas, ruhiger als die Inseln.",
-    zweckEn: "One diagonal gradient, two tones. Enough for glass, calmer than the islands.",
-    light: { "--lovelace-background": "linear-gradient(155deg, #e9eef7 0%, #f4f1f8 55%, #eaf4f2 100%)" },
-    dark:  { "--lovelace-background": "linear-gradient(155deg, #0e1220 0%, #151225 55%, #0c1d1f 100%)" },
-  },
-];
+import { HINTERGRUENDE, ohneFest } from "./hintergrund.js";
+export { HINTERGRUENDE };
 
 // ---------------------------------------------------------------------------
 // Was ein Teil anrichtet, bevor es angewendet wird
@@ -441,7 +395,10 @@ export const BAUKASTEN = {
   palette: { de: "Farben", en: "Colours", teile: PALETTEN },
   schrift: { de: "Schrift", en: "Typeface", teile: SCHRIFTEN },
   karten: { de: "Karten", en: "Cards", teile: KARTENSTILE },
-  hintergrund: { de: "Hintergrund", en: "Background", teile: HINTERGRUENDE },
+  // gleich: Mit und ohne das Wort "fixed" ist es derselbe Hintergrund, nur
+  // anders aufgehaengt. Ohne diesen Vergleich verloere eine Theme ihren Haken,
+  // sobald jemand die Flaeche fest stellt oder wieder loest.
+  hintergrund: { de: "Hintergrund", en: "Background", teile: HINTERGRUENDE, gleich: ohneFest },
   oberflaeche: { de: "Oberflaeche", en: "Chrome", teile: OBERFLAECHE_LEER,
                  nurVorlagen: true,
                  zweckDe: "Seitenleiste, Kopfleiste, Dialoge und Meldungen.",
@@ -522,13 +479,15 @@ export function teilAnwenden(sorte, teil, schreibe) {
 // Merker. Verglichen wird nur das, was das Teil wirklich setzt.
 export function erkenneTeil(sorte, lies) {
   const teile = BAUKASTEN[sorte]?.teile || [];
+  // Eine Sorte darf sagen, was fuer sie "derselbe Wert" ist.
+  const glatt = BAUKASTEN[sorte]?.gleich || ((w) => w);
   for (const teil of teile) {
     let passt = true;
     const pruefe = (name, soll, ebene) => {
       if (!passt) return;
       const ist = lies(name.startsWith("--") ? name : "--" + name, ebene);
       // Ein leerer Sollwert heisst "Feld nicht gesetzt" - beides zaehlt gleich.
-      if ((ist ?? "") !== (soll ?? "")) passt = false;
+      if (glatt(ist ?? "") !== glatt(soll ?? "")) passt = false;
     };
     if (sorte === "palette") {
       // Die Rampe hat 55 Stufen; der Akzent allein genuegt als Kennzeichen und

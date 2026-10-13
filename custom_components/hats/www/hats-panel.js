@@ -29,6 +29,7 @@ import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
 import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
+import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten } from "./hintergrund-seite.js";
 
 const HATS_VERSION = "0.2.0b3";
 
@@ -1310,6 +1311,7 @@ class HatsPanel extends HTMLElement {
             }).join("")}
           </div>
         </section>` : ""}
+        ${schluessel === "hintergrund" ? hintergrundSeiteHtml({ modell: m, spr: this.spr, wetter: wetterEntitaeten(this._hass) }) : ""}
       </div>`;
   }
 
@@ -1348,6 +1350,16 @@ class HatsPanel extends HTMLElement {
         this.zeichneZaehler();
       })
     );
+
+    // Der Hintergrund hat Stellgroessen, die kein Kaestchen sind - Stufe,
+    // Entitaet, Staerke. Seine Seite zeichnet und verdrahtet
+    // hintergrund-seite.js; hier bleibt nur die Buchfuehrung.
+    if (this._bkSeite === "hintergrund") bindeHintergrundSeite(wurzel, {
+      modell: () => ZUSTAND.modell,
+      spr: this.spr,
+      gemeldet: (felder) => { for (const k of felder) ZUSTAND.geaendert.add(k); this.zeichneZaehler(); },
+      zeichne: () => this.zeichneBaukasten(),
+    });
   }
 
   bindeBaukasten(wurzel) {

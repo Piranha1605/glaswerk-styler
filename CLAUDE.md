@@ -1159,11 +1159,46 @@ Assistant mit `pong`, nicht mit `result`; `ruf()` kannte nur das zweite.
 
 ## Der Hintergrund
 
-Seit dem 13.10.2026 hat der Hintergrund ein eigenes Modul,
-`custom_components/hats/www/hintergrund.js`: fest oder mitlaufend, bewegt, im
-Farbwechsel, nach Wetter. Es steht noch **nicht im Panel**; es liefert Vorlagen
-in der Form von `vorlagen.js`, die `vorlageAn()` und `vorlageAus()` ohne
-Sonderweg schalten. Gemessen an der Testmaschine, HA 2026.10.1 und UIX 8.4.0.
+Seit dem 13.10.2026 gehört der Hintergrund einer eigenen Sitzung (Kennung
+`hintergrund` im Briefkasten) und hat zwei eigene Dateien:
+
+    www/hintergrund.js         die drei Hintergründe des Baukastens, fest oder
+                               mitlaufend, Bewegung, Farbwechsel, Himmel - ohne DOM
+    www/hintergrund-seite.js   der Abschnitt auf der Hintergrund-Seite des Baukastens
+
+Gemessen an der Testmaschine, HA 2026.10.1 und UIX 8.4.0.
+
+### Im Baukasten
+
+`HINTERGRUENDE` steht in `hintergrund.js`; `baukasten.js` liest die Liste von
+dort und gibt sie unter demselben Namen weiter. **Die Farbinseln tragen
+`fixed`**, der ruhige Verlauf nicht — die Begründung steht unter *Wer malt, und
+wie groß*.
+
+**Erkannt wird ein Hintergrund ohne Rücksicht auf `fixed`.** `erkenneTeil()`
+vergleicht sonst wörtlich; eine Theme von gestern (`liquid_glass` etwa) trägt
+die Inseln ohne das Wort und verlöre ihren Haken. Eine Sorte darf deshalb mit
+`gleich` sagen, was für sie derselbe Wert ist — beim Hintergrund `ohneFest()`.
+
+**Bewegung und Himmel stehen nicht in `VORLAGEN` und nicht in
+`SORTEN_VORLAGEN`.** Beide haben Stellgrößen (Stufe, Ausschlag, Entität,
+Stärke) und entstehen erst aus einer Funktion; die Stellgrößen werden aus dem
+CSS im Theme zurückgelesen, ein eigenes Feld dafür wäre ein Hilfsfeld. Auf der
+Hintergrund-Seite haben sie Regler statt Kästchen. Im UIX-Dialog zählen sie
+deshalb nicht mit.
+
+**„Fest" ändert den Wert dort, wo er steht.** Nicht über `setze()` — das räumt
+beim Schreiben die andere Ebene weg, und aus einem Hintergrund je Modus würde
+einer für beide.
+
+**Der Himmel wird abgelehnt, wenn das Stilziel ihn nicht verträgt**, und die
+Seite zeigt die Zeile. Ausschalten geht immer.
+
+**`werkzeuge/sync-liste-bauen.sh` wirft den Eintrag für `ha_blanko` weg.** Die
+Liste nennt sich „nicht von Hand ändern", der Eintrag ist aber von Hand
+dazugekommen (Commit `0bf2b3d`), und das Skript kennt ihn nicht. Am 13.10.2026
+beim Neuerzeugen bemerkt und zurückgeholt; bis das Skript ihn kennt, wird die
+Liste von Hand ergänzt.
 
 ### Wer malt, und wie groß
 
@@ -1303,7 +1338,8 @@ CLAUDE.md, die Variable gehöre zu `hui-root` und nicht zum Drawer, stimmt für
 ### Messen
 
 ```bash
-node tests/hats-hintergrund.test.js            ohne Instanz, 25 Prüfungen
+node tests/hats-hintergrund.test.js            die Vorlagen, ohne Instanz, 25 Prüfungen
+node tests/hats-hintergrund-seite.test.js      Hintergründe und Baukasten-Seite, 21 Prüfungen
 node werkzeuge/test/hintergrund-messen.mjs     Testmaschine und Chrome, 23 Prüfungen
 ```
 
@@ -1323,7 +1359,8 @@ Quirks-Modus; dort ist `clientHeight` von `<html>` die Höhe des Inhalts, nicht
 die des Fensters. Und Prozentwerte einer festen Fläche beziehen sich auf das
 Fenster **ohne** Rollbalken — `innerWidth` liegt 15 px daneben.
 
-**Nicht gemessen:** die Vorlagen über eine echte Theme an der Instanz (dort
+**Nicht gemessen:** die Seite im laufenden Panel — sie ist ohne Browser
+geprüft, gegen nachgebaute Elemente. Die Vorlagen über eine echte Theme an der Instanz (dort
 gemessen sind die Bausteine einzeln: `@keyframes` im Shadow Root von `hui-root`,
 Jinja in einem UIX-Knoten, die Zuordnung auf dem Server). Was Bewegung unter
 Glas an Rechenzeit kostet. Ob `render_template` für Nutzer ohne
