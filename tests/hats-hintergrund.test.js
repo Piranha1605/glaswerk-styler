@@ -19,7 +19,7 @@ import {
 import {
   istFest, festUnerkannt, stelleFest,
   bewegung, leseBewegung, driftDauer, farbDauer, punkteDauer, BEWEGUNG_ID, BEWEGUNG_STUFEN,
-  FARBVERLAEUFE, HINTERGRUENDE, PUNKTE, PUNKTE_VORGABE, punkteBild, istPunkteBild, bewegungNachBild,
+  FARBVERLAEUFE, HINTERGRUENDE, PUNKTE, PUNKTE_VORGABE, punkteBild, istPunkteBild, bewegungNachBild, bewegungNachWahl,
   himmel, leseHimmel, himmelLage, himmelLageVorlage, istWetterEntitaet,
   HIMMEL_ID, HIMMEL_LAGEN, HIMMEL_STUFEN, HIMMEL_VORGABE, himmelLagen, vertraegtVorlage, HINTERGRUND_ZIEL,
 } from "../custom_components/hats/www/hintergrund.js";
@@ -369,6 +369,34 @@ pruefe("Punkte: jede Stufe kommt zurueck, allein und neben Treiben und Farbwechs
   // Die Empfehlung fuer "leicht bewegen und Farben aendern" ist eine gueltige Einstellung.
   assert.deepStrictEqual(bewegung(PUNKTE_VORGABE, { punkte: true }).einstellung, PUNKTE_VORGABE);
   assert.ok(PUNKTE_VORGABE.punkte > 0 && PUNKTE_VORGABE.farbe > 0 && PUNKTE_VORGABE.drift === 0);
+});
+
+pruefe("Wer einen Farbverlauf waehlt, bekommt laufende Punkte - jedes Mal", () => {
+  const marke = (v) => `/* HATS:${BEWEGUNG_ID}:START */\n${v.css}\n/* HATS:${BEWEGUNG_ID}:ENDE */`;
+  const punkte = [FARBVERLAEUFE[8].light[feld], FARBVERLAEUFE[8].dark[feld]];
+  // Noch gar keine Bewegung: die Vorgabe.
+  assert.deepStrictEqual(bewegungNachWahl("", punkte).einstellung, PUNKTE_VORGABE);
+  assert.deepStrictEqual(bewegungNachWahl(".header { color: red; }", punkte).einstellung, PUNKTE_VORGABE);
+  // Der Fall vom 13.10.2026: Vom vorigen Mal liegt nur noch der Farbwechsel
+  // im Block. Die Punkte starten trotzdem, der Farbwechsel bleibt, wie er war.
+  const nurFarbe = marke(bewegung({ drift: 0, punkte: 0, farbe: 7, weite: 90 }));
+  assert.deepStrictEqual(bewegungNachWahl(nurFarbe, punkte).einstellung, { drift: 0, punkte: PUNKTE_VORGABE.punkte, farbe: 7, weite: 90 });
+  // Laufen sie schon, bleibt alles - auch die eigene Stufe.
+  const laeuft = marke(bewegung({ drift: 0, punkte: 9, farbe: 0 }, { punkte: true }));
+  assert.strictEqual(bewegungNachWahl(laeuft, punkte), undefined);
+  // Wer die Flaeche treiben laesst, behaelt das.
+  assert.strictEqual(bewegungNachWahl(marke(bewegung({ drift: 4 })), punkte), undefined);
+  // Der zweite Aufruf aendert nichts mehr - sonst waere jedes Zeichnen eine Aenderung.
+  for (const anfang of ["", nurFarbe]) {
+    const einmal = marke(bewegungNachWahl(anfang, punkte));
+    assert.strictEqual(bewegungNachWahl(einmal, punkte), undefined);
+  }
+  // Kein Punktebild: dann gilt, was bewegungNachBild() sagt - und es startet nichts.
+  assert.strictEqual(bewegungNachWahl("", [VERLAUF]), undefined);
+  assert.strictEqual(bewegungNachWahl(nurFarbe, [VERLAUF]), undefined);
+  assert.strictEqual(bewegungNachWahl(laeuft, [VERLAUF]), null);
+  assert.strictEqual(bewegungNachWahl("", []), undefined, "ohne Hintergrund starten Punkte");
+  assert.strictEqual(bewegungNachWahl(laeuft, [punkte[0], VERLAUF]), null, "hell Punkte, dunkel nicht");
 });
 
 // ---------------------------------------------------------------------------

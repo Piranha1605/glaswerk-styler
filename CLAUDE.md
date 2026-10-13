@@ -1248,9 +1248,13 @@ Gemessen an der Testmaschine, HA 2026.10.1 und UIX 8.4.0.
 
 `HINTERGRUENDE` steht in `hintergrund.js`; `baukasten.js` liest die Liste von
 dort und gibt sie unter demselben Namen weiter. Zwölf Teile: „Keiner", **zehn
-Farbverläufe** aus Farbpunkten, der ruhige Verlauf. **Die Farbpunkte tragen
-`fixed`**, der ruhige Verlauf nicht — die Begründung steht unter *Wer malt, und
-wie groß*.
+Farbverläufe** aus Farbpunkten, der ruhige Verlauf. **Jeder Teil mit einem
+Wert trägt `fixed`.** Bei den Farbpunkten wegen ihrer Lage — die Begründung
+steht unter *Wer malt, und wie groß*. Beim ruhigen Verlauf wegen der
+Seitenleiste: Mitlaufend beginnt die Fläche erst rechts von ihr, und eine
+durchscheinende Leiste steht dann vor Home Assistants flachem `#111111` statt
+vor dem Verlauf. Von „HATS Aufbau" über `_applyTheme()` gemessen: ohne das Wort
+658 × 2557 px ab x = 256, mit ihm 914 × 863 px ab x = 0.
 
 **Erkannt wird ein Hintergrund ohne Rücksicht auf `fixed`.** `erkenneTeil()`
 vergleicht sonst wörtlich; eine Theme von gestern (`liquid_glass` etwa) trägt
@@ -1330,6 +1334,22 @@ verschöbe derselbe Block dessen erste Ebene, und es rutschte aus dem Rahmen.
 
 `PUNKTE_VORGABE` ist, was „leicht bewegen und Farben ändern" heißt, wenn sonst
 nichts gesagt ist: ein Umlauf in 80 s, der Farbton pendelt um 40 Grad.
+
+**Wer einen Farbverlauf wählt, bekommt laufende Punkte.** Ansage vom
+13.10.2026: *„ja die punkte sollen gleich starten"*. Die Regel steht in
+`bewegungNachWahl()`, und sie gilt **jedes Mal**, nicht nur beim ersten:
+
+    noch keine Bewegung im Theme     die Vorgabe
+    nur Farbwechsel im Theme         die Punkte kommen dazu, der Farbwechsel bleibt
+    die Punkte laufen schon          nichts, auch die eigene Stufe bleibt
+    die Fläche treibt                nichts - beides zugleich zöge die Punkte
+                                     aus ihren Ecken
+    kein Punktebild                  bewegungNachBild(): die Punkte fallen weg
+
+Die zweite Zeile ist der Fall, der zuerst fehlte: Nordlicht, dann der ruhige
+Verlauf, dann Sand — und bei Sand standen die Punkte auf 0, weil vom vorigen
+Mal noch der Farbwechsel im Block lag und damit „schon eine Bewegung
+eingestellt" war. Gefunden beim Nachspielen der Reihenfolge, nicht im Test.
 
 ### Wer malt, und wie groß
 
@@ -1454,17 +1474,27 @@ Die Lagen und Anteile stammen aus der Wetterkachel der Horizon-Cards
 
 ### UIX bringt eine eigene Hintergrundschicht mit
 
-Aus dem Bündel von UIX 8.4.0 gelesen und an der Instanz ausgelöst: `ha-drawer`
+Aus dem Bündel von UIX 8.4.0 gelesen und an der Instanz ausgelöst: **UIX**
 liest `--uix-view-background` (dazu `-image`, `-video`, `-image-entity`,
-`-camera-entity`, `-cover`) und legt daraus ein festes `div[uix-view-background]`
-vorn in `<body>`. Die Schicht liegt über `hui-view-background` und unter den
-Karten — und sie war die einzige, die auch hinter den **Einstellungsseiten**
-zu sehen war.
+`-camera-entity`, `-cover`) als berechneten Wert **am Element `ha-drawer`** und
+legt daraus selbst ein festes `div[uix-view-background]` vorn in `<body>`. Die
+Schicht liegt über `hui-view-background` und unter den Karten — und sie war die
+einzige, die auch hinter den **Einstellungsseiten** zu sehen war.
 
-HATS benutzt sie noch nicht. Der Name ist doppelt belegt: `uix-view-background`
-ist zugleich das Stilziel dieser Schicht und ihr Wert. Und die Notiz in HATGs
-CLAUDE.md, die Variable gehöre zu `hui-root` und nicht zum Drawer, stimmt für
-8.4.0 nicht mehr.
+Genau gesagt, weil der erste Satz hier ungenau war: `ha-drawer` selbst weiß
+davon nichts, in seinen `elementStyles` kommt der Name nicht vor (von „HATS
+Aufbau" nachgemessen). Es ist der Aufsatz, den UIX auf dieses Bauteil setzt:
+Er fragt `getComputedStyle()` des Drawers. Richtig bleibt, dass die Variable
+nicht zu `hui-root` gehört.
+
+**Die Schicht spart Kopfleiste und Seitenleiste aus** — gemessen
+`inset: 56px 0px 0px 255px`. Sie taugt also nicht dafür, den Hintergrund unter
+die Seitenleiste zu bringen; das tut das Wort `fixed`. Im Bündel steht dazu ein
+Schalter: Hat `--uix-view-background-cover` den Wert `full`, setzt UIX oben und
+links auf 0. **Gelesen, nicht gemessen.**
+
+HATS benutzt die Schicht nicht. Der Name ist doppelt belegt:
+`uix-view-background` ist zugleich das Stilziel dieser Schicht und ihr Wert.
 
 ### Messen
 

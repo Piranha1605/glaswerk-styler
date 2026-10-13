@@ -43,6 +43,13 @@ function wende(m, sorte, teil) {
 }
 const leser = (m) => (name, ebene) => { const k = name.replace(/^--/, ""); return ebene === "beide" ? m.flach[k] : m[ebene]?.[k]; };
 const teil = (id) => HINTERGRUENDE.find((h) => h.id === id);
+// Angewendet und wieder geloest. Jeder Teil steht von sich aus fest; wer den
+// Schalter pruefen will, braucht einen Anfang, an dem er noch nicht umgelegt ist.
+function wendeLose(m, h) {
+  wende(m, "hintergrund", h);
+  for (const e of ["light", "dark"]) m[e][FELD] = stelleFest(m[e][FELD], false);
+  return m;
+}
 
 // ---------------------------------------------------------------------------
 // Die Hintergruende
@@ -60,13 +67,18 @@ pruefe("Der Baukasten fuehrt genau die Hintergruende aus hintergrund.js", () => 
   }
 });
 
-pruefe("Die Farbinseln stehen fest, und zwar so, dass Home Assistant es erkennt", () => {
+pruefe("Jeder Hintergrund steht fest, und zwar so, dass Home Assistant es erkennt", () => {
   for (const modus of ["light", "dark"]) {
     const w = teil("inseln")[modus]["--" + FELD];
     assert.strictEqual(haIstFest(w), true, `${modus}: nicht fest`);
     assert.strictEqual((w.match(/radial-gradient\(/g) || []).length, 4, "es sind nicht mehr vier Inseln");
-    // Gegenprobe: der ruhige Verlauf und "keiner" tragen das Wort nicht.
-    assert.strictEqual(haIstFest(teil("verlauf")[modus]["--" + FELD]), false);
+    // Auch der ruhige Verlauf: Mitlaufend beginnt die Flaeche erst rechts von
+    // der Seitenleiste, und eine durchscheinende Leiste steht dann vor Home
+    // Assistants flachem Grund - gemeldet am 13.10.2026 als Kante.
+    for (const h of HINTERGRUENDE.filter((x) => x.id !== "keiner"))
+      assert.strictEqual(haIstFest(h[modus]["--" + FELD]), true, `${h.id}/${modus} laeuft mit`);
+    // Gegenprobe: Das Orakel sagt nicht zu allem ja.
+    assert.strictEqual(haIstFest(ohneFest(teil("verlauf")[modus]["--" + FELD])), false);
     assert.strictEqual(teil("keiner")[modus]["--" + FELD], "");
   }
   // Hell und dunkel sind verschiedene Farben an denselben Stellen.
@@ -102,7 +114,7 @@ pruefe("Ein Hintergrund wird wiedererkannt, ob fest oder nicht", () => {
 // Lesen und Schreiben
 
 pruefe("Fest: der Schalter aendert den Wert dort, wo er steht, in beiden Modi", () => {
-  const m = wende(leeresModell("t"), "hintergrund", teil("verlauf"));
+  const m = wendeLose(leeresModell("t"), teil("verlauf"));
   assert.strictEqual(hintergrundStand(m).fest, false);
   assert.deepStrictEqual(hintergrundAendern(m, "fest", true), { felder: [FELD], abgelehnt: null });
   assert.ok(haIstFest(m.light[FELD]) && haIstFest(m.dark[FELD]));
@@ -113,7 +125,7 @@ pruefe("Fest: der Schalter aendert den Wert dort, wo er steht, in beiden Modi", 
   // Zweimal dasselbe meldet keine Aenderung.
   assert.deepStrictEqual(hintergrundAendern(m, "fest", true).felder, []);
   hintergrundAendern(m, "fest", false);
-  assert.strictEqual(m.light[FELD], teil("verlauf").light["--" + FELD], "der Weg zurueck aendert den Wert");
+  assert.strictEqual(m.light[FELD], ohneFest(teil("verlauf").light["--" + FELD]), "der Weg zurueck aendert den Wert");
 });
 
 pruefe("Fest: ein flacher Wert bleibt flach, und ohne Hintergrund geschieht nichts", () => {
@@ -129,7 +141,7 @@ pruefe("Fest: ein flacher Wert bleibt flach, und ohne Hintergrund geschieht nich
 });
 
 pruefe("Stand: halb fest und unerkannt fest werden gemeldet", () => {
-  const m = wende(leeresModell("t"), "hintergrund", teil("verlauf"));
+  const m = wendeLose(leeresModell("t"), teil("verlauf"));
   m.light[FELD] = stelleFest(m.light[FELD], true);
   const s = hintergrundStand(m);
   assert.strictEqual(s.fest, false);
@@ -334,7 +346,7 @@ pruefe("Ein Regler schreibt erst beim Loslassen, beim Ziehen aendert sich nur di
 });
 
 pruefe("Schalter, Auswahl und Ausschlag reichen den richtigen Wert weiter", () => {
-  const m = wende(leeresModell("t"), "hintergrund", teil("verlauf"));
+  const m = wendeLose(leeresModell("t"), teil("verlauf"));
   const fest = element("checkbox", "fest", true);
   const wahl = element("select-one", "wetter", "weather.forecast_home");
   const farbe = element("range", "farbe", 2);

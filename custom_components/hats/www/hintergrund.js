@@ -107,8 +107,15 @@ export function ohneFest(wert) {
 // Die Farbpunkte stehen FEST. Ohne das Wort haengt die Flaeche absolut und ist
 // so hoch wie der ganze Inhalt - gemessen 1774 px bei 768 px Fensterhoehe. In
 // der alten Schreibweise sassen die Punkte bei 86 % und 78 % dann bei 1525 und
-// 1383 px, zwei von vier unter dem ersten Bildschirm. Der ruhige Verlauf bleibt
-// mitlaufend: Zwei Toene ueber die ganze Seite gezogen sind immer noch zwei Toene.
+// 1383 px, zwei von vier unter dem ersten Bildschirm.
+//
+// Der ruhige Verlauf steht ebenfalls fest - aus einem anderen Grund. Fuer zwei
+// Toene ist die Hoehe der Flaeche gleichgueltig, fuer die Seitenleiste nicht:
+// Mitlaufend beginnt die Flaeche erst rechts von ihr, und eine durchscheinende
+// Leiste steht dann vor Home Assistants flachem Grund statt vor dem Verlauf.
+// Gemessen von der Sitzung "HATS Aufbau" am 13.10.2026, ueber _applyTheme():
+// ohne das Wort 658 x 2557 px ab x = 256, mit ihm 914 x 863 px ab x = 0.
+// Gemeldet war es als Kante neben der Leiste.
 //
 // Glas braucht einen dieser Hintergruende: Eine durchscheinende Flaeche vor
 // einer einfarbigen Wand sieht aus wie eine etwas hellere Wand. Der Kartenstil
@@ -291,8 +298,8 @@ export const HINTERGRUENDE = [
     de: "Ruhiger Verlauf", en: "Quiet gradient",
     zweckDe: "Ein schraeger Verlauf, zwei Toene. Genug fuer Glas, ruhiger als die Punkte.",
     zweckEn: "One diagonal gradient, two tones. Enough for glass, calmer than the dots.",
-    light: { "--lovelace-background": "linear-gradient(155deg, #e9eef7 0%, #f4f1f8 55%, #eaf4f2 100%)" },
-    dark:  { "--lovelace-background": "linear-gradient(155deg, #0e1220 0%, #151225 55%, #0c1d1f 100%)" },
+    light: { "--lovelace-background": stelleFest("linear-gradient(155deg, #e9eef7 0%, #f4f1f8 55%, #eaf4f2 100%)", true) },
+    dark:  { "--lovelace-background": stelleFest("linear-gradient(155deg, #0e1220 0%, #151225 55%, #0c1d1f 100%)", true) },
   },
 ];
 
@@ -511,6 +518,32 @@ export function bewegungNachBild(text, werte) {
   const gesetzt = (werte || []).filter((w) => typeof w === "string" && w.trim());
   if (gesetzt.length && gesetzt.every(istPunkteBild)) return undefined;
   return bewegung(b, { punkte: false });
+}
+
+// Ein Hintergrund wurde GEWAEHLT - was heisst das fuer die Bewegung?
+//
+// Ansage des Maintainers vom 13.10.2026, auf die Frage, ob die Punkte beim
+// Waehlen von selbst loslaufen sollen: "ja die punkte sollen gleich starten".
+//
+// Die Regel ist deshalb eine einzige: Wer ein Punktebild waehlt, bekommt
+// laufende Punkte. Nicht nur beim allerersten Mal - sonst steht jemand, der
+// ueber den ruhigen Verlauf zu den Punkten zurueckkommt, vor Punkten, die
+// stillstehen, weil vom vorigen Mal noch der Farbwechsel im Block liegt.
+// Genau das war am 13.10.2026 der Fall: Nordlicht, Ruhiger Verlauf, Sand -
+// und bei Sand standen die Punkte auf 0.
+//
+// Was bleibt, wie es ist: Laufen die Punkte schon, aendert sich nichts. Und
+// wer die Flaeche treiben laesst, behaelt das - beides zugleich zoege die
+// Punkte aus ihren Ecken, und eine Wahl soll keine Einstellung ueberschreiben.
+//
+// Der zweite Aufruf aendert nichts mehr. Rueckgabe wie bewegungNachBild().
+export function bewegungNachWahl(text, werte) {
+  const gesetzt = (werte || []).filter((w) => typeof w === "string" && w.trim());
+  if (!gesetzt.length || !gesetzt.every(istPunkteBild)) return bewegungNachBild(text, werte);
+  const b = leseBewegung(text);
+  if (!b) return bewegung(PUNKTE_VORGABE, { punkte: true });
+  if (b.punkte || b.drift) return undefined;
+  return bewegung({ ...b, punkte: PUNKTE_VORGABE.punkte }, { punkte: true });
 }
 
 // ---------------------------------------------------------------------------
