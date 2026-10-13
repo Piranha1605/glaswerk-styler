@@ -9,6 +9,7 @@ manifest.json
 translations/de.json
 translations/en.json
 www/bedienelemente.js
+www/hats-control-card.js
 www/hats-panel.js
 www/palette.js
 www/theme.js

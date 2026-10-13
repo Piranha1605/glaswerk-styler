@@ -66,6 +66,21 @@ const vergleich = {
 const alles = {
   title: "Alles", path: "alles", icon: "mdi:view-grid", type: "sections", max_columns: 3,
   sections: [
+    // Die Steuerkarte steht vorn, wie auf einem echten Dashboard - und direkt
+    // ueber einer Kachel mit Auswahlleiste: Die Karte ist den Massen von
+    // ha-control-select nachgebaut, und nur nebeneinander sieht man, ob das
+    // stimmt.
+    { type: "grid", cards: [
+      { type: "heading", heading: "HATS", heading_style: "title", icon: "mdi:palette-outline" },
+      { type: "custom:hats-control-card", controls: ["mode", "fullscreen"],
+        grid_options: { columns: 12, rows: 1 } },
+      { type: "custom:hats-control-card", controls: ["mode"] },
+      { type: "custom:hats-control-card", controls: ["fullscreen", "mode"], kiosk_only: true },
+      { type: "tile", entity: "climate.heatpump", features_position: "bottom",
+        features: [{ type: "climate-hvac-modes" }] },
+      { type: "tile", entity: "fan.living_room_fan", features_position: "bottom",
+        features: [{ type: "fan-speed" }] },
+    ] },
     { type: "grid", cards: [
       { type: "heading", heading: "Home Assistant", heading_style: "title", icon: "mdi:home-assistant" },
       { type: "tile", entity: "light.ceiling_lights", features_position: "bottom", features: [{ type: "light-brightness" }] },

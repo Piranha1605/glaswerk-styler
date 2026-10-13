@@ -16,6 +16,11 @@ PANEL_TAG = "hats-panel"
 STATIC_PATH = "/hats_static"
 FRONTEND_MODULE = "/hats_static/hats-panel.js?v=0.2.0b3"
 
+# Die Steuerkarte. Ihre Adresse wird aus STATIC_PATH und VERSION gebaut, nicht
+# hier ausgeschrieben - die Versionsnummer steht schon an vier Stellen, und
+# eine fuenfte waere die naechste, die auseinanderlaeuft.
+CARD_FILE = "hats-control-card.js"
+
 THEMES_SUBDIR = "themes"
 
 # Hintergrundbilder liegen in config/www/hats und kommen unter /local/hats von

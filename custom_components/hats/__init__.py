@@ -3,6 +3,10 @@
 Registriert das Panel und die drei Websocket-Befehle, die HATS braucht:
 Themes auflisten, eine Theme-Datei lesen, eine Theme-Datei schreiben.
 
+Dazu die Steuerkarte fuer Dashboards (hats-control-card.js). Sie wird als
+zusaetzliches Modul der Oberflaeche angemeldet und steht damit auf jedem
+Dashboard bereit, ohne dass jemand eine Ressource eintragen muss.
+
 Mehr ist absichtlich nicht drin. Vorlagen, Marker und Shadow-DOM-Pfade bleiben
 bei HATG - HATS schreibt gewoehnliche Theme-Felder, und die erben durch jede
 Shadow-Grenze. Siehe CLAUDE.md.
@@ -28,6 +32,7 @@ from homeassistant.core import HomeAssistant
 from .const import (
     BILDER_LOCAL_PATH,
     BILDER_SUBDIR,
+    CARD_FILE,
     DOMAIN,
     FRONTEND_MODULE,
     PANEL_ICON,
@@ -36,12 +41,14 @@ from .const import (
     PANEL_URL,
     STATIC_PATH,
     THEMES_SUBDIR,
+    VERSION,
     WWW_SUBDIR,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 _WS_REGISTERED_FLAG = f"{DOMAIN}_ws_registered"
+_KARTEN_URL = f"{DOMAIN}_karten_url"
 _SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 # Woran eine von HATS gebaute Datei zu erkennen ist. Dieselbe Zeichenfolge
@@ -402,15 +409,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Regel, nicht die Ausnahme -, bekommt im Browser 31 Tage lang den alten
     # Stand, obwohl die Kopfzeile die neue Version zeigt. Faellt das Lesen aus,
     # bleibt es bei der Version.
-    def _modul_url() -> str:
-        datei = www_path / "hats-panel.js"
+    def _mit_pruefsumme(datei: str, adresse: str) -> str:
         try:
-            kurz = hashlib.md5(datei.read_bytes()).hexdigest()[:8]
+            kurz = hashlib.md5((www_path / datei).read_bytes()).hexdigest()[:8]
         except OSError:
-            return FRONTEND_MODULE
-        return f"{FRONTEND_MODULE}.{kurz}"
+            return adresse
+        return f"{adresse}.{kurz}"
 
-    module_url = await hass.async_add_executor_job(_modul_url)
+    module_url = await hass.async_add_executor_job(
+        _mit_pruefsumme, "hats-panel.js", FRONTEND_MODULE
+    )
+    karten_url = await hass.async_add_executor_job(
+        _mit_pruefsumme, CARD_FILE, f"{STATIC_PATH}/{CARD_FILE}?v={VERSION}"
+    )
 
     # Dritter Parameter ist cache_headers. Bewusst False, solange entwickelt
     # wird: Mit True liefert HA die Datei mit max-age=2678400 aus, also 31
@@ -433,11 +444,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         require_admin=True,
     )
 
+    # Die Steuerkarte als zusaetzliches Modul der Oberflaeche - NICHT als
+    # Lovelace-Ressource. Eine Ressource stuende in der Konfiguration des
+    # Nutzers und bliebe dort liegen, wenn HATS wieder geht; das Modul hier
+    # verschwindet mit dem Eintrag. Dieselbe Regel wie bei den Theme-Feldern:
+    # nichts hinterlassen, was spaeter ins Leere zeigt.
+    #
+    # Die Adresse wird gemerkt, weil async_unload_entry genau DIESE wieder
+    # abmelden muss: Nach einem Reload mit geaenderter Datei ist die Pruefsumme
+    # eine andere, und eine neu gerechnete Adresse traefe die alte nicht.
+    frontend.add_extra_js_url(hass, karten_url)
+    hass.data[_KARTEN_URL] = karten_url
+
     _registriere_websocket(hass)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Panel wieder abmelden."""
+    """Panel und Steuerkarte wieder abmelden."""
     frontend.async_remove_panel(hass, PANEL_URL)
+    karten_url = hass.data.pop(_KARTEN_URL, None)
+    if karten_url:
+        frontend.remove_extra_js_url(hass, karten_url)
     return True

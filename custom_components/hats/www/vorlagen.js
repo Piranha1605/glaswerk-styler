@@ -195,6 +195,32 @@ ha-card.is-on .bubble-background {
   opacity: .55 !important;
 }
 
+/* Die Klimakarte ist der Sonderfall - und der einzige.
+
+   Am 13.10.2026 an sechs Bubble-Karten gezaehlt: Nur EINE traegt auf
+   .bubble-background wirklich eine Farbe, naemlich die Klimakarte. Bei
+   Button-, Cover- und Media-Player-Karten ist die Schicht farblos
+   (rgba(0,0,0,0)) - die Deckkraft oben laeuft dort also ins Leere.
+
+   Bubble setzt die Zustandsfarbe bei Klima inline und markiert die Schicht
+   mit einer eigenen Klasse:
+
+       button / cover / media-player   .bubble-background .bubble-*-background
+       climate                         .bubble-background .bubble-color-background
+
+   Mit 55 % deckt das volle Orange die ganze Karte zu - gemeldet: "die Bubble
+   heizungskarte braucht anpassung". HA und Mushroom faerben beim selben Geraet
+   nur das Symbol und lassen die Flaeche Glas. 22 % bringt die Klimakarte auf
+   dasselbe Bild: getoent statt gedeckt, der Zustand bleibt auf einen Blick
+   erkennbar.
+
+   Der Selektor braucht ha-card.is-on davor. Eine nackte Klasse verliert gegen
+   die Regel darueber - gemessen: .bubble-color-background allein liess die
+   Deckkraft auf .55, erst mit dem Vorsatz griff sie. */
+ha-card.is-on .bubble-color-background {
+  opacity: .22 !important;
+}
+
 /* Ein Separator ist eine Ueberschriftenzeile, keine Kachel. Bubble laesst ihn
    schon ohne Flaeche; ohne diese Ausnahme laegen trotzdem Weichzeichnung und
    Lichtkante darauf - ein verschwommener Balken mit heller Oberkante hinter
