@@ -69,6 +69,22 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 | `controls` | `[mode, fullscreen]` | welche Bedienteile, in welcher Reihenfolge |
 | `kiosk_only` | `false` | `true`: Vollbild nur in Home Assistant, das Browserfenster bleibt |
 
+### Als Badge
+
+Dieselbe Steuerung gibt es in klein, für die Badge-Reihe über den Karten:
+
+![Das Badge im hellen Modus](docs/bilder/steuerbadge-hell.jpg)
+![Das Badge im dunklen Modus](docs/bilder/steuerbadge-dunkel.jpg)
+
+```yaml
+type: custom:hats-control-badge
+```
+
+Die Felder sind dieselben. Im Badge-Wähler steht es unter **„Nach Badge"**,
+Abschnitt Community-Badges, als „HATS Steuerung":
+
+![Der Badge-Wähler mit HATS Steuerung](docs/bilder/steuerbadge-waehler.jpg)
+
 Alles, was die Karte benutzt, stellt Home Assistant: die Bauteile, die Symbole,
 die Farbvariablen und die beiden Schalter dahinter. Sie passt sich deshalb jeder
 Theme an und braucht keine weitere Karte aus HACS.

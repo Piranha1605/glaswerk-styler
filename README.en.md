@@ -68,6 +68,22 @@ by hand; the log shows the line.
 | `controls` | `[mode, fullscreen]` | which controls, in which order |
 | `kiosk_only` | `false` | `true`: fullscreen in Home Assistant only, the browser window stays |
 
+### As a badge
+
+The same control exists in a small form, for the badge row above the cards:
+
+![The badge in light mode](docs/bilder/steuerbadge-hell.jpg)
+![The badge in dark mode](docs/bilder/steuerbadge-dunkel.jpg)
+
+```yaml
+type: custom:hats-control-badge
+```
+
+The fields are the same. In the badge picker it is listed on the **"By
+badge"** tab, section Community badges, as "HATS control":
+
+![The badge picker showing the HATS control](docs/bilder/steuerbadge-waehler.jpg)
+
 Everything the card uses is provided by Home Assistant: the elements, the
 icons, the colour variables and the two switches behind it. It therefore
 follows any theme and needs no further card from HACS.

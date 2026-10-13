@@ -1,15 +1,21 @@
-// HATS - die Steuerkarte
+// HATS - die Steuerkarte und ihre kleine Form, das Badge
 //
-// Eine Lovelace-Karte, die im Moment zwei Dinge schaltet: den Modus
-// (automatisch, hell, dunkel) und das Vollbild.
+// Beide schalten im Moment zwei Dinge: den Modus (automatisch, hell, dunkel)
+// und das Vollbild.
 //
-//     type: custom:hats-control-card
+//     type: custom:hats-control-card      als Karte
+//     type: custom:hats-control-badge     als Badge, in der Reihe ueber den Karten
+//
+// Beide stehen in DIESER Datei, obwohl sie nach der Karte heisst: HATS meldet
+// genau eine Datei als Ressource an (karte.py), und zwei Formen derselben
+// Sache sollen nicht auseinanderlaufen koennen. Was sie unterscheidet, sind
+// der Rahmen und ein Stilblatt.
 //
 // DIE REGEL DIESER DATEI: ALLES, WAS SIE BENUTZT, STELLT HOME ASSISTANT.
 // Keine Bibliothek, keine fremde Karte, kein eigenes Symbol, keine eigene
 // Farbe. Im Einzelnen, am 13.10.2026 an HA 2026.10.1 gemessen:
 //
-//   Bauteile   ha-card, ha-icon (mdi), ha-ripple
+//   Bauteile   ha-card, ha-badge, ha-icon (mdi), ha-ripple
 //   Farben     --primary-color, --disabled-color, --primary-text-color ...
 //              dieselben Namen, die ha-control-select und ha-control-button
 //              lesen - aus deren elementStyles abgeschrieben, nicht geraten
@@ -33,6 +39,7 @@
 // bleibt, wie es ist. Mit kiosk_only: true bleibt es dabei.
 
 const KARTE = "hats-control-card";
+const BADGE = "hats-control-badge";
 
 // Die Reihenfolge hier ist die Vorgabe fuer die Anzeige. Was dazukommt, kommt
 // hier dazu - und nur hier.
@@ -41,6 +48,7 @@ export const BEDIENTEILE = ["mode", "fullscreen"];
 const TEXTE = {
   de: {
     name: "HATS Steuerkarte",
+    nameBadge: "HATS Steuerung",
     beschreibung: "Schaltet den Modus (automatisch, hell, dunkel) und das Vollbild.",
     modus: "Modus",
     auto: "Automatisch - folgt dem Gerät",
@@ -60,6 +68,7 @@ const TEXTE = {
   },
   en: {
     name: "HATS control card",
+    nameBadge: "HATS control",
     beschreibung: "Switches the mode (auto, light, dark) and fullscreen.",
     modus: "Mode",
     auto: "Auto - follows the device",
@@ -234,13 +243,15 @@ if (globalThis.document?.addEventListener) {
 
 // ---- Aussehen ------------------------------------------------------------
 //
-// Die Masse und Farben stehen in den elementStyles von ha-control-select und
-// ha-control-button: Spur in --disabled-color bei 20 Prozent, Auswahl in
-// --primary-color, 40 Pixel hoch, 4 Pixel Polster, 20-Pixel-Symbole. Die
-// Rundung nimmt denselben Weg wie in den Kachel-Funktionen
-// (--ha-card-features-border-radius, sonst --ha-border-radius-lg). Damit
-// steht die Karte neben einer Kachel, ohne aufzufallen, und zieht mit, wenn
-// die Theme eins dieser Felder aendert.
+// Drei Blaetter: was beide Formen teilen, dann die Karte, dann das Badge.
+//
+// Die Masse und Farben der KARTE stehen in den elementStyles von
+// ha-control-select und ha-control-button: Spur in --disabled-color bei 20
+// Prozent, Auswahl in --primary-color, 40 Pixel hoch, 4 Pixel Polster,
+// 20-Pixel-Symbole. Die Rundung nimmt denselben Weg wie in den
+// Kachel-Funktionen (--ha-card-features-border-radius, sonst
+// --ha-border-radius-lg). Damit steht die Karte neben einer Kachel, ohne
+// aufzufallen, und zieht mit, wenn die Theme eins dieser Felder aendert.
 //
 // Die Flaechen liegen als ::before UNTER dem Symbol, wie bei Home Assistant:
 // So laesst sich die Deckkraft der Flaeche stellen, ohne das Symbol
@@ -248,18 +259,7 @@ if (globalThis.document?.addEventListener) {
 //
 // Jeder Knopf setzt seine Schriftfarbe selbst. button erbt sie nicht von der
 // Karte, sondern vom Browser - dieselbe Falle wie im Panel.
-const STIL = `
-  :host { display: block; height: 100%; }
-  ha-card {
-    height: 100%; box-sizing: border-box;
-    display: flex; align-items: center;
-    padding: var(--ha-space-2, 8px);
-  }
-  .reihe {
-    --_rund: var(--ha-card-features-border-radius, var(--ha-border-radius-lg, 12px));
-    flex: 1; min-width: 0;
-    display: flex; align-items: center; gap: var(--ha-space-2, 8px);
-  }
+const STIL_GEMEINSAM = `
   button {
     position: relative; z-index: 0; box-sizing: border-box;
     display: flex; align-items: center; justify-content: center;
@@ -273,8 +273,44 @@ const STIL = `
     border-radius: inherit; pointer-events: none;
     transition: background-color .18s ease-in-out, opacity 80ms ease-in-out;
   }
-  ha-icon { --mdc-icon-size: 20px; display: flex; pointer-events: none; }
+  ha-icon { display: flex; pointer-events: none; }
   ha-ripple:not(:defined) { display: none; }
+
+  .wahl::before { background-color: var(--primary-color); opacity: 0; }
+  .wahl:hover::before { opacity: .2; }
+  .wahl:focus-visible { box-shadow: 0 0 0 2px var(--primary-color); }
+  .wahl[aria-pressed="true"] { color: var(--ha-color-on-primary-loud, #fff); }
+  .wahl[aria-pressed="true"]::before { opacity: 1; }
+
+  /* Gesperrt heisst leiser, nicht unsichtbar - und nicht "disabled": Der
+     Knopf muss klickbar bleiben, damit er sagen kann, warum er nichts tut. */
+  .modus[aria-disabled="true"] .wahl { cursor: not-allowed; color: var(--disabled-text-color); }
+  .modus[aria-disabled="true"] .wahl::before { background-color: var(--disabled-color); }
+  .modus[aria-disabled="true"] .wahl:hover:not([aria-pressed="true"])::before { opacity: 0; }
+  .modus[aria-disabled="true"] .wahl[aria-pressed="true"] { color: var(--primary-text-color); }
+
+  .knopf { overflow: hidden; }
+  .knopf:focus-visible { box-shadow: 0 0 0 2px var(--secondary-text-color); }
+  .knopf[aria-pressed="true"] { color: var(--ha-color-on-primary-loud, #fff); }
+  .knopf[aria-pressed="true"]::before { background-color: var(--primary-color); opacity: 1; }
+
+  .leer { color: var(--secondary-text-color); font-size: var(--ha-font-size-m, 14px);
+          padding: 0 var(--ha-space-2, 8px); white-space: nowrap; }
+`;
+
+const STIL_KARTE = `
+  :host { display: block; height: 100%; }
+  ha-card {
+    height: 100%; box-sizing: border-box;
+    display: flex; align-items: center;
+    padding: var(--ha-space-2, 8px);
+  }
+  .reihe {
+    --_rund: var(--ha-card-features-border-radius, var(--ha-border-radius-lg, 12px));
+    flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: var(--ha-space-2, 8px);
+  }
+  ha-icon { --mdc-icon-size: 20px; }
 
   .modus {
     position: relative; flex: 1; min-width: 0; height: 40px; box-sizing: border-box;
@@ -289,43 +325,53 @@ const STIL = `
     flex: 1; min-width: 0; height: 100%;
     border-radius: calc(var(--_rund) - 4px);
   }
-  .wahl::before { background-color: var(--primary-color); opacity: 0; }
-  .wahl:hover::before { opacity: .2; }
-  .wahl:focus-visible { box-shadow: 0 0 0 2px var(--primary-color); }
-  .wahl[aria-pressed="true"] { color: var(--ha-color-on-primary-loud, #fff); }
-  .wahl[aria-pressed="true"]::before { opacity: 1; }
-
-  /* Gesperrt heisst leiser, nicht unsichtbar - und nicht "disabled": Der
-     Knopf muss klickbar bleiben, damit er sagen kann, warum er nichts tut. */
-  .modus[aria-disabled="true"] .wahl { cursor: not-allowed; color: var(--disabled-text-color); }
-  .modus[aria-disabled="true"] .wahl::before { background-color: var(--disabled-color); }
-  .modus[aria-disabled="true"] .wahl:hover:not([aria-pressed="true"])::before { opacity: 0; }
-  .modus[aria-disabled="true"] .wahl[aria-pressed="true"] { color: var(--primary-text-color); }
-
-  .knopf {
-    flex: none; width: 40px; height: 40px; overflow: hidden;
-    border-radius: var(--_rund);
-  }
+  .knopf { flex: none; width: 40px; height: 40px; border-radius: var(--_rund); }
   .knopf::before { background-color: var(--disabled-color); opacity: .2; }
-  .knopf:focus-visible { box-shadow: 0 0 0 2px var(--secondary-text-color); }
-  .knopf[aria-pressed="true"] { color: var(--ha-color-on-primary-loud, #fff); }
-  .knopf[aria-pressed="true"]::before { background-color: var(--primary-color); opacity: 1; }
+`;
 
-  .leer { color: var(--secondary-text-color); font-size: var(--ha-font-size-m, 14px);
-          padding: 0 var(--ha-space-2, 8px); }
+// Das Badge. Die Flaeche zeichnet ha-badge selbst - Hoehe, Rundung, Rand,
+// Schatten und Weichzeichnung kommen aus denselben Feldern wie bei jedem
+// anderen Badge, also auch aus der Theme.
+//
+// Am 13.10.2026 an ha-badge gemessen: Mit icon-only hat die Flaeche kein
+// Polster und zeichnet NUR den Steckplatz "icon"; der uebrige Inhalt faellt
+// weg. Die Reihe sitzt deshalb in diesem Steckplatz und bringt ihr Polster
+// selbst mit. 36 Pixel hoch, darin 28 Pixel grosse runde Knoepfe.
+//
+// Eine Spur wie in der Karte gibt es hier nicht - die Pille des Badges IST die
+// Spur. Zwischen Modus und Vollbild steht dafuer ein Strich, wie in der
+// Menueleiste des Panels: zwei Dinge, die Verschiedenes tun.
+const STIL_BADGE = `
+  :host { display: block; }
+  ha-badge:not(:defined) { display: inline-flex; }
+  .reihe {
+    display: flex; align-items: center;
+    gap: var(--ha-space-1, 4px); padding: 0 var(--ha-space-1, 4px);
+  }
+  ha-icon { --mdc-icon-size: var(--ha-badge-icon-size, 18px); }
+
+  .modus { display: flex; align-items: center; gap: 2px; }
+  .wahl, .knopf {
+    flex: none; width: 28px; height: 28px;
+    border-radius: var(--ha-border-radius-pill, 9999px);
+  }
+  .knopf::before { background-color: var(--primary-color); opacity: 0; }
+  .trenner { flex: none; width: 1px; height: 16px; background: var(--divider-color); }
 `;
 
 const Basis = globalThis.HTMLElement || class {};
 
-class HatsControlCard extends Basis {
+// Was Karte und Badge teilen: die Konfiguration, den Zustand, die Klicks. Die
+// beiden Formen darunter liefern nur noch Rahmen und Stilblatt.
+class Steuerung extends Basis {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot.addEventListener("click", (ev) => this._klick(ev));
   }
 
-  // Der Kartenwaehler legt die Liste ausdruecklich an. Ohne das zeigte der
-  // Editor ein leeres Auswahlfeld, waehrend die Karte beide Teile zeichnet.
+  // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
+  // ein leeres Auswahlfeld, waehrend beide Teile gezeichnet werden.
   static getStubConfig() {
     return { controls: [...BEDIENTEILE] };
   }
@@ -357,7 +403,7 @@ class HatsControlCard extends Basis {
   }
 
   // Home Assistant setzt hass bei JEDER Zustandsaenderung im Haus neu. Die
-  // Karte haengt nur an vier Dingen, und nur die loesen ein Zeichnen aus.
+  // Steuerung haengt nur an vier Dingen, und nur die loesen ein Zeichnen aus.
   // Unveraenderte Teile reicht Home Assistant als dasselbe Objekt weiter, ein
   // Vergleich der Verweise genuegt also.
   set hass(hass) {
@@ -370,14 +416,6 @@ class HatsControlCard extends Basis {
         || sprache(alt) !== sprache(hass)) {
       this._zeichne();
     }
-  }
-
-  getCardSize() { return 1; }
-
-  // Eine Zeile im Sections-Raster ist 56 Pixel hoch: 40 fuer die Bedienteile
-  // und zweimal 8 Polster.
-  getGridOptions() {
-    return { columns: 6, rows: 1, min_columns: 4, min_rows: 1 };
   }
 
   _zeichne() {
@@ -407,10 +445,10 @@ class HatsControlCard extends Basis {
           <ha-ripple></ha-ripple>
         </button>`,
     };
-    const inhalt = this._config.controls.map((c) => teil[c]).join("")
+    const inhalt = this._config.controls.map((c) => teil[c]).join(this._trenner())
       || `<div class="leer">${t.leer}</div>`;
     this.shadowRoot.innerHTML =
-      `<style>${STIL}</style><ha-card><div class="reihe">${inhalt}</div></ha-card>`;
+      `<style>${STIL_GEMEINSAM}${this._stil()}</style>${this._rahmen(inhalt)}`;
   }
 
   _stelle(spr) {
@@ -477,13 +515,48 @@ class HatsControlCard extends Basis {
   }
 }
 
-if (globalThis.customElements && !customElements.get(KARTE)) {
-  customElements.define(KARTE, HatsControlCard);
-  // Damit die Karte im Kartenwaehler steht. Den Eintrag gibt es nur in einer
-  // Sprache, also in der der Seite.
+class HatsControlCard extends Steuerung {
+  _stil() { return STIL_KARTE; }
+  _trenner() { return ""; }
+  _rahmen(inhalt) { return `<ha-card><div class="reihe">${inhalt}</div></ha-card>`; }
+
+  getCardSize() { return 1; }
+
+  // Eine Zeile im Sections-Raster ist 56 Pixel hoch: 40 fuer die Bedienteile
+  // und zweimal 8 Polster.
+  getGridOptions() {
+    return { columns: 6, rows: 1, min_columns: 4, min_rows: 1 };
+  }
+}
+
+class HatsControlBadge extends Steuerung {
+  _stil() { return STIL_BADGE; }
+  _trenner() { return `<span class="trenner"></span>`; }
+  // icon-only als ATTRIBUT: ha-badge fuehrt die Eigenschaft iconOnly unter
+  // genau diesem Namen. "icononly" ohne Bindestrich tut nichts - gemessen.
+  _rahmen(inhalt) {
+    return `<ha-badge icon-only><div class="reihe" slot="icon">${inhalt}</div></ha-badge>`;
+  }
+}
+
+if (globalThis.customElements) {
+  // Die Eintraege fuer die beiden Waehler gibt es nur in einer Sprache, also
+  // in der der Seite.
   const t = TEXTE[sprache()];
-  window.customCards = window.customCards || [];
-  window.customCards.push({
-    type: KARTE, name: t.name, description: t.beschreibung, preview: true,
-  });
+  if (!customElements.get(KARTE)) {
+    customElements.define(KARTE, HatsControlCard);
+    window.customCards = window.customCards || [];
+    window.customCards.push({
+      type: KARTE, name: t.name, description: t.beschreibung, preview: true,
+    });
+  }
+  // Badges fuehrt Home Assistant in einer eigenen Liste. Wer dort fehlt, steht
+  // im Badge-Waehler nicht unter "Community-Badges".
+  if (!customElements.get(BADGE)) {
+    customElements.define(BADGE, HatsControlBadge);
+    window.customBadges = window.customBadges || [];
+    window.customBadges.push({
+      type: BADGE, name: t.nameBadge, description: t.beschreibung, preview: true,
+    });
+  }
 }

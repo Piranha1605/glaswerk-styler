@@ -72,7 +72,7 @@ custom_components/hats/
 ├── translations/         de.json und en.json
 └── www/
     ├── hats-panel.js     das Panel
-    └── hats-control-card.js   die Steuerkarte fuer Dashboards
+    └── hats-control-card.js   die Steuerkarte fuer Dashboards, als Karte und als Badge
 docs/beispiele/           Start-Themes
 werkzeuge/                Prüfwerkzeuge
 ```
@@ -1013,6 +1013,56 @@ leeres Auswahlfeld neben einer Karte mit beiden Teilen.
 
 Ein unbekannter Name in `controls` ist ein **Fehler**, kein stilles Nichts —
 sonst verschwände bei einem Tippfehler einfach ein Knopf.
+
+### Die kleine Form: das Badge
+
+Auf Ansage vom 13.10.2026, mit einem Bild des Badge-Wählers: *„kannst dafür
+auch noch eine kleine version bauen"*.
+
+```yaml
+type: custom:hats-control-badge     # dieselben Felder wie die Karte
+```
+
+Dieselben Knöpfe, in Home Assistants eigener Badge-Pille. Beide Formen stehen
+in **einer** Datei und erben von derselben Klasse `Steuerung`; Karte und Badge
+liefern nur Rahmen und Stilblatt. Ein Test hält fest, dass keine der beiden
+Klicks, Zustand oder Konfiguration überschreibt — sonst liefen sie auseinander.
+
+**Die Fläche zeichnet `ha-badge`.** An der Instanz gemessen:
+
+    Eigenschaften    type, label, iconOnly
+    Attribut         icon-only          (icononly ohne Bindestrich tut nichts)
+    mit icon-only    kein Polster, und gezeichnet wird NUR der Steckplatz "icon"
+    Fläche           Höhe --ha-badge-size (36px), Rundung die halbe Höhe,
+                     Farbe --ha-card-background, Weichzeichnung
+                     --ha-card-backdrop-filter, Schatten --ha-card-box-shadow
+
+Die Reihe sitzt deshalb in `slot="icon"` und bringt ihr Polster selbst mit.
+Ergebnis an der Testmaschine: 133 × 36 Pixel für alle vier Knöpfe, jeder 28
+Pixel rund, Symbole 18 Pixel (`--ha-badge-icon-size`), dazwischen ein Strich
+in `--divider-color`. Fläche, Rundung und Schatten kommen aus der Theme, ohne
+eine Zeile dafür.
+
+**In der Liste steht es über `window.customBadges`**, nicht über
+`customCards` — Home Assistant führt Badges getrennt. Und es gilt dieselbe
+Falle wie bei der Karte: Der Dialog öffnet auf „Nach Entität"; das Badge
+steht unter **„Nach Badge" → Community-Badges** als „HATS Steuerung".
+
+**Dabei gefunden: `glas-badges` trifft den Wirt, nicht die Pille.** Bis zu
+diesem Badge gab es auf der Testmaschine kein einziges, die Vorlage war also
+nie an etwas gemessen. UIX hängt seinen Knoten in den Shadow Root des
+Badge-Elements; `.badge` liegt eine Grenze tiefer, in `ha-badge`, und wird
+nicht erreicht. Es greift nur `:host`:
+
+    am Wirt gemessen   backdrop-filter  blur(26px) saturate(1.8)
+                       box-shadow       rgba(255,255,255,.5) 0 1px 0 inset
+                       border-radius    999px
+
+Die Weichzeichnung liegt damit doppelt — `ha-badge` nimmt sie schon selbst aus
+`--ha-card-backdrop-filter` —, und die Kante ist ein fester Hell-Wert in einem
+Feld, das für beide Modi gilt. Dieselbe Sorte Fehler, die am 13.10. aus neun
+anderen Vorlagen herausgenommen wurde. Die Vorlage habe ich nicht angefasst;
+sie gehört der Sitzung, die gerade an `vorlagen.js` arbeitet.
 
 ### Angemeldet als Ressource — der erste Weg scheiterte am Service Worker
 

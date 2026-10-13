@@ -52,6 +52,8 @@ const reihe = (ueberschrift, ent, art) => {
 const vergleich = {
   title: "Vergleich", path: "vergleich", icon: "mdi:compare-horizontal",
   type: "sections", max_columns: 3,
+  // Die kleine Form der Steuerkarte, in der Badge-Reihe ueber den Abschnitten.
+  badges: [{ type: "custom:hats-control-badge" }],
   sections: [
     reihe("Licht AN (mit Farbe)", "light.ceiling_lights", "slider"),
     reihe("Licht AUS",            "light.bed_light",      "slider"),

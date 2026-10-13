@@ -177,7 +177,10 @@ pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
   const tags = [...new Set([...code.matchAll(/<([a-z]+(?:-[a-z]+)+)[\s>]/g)].map((m) => m[1]))].sort();
   // Gegenprobe: Der Ausdruck findet ueberhaupt etwas.
   assert.ok(tags.includes("ha-card"), "der Ausdruck findet ha-card nicht - die Pruefung waere leer");
-  assert.deepStrictEqual(tags, ["ha-card", "ha-icon", "ha-ripple"]);
+  // ha-badge war an der Testinstanz auch auf einer Ansicht ohne ein einziges
+  // Badge angemeldet. Ob das auf jeder Instanz so ist, ist nicht bewiesen -
+  // fehlt es, zeichnet die Reihe sich trotzdem, nur ohne Pille darum.
+  assert.deepStrictEqual(tags, ["ha-badge", "ha-card", "ha-icon", "ha-ripple"]);
 });
 
 pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
@@ -186,9 +189,12 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     "--ha-space-2", "--ha-border-radius-lg", "--primary-text-color", "--disabled-color",
     "--primary-color", "--ha-color-on-primary-loud", "--disabled-text-color",
     "--secondary-text-color", "--ha-font-size-m",
+    // fuer das Badge dazugekommen
+    "--ha-space-1", "--ha-border-radius-pill", "--divider-color",
   ];
-  // Home Assistant liest den Namen (hui-card-features), belegt ihn aber nicht.
-  const nurGelesen = ["--ha-card-features-border-radius"];
+  // Home Assistant liest die Namen (hui-card-features, ha-badge), belegt sie
+  // aber nicht.
+  const nurGelesen = ["--ha-card-features-border-radius", "--ha-badge-icon-size"];
   // Lebt nur in der Karte selbst und kommt in keiner Theme vor.
   const eigen = ["--_rund"];
 
@@ -202,8 +208,10 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
 });
 
 pruefe("Keine eigene Farbe ausser HAs Weiss auf der Auswahl", () => {
-  const stil = /const STIL = `([\s\S]*?)`;/.exec(quelle);
-  assert.ok(stil, "STIL nicht gefunden");
+  // Alle drei Blaetter: das gemeinsame, das der Karte, das des Badges.
+  const blaetter = [...quelle.matchAll(/const (STIL_\w+) = `([\s\S]*?)`;/g)];
+  assert.deepStrictEqual(blaetter.map((b) => b[1]), ["STIL_GEMEINSAM", "STIL_KARTE", "STIL_BADGE"]);
+  const stil = [null, blaetter.map((b) => b[2]).join("\n")];
   const farben = stil[1].match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/g) || [];
   // #fff steht in ha-control-select fest (.option.selected{color:#fff}); hier
   // ist es nur noch der Ausweichwert hinter --ha-color-on-primary-loud.
@@ -243,6 +251,41 @@ pruefe("Beide Sprachen tragen dieselben Texte", () => {
   assert.deepStrictEqual(schluessel(de), schluessel(en));
 });
 
+// ---- Karte und Badge ------------------------------------------------------
+
+pruefe("Karte und Badge teilen Verhalten und unterscheiden sich nur im Rahmen", () => {
+  const rumpf = (name) => {
+    const m = new RegExp(`class ${name} extends Steuerung \\{([\\s\\S]*?)\\n\\}`).exec(quelle);
+    assert.ok(m, `${name} erbt nicht von Steuerung`);
+    return [...m[1].matchAll(/^  ([a-zA-Z_]+)\(/gm)].map((x) => x[1]).sort();
+  };
+  // Klicks, Zustand und Konfiguration stehen genau einmal, in Steuerung. Eine
+  // Form, die davon etwas ueberschreibt, liefe der anderen davon.
+  assert.deepStrictEqual(rumpf("HatsControlBadge"), ["_rahmen", "_stil", "_trenner"]);
+  assert.deepStrictEqual(rumpf("HatsControlCard"),
+    ["_rahmen", "_stil", "_trenner", "getCardSize", "getGridOptions"]);
+  // Gegenprobe: Die Basis traegt, was die Formen nicht tragen.
+  const basis = /class Steuerung extends Basis \{([\s\S]*?)\n\}/.exec(quelle);
+  assert.ok(basis, "Steuerung nicht gefunden");
+  for (const m of ["setConfig", "_klick", "_stelle", "_baue"]) {
+    assert.ok(new RegExp(`^  ${m}\\(`, "m").test(basis[1]), `${m} fehlt in Steuerung`);
+  }
+});
+
+pruefe("Das Badge steht in Home Assistants Badge-Liste, die Karte in der Kartenliste", () => {
+  assert.ok(/window\.customBadges\.push\(\{\s*type: BADGE,/.test(quelle), "nicht in customBadges");
+  assert.ok(/window\.customCards\.push\(\{\s*type: KARTE,/.test(quelle), "nicht in customCards");
+  assert.ok(/const BADGE = "hats-control-badge";/.test(quelle));
+  assert.ok(/const KARTE = "hats-control-card";/.test(quelle));
+});
+
+pruefe("Das Badge sitzt im Steckplatz icon eines ha-badge mit icon-only", () => {
+  // An ha-badge gemessen: Mit icon-only zeichnet es NUR diesen Steckplatz,
+  // und das Attribut heisst mit Bindestrich.
+  assert.ok(/<ha-badge icon-only><div class="reihe" slot="icon">/.test(quelle));
+  assert.ok(!/<ha-badge icononly/.test(quelle));
+});
+
 // ---- Die Anmeldung --------------------------------------------------------
 
 pruefe("Die Datei der Karte gibt es, und ihre Adresse traegt keine eigene Version", () => {
@@ -265,4 +308,4 @@ pruefe("Die Karte steht in der Einspielliste", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 18) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 21) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
