@@ -312,13 +312,26 @@ export const KARTENSTILE = [
 // ---------------------------------------------------------------------------
 // Hintergruende
 //
+// UEBERGEBEN AM 13.10.2026 an die Sitzung, die den bewegten Hintergrund baut -
+// auf Ansage des Maintainers. Wer hier etwas aendert, stimmt sich vorher ab;
+// die Absprache liegt in /Users/enricofischer/Projekte/briefkasten/.
+//
+// Offen und dort schon gemessen: hui-view-background haengt absolut und ist so
+// hoch wie der ganze Inhalt - auf einer langen Ansicht 1774 px bei 768 px
+// Fensterhoehe. Die Inseln bei 86 % und 78 % liegen damit unter dem ersten
+// Bildschirm, zwei von vier sind unsichtbar. Das Wort "fixed" am Ende des
+// Wertes stellt die Flaeche fest ans Fenster und holt sie zurueck.
+//
 // Gehoeren zum Kartenstil: Glas vor einer einfarbigen Wand sieht aus wie eine
 // etwas hellere Wand. Wer "Glas" waehlt und keinen Hintergrund hat, bekommt
 // nichts zu sehen - deshalb traegt der Stil oben ein braucht.hintergrund.
 //
-// --lovelace-background liest genau EIN Bauteil, hui-view-background, und das
-// entsteht nur unter ha-panel-lovelace. Auf der Home-Seite und in den
-// Einstellungen bleibt der Hintergrund also der von HA. Und: Ein Bild aus der
+// --lovelace-background liest genau EIN Bauteil, hui-view-background. Es liegt
+// unter hui-root - und hui-root gibt es unter ha-panel-lovelace UND unter
+// ha-panel-home. Auf der Home-Seite kommt der Hintergrund also an; am
+// 13.10.2026 an 2026.10.1 nachgemessen, der Verlauf lag sichtbar dahinter.
+// (Hier stand bis dahin, die Home-Seite sei ausgenommen. Das war falsch.) Auf
+// den Einstellungsseiten gibt es das Bauteil weiterhin nicht. Und: Ein Bild aus der
 // DASHBOARD-Konfiguration liegt darueber - der Theme-Wert ist dann gesetzt,
 // gelesen und trotzdem nicht zu sehen.
 

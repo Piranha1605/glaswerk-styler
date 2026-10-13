@@ -226,3 +226,24 @@ pruefe("Gegenprobe: ein verschachteltes ::part wuerde auffallen", () => {
 
 console.log(`\n${n} Pruefungen`);
 if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+
+pruefe("Keine Jinja-Zeichen in einer Vorlage", () => {
+  // Sobald {{ oder {% in einem uix-Feld steht, schickt UIX das GANZE Feld
+  // durch render_template - ein Fehler darin leert alles, auch die Bloecke,
+  // die keine Vorlage sind.
+  //
+  // Und {# ist in Jinja ein Kommentaranfang. "@media (...) {#view { ... }}"
+  // ist gueltiges CSS; steht im selben Stilziel eine Vorlage, kommt davon
+  // nichts mehr an. Hinter einer oeffnenden Klammer gehoert deshalb ein
+  // Leerzeichen oder ein Umbruch.
+  //
+  // Gemeldet am 13.10.2026 von der Sitzung, die den Hintergrund baut - sie
+  // schreibt Jinja nach uix-root, und glas-kopfleiste liegt dort auch.
+  for (const v of VORLAGEN) {
+    const treffer = [...v.css.matchAll(/\{[#%{]/g)];
+    for (const m of treffer) {
+      const stelle = v.css.slice(Math.max(0, m.index - 40), m.index + 20).replace(/\n/g, " ");
+      assert.fail(`${v.id}: Jinja-Zeichen "${m[0]}" bei ...${stelle}...`);
+    }
+  }
+});
