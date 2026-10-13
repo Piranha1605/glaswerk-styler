@@ -952,6 +952,19 @@ Modul auf.
 **Nur noch fuer Messungen, die wirklich dort stattfinden muessen** — der
 Arbeitsplatz ist die Testinstanz oben.
 
+**Und seit dem 13.10.2026 gibt es dorthin keinen Dateizugang mehr.** HATG und
+HATS sind als Integration entfernt und ihre Ordner nach
+`/config/entfernt-2026-10-13/` verschoben (samt `sync-hats.sh`); das Add-on
+Studio Code Server ist deinstalliert. Was bleibt, ist die Weboberflaeche und
+die Websocket-Schnittstelle — also Dashboards, Entitaeten und Einstellungen,
+aber **keine Datei**. Die Theme `liquid_glass` liegt dort autark und auf dem
+Stand vom 13.10.2026; sie braucht keinen Generator, es steht keine Adresse und
+kein `var(--hats-*)` darin.
+
+Wer dort wieder schreiben muss, braucht erst wieder ein Add-on (Studio Code
+Server oder File Editor) oder Samba. Das ist Absicht: Das Haus soll Ruhe
+haben.
+
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
 `/dashboard-home/ubersicht`. Der Browser-Bereich der Claude-App hält die
 Anmeldung über Sitzungen hinweg; nie nach einem Token oder Passwort fragen und
