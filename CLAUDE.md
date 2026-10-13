@@ -559,6 +559,35 @@ Theme schreibt, bekommt sie beim nächsten Speichern nicht wieder heraus.
 **Der Bericht ist die Prüfung dafür** — er zählt beim Einlesen jedes Feld, das
 HATS nicht kennt, und nennt es beim Namen. Wer eine Theme baut, liest ihn.
 
+## Ein Hintergrund an der Ansicht gewinnt über `lovelace-background`
+
+Am 13.10.2026 aufgefallen, als die Theme ihren Farbverlauf nicht zeigte: Die
+Ansicht trug ein eigenes Bild.
+
+```yaml
+views:
+  - title: Musterseite
+    background:
+      image: {media_content_id: …}
+      attachment: fixed
+      size: cover
+```
+
+Das ist eine Dashboard-Einstellung, kein Theme-Feld — und es überdeckt
+`--lovelace-background` vollständig. Die Theme ist dabei völlig in Ordnung; das
+Feld steht korrekt am `html`-Element und lässt sich auch dort auslesen.
+
+**Das Erkennungsmerkmal:** `getComputedStyle(document.documentElement)` liefert
+den Verlauf aus der Theme, und auf dem Bildschirm ist er trotzdem nicht zu
+sehen. Dann liegt es nicht an der Theme. Nachsehen mit:
+
+```js
+const panel = document.querySelector('home-assistant').shadowRoot
+  .querySelector('home-assistant-main').shadowRoot
+  .querySelector('partial-panel-resolver').children[0];
+panel.lovelace.config.views.map(v => [v.path, !!v.background]);
+```
+
 ## `uix-theme` ist der Schalter — ohne ihn kommt keine Vorlage an
 
 **Das Wichtigste über UIX-Vorlagen, und es stand nirgends.** UIX wendet seine
