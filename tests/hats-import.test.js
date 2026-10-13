@@ -9,7 +9,9 @@ import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { leseTheme, schreibeTheme, berichtUeberTheme } from "../custom_components/hats/www/theme.js";
+import { leseTheme, schreibeTheme, berichtUeberTheme, uixSchalterSetzen, UIX_SCHALTER }
+  from "../custom_components/hats/www/theme.js";
+import { UIX_ZIELE } from "../custom_components/hats/www/uix.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
 const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
@@ -300,5 +302,52 @@ pruefe("Beide neuen Felder sind auch als Kachel erreichbar", () => {
   assert.match(stufen, /v: "--popup-custom-wallpaper"/);
 });
 
+pruefe("Der eigene Schalter uix-theme gilt nicht als fremd", () => {
+  // Er wird von uixSchalterSetzen() geschrieben, nicht vom Nutzer. Bis zum
+  // 14.10.2026 meldete der Bericht ihn ZWEIMAL als fremd: als "kennt HATS
+  // nicht" und als "Stilziel von HATG" - bei jeder HATS-Theme mit Vorlagen.
+  const m = leseTheme(`liquid_glass:
+  uix-card: "ha-card { border: 0 }"
+  primary-color: "#ff0000"
+`);
+  m.name = "liquid_glass";
+  uixSchalterSetzen(m);
+  assert.strictEqual(m.flach[UIX_SCHALTER], "liquid_glass", "der Schalter wurde gar nicht gesetzt");
+
+  const ziele = new Set(UIX_ZIELE.map((z) => z.id));
+  const b = berichtUeberTheme(m, new Set(["primary-color"]), ziele);
+  assert.ok(b.bedienbar.includes(UIX_SCHALTER), "der Schalter fehlt bei bedienbar");
+  assert.deepStrictEqual(b.mitgenommen, [], `faelschlich mitgenommen: ${b.mitgenommen}`);
+  assert.deepStrictEqual(b.stilziele, [], `faelschlich als fremdes Stilziel: ${b.stilziele}`);
+
+  // Gegenprobe 1: Ohne die Stilziel-Liste bleibt uix-card fremd - der Bericht
+  // macht also nicht pauschal alles zu eigenem.
+  const ohne = berichtUeberTheme(m, new Set(["primary-color"]));
+  assert.deepStrictEqual(ohne.stilziele, ["uix-card"]);
+  assert.ok(!ohne.stilziele.includes(UIX_SCHALTER), "auch ohne Liste darf der Schalter nicht fremd sein");
+
+  // Gegenprobe 2: Ein ERFUNDENES uix-Feld bleibt fremd, auch mit Liste.
+  const falsch = leseTheme(`t:\n  uix-gibtesnicht: "x"\n`);
+  assert.deepStrictEqual(berichtUeberTheme(falsch, new Set(), ziele).stilziele, ["uix-gibtesnicht"]);
+});
+
+pruefe("Die Kennzahl auf der Startseite zaehlt die Theme, nicht das Panel", () => {
+  // Hier stand felderGesamt - die Summe ueber alle acht Stufen, also was das
+  // Panel ANBIETEN kann. Unter "Dein Theme im Ueberblick", neben zwei Zahlen,
+  // die sich auf die Theme beziehen. Der Bericht beim Oeffnen sagte etwas
+  // anderes, und wer beide sah, hielt eine fuer falsch.
+  assert.match(panel, /const felderImModell = ZUSTAND\.modell/,
+    "die Kennzahl wird nicht aus dem Modell gerechnet");
+  assert.match(panel, /<b>\$\{felderImModell\}<\/b><span>\$\{T\("Felder"\)\}/,
+    "die Kachel zeigt nicht die Zahl aus dem Modell");
+  // Gegenprobe: felderGesamt steht noch da - aber nur noch als Hinweis am
+  // title, nicht mehr als die grosse Zahl.
+  assert.match(panel, /title="\$\{felderGesamt\} \$\{T\("bietet das Panel an"\)\}"/);
+  const kachel = /<div class="kennzahl"[^>]*><b>\$\{felderImModell\}/.exec(panel);
+  assert.ok(kachel, "die Kachel sieht anders aus als erwartet");
+  // Und der englische Text fehlt nicht - sonst stuende Deutsch im englischen Panel.
+  assert.match(panel, /"bietet das Panel an": "[^"]+"/);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 28) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 30) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

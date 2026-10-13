@@ -124,6 +124,10 @@ function entquote(roh) {
 // UIX wendet seine Felder NUR an, wenn die Theme sich mit ihrem Namen als
 // UIX-Theme ausweist - uix-theme auf Theme-Ebene ist der Schalter.
 //
+// Der Name steht als Konstante da und nicht dreimal als Zeichenkette: Der
+// Bericht weiter unten muss ihn auch kennen, sonst meldet er HATS' eigenen
+// Schalter als fremd.
+//
 // Am 13.10.2026 an der laufenden Instanz gemessen, nachdem der Maintainer
 // meldete, Bubble laufe nicht richtig: Von 39 uix-node-Knoten waren 39 leer,
 // auch die von drawer, sidebar und root, die sonst sofort stehen. Die Felder
@@ -138,11 +142,13 @@ function entquote(roh) {
 // Ohne diesen Schalter ist jede Vorlage wirkungslos, und zwar lautlos - die
 // Datei sieht vollstaendig aus, die Oberflaeche sieht fast richtig aus (die
 // FELDER wirken ja), und nur die Vorlagen fehlen.
+export const UIX_SCHALTER = "uix-theme";
+
 export function uixSchalterSetzen(modell) {
-  const hatVorlagen = Object.keys(modell.flach || {}).some((k) => /^uix-/.test(k) && k !== "uix-theme");
-  if (hatVorlagen && modell.name) modell.flach["uix-theme"] = modell.name;
+  const hatVorlagen = Object.keys(modell.flach || {}).some((k) => /^uix-/.test(k) && k !== UIX_SCHALTER);
+  if (hatVorlagen && modell.name) modell.flach[UIX_SCHALTER] = modell.name;
   // Kein Stilziel mehr im Theme? Dann hat der Schalter nichts mehr zu schalten.
-  else if (!hatVorlagen) delete modell.flach["uix-theme"];
+  else if (!hatVorlagen) delete modell.flach[UIX_SCHALTER];
   return modell;
 }
 
@@ -203,12 +209,23 @@ export function berichtUeberTheme(modell, bekannt, stilziele = null) {
   const gesehen = new Set();
   const eigenesZiel = (k) =>
     stilziele instanceof Set && /^uix-/.test(k) && !/-yaml$/.test(k) && stilziele.has(k.slice(4));
+  // uix-theme ist KEIN Stilziel, sondern HATS' eigener Schalter:
+  // uixSchalterSetzen() setzt ihn bei jeder Ausgabe und nimmt ihn wieder
+  // heraus, wenn die letzte Vorlage ausgeht.
+  //
+  // Ohne diese Zeile meldete der Bericht ihn ZWEIMAL als fremd - einmal als
+  // "kennt HATS nicht", einmal als "Stilziel von HATG". Beides falsch, und
+  // beides sah jeder, der eine HATS-Theme mit Vorlagen oeffnete. Am 14.10.2026
+  // beim Durchgehen aufgefallen. Eine Warnung, die bei der eigenen Arbeit
+  // anschlaegt, lernt man weg - dieselbe Lehre wie bei den Stilzielen
+  // darunter, nur ein Feld spaeter.
+  const selbstGefuehrt = (k) => k === UIX_SCHALTER;
   for (const ebene of ["flach", "light", "dark"]) {
     for (const k of Object.keys(modell[ebene] || {})) {
       if (gesehen.has(k)) continue;
       gesehen.add(k);
       // Ein eigenes Stilziel ist bedienbar - es steht auf der UIX-Seite.
-      (bekannt.has(k) || eigenesZiel(k) ? zaehl.bedienbar : zaehl.mitgenommen).push(k);
+      (bekannt.has(k) || eigenesZiel(k) || selbstGefuehrt(k) ? zaehl.bedienbar : zaehl.mitgenommen).push(k);
     }
   }
   zaehl.bedienbar.sort();
@@ -239,6 +256,7 @@ export function berichtUeberTheme(modell, bekannt, stilziele = null) {
     //   uix-*-yaml        Shadow-DOM-Pfade; HATS kennt nur die einfache Form
     //   uix-<unbekannt>   ein Stilziel, das nicht in UIX_ZIELE steht
     stilziele: [...gesehen].filter((k) => {
+      if (selbstGefuehrt(k)) return false;
       if (/^card-mod-/.test(k)) return true;
       if (!/^uix-/.test(k)) return false;
       if (/-yaml$/.test(k)) return true;

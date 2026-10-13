@@ -931,6 +931,7 @@ const TEXTE = {
     "Jetzt in Kraft": "In effect now", "Hell": "Light", "Dunkel": "Dark",
     "Beide Modi": "Both modes", "Alle anbinden": "Wire up all",
     "Zuordnungen eingetragen": "mappings written", "Toene": "tones", "Aenderungen": "changes", "Speichern": "Save",
+    "bietet das Panel an": "the panel offers",
     "Grundlage nicht geladen: ": "Base not loaded: ",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
     "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
@@ -2016,6 +2017,20 @@ class HatsPanel extends HTMLElement {
     const T = (s) => t(s, this.spr);
     const fertig = STUFEN.filter((s) => s.stand === "fertig").length;
     const offen = STUFEN.length - fertig;
+    // Wie viele Felder DIESE Theme hat - nicht, wie viele das Panel anbieten
+    // koennte.
+    //
+    // Hier stand felderGesamt, also die Summe ueber alle acht Stufen: 413.
+    // Unter der Zeile "Dein Theme im Ueberblick", zwischen "0 Aenderungen" und
+    // "zuletzt geaendert" - zwei Zahlen ueber die Theme und eine ueber das
+    // Programm. Der Bericht beim Oeffnen sagte derweil 397, und wer beide sah,
+    // hielt eine fuer falsch. Am 14.10.2026 beim Durchgehen gemeldet.
+    //
+    // Was das Panel anbietet, steht ohnehin an jeder Stufe in der Liste
+    // darunter ("7 Gruppen, 90 Felder").
+    const felderImModell = ZUSTAND.modell
+      ? new Set(["flach", "light", "dark"].flatMap((e) => Object.keys(ZUSTAND.modell[e] || {}))).size
+      : 0;
 
     this.shadowRoot.innerHTML = `
       <style>${this.stil()}</style>
@@ -2078,7 +2093,7 @@ class HatsPanel extends HTMLElement {
             ${ZUSTAND.start ? "" : `
             <div class="kennzahlen">
               <div class="kennzahl"><b>${fertig}/${STUFEN.length}</b><span>${T("Stufen fertig")}</span></div>
-              <div class="kennzahl"><b>${felderGesamt}</b><span>${T("Felder")}</span></div>
+              <div class="kennzahl" title="${felderGesamt} ${T("bietet das Panel an")}"><b>${felderImModell}</b><span>${T("Felder")}</span></div>
               <div class="kennzahl"><b>${T("gerade eben")}</b><span>${T("zuletzt geändert")}</span></div>
             </div>`}
 
