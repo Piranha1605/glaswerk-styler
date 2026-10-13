@@ -457,6 +457,34 @@ nie mehr gelesen. Wer Shadow-DOM-Pfade braucht, nimmt HATG.
 kommt beim Wiedereinschalten wortgetreu zurück — ein Schalter, der Arbeit
 vernichtet, ist kein Schalter.
 
+### Bilder liegen in `config/www/hats`
+
+Denselben Weg wie HATG, und aus demselben Grund. Sie kommen unter
+**`/local/hats/<name>`** von Home Assistant **selbst**.
+
+**Warum das wichtig ist:** Eine Adresse, die nur HATS ausliefert, macht eine
+weitergegebene Theme unbrauchbar — beim Empfänger bliebe der Hintergrund leer,
+ohne Fehlermeldung, weil ein fehlendes Bild in CSS einfach nichts tut. HATG hat
+das am 2026-09-30 an einer weitergegebenen Theme gelernt. Das Versprechen „am
+Ende steht eine ganz normale Theme-Datei" gilt eben auch für die Werte, nicht
+nur für die Feldnamen.
+
+Drei Websocket-Befehle: `hats/list_images`, `hats/upload_image`,
+`hats/delete_image`. Am 13.10.2026 an der Instanz durchgespielt:
+
+    probe bild!.png   ->  probe_bild.png      Name gesaeubert
+    ganz anders.png   ->  probe_bild.png      doppelt erkannt, eine Datei
+    ../../boese.sh    ->  invalid_name        abgewiesen, auch beim Loeschen
+
+- **Kein Pfadausbruch.** `Path(...).name` wirft jedes Verzeichnis weg, die
+  Endungsliste jede ausführbare Datei. Beides zusammen, nicht eins davon.
+- **Inhaltsgleiche Bilder landen nicht doppelt auf der Platte.** Geprüft wird
+  über die SHA-256 des Inhalts, nicht über den Namen; bei gleichem Namen und
+  anderem Inhalt wird durchgezählt (`-2`, `-3`), nicht überschrieben.
+- **`/local` hängt an `config/www` zum Startzeitpunkt.** Legt HATS den Ordner
+  gerade erst an, bleibt `/local` bis zum nächsten Neustart tot — das steht als
+  Warnung im Log, sonst sucht man den Fehler in der Theme.
+
 ## Werkzeuge
 
 ```bash

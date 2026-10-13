@@ -255,17 +255,23 @@ pruefe("Name, Herkunft, Modus und beide Hintergruende stehen dort", () => {
   assert.match(b, /--popup-custom-wallpaper/, "Pop-up-Hintergrund fehlt");
 });
 
-pruefe("Hintergrund und Pop-up gibt es je Modus", () => {
+pruefe("Hintergrund und Pop-up gibt es je Modus, mit Galerie", () => {
   const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
-  assert.match(b, /data-modus="light"/);
-  assert.match(b, /data-modus="dark"/);
+  // Seit dem 13.10.2026 aus einer Schleife ueber beide Modi erzeugt, nicht
+  // zweimal getippt - und jedes Feld hat einen Knopf zur Bildergalerie.
+  assert.match(b, /\["light", "dark"\]\.map/);
+  assert.match(b, /data-modus="\$\{mo\}"/);
+  assert.match(b, /data-galerie="\$\{v\}"/, "der Knopf zur Galerie fehlt");
 });
 
-pruefe("Ohne offene Theme gesperrt, nicht versteckt", () => {
-  // Dieselbe Entscheidung wie bei der Schalterreihe: Ein Feld, das mal da ist
-  // und mal nicht, laesst einen suchen.
+pruefe("Ohne offene Theme gar nicht erst zeigen", () => {
+  // "Gesperrt statt versteckt" gilt fuer die Knopfleiste, wo die Position
+  // etwas sagt. Ein ganzer Einstellungsblock, der nichts tun kann, ist
+  // dagegen nur Laerm - am 13.10.2026 gemeldet als "das ist komplett tot".
+  assert.match(panel, /\$\{!ZUSTAND\.modell \? "" : `\s*\n\s*<div class="starteinst">/);
   const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
-  assert.match(b, /ZUSTAND\.modell \? "" : "disabled"/);
+  assert.doesNotMatch(b, /ZUSTAND\.modell \? "" : "disabled"/,
+    "die Felder sind wieder nur gesperrt statt weg");
 });
 
 pruefe("Beide neuen Felder sind auch als Kachel erreichbar", () => {

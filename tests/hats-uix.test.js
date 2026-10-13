@@ -76,5 +76,61 @@ pruefe("Gegenprobe: ein erfundener Typname faellt auf", () => {
   assert.ok(!ids.includes("gibt-es-nicht"), "die Liste ist nicht die, die geprueft wird");
 });
 
+
+// ---------------------------------------------------------------------------
+// Bilder: derselbe Weg wie bei HATG.
+
+import { readFileSync as lies } from "node:fs";
+const py = lies(path.join(hier, "../custom_components/hats/__init__.py"), "utf8");
+const konst = lies(path.join(hier, "../custom_components/hats/const.py"), "utf8");
+
+pruefe("Bilder liegen in config/www/hats, nicht hinter einer eigenen Route", () => {
+  // Der ganze Punkt: Eine Adresse, die nur HATS ausliefert, macht eine
+  // weitergegebene Theme unbrauchbar - beim Empfaenger bliebe der Hintergrund
+  // leer, ohne Fehlermeldung, weil ein fehlendes Bild in CSS nichts tut.
+  // HATG hat das am 2026-09-30 an einer weitergegebenen Theme gelernt.
+  assert.match(konst, /BILDER_SUBDIR = "hats"/);
+  assert.match(konst, /BILDER_LOCAL_PATH = "\/local\/hats"/);
+  assert.match(py, /Path\(hass\.config\.path\(WWW_SUBDIR, BILDER_SUBDIR\)\)/);
+});
+
+pruefe("Hochladen laesst nur Bilder durch und keinen Pfad", () => {
+  // Path(...).name wirft jedes Verzeichnis weg, die Endungsliste jede
+  // ausfuehrbare Datei. Beides zusammen schliesst einen Pfadausbruch aus.
+  assert.match(py, /basis = Path\(roh\)\.name/);
+  assert.match(py, /if endung not in _BILD_ENDUNGEN:\s*\n\s*return None/);
+  assert.match(py, /_BILD_NAME_RE = re\.compile/);
+  assert.match(py, /_BILD_MAX_BYTES/);
+});
+
+pruefe("Inhaltsgleiche Bilder landen nicht doppelt auf der Platte", () => {
+  assert.match(py, /def _bild_mit_inhalt/);
+  assert.match(py, /schon_da = _bild_mit_inhalt\(ordner, summe\)/);
+  // Und bei gleichem NAMEN wird nicht ueberschrieben, sondern durchgezaehlt.
+  assert.match(py, /def _freier_bildpfad/);
+});
+
+pruefe("Die /local-Falle steht im Log, nicht im Verborgenen", () => {
+  // Home Assistant registriert /local nur, wenn config/www beim Start schon da
+  // war. Legt HATS den Ordner gerade erst an, bleibt /local bis zum naechsten
+  // Neustart tot - und dann sucht man den Fehler in der Theme.
+  assert.match(py, /www_fehlte = not eltern\.is_dir\(\)/);
+  assert.match(py, /_LOGGER\.warning\(/);
+});
+
+pruefe("Alle drei Bildbefehle sind angemeldet", () => {
+  // Ohne die Anmeldung gibt es sie zwar, aber niemand kann sie rufen - und
+  // der Fehler heisst dann nur "Unknown command".
+  for (const b of ["ws_list_images", "ws_upload_image", "ws_delete_image"])
+    assert.ok(py.includes(`async_register_command(hass, ${b})`), `${b} nicht angemeldet`);
+});
+
+pruefe("Die Texte der Galerie stehen IM en-Block", () => {
+  const tab = panel.slice(panel.indexOf("const TEXTE = {"));
+  const en = tab.slice(tab.indexOf("en: {"), tab.indexOf("\n  },"));
+  for (const x of ["Bild waehlen", "Bild hochladen...", "Kein Bild", "Hochgeladen"])
+    assert.ok(en.includes(JSON.stringify(x)), `${x} fehlt im en-Block`);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 7) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 13) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

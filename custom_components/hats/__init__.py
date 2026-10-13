@@ -10,6 +10,8 @@ Shadow-Grenze. Siehe CLAUDE.md.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import logging
 import re
@@ -24,6 +26,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    BILDER_LOCAL_PATH,
+    BILDER_SUBDIR,
     DOMAIN,
     FRONTEND_MODULE,
     PANEL_ICON,
@@ -32,6 +36,7 @@ from .const import (
     PANEL_URL,
     STATIC_PATH,
     THEMES_SUBDIR,
+    WWW_SUBDIR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,7 +48,72 @@ _SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 # schreibt schreibeTheme() in den Kopf - stimmen beide nicht ueberein, findet
 # die Oberflaeche ihre eigenen Dateien nicht mehr. Ein Test vergleicht sie.
 HATS_MARKE = "# Erzeugt mit HATS "
+
+# Nur Bilder, und nur mit harmlosem Namen. Beides zusammen schliesst einen
+# Pfadausbruch aus: Path(...).name wirft jedes Verzeichnis weg, die
+# Endungsliste jede ausfuehrbare Datei.
+_BILD_ENDUNGEN = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
+_BILD_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
+_BILD_MAX_BYTES = 12 * 1024 * 1024
 KOPF_BYTES = 512
+
+
+def _bilder_ordner(hass: HomeAssistant) -> Path:
+    return Path(hass.config.path(WWW_SUBDIR, BILDER_SUBDIR))
+
+
+def _bild_url(name: str) -> str:
+    return f"{BILDER_LOCAL_PATH}/{name}"
+
+
+def _bild_name_saeubern(roh: str) -> str | None:
+    """Macht aus einem hochgeladenen Namen einen, der im Ordner stehen darf."""
+    if not roh:
+        return None
+    basis = Path(roh).name                      # wirft jedes Verzeichnis weg
+    endung = Path(basis).suffix.lower()
+    if endung not in _BILD_ENDUNGEN:
+        return None
+    stamm = basis[: -len(endung)] if endung else basis
+    stamm = _BILD_NAME_RE.sub("_", stamm).strip("._") or "bild"
+    return f"{stamm}{endung}"
+
+
+def _bild_pruefsumme(pfad: Path) -> str:
+    h = hashlib.sha256()
+    with pfad.open("rb") as f:
+        for block in iter(lambda: f.read(131072), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def _bild_mit_inhalt(ordner: Path, summe: str) -> Path | None:
+    """Liegt dasselbe Bild schon da? Dann nicht ein zweites Mal ablegen."""
+    if not ordner.exists():
+        return None
+    for eintrag in sorted(ordner.iterdir()):
+        if not eintrag.is_file() or eintrag.suffix.lower() not in _BILD_ENDUNGEN:
+            continue
+        try:
+            if _bild_pruefsumme(eintrag) == summe:
+                return eintrag
+        except OSError:
+            continue
+    return None
+
+
+def _freier_bildpfad(ordner: Path, name: str) -> Path:
+    """Bei Namensgleichheit -2, -3 ... anhaengen, statt zu ueberschreiben."""
+    ziel = ordner / name
+    if not ziel.exists():
+        return ziel
+    stamm, endung = Path(name).stem, Path(name).suffix
+    n = 2
+    while True:
+        ziel = ordner / f"{stamm}-{n}{endung}"
+        if not ziel.exists():
+            return ziel
+        n += 1
 
 
 def _ist_sicherer_name(name: str) -> bool:
@@ -177,6 +247,112 @@ async def ws_save_theme(hass: HomeAssistant, connection, msg) -> None:
     connection.send_result(msg["id"], {"saved": True, "path": f"/config/themes/{name}.yaml"})
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/list_images"})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_list_images(hass: HomeAssistant, connection, msg) -> None:
+    """Die Bilder in config/www/hats auflisten."""
+    ordner = _bilder_ordner(hass)
+
+    def _lies() -> list[dict]:
+        if not ordner.is_dir():
+            return []
+        aus = []
+        for p in sorted(ordner.iterdir()):
+            if not p.is_file() or p.suffix.lower() not in _BILD_ENDUNGEN:
+                continue
+            aus.append({"name": p.name, "url": _bild_url(p.name), "bytes": p.stat().st_size})
+        return aus
+
+    connection.send_result(msg["id"], {"bilder": await hass.async_add_executor_job(_lies)})
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/upload_image",
+    vol.Required("filename"): str,
+    vol.Required("data"): str,
+})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_upload_image(hass: HomeAssistant, connection, msg) -> None:
+    """Ein Bild nach config/www/hats legen."""
+    name = _bild_name_saeubern(msg["filename"])
+    if name is None:
+        connection.send_error(msg["id"], "invalid_name",
+                              "Nur Bilder (jpg, png, webp, gif, svg, avif).")
+        return
+    try:
+        roh = base64.b64decode(msg["data"], validate=True)
+    except (binascii.Error, ValueError) as err:
+        connection.send_error(msg["id"], "invalid_data", f"Bild nicht lesbar: {err}")
+        return
+    if not roh:
+        connection.send_error(msg["id"], "invalid_data", "Die Datei ist leer.")
+        return
+    if len(roh) > _BILD_MAX_BYTES:
+        connection.send_error(msg["id"], "too_large",
+                              f"Groesser als {_BILD_MAX_BYTES // 1024 // 1024} MB.")
+        return
+
+    ordner = _bilder_ordner(hass)
+
+    def _schreibe() -> tuple[str, bool]:
+        ordner.mkdir(parents=True, exist_ok=True)
+        # Inhaltsgleiche Bilder nicht doppelt ablegen. Wer dasselbe Bild zweimal
+        # waehlt, soll nicht zwei Dateien bekommen - und die Theme soll auf
+        # dieselbe Adresse zeigen.
+        summe = hashlib.sha256(roh).hexdigest()
+        schon_da = _bild_mit_inhalt(ordner, summe)
+        if schon_da is not None:
+            return schon_da.name, True
+        ziel = _freier_bildpfad(ordner, name)
+        ziel.write_bytes(roh)
+        return ziel.name, False
+
+    try:
+        endname, war_da = await hass.async_add_executor_job(_schreibe)
+    except OSError as err:
+        connection.send_error(msg["id"], "write_failed", f"Nicht gespeichert: {err}")
+        return
+
+    connection.send_result(msg["id"], {
+        "name": endname, "url": _bild_url(endname), "doppelt": war_da,
+    })
+
+
+@websocket_api.websocket_command({
+    vol.Required("type"): f"{DOMAIN}/delete_image",
+    vol.Required("name"): str,
+})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_delete_image(hass: HomeAssistant, connection, msg) -> None:
+    """Ein Bild loeschen - nur aus diesem einen Ordner."""
+    name = _bild_name_saeubern(msg["name"])
+    if name is None or name != Path(msg["name"]).name:
+        connection.send_error(msg["id"], "invalid_name", "Ungueltiger Dateiname.")
+        return
+    pfad = _bilder_ordner(hass) / name
+
+    def _loesche() -> str | None:
+        if not pfad.is_file():
+            return "not_found"
+        try:
+            pfad.unlink()
+        except OSError as err:
+            return f"delete_failed: {err}"
+        return None
+
+    fehler = await hass.async_add_executor_job(_loesche)
+    if fehler == "not_found":
+        connection.send_error(msg["id"], "not_found", f"{name} gibt es nicht.")
+        return
+    if fehler:
+        connection.send_error(msg["id"], "delete_failed", fehler)
+        return
+    connection.send_result(msg["id"], {"deleted": True, "name": name})
+
+
 def _registriere_websocket(hass: HomeAssistant) -> None:
     """Die Befehle anmelden - bei jedem Setup neu.
 
@@ -194,11 +370,31 @@ def _registriere_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_list_themes)
     websocket_api.async_register_command(hass, ws_load_theme_file)
     websocket_api.async_register_command(hass, ws_save_theme)
+    websocket_api.async_register_command(hass, ws_list_images)
+    websocket_api.async_register_command(hass, ws_upload_image)
+    websocket_api.async_register_command(hass, ws_delete_image)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Panel registrieren und Websocket anmelden."""
     www_path = Path(__file__).parent / "www"
+
+    # Home Assistant registriert /local NUR, wenn config/www beim Start schon
+    # da war. Legen wir den Ordner gerade erst an, bleibt /local bis zum
+    # naechsten Neustart tot - und dann sucht man den Fehler in der Theme,
+    # obwohl die Adresse stimmt. Deshalb steht es im Log.
+    def _bilderordner_anlegen() -> bool:
+        eltern = Path(hass.config.path(WWW_SUBDIR))
+        www_fehlte = not eltern.is_dir()
+        _bilder_ordner(hass).mkdir(parents=True, exist_ok=True)
+        return www_fehlte
+
+    if await hass.async_add_executor_job(_bilderordner_anlegen):
+        _LOGGER.warning(
+            "config/www wurde gerade erst angelegt. Home Assistant liefert %s "
+            "erst nach einem Neustart aus - bis dahin bleiben Hintergrundbilder leer.",
+            BILDER_LOCAL_PATH,
+        )
 
     # Der Cache-Buster haengt am Inhalt, nicht nur an der Versionsnummer.
     # Home Assistant liefert /hats_static mit max-age=2678400 aus: Wer die

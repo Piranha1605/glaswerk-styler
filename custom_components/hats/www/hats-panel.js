@@ -801,6 +801,12 @@ const BEKANNT = new Set([
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Bild waehlen": "Choose an image",
+    "Bild hochladen...": "Upload an image...",
+    "Kein Bild": "No image",
+    "Noch keine Bilder - lad eins hoch": "No images yet - upload one",
+    "Hochgeladen": "Uploaded", "Lag schon da": "Was already there", "Loeschen": "Delete",
+    "Bilder liegen in config/www/hats und kommen unter /local/hats von Home Assistant selbst - die Theme bleibt damit weitergebbar.": "Images live in config/www/hats and are served from /local/hats by Home Assistant itself - that keeps the theme shareable.",
     "Add-ons": "Add-ons",
     "Felder angebunden": "fields wired up",
     "von": "of", "Stilzielen an": "style targets on",
@@ -959,6 +965,111 @@ class HatsPanel extends HTMLElement {
       this._grundlage = JSON.parse(JSON.stringify(ZUSTAND.modell));
       ZUSTAND.ladefehler = String(e.message || e.code || e);
     }
+    this.zeichne();
+  }
+
+  // Die Bildergalerie.
+  //
+  // Bilder liegen in config/www/hats und kommen unter /local/hats von Home
+  // Assistant SELBST. Das ist der ganze Punkt: Eine Adresse, die nur HATS
+  // ausliefert, macht eine weitergegebene Theme unbrauchbar - beim Empfaenger
+  // bliebe der Hintergrund leer, ohne Fehlermeldung, weil ein fehlendes Bild
+  // in CSS einfach nichts tut.
+  async zeigeGalerie(ziel, modus) {
+    const T = (x) => t(x, this.spr);
+    let bilder = [];
+    try {
+      const r = await this._hass.connection.sendMessagePromise({ type: "hats/list_images" });
+      bilder = r.bilder || [];
+    } catch (e) {
+      ZUSTAND.meldung = { text: "Bilder nicht geladen: " + (e.message || e.code || e), art: "fehler" };
+    }
+
+    const d = this.shadowRoot.querySelector(".overlay.zwei .dialog");
+    const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
+    d.innerHTML = `
+      <header class="dkopf">
+        <div><h2>${T("Bild waehlen")}</h2>
+             <p>${ziel.replace(/^--/, "")} &middot; ${modus === "dark" ? T("dunkel") : T("hell")}</p></div>
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+      <div class="feldseite">
+        <input type="file" accept="image/*" class="bildwahl" hidden>
+        <div class="galeriekopf">
+          <button class="modalknopf hochladen">${T("Bild hochladen...")}</button>
+          <button class="modalknopf dateiknopf keinbild">${T("Kein Bild")}</button>
+        </div>
+        ${bilder.length ? `<div class="galerie">
+          ${bilder.map((b) => `
+            <figure class="bild" data-bild="${b.url}" title="${b.name}">
+              <img src="${b.url}" alt="" loading="lazy">
+              <figcaption>${b.name}<span>${kb(b.bytes)}</span></figcaption>
+              <button class="bildweg" data-bild-weg="${b.name}" title="${T("Loeschen")}">✕</button>
+            </figure>`).join("")}
+        </div>` : `<p class="leer">${T("Noch keine Bilder - lad eins hoch")}</p>`}
+        <p class="noch">${T("Bilder liegen in config/www/hats und kommen unter /local/hats von Home Assistant selbst - die Theme bleibt damit weitergebbar.")}</p>
+      </div>`;
+
+    const feld = d.querySelector(".bildwahl");
+    d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    d.querySelector(".hochladen").addEventListener("click", () => feld.click());
+    d.querySelector(".keinbild").addEventListener("click", () => {
+      this.setzeBild(ziel, modus, "");
+      this.schliesseFeld();
+    });
+    feld.addEventListener("change", async () => {
+      const f = feld.files && feld.files[0];
+      if (!f) return;
+      // base64 ohne den data:-Kopf - den will der Server nicht.
+      const roh = await new Promise((ok, nein) => {
+        const r = new FileReader();
+        r.onload = () => ok(String(r.result).split(",")[1]);
+        r.onerror = nein;
+        r.readAsDataURL(f);
+      });
+      try {
+        const a = await this._hass.connection.sendMessagePromise({
+          type: "hats/upload_image", filename: f.name, data: roh });
+        ZUSTAND.meldung = { text: a.doppelt ? `${T("Lag schon da")}: ${a.name}` : `${T("Hochgeladen")}: ${a.name}`, art: "gut" };
+        this.setzeBild(ziel, modus, `url(${a.url})`);
+        this.zeigeGalerie(ziel, modus);
+      } catch (e) {
+        ZUSTAND.meldung = { text: "Nicht hochgeladen: " + (e.message || e.code || e), art: "fehler" };
+        this.zeichne();
+      }
+    });
+    d.querySelectorAll("[data-bild]").forEach((el) =>
+      el.addEventListener("click", (ev) => {
+        if (ev.target.closest("[data-bild-weg]")) return;   // das Kreuz ist kein Griff
+        this.setzeBild(ziel, modus, `url(${el.dataset.bild})`);
+        this.schliesseFeld();
+      })
+    );
+    d.querySelectorAll("[data-bild-weg]").forEach((b) =>
+      b.addEventListener("click", async (ev) => {
+        ev.stopPropagation();
+        try {
+          await this._hass.connection.sendMessagePromise({
+            type: "hats/delete_image", name: b.dataset.bildWeg });
+          this.zeigeGalerie(ziel, modus);
+        } catch (e) {
+          ZUSTAND.meldung = { text: "Nicht geloescht: " + (e.message || e.code || e), art: "fehler" };
+          this.zeichne();
+        }
+      })
+    );
+
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+  }
+
+  setzeBild(ziel, modus, wert) {
+    if (!ZUSTAND.modell) return;
+    const name = ziel.replace(/^--/, "");
+    if (wert) setze(ZUSTAND.modell, name, wert, modus === "dark" ? "dark" : "light");
+    else delete ZUSTAND.modell[modus === "dark" ? "dark" : "light"][name];
+    ZUSTAND.geaendert.add(name);
     this.zeichne();
   }
 
@@ -1123,39 +1234,48 @@ class HatsPanel extends HTMLElement {
     return `
       <!-- Die Starteinstellungen gehoeren hierher, nicht als Kachelgruppe in
            Stufe 1: Name, Herkunft und Modus entscheiden sich, BEVOR man an
-           Farben geht, und die Hintergrundbilder gehoeren dazu. Ohne offene
-           Theme sind die Felder leer und gesperrt - anzeigen und sperren ist
-           besser als verstecken, siehe die Schalterreihe. -->
+           Farben geht, und die Hintergrundbilder gehoeren dazu.
+           Ohne offene Theme werden sie GAR NICHT gezeigt. "Gesperrt statt
+           versteckt" gilt fuer die Knopfleiste, wo die Position etwas sagt -
+           ein ganzer Einstellungsblock, der nichts tun kann, ist dagegen nur
+           Laerm. Am 13.10.2026 gemeldet: "das ist komplett tot", und das
+           stimmte. -->
+      ${!ZUSTAND.modell ? "" : `
       <div class="starteinst">
         <div class="sezeile">
           <label>${T("Name der Theme")}</label>
           <input class="se-name" type="text" value="${ZUSTAND.name || ""}"
-                 placeholder="mein_theme" spellcheck="false" ${ZUSTAND.modell ? "" : "disabled"}>
+                 placeholder="mein_theme" spellcheck="false">
         </div>
         <div class="sezeile">
           <label>${T("Herkunft")}</label>
-          <span class="sewert">${ZUSTAND.modell ? (ZUSTAND.meta.Grundlage || "ha_blanko") : "—"}</span>
+          <span class="sewert">${ZUSTAND.meta.Grundlage || "ha_blanko"}</span>
         </div>
         <div class="sezeile">
           <label>${T("Modus")}</label>
           <div class="be-segmente klein">
             ${[["beide", T("Hell + dunkel")], ["hell", T("Nur hell")], ["dunkel", T("Nur dunkel")]]
               .map(([w, n]) => `<button class="se-modus ${ZUSTAND.meta.Modus === w ? "an" : ""}"
-                      data-se-modus="${w}" ${ZUSTAND.modell ? "" : "disabled"}>${n}</button>`).join("")}
+                      data-se-modus="${w}">${n}</button>`).join("")}
           </div>
         </div>
         ${[["--lovelace-background", T("Hintergrundbild")],
            ["--popup-custom-wallpaper", T("Pop-up-Hintergrund")]].map(([v, n]) => `
         <div class="sezeile zwei">
           <label>${n}</label>
-          <input class="se-bild" data-v="${v}" data-modus="light" type="text"
-                 value="${(ZUSTAND.modell?.light?.[v.slice(2)] ?? "").replace(/"/g, "&quot;")}"
-                 placeholder="${T("hell")}" spellcheck="false" ${ZUSTAND.modell ? "" : "disabled"}>
-          <input class="se-bild" data-v="${v}" data-modus="dark" type="text"
-                 value="${(ZUSTAND.modell?.dark?.[v.slice(2)] ?? "").replace(/"/g, "&quot;")}"
-                 placeholder="${T("dunkel")}" spellcheck="false" ${ZUSTAND.modell ? "" : "disabled"}>
+          ${["light", "dark"].map((mo) => `
+          <span class="bildfeld">
+            <input class="se-bild" data-v="${v}" data-modus="${mo}" type="text"
+                   value="${(ZUSTAND.modell?.[mo === "dark" ? "dark" : "light"]?.[v.slice(2)] ?? "").replace(/"/g, "&quot;")}"
+                   placeholder="${mo === "dark" ? T("dunkel") : T("hell")}" spellcheck="false"
+                  >
+            <button class="bildknopf" data-galerie="${v}" data-galerie-modus="${mo}"
+                    title="${T("Bild waehlen")}">
+              <ha-icon icon="mdi:image-outline"></ha-icon>
+            </button>
+          </span>`).join("")}
         </div>`).join("")}
-      </div>
+      </div>`}
 
       <p class="startnotiz">${meine.length
         ? T("Diese Dateien hat HATS gebaut - oder oben eine neue beginnen")
@@ -1477,6 +1597,9 @@ class HatsPanel extends HTMLElement {
     );
     this.shadowRoot.querySelectorAll(".zeile.datei:not(.gesperrt)").forEach((z) =>
       z.addEventListener("click", () => this.oeffneDatei(z.dataset.datei))
+    );
+    this.shadowRoot.querySelectorAll("[data-galerie]").forEach((b) =>
+      b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
     this.shadowRoot.querySelectorAll("[data-addon-stufe]").forEach((b) =>
       b.addEventListener("click", () => this.oeffne(Number(b.dataset.addonStufe)))
@@ -2333,6 +2456,33 @@ class HatsPanel extends HTMLElement {
       .sezeile input:focus { outline: none; background: #fff;
                              box-shadow: inset 0 0 0 1px rgba(27,36,48,.18); }
       .sezeile input[disabled] { opacity: .5; }
+      .bildfeld { display: flex; gap: 6px; align-items: center; min-width: 0; }
+      .bildfeld input { flex: 1; min-width: 0; }
+      .bildknopf { width: 34px; height: 34px; flex: none; border: 0; border-radius: 999px;
+                   display: flex; align-items: center; justify-content: center;
+                   background: rgba(27,36,48,.06); color: var(--s-tinte); cursor: pointer; }
+      .bildknopf ha-icon { --mdc-icon-size: 18px; color: var(--s-tinte-leise); }
+      .bildknopf:hover:not([disabled]) { background: #fff; box-shadow: var(--s-schatten-klein); }
+      .bildknopf[disabled] { cursor: default; opacity: .5; }
+
+      /* ---- Galerie ---- */
+      .galeriekopf { display: flex; gap: 8px; margin-bottom: 14px; }
+      .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                 gap: 10px; }
+      .bild { position: relative; margin: 0; border-radius: var(--s-r); overflow: hidden;
+              background: rgba(27,36,48,.05); cursor: pointer;
+              transition: box-shadow .15s ease, transform .15s ease; }
+      .bild:hover { box-shadow: var(--s-schatten); transform: translateY(-1px); }
+      .bild img { display: block; width: 100%; height: 86px; object-fit: cover; }
+      .bild figcaption { display: flex; justify-content: space-between; gap: 6px;
+                         padding: 6px 8px; font-size: 11px; color: var(--s-tinte); }
+      .bild figcaption span { color: var(--s-tinte-leise); flex: none; }
+      .bildweg { position: absolute; top: 5px; right: 5px; width: 22px; height: 22px;
+                 border: 0; border-radius: 50%; cursor: pointer; font-size: 12px;
+                 background: rgba(255,255,255,.85); color: var(--s-tinte);
+                 opacity: 0; transition: opacity .15s ease; }
+      .bild:hover .bildweg { opacity: 1; }
+
       .se-modus { border: 0; background: none; font: inherit; font-size: 12.5px;
                   padding: 6px 14px; border-radius: 999px; cursor: pointer;
                   color: var(--s-tinte); }
