@@ -640,6 +640,35 @@ Object.fromEntries(Object.entries(t).map(([n, v]) =>
   [n, Object.keys(v).filter(k => k.startsWith('uix-'))]));
 ```
 
+## Jede Vorlage bekommt sofort ihr Bild
+
+**Auf Ansage vom 13.10.2026:** *„Mach dir immer gleich screenshots für eine
+datenbank unserer vorlagen da haben wir immer gleich ein bild dazu."*
+
+Der Grund ist nicht Kosmetik. Ein Vorlagenname sagt niemandem, was er bekommt —
+„Lichtkante auf Karten" kann alles heißen. Und ein Bild, das erst Wochen später
+nachgereicht wird, entsteht nie: Am 13.10. hatten acht von zwölf Vorlagen keins,
+weil der Zustand dafür erst wieder hergestellt werden müsste.
+
+**Der Ablauf, sobald eine Vorlage steht:**
+
+1. An der laufenden Instanz anwenden — mit `werkzeuge/vorschau.js`, das die
+   Vorlage einzeln schalten kann (`nur(theme, [id])`) und die `uix-node`-Knoten
+   der aktiven Theme stilllegt.
+2. **Zwei** Bilder: dieselbe Stelle einmal ohne und einmal mit der Vorlage.
+   Beide mit derselben Theme — ein Vorher-Bild aus einer anderen Theme
+   vergleicht zwei Dinge auf einmal und schreibt der Vorlage zu, was die
+   Felder getan haben.
+3. Ausschnitt mit `sips` auf 16:10, dort wo die Wirkung sitzt. Bei Icons der
+   Bubble-Bereich, bei Flächen die Karten, bei der Leiste die Seitenleiste.
+4. Beide als Asset in die Werkbank laden, die zurückgegebene URL in die
+   `vorlagen`-Sammlung ihrer Datenbank schreiben.
+
+**Wenn kein Unterschied zu sehen ist, gehört das notiert statt beschönigt.**
+Bei `glas-toast` und `glas-badges` gibt es auf der Musterseite keinen Wirt —
+`ha-badge` und `ha-toast` entstehen erst im Betrieb. Ein Bild ohne erkennbaren
+Unterschied ist schlechter als keines: Es behauptet, geprüft zu sein.
+
 ## Vorlagen für UIX
 
 Seit dem 13.10.2026 bringt HATS zehn fertige CSS-Blöcke mit, Gruppe **Liquid
