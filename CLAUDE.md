@@ -404,18 +404,28 @@ Nach der Korrektur: dieselbe Datei, **null unlesbare Zeilen**, 287 bedienbar,
 
 ## Der Aufbau der Oberfläche
 
-Am 13.10.2026 festgelegt: **oben HA, rechts die Add-ons.**
+Am 13.10.2026 festgelegt und noch am selben Tag nachgeschärft: **alles oben,
+nichts rechts.**
 
 ```
 ┌───────────────────────────────────────────────┐
-│ ● [8 Stufen]            │ [6 Aktionen]        │   Menüleiste
-├──────────────────────────────────┬────────────┤
-│  Guten Tag / Startbild           │  Add-ons   │
-│  Kennzahlen                      │  Bubble    │
-│  Stufenliste                     │  Mushroom  │
-│                                  │  UIX  ○○○  │
-└──────────────────────────────────┴────────────┘
+│ ● [8 Stufen]        │ [UIX] [6 Aktionen]      │   Menüleiste
+├───────────────────────────────────────────────┤
+│  Guten Tag / Startbild                        │
+│  Kennzahlen                                   │
+│  Stufenliste                                  │
+└───────────────────────────────────────────────┘
 ```
+
+Zuerst stand rechts eine Add-on-Spalte mit Bubble, Mushroom und UIX. Sie ist
+wieder weg, auf Ansage: *„UIX kann auch hoch ins Menü da bubble und Mushroom da
+auch schon in Fremdkarten liegen. so haben wir rechts frei."* Bubble und
+Mushroom sind über Stufe 6 erreichbar, UIX über ein eigenes Symbol oben — und
+die Fläche gehört wieder dem Inhalt.
+
+**UIX braucht die Breite.** Zehn Vorlagen als Karten mit Bild, darunter die
+28 Stilziele hinter einem Aufklapper. In einer 290px-Spalte war davon nichts
+lesbar; im Dialog über die ganze Breite stehen vier Karten nebeneinander.
 
 **Eine Leiste statt dreier Stellen.** Vorher gab es eine Symbolleiste links,
 eine runde Schalterreihe oben und Startkarten in der Mitte — drei Orte für
@@ -490,8 +500,22 @@ Drei Websocket-Befehle: `hats/list_images`, `hats/upload_image`,
 ```bash
 werkzeuge/pruefen.sh                   alles ohne Instanz: Syntax, Tests, Versionen
 werkzeuge/einspielen.sh                Dateien auf die Instanz, mit Gegenprobe
-werkzeuge/einspielen.sh www/theme.js   nur eine
+werkzeuge/sync-instanz.sh              die Schleife: die Instanz holt von selbst
+werkzeuge/vorschau.js                  eine Theme ansehen, ohne sie zu aktivieren
+werkzeuge/liquid-glass-bauen.mjs       die Beispiel-Theme bauen
 ```
+
+**Die Schleife ist der Hebel.** Ohne sie kostet jede Änderung einen Gang in den
+Terminal des Studio Code Server. Mit ihr liegt eine lokale Änderung nach **neun
+Sekunden** auf der Instanz — am 13.10.2026 gemessen. Sie holt ihre Dateiliste
+jede Runde neu (`werkzeuge/sync-dateien.txt`) und erneuert sich selbst, wenn
+das Skript sich ändert. Wie sie gestartet wird, steht in `werkzeuge/README.md`.
+
+**Ein Reload des Konfigurationseintrags bleibt trotzdem nötig.** `/hats_static`
+ist mit `cache_headers=False` registriert und trägt kein `Cache-Control` — aber
+genau dann darf ein Browser heuristisch cachen, und Chrome tut es. Die Datei lag
+byteweise neu auf der Instanz, und die Seite zeigte nach zwei vollen Reloads
+weiter den alten Stand. Erst die neue Prüfsumme in der Adresse brachte ihn durch.
 
 `werkzeuge/README.md` hält die Schleife und die Fallen fest — angelegt am
 13.10.2026 auf Ansage: *„kannst du die Werkzeuge die du ständig brauchst mal
@@ -516,6 +540,81 @@ den man vergisst; dann sucht man den Fehler im Code, und er liegt im Cache.
 **Was vom Mac aus nicht geht:** schreiben. Port 22 und 445 sind zu, die
 REST-API will einen Token. Lesen geht über Port 80. Würde SSH oder Samba
 eingerichtet, fiele der Terminal-Umweg weg.
+
+## Vorlagen für UIX
+
+Seit dem 13.10.2026 bringt HATS zehn fertige CSS-Blöcke mit, Gruppe **Liquid
+Glass**. Sie stehen in `custom_components/hats/www/vorlagen.js`, die Mechanik
+dazu in `theme.js`.
+
+**Eine Vorlage schreibt zwischen zwei Marker in das Feld ihres Stilziels:**
+
+```
+/* HATS:glas-karten:START */
+ha-card { … }
+/* HATS:glas-karten:ENDE */
+```
+
+Drei Regeln, jede davon in HATG teuer gelernt:
+
+1. **Einschalten hängt an, es ersetzt nicht.** Eigenes CSS daneben bleibt
+   stehen — sonst wäre ein Fehlklick der Verlust einer Stunde Arbeit.
+2. **Von doppelten Blöcken bleibt nur der letzte.** In HATG lagen einmal 23
+   Glas-Vorlagen doppelt in einer Theme.
+3. **Eine fremde Vorsilbe wird mitgelesen.** Eine umbenannte Kopie trägt
+   `/* HORIZON:glas-karten:START */`; wer nur auf die eigene schaut, hängt die
+   Vorlage ein zweites Mal an.
+
+**Eine Vorlage liest Theme-Felder, sie nagelt keine Farben fest.**
+`var(--ha-card-background)` statt `rgba(255,255,255,.5)`. Sonst wäre die Vorlage
+ein zweiter Ort, an dem dieselbe Farbe steht — der Nutzer ändert das Feld, und
+nichts tut sich. Nur was HA gar nicht als Feld anbietet (die Weichzeichnung der
+Seitenleiste etwa), steht als fester Wert da, mit `var()` davor.
+
+**Und ein `uix-`Feld gilt für Hell und Dunkel zugleich.** Was sich zwischen den
+Modi unterscheiden muss, gehört in ein Theme-Feld. `light-dark()` hilft nicht:
+Es folgt dem Betriebssystem, und HA setzt kein `color-scheme`.
+
+`tests/hats-vorlageninhalt.test.js` prüft die Vorlagen gegen die bekannten
+Fallen — kein Filter auf blankem `:host` (das lässt Bubble-Pop-ups auf Höhe 0
+zusammenfallen), keine Weichzeichnung auf einer Dialogfläche (die legt die
+Auswahllisten darin neben den Bildschirm), beide Klassennamen der Kopfleiste,
+kein `--card-background-color`, `pointer-events` auf jeder Schicht.
+
+### Bubble: die Kette ist dreistufig, die erste Stufe ist typspezifisch
+
+Am 13.10.2026 gemessen, nachdem der Maintainer darauf hinwies, dass Bubble „für
+jeden Schalter eine eigene Bezeichnung" hat. `--bubble-icon-border-radius` auf
+28 % gesetzt: **zwei von fünf** Icons wurden eckig, drei blieben rund — obwohl
+die Variable an jedem der fünf auf 28 % stand.
+
+```css
+border-radius: var(--bubble-card-type-icon-border-radius,
+                   var(--bubble-icon-border-radius,
+                       var(--bubble-border-radius, 50%)));
+```
+
+Die erste Stufe setzt Bubble selbst, je Kartentyp. Wo sie steht, kommt die
+allgemeine nie zum Zug. Wer etwas durchsetzen will, setzt sie mit. Dasselbe
+Muster trägt die Kartenfläche (`--bubble-card-type-border-radius`).
+
+### Eine Theme lässt sich von außen nicht aktivieren
+
+Alle drei Wege am 13.10.2026 gemessen, keiner greift durch: `frontend.set_theme`
+setzt nur `default_theme`, `frontend/set_user_data` wird beim Laden
+überschrieben, und in den `localStorage` schreibt HA seinen aufgelösten Stand
+zurück. Der einzige echte Hebel wäre das `settheme`-Ereignis, und das ist tabu.
+
+Dafür gibt es `werkzeuge/vorschau.js`: Es schreibt die Felder selbst auf
+`<html>` und hängt das `uix-`CSS von Hand in die Shadow Roots. Zwei Dinge sind
+dabei nötig, sonst lügt die Messung:
+
+- **Dort einhängen, wo UIX es täte** — unter einer `hui-card` an das
+  Karten-Element, sonst an die `ha-card`. Wer beide nimmt, bemalt doppelt, und
+  die Ausnahmen treffen nicht: `:host(hui-heading-card)` passt in der inneren
+  `ha-card` nicht mehr, und Überschriftenkarten behalten ihre Fläche.
+- **Die `uix-node`-Knoten der aktiven Theme stilllegen** (auf der Instanz des
+  Nutzers 39 Stück). Sonst misst man einen Kampf statt eine Vorlage.
 
 ## Die Instanz
 
