@@ -1214,7 +1214,8 @@ Gemessen an der Testmaschine, HA 2026.10.1 und UIX 8.4.0.
 ### Im Baukasten
 
 `HINTERGRUENDE` steht in `hintergrund.js`; `baukasten.js` liest die Liste von
-dort und gibt sie unter demselben Namen weiter. **Die Farbinseln tragen
+dort und gibt sie unter demselben Namen weiter. Zwölf Teile: „Keiner", **zehn
+Farbverläufe** aus Farbpunkten, der ruhige Verlauf. **Die Farbpunkte tragen
 `fixed`**, der ruhige Verlauf nicht — die Begründung steht unter *Wer malt, und
 wie groß*.
 
@@ -1242,6 +1243,60 @@ Liste nennt sich „nicht von Hand ändern", der Eintrag ist aber von Hand
 dazugekommen (Commit `0bf2b3d`), und das Skript kennt ihn nicht. Am 13.10.2026
 beim Neuerzeugen bemerkt und zurückgeholt; bis das Skript ihn kennt, wird die
 Liste von Hand ergänzt.
+
+### Die Farbpunkte und die zehn Farbverläufe
+
+Auf Ansage vom 13.10.2026: *„als erstes sollen die farbpunkte sich leicht
+bewegen und die farben ändern. dafür in den einstellungen 10 farbverläufe als
+auswahl anbieten."*
+
+![Die zehn Farbverläufe im Dunkelmodus](docs/bilder/hintergrund-farbverlaeufe-dunkel.jpg)
+
+**Jeder Punkt ist eine eigene Ebene**, so groß wie sein Fleck und an einer Ecke
+aufgehängt:
+
+    radial-gradient(closest-side, <Farbe>, transparent)
+        left -413px top -310px / 990px 682px no-repeat
+
+Früher stand jeder Fleck als Verlauf über die ganze Fläche da
+(`radial-gradient(900px 620px at 8% 4%, …)`). So lässt er sich nicht einzeln
+bewegen: Verschiebt man die Ebene, läuft ihr Rand als harte Kante durchs Bild.
+Die Zahlen sind die alten Flecke bei 1024 × 768 umgerechnet, nicht neu gewählt.
+
+**Eine Theme mit der alten Schreibweise wird nicht mehr als „Farbinseln"
+erkannt** — die Werte sind andere. `liquid_glass` trägt sie noch; die Theme
+selbst ist dabei in Ordnung, nur der Haken im Baukasten fehlt, und ihre Punkte
+lassen sich nicht einzeln bewegen.
+
+**Die zehn** heißen Werkbank, Nordlicht, Abendrot, Ozean, Wald, Lavendel, Glut,
+Pastell, Sand und Graphit. Der erste trägt wörtlich die Farben der
+Projektwerkbank und behält die Kennung `inseln`. Die anderen neun nennen vier
+Töne als Farbwinkel und Sättigung; hell und dunkel entstehen daraus mit fester
+Helligkeit. **Die Töne sind eine Entscheidung, keine Messung.** Gemessen ist,
+was daraus folgt: Der Grund bleibt im Hellmodus über 0,8 Helligkeit und im
+Dunkelmodus unter 0,03.
+
+**Bewegt werden die Punkte über `background-position`**, jeder auf einem eigenen
+kleinen Viereck, höchstens 55 px von der Ruhelage. Das rechnet nicht die
+Grafikkarte: Jeder neue Wert malt die Fläche neu. Deshalb läuft die Bewegung
+**in Schritten, zehnmal je Sekunde** (`steps()`). Gemessen in 1,5 s: 16
+verschiedene Lagen im Takt, 92 ohne — bei drei Pixeln in der Sekunde ist ein
+Schritt ein Drittel Pixel.
+
+**Die Farben wechseln über den Farbton der ganzen Fläche** (`hue-rotate`). Jeden
+Punkt einzeln umzufärben geht aus einem Stilziel heraus nicht: Die Farbe eines
+Verlaufs lässt sich nur mit `@property` überblenden, und das wird in einem
+Shadow Root nicht registriert. Die Farben in den Block zu schreiben ginge auch
+nicht — ein `uix-`Feld gilt für hell und dunkel zugleich.
+
+**Die Punktbewegung gibt es nur auf einem Punktebild.** Auf ein Foto angewendet,
+verschöbe derselbe Block dessen erste Ebene, und es rutschte aus dem Rahmen.
+`istPunkteBild()` prüft die Geometrie (die Farben sind frei);
+`bewegungNachBild()` räumt die Punkte weg, wenn der Hintergrund gewechselt hat —
+**aufzurufen nach jeder Änderung am Hintergrund.**
+
+`PUNKTE_VORGABE` ist, was „leicht bewegen und Farben ändern" heißt, wenn sonst
+nichts gesagt ist: ein Umlauf in 80 s, der Farbton pendelt um 40 Grad.
 
 ### Wer malt, und wie groß
 
@@ -1381,10 +1436,14 @@ CLAUDE.md, die Variable gehöre zu `hui-root` und nicht zum Drawer, stimmt für
 ### Messen
 
 ```bash
-node tests/hats-hintergrund.test.js            die Vorlagen, ohne Instanz, 25 Prüfungen
+node tests/hats-hintergrund.test.js            Farbverläufe und Vorlagen, ohne Instanz, 32 Prüfungen
 node tests/hats-hintergrund-seite.test.js      Hintergründe und Baukasten-Seite, 21 Prüfungen
-node werkzeuge/test/hintergrund-messen.mjs     Testmaschine und Chrome, 23 Prüfungen
+node werkzeuge/test/hintergrund-messen.mjs     Testmaschine und Chrome, 28 Prüfungen
+node werkzeuge/test/hintergrund-messen.mjs --bilder <ordner>    dazu Bilder von jedem Schritt
 ```
+
+Die beiden Übersichten der Farbverläufe in `docs/bilder/` stammen aus so einem
+Lauf (`hintergrund-farbverlaeufe-dunkel.jpg`, `-hell.jpg`).
 
 Das zweite lässt erst die Testmaschine die Vorlage rechnen und hängt das
 Ergebnis dann in einen kopflosen Chrome. Die Seite dort ist ein **Nachbau** mit

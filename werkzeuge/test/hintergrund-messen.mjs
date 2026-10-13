@@ -34,6 +34,7 @@ import path from "node:path";
 import assert from "node:assert";
 import {
   bewegung, himmel, himmelLage, himmelLageVorlage, himmelLagen, HIMMEL_LAGEN,
+  FARBVERLAEUFE, PUNKTE_VORGABE, ohneFest,
 } from "../../custom_components/hats/www/hintergrund.js";
 
 const HAOS = "/Users/enricofischer/Projekte/haos-test";
@@ -410,6 +411,92 @@ try {
     assert.strictEqual(scheinDabei.inhalt, '""');
   });
 
+  // -------------------------------------------------------------------------
+  // Die Farbpunkte
+  //
+  // Der Nachbau setzt das Attribut fixed-background nach Home Assistants
+  // eigener Regel, woertlich aus dem Buendel - in der Instanz tut das
+  // _applyTheme() am Bauteil.
+  const FELD = "--lovelace-background";
+  const werkbank = FARBVERLAEUFE[0].dark[FELD];
+  await lies(`(() => {
+    const haIstFest = (e) => "string" == typeof e ? e.split(" ").includes("fixed") : "object" == typeof e && "fixed" === e.attachment;
+    window.grund = (wert) => { document.documentElement.style.setProperty("--lovelace-background", wert); hg.toggleAttribute("fixed-background", haIstFest(wert)); };
+    window.lagen = () => getComputedStyle(hg).backgroundPosition.split(", ");
+    // Wie viele verschiedene Lagen in einer Zeitspanne vorkommen - so oft wird neu gemalt.
+    window.takte = (ms, abstand) => new Promise((ok) => { const gesehen = new Set(); const t0 = performance.now();
+      const lauf = () => { gesehen.add(getComputedStyle(hg).backgroundPosition); if (performance.now() - t0 < ms) setTimeout(lauf, abstand); else ok(gesehen.size); }; lauf(); });
+    return true; })()`);
+  await setze("");
+  await lies(`grund(${JSON.stringify(werkbank)})`);
+  await warte(300);
+  const ruhe = await lies("({ ...stand(), lagen: lagen(), bilder: getComputedStyle(hg).backgroundImage.split('gradient(').length - 1, wiederholung: getComputedStyle(hg).backgroundRepeat })");
+  await bild("hintergrund-farbpunkte-ruhe");
+  pruefe("Farbpunkte: fuenf Ebenen, fest am Fenster, die vier Punkte ohne Wiederholung", () => {
+    assert.strictEqual(ruhe.position, "fixed");
+    assert.ok(Math.abs(ruhe.breite - ruhe.fenster[0]) < 1 && Math.abs(ruhe.hoehe - ruhe.fenster[1]) < 1, `${ruhe.breite} x ${ruhe.hoehe}`);
+    assert.strictEqual(ruhe.bilder, 5);
+    assert.strictEqual(ruhe.lagen.length, 5);
+    assert.deepStrictEqual(ruhe.wiederholung.split(", ").slice(0, 4), ["no-repeat", "no-repeat", "no-repeat", "no-repeat"]);
+    assert.deepStrictEqual(ruhe.rollbar, leer.rollbar, "die Punkte machen einen Rollbalken");
+  });
+
+  await setze(bewegung({ drift: 0, punkte: 10, farbe: 0 }, { punkte: true }).css);
+  await warte(400);
+  const p1 = await lies("({ lagen: lagen(), stand: stand() })");
+  await warte(3000);
+  const p2 = await lies("({ lagen: lagen(), stand: stand() })");
+  await bild("hintergrund-farbpunkte-bewegt");
+  pruefe("Farbpunkte: jeder Punkt bewegt sich, der Grund und die Flaeche bleiben stehen", () => {
+    assert.deepStrictEqual(p1.stand.laeufe, ["hats-hintergrund-punkte:running"]);
+    for (let i = 0; i < 4; i++) assert.notStrictEqual(p1.lagen[i], p2.lagen[i], `Punkt ${i + 1} steht`);
+    assert.strictEqual(p1.lagen[4], p2.lagen[4], "der Grundverlauf bewegt sich");
+    assert.strictEqual(p2.stand.transform, "none");
+    assert.strictEqual(p2.stand.position, "fixed");
+    assert.deepStrictEqual(p2.stand.rollbar, leer.rollbar);
+  });
+  const getaktet = await lies("takte(1500, 15)");
+  await setze(bewegung({ drift: 0, punkte: 10, farbe: 0 }, { punkte: true }).css.replace(/steps\(\d+\)/, "linear"));
+  await warte(300);
+  const stufenlos = await lies("takte(1500, 15)");
+  pruefe("Farbpunkte: gemalt wird im Takt, nicht in jedem Bild", () => {
+    console.log(`     in 1,5 s: ${getaktet} verschiedene Lagen im Takt, ${stufenlos} ohne`);
+    assert.ok(getaktet >= 10 && getaktet <= 20, `erwartet etwa 15, gemessen ${getaktet}`);
+    // Gegenprobe: Ohne die Schritte aendert sich die Lage bei jedem Hinsehen.
+    assert.ok(stufenlos > getaktet * 2.5, `ohne Schritte nur ${stufenlos}`);
+  });
+
+  // Das, was eingeschaltet wird, wenn nichts weiter gesagt ist.
+  await setze(bewegung(PUNKTE_VORGABE, { punkte: true }).css);
+  await warte(500);
+  const v1 = await lies("stand()");
+  await warte(1500);
+  const v2 = await lies("stand()");
+  pruefe("Die Vorgabe: Punkte und Farbwechsel laufen zusammen, die Flaeche bleibt", () => {
+    assert.deepStrictEqual(v1.laeufe, ["hats-hintergrund-farbe:running", "hats-hintergrund-punkte:running"]);
+    assert.notStrictEqual(v1.filter, v2.filter);
+    assert.strictEqual(v2.transform, "none");
+  });
+  await ruf("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+  await warte(300);
+  const still = await lies("({ laeufe: stand().laeufe, lagen: lagen() })");
+  await ruf("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }] });
+  pruefe("Reduzierte Bewegung haelt auch die Punkte an, in der Ruhelage", () => {
+    assert.deepStrictEqual(still.laeufe, []);
+    assert.deepStrictEqual(still.lagen, ruhe.lagen);
+  });
+
+  // Die Uebersicht der zehn Farbverlaeufe, je Modus ein Blatt.
+  if (bilder) {
+    await ruf("Emulation.setDeviceMetricsOverride", { width: 1600, height: 500, deviceScaleFactor: 1, mobile: false });
+    for (const [modus, grundfarbe, schrift] of [["dark", "#0b1020", "#ffffff"], ["light", "#f4f5f8", "#1b2430"]]) {
+      const kacheln = FARBVERLAEUFE.map((f) => `<figure style="margin:0"><div style="width:300px;height:188px;overflow:hidden;border-radius:14px"><div style="width:1000px;height:626px;transform:scale(.3);transform-origin:0 0;background:${ohneFest(f[modus][FELD])}"></div></div><figcaption style="padding:6px 2px 0;font:500 14px sans-serif;color:${schrift}">${f.de}</figcaption></figure>`).join("");
+      await lies(`(document.body.style.background = ${JSON.stringify(grundfarbe)}, document.body.innerHTML = ${JSON.stringify(`<div style="display:grid;grid-template-columns:repeat(5,300px);gap:22px 16px;padding:20px">${kacheln}</div>`)}, true)`);
+      await warte(300);
+      await bild("hintergrund-farbverlaeufe-" + (modus === "dark" ? "dunkel" : "hell"));
+    }
+  }
+
   ws.close();
 } catch (e) {
   rot++;
@@ -422,4 +509,4 @@ try {
 
 console.log(`\n${n} Pruefungen bestanden${rot ? `, ${rot} ROT` : ""}`);
 // Eine Messung, die still weniger prueft, als sie soll, ist keine.
-process.exit(rot || n < 23 ? 1 : 0);
+process.exit(rot || n < 28 ? 1 : 0);

@@ -18,7 +18,8 @@ import {
 } from "../custom_components/hats/www/theme.js";
 import {
   istFest, festUnerkannt, stelleFest,
-  bewegung, leseBewegung, driftDauer, farbDauer, BEWEGUNG_ID, BEWEGUNG_STUFEN,
+  bewegung, leseBewegung, driftDauer, farbDauer, punkteDauer, BEWEGUNG_ID, BEWEGUNG_STUFEN,
+  FARBVERLAEUFE, HINTERGRUENDE, PUNKTE, PUNKTE_VORGABE, punkteBild, istPunkteBild, bewegungNachBild,
   himmel, leseHimmel, himmelLage, himmelLageVorlage, istWetterEntitaet,
   HIMMEL_ID, HIMMEL_LAGEN, HIMMEL_STUFEN, HIMMEL_VORGABE, himmelLagen, vertraegtVorlage, HINTERGRUND_ZIEL,
 } from "../custom_components/hats/www/hintergrund.js";
@@ -205,6 +206,172 @@ pruefe("Bewegung: eine Kopie unter fremder Vorsilbe wird gelesen", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Die Farbpunkte und die zehn Farbverlaeufe
+
+const feld = "--lovelace-background";
+// Unabhaengig vom Code gelesen: wo jede Ebene im WERT steht.
+const lagenIm = (wert) => [...wert.matchAll(/\) (left|right) (-?\d+)px (top|bottom) (-?\d+)px \/ (\d+)px (\d+)px no-repeat/g)]
+  .map((t) => ({ x: t[1], dx: Number(t[2]), y: t[3], dy: Number(t[4]), b: Number(t[5]), h: Number(t[6]) }));
+const helligkeit = (hex) => {
+  const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  const z = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return 0.2126 * f(z[0]) + 0.7152 * f(z[1]) + 0.0722 * f(z[2]);
+};
+const farbenIm = (wert) => (wert.match(/#[0-9a-f]{6}/gi) || []);
+
+pruefe("Zehn Farbverlaeufe, jeder mit eigenem Namen und eigenen Farben", () => {
+  assert.strictEqual(FARBVERLAEUFE.length, 10);
+  for (const k of ["id", "de", "en"]) assert.strictEqual(new Set(FARBVERLAEUFE.map((f) => f[k])).size, 10, `${k} doppelt`);
+  const werte = FARBVERLAEUFE.flatMap((f) => [f.light[feld], f.dark[feld]]);
+  assert.strictEqual(new Set(werte).size, 20, "zwei Verlaeufe sind gleich, oder hell gleich dunkel");
+  for (const f of FARBVERLAEUFE) {
+    assert.ok(f.zweckDe && f.zweckEn, `${f.id} ohne Zweck`);
+    for (const modus of ["light", "dark"]) {
+      const w = f[modus][feld];
+      assert.deepStrictEqual(Object.keys(f[modus]), [feld]);
+      assert.strictEqual(haIstFest(w), true, `${f.id}/${modus} steht nicht fest`);
+      assert.strictEqual(istPunkteBild(w), true, `${f.id}/${modus} ist kein Punktebild`);
+      // Vier Punkte und drei Toene im Grund, jede Farbe als Hex.
+      assert.strictEqual(farbenIm(w).length, 7, `${f.id}/${modus}`);
+      assert.strictEqual(new Set(farbenIm(w).slice(0, 4)).size, 4, `${f.id}/${modus}: zwei Punkte haben dieselbe Farbe`);
+      assert.match(f.vorschau[modus], /^linear-gradient\(90deg, #[0-9a-f]{6}, #[0-9a-f]{6}, #[0-9a-f]{6}, #[0-9a-f]{6}\)$/);
+      assert.deepStrictEqual(farbenIm(f.vorschau[modus]), farbenIm(w).slice(0, 4), "die Vorschau zeigt andere Farben als das Bild");
+    }
+  }
+  // Im Baukasten stehen sie zwischen "keiner" und dem ruhigen Verlauf.
+  assert.deepStrictEqual(HINTERGRUENDE.map((h) => h.id),
+    ["keiner", "inseln", "nordlicht", "abendrot", "ozean", "wald", "lavendel", "glut", "pastell", "sand", "graphit", "verlauf"]);
+  // Der erste traegt weiter die Farben der Werkbank, woertlich.
+  assert.deepStrictEqual(farbenIm(FARBVERLAEUFE[0].light[feld]).slice(0, 4), ["#7db5ff", "#ff9ec7", "#5ee0d0", "#c08cff"]);
+  assert.deepStrictEqual(farbenIm(FARBVERLAEUFE[0].dark[feld]).slice(0, 4), ["#1f4d9e", "#7a2a5c", "#0d6b63", "#4b2a86"]);
+});
+
+pruefe("Jeder Verlauf bleibt im Hellmodus hell und im Dunkelmodus dunkel", () => {
+  // Ein Hintergrund liegt unter jeder Karte. Ein dunkler Grund im Hellmodus
+  // laege unter hellem Glas mit dunkler Schrift, und umgekehrt.
+  let dunkelste = 1, hellste = 0;
+  for (const f of FARBVERLAEUFE) {
+    const hell = farbenIm(f.light[feld]).map(helligkeit), dunkel = farbenIm(f.dark[feld]).map(helligkeit);
+    for (const l of hell.slice(4)) { assert.ok(l > 0.8, `${f.id}: Grund im Hellmodus zu dunkel (${l.toFixed(2)})`); dunkelste = Math.min(dunkelste, l); }
+    for (const l of dunkel.slice(4)) { assert.ok(l < 0.03, `${f.id}: Grund im Dunkelmodus zu hell (${l.toFixed(3)})`); hellste = Math.max(hellste, l); }
+    for (const l of hell.slice(0, 4)) assert.ok(l > 0.3, `${f.id}: ein Punkt ist im Hellmodus zu dunkel (${l.toFixed(2)})`);
+    for (const l of dunkel.slice(0, 4)) assert.ok(l < 0.25, `${f.id}: ein Punkt ist im Dunkelmodus zu hell (${l.toFixed(2)})`);
+    // Die Punkte heben sich vom Grund ab - sonst waere es eine einfarbige Wand.
+    assert.ok(Math.min(...hell.slice(0, 4)) < Math.min(...hell.slice(4)), `${f.id}: Punkte im Hellmodus nicht zu sehen`);
+    assert.ok(Math.max(...dunkel.slice(0, 4)) > Math.max(...dunkel.slice(4)) * 2, `${f.id}: Punkte im Dunkelmodus nicht zu sehen`);
+  }
+  // Gegenprobe: Die Rechnung unterscheidet wirklich.
+  assert.ok(helligkeit("#ffffff") > 0.99 && helligkeit("#000000") < 0.001 && dunkelste < 1 && hellste > 0);
+});
+
+pruefe("istPunkteBild: die Farben sind frei, die Geometrie nicht", () => {
+  const eigen = punkteBild(["#111111", "rgba(255,0,0,.5)", "var(--accent-color)", "#444444"], ["#000", "#111", "#222"]);
+  assert.strictEqual(istPunkteBild(eigen), true);
+  assert.strictEqual(istPunkteBild(stelleFest(eigen, true)), true, "mit fixed nicht mehr erkannt");
+  // Was es nicht ist:
+  const alt = "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)";
+  for (const [was, wert] of [
+    ["der ruhige Verlauf", VERLAUF], ["ein Foto", "url(/local/hats/bild.jpg) center / cover no-repeat fixed"],
+    ["die alte Schreibweise der Inseln", alt], ["leer", ""], ["kein Text", undefined],
+    ["ein Punkt um ein Pixel verschoben", eigen.replace("left -413px", "left -412px")],
+    ["ein Punkt anders gross", eigen.replace("990px 682px", "990px 680px")],
+    ["nur drei Punkte", eigen.split("no-repeat, ").slice(1).join("no-repeat, ")],
+    ["ohne Grundverlauf", eigen.slice(0, eigen.lastIndexOf(", linear-gradient"))],
+  ]) assert.strictEqual(istPunkteBild(wert), false, `${was} gilt als Punktebild`);
+});
+
+pruefe("Die Punkte sitzen in den vier Ecken, jede Ebene so gross wie ihr Fleck", () => {
+  const lagen = lagenIm(FARBVERLAEUFE[3].dark[feld]);
+  assert.strictEqual(lagen.length, 4);
+  assert.deepStrictEqual(lagen.map((l) => l.x + "-" + l.y), ["left-top", "right-top", "right-bottom", "left-bottom"]);
+  for (const l of lagen) {
+    // Die Ebene ragt ueber ihre Ecke hinaus (negative Lage), ihre Mitte liegt
+    // aber im Bild - sonst saehe man vom Fleck weniger als die Haelfte.
+    assert.ok(l.dx < 0 && l.dy < 0, JSON.stringify(l));
+    assert.ok(l.dx + l.b / 2 > 0 && l.dy + l.h / 2 > 0, `Mitte ausserhalb: ${JSON.stringify(l)}`);
+  }
+  // Und es ist dieselbe Geometrie, die der Code fuer die Bewegung benutzt.
+  assert.deepStrictEqual(lagen, PUNKTE.map(({ x, dx, y, dy, b, h }) => ({ x, dx, y, dy, b, h })));
+});
+
+pruefe("Punkte: jede Ebene laeuft ihren eigenen Weg und kommt in der Ruhelage an", () => {
+  const css = bewegung({ drift: 0, punkte: 4, farbe: 0 }, { punkte: true }).css;
+  const bilder = [...css.matchAll(/^\s*([\d%, ]+) \{ background-position: ([^;]+); \}$/gm)].map((t) => [t[1], t[2].split(", ")]);
+  assert.deepStrictEqual(bilder.map((b) => b[0]), ["0%, 100%", "25%", "50%", "75%"]);
+  for (const [, lagen] of bilder) {
+    assert.strictEqual(lagen.length, 5, "nicht fuenf Ebenen");
+    assert.strictEqual(lagen[4], "0 0", "der Grundverlauf bewegt sich");
+  }
+  // Start und Ende sind die Ruhelage aus dem Wert selbst - sonst spraenge das
+  // Bild beim Einschalten.
+  const ruhe = lagenIm(FARBVERLAEUFE[0].light[feld]).map((l) => `${l.x} ${l.dx}px ${l.y} ${l.dy}px`);
+  assert.deepStrictEqual(bilder[0][1].slice(0, 4), ruhe);
+  // Jeder Punkt: vier verschiedene Lagen, nie mehr als 55 px von der Ruhelage,
+  // und kein Punkt laeuft denselben Weg wie ein anderer.
+  const zahl = (s) => { const t = /(left|right) (-?\d+)px (top|bottom) (-?\d+)px/.exec(s); return [t[1] === "left" ? Number(t[2]) : -Number(t[2]), t[3] === "top" ? Number(t[4]) : -Number(t[4])]; };
+  const wege = [0, 1, 2, 3].map((i) => bilder.map(([, lagen]) => { const [x, y] = zahl(lagen[i]), [x0, y0] = zahl(bilder[0][1][i]); return [x - x0, y - y0]; }));
+  for (const weg of wege) {
+    assert.strictEqual(new Set(weg.map(String)).size, 4, "ein Punkt bleibt stehen");
+    const weiteste = Math.max(...weg.map(([x, y]) => Math.hypot(x, y)));
+    assert.ok(weiteste >= 20 && weiteste <= 55, `Ausschlag ${weiteste.toFixed(0)} px - "leicht" ist 20 bis 55`);
+  }
+  assert.strictEqual(new Set(wege.map(String)).size, 4, "zwei Punkte laufen denselben Weg");
+  // In Schritten, zehnmal je Sekunde: ein Viertel des Umlaufs je Abschnitt.
+  const t = /hats-hintergrund-punkte (\d+)s steps\((\d+)\) infinite/.exec(css);
+  assert.ok(t, "die Punkte laufen nicht in Schritten");
+  assert.strictEqual(Number(t[1]), punkteDauer(4));
+  assert.strictEqual(Number(t[2]), Math.round(punkteDauer(4) / 4 * 10));
+  // Die Flaeche bleibt, wo sie ist, und reduzierte Bewegung gilt auch hier.
+  assert.ok(!/position:\s*fixed|inset:|will-change/.test(css));
+  assert.match(css, /prefers-reduced-motion: reduce/);
+});
+
+pruefe("Punkte gibt es nur auf einem Punktebild, und der Abgleich raeumt sie weg", () => {
+  assert.strictEqual(bewegung({ drift: 0, punkte: 4 }, { punkte: false }), null);
+  assert.strictEqual(bewegung({ drift: 3, punkte: 4 }, { punkte: false }).einstellung.punkte, 0);
+  assert.ok(!bewegung({ drift: 3, punkte: 4 }, { punkte: false }).css.includes("background-position"));
+  // Ohne die Angabe bleibt, was verlangt ist - wer nur eine andere Groesse
+  // aendert und den Rest durchreicht, verliert die Punkte nicht nebenbei.
+  assert.strictEqual(bewegung({ drift: 0, punkte: 4 }).einstellung.punkte, 4);
+  assert.strictEqual(bewegung({ drift: 0, punkte: 0, farbe: 0 }, { punkte: true }), null);
+
+  const marke = (v) => `/* HATS:${BEWEGUNG_ID}:START */\n${v.css}\n/* HATS:${BEWEGUNG_ID}:ENDE */`;
+  const bild = [FARBVERLAEUFE[2].light[feld], FARBVERLAEUFE[2].dark[feld]];
+  const nurPunkte = marke(bewegung({ drift: 0, punkte: 5 }, { punkte: true }));
+  const mitFarbe = marke(bewegung({ drift: 0, punkte: 5, farbe: 3, weite: 90 }, { punkte: true }));
+  // Passt alles: nichts zu tun.
+  assert.strictEqual(bewegungNachBild(nurPunkte, bild), undefined);
+  assert.strictEqual(bewegungNachBild("", bild), undefined);
+  assert.strictEqual(bewegungNachBild(marke(bewegung({ drift: 4 })), [VERLAUF]), undefined, "ohne Punkte gibt es nichts abzugleichen");
+  // Der Hintergrund ist kein Punktebild mehr.
+  assert.strictEqual(bewegungNachBild(nurPunkte, [VERLAUF]), null, "es gab nur die Punkte - abschalten");
+  assert.strictEqual(bewegungNachBild(nurPunkte, []), null, "gar kein Hintergrund mehr");
+  assert.strictEqual(bewegungNachBild(nurPunkte, [bild[0], VERLAUF]), null, "hell Punkte, dunkel nicht");
+  const rest = bewegungNachBild(mitFarbe, ["url(/local/hats/bild.jpg) center / cover"]);
+  assert.deepStrictEqual(rest.einstellung, { drift: 0, punkte: 0, farbe: 3, weite: 90 });
+  assert.ok(!rest.css.includes("background-position"));
+});
+
+pruefe("Punkte: jede Stufe kommt zurueck, allein und neben Treiben und Farbwechsel", () => {
+  for (let p = 1; p <= BEWEGUNG_STUFEN; p++) {
+    for (const [d, f] of [[0, 0], [3, 0], [0, 7], [10, 10]]) {
+      const m = leeresModell("t");
+      vorlageAn(m, bewegung({ drift: d, punkte: p, farbe: f, weite: 60 }, { punkte: true }));
+      const z = leseBewegung(m.flach["uix-root"]);
+      assert.deepStrictEqual([z.drift, z.punkte, z.farbe], [d, p, f], `Punkte ${p}, Treiben ${d}, Farbe ${f}`);
+    }
+  }
+  assert.ok(punkteDauer(1) > punkteDauer(10));
+  // Drei Laeufe in EINER Angabe - sonst ueberschriebe einer die anderen.
+  const css = bewegung({ drift: 2, punkte: 2, farbe: 2 }, { punkte: true }).css;
+  assert.strictEqual((css.match(/\banimation:[^;]+;/g) || []).length, 2);
+  for (const name of ["drift", "punkte", "farbe"]) assert.ok(css.match(/\banimation:[^;]+;/)[0].includes("hats-hintergrund-" + name), name);
+  // Die Empfehlung fuer "leicht bewegen und Farben aendern" ist eine gueltige Einstellung.
+  assert.deepStrictEqual(bewegung(PUNKTE_VORGABE, { punkte: true }).einstellung, PUNKTE_VORGABE);
+  assert.ok(PUNKTE_VORGABE.punkte > 0 && PUNKTE_VORGABE.farbe > 0 && PUNKTE_VORGABE.drift === 0);
+});
+
+// ---------------------------------------------------------------------------
 // Der Himmel
 
 pruefe("Himmel: nur eine echte Wetter-Entitaet kommt in die Vorlage", () => {
@@ -374,7 +541,7 @@ pruefe("Beide Vorlagen ueberstehen Schreiben und Lesen, und der zweite Durchlauf
   assert.strictEqual(gelesen.flach["uix-root"], m.flach["uix-root"], "das Stilziel kam veraendert zurueck");
   assert.strictEqual(schreibeTheme(gelesen), eins, "der zweite Durchlauf aendert die Datei");
   assert.strictEqual(vorlageIstAn(gelesen, { id: BEWEGUNG_ID, ziel: HINTERGRUND_ZIEL }), true);
-  assert.deepStrictEqual(leseBewegung(gelesen.flach["uix-root"]), { drift: 4, farbe: 2, weite: 40 });
+  assert.deepStrictEqual(leseBewegung(gelesen.flach["uix-root"]), { drift: 4, punkte: 0, farbe: 2, weite: 40 });
   assert.deepStrictEqual(leseHimmel(gelesen.flach["uix-root"]), { wetter: "weather.forecast_home", staerke: HIMMEL_VORGABE.staerke });
   assert.strictEqual(haIstFest(gelesen.flach["lovelace-background"]), true);
   // Ohne den Schalter kaeme keine der beiden Vorlagen an.

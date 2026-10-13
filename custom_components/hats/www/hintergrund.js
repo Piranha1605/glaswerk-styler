@@ -104,14 +104,11 @@ export function ohneFest(wert) {
 // Wert heisst "Feld weg", nicht "Feld leer": Das Panel entfernt es dann, statt
 // Home Assistants Vorgabe mit nichts zu ueberschreiben.
 //
-// Die Farbinseln stehen FEST. Ohne das Wort haengt die Flaeche absolut und ist
-// so hoch wie der ganze Inhalt - gemessen 1774 px bei 768 px Fensterhoehe. Die
-// Inseln bei 86 % und 78 % sassen dann bei 1525 und 1383 px, zwei von vier
-// unter dem ersten Bildschirm. Der ruhige Verlauf bleibt mitlaufend: Zwei Toene
-// ueber die ganze Seite gezogen sind immer noch zwei Toene.
-//
-// Die vier Farben der Inseln sind die der Projektwerkbank, damit Panel und
-// Theme dieselbe Sprache sprechen.
+// Die Farbpunkte stehen FEST. Ohne das Wort haengt die Flaeche absolut und ist
+// so hoch wie der ganze Inhalt - gemessen 1774 px bei 768 px Fensterhoehe. In
+// der alten Schreibweise sassen die Punkte bei 86 % und 78 % dann bei 1525 und
+// 1383 px, zwei von vier unter dem ersten Bildschirm. Der ruhige Verlauf bleibt
+// mitlaufend: Zwei Toene ueber die ganze Seite gezogen sind immer noch zwei Toene.
 //
 // Glas braucht einen dieser Hintergruende: Eine durchscheinende Flaeche vor
 // einer einfarbigen Wand sieht aus wie eine etwas hellere Wand. Der Kartenstil
@@ -121,18 +118,164 @@ export function ohneFest(wert) {
 // Und: Ein Bild aus der DASHBOARD-Konfiguration liegt ueber allem hier. Der
 // Theme-Wert ist dann gesetzt, wird gelesen und ist trotzdem nicht zu sehen.
 
-const INSELN_HELL =
-  "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), " +
-  "radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), " +
-  "radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), " +
-  "radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), " +
-  "linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)";
-const INSELN_DUNKEL =
-  "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), " +
-  "radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), " +
-  "radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), " +
-  "radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), " +
-  "linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%)";
+// ---------------------------------------------------------------------------
+// Die Farbpunkte
+//
+// Vier weiche Flecke in den Ecken, darunter ein schraeger Grundverlauf. Jeder
+// Fleck ist eine EIGENE Ebene mit eigener Lage und Groesse:
+//
+//   radial-gradient(closest-side, <Farbe>, transparent)
+//       left -413px top -310px / 990px 682px no-repeat
+//
+// Frueher stand jeder Fleck als Verlauf ueber die ganze Flaeche da
+// ("radial-gradient(900px 620px at 8% 4%, ...)"). So laesst er sich nicht
+// einzeln bewegen: Verschiebt man die Ebene, laeuft ihr Rand als harte Kante
+// durchs Bild. Eine Ebene, die nur so gross ist wie ihr Fleck und zum Rand hin
+// durchsichtig wird, hat keine Kante.
+//
+// Die Lage haengt an den ECKEN der Flaeche, nicht an Prozenten ihrer Groesse:
+// Die Flecke sitzen damit auf jedem Bildschirm gleich weit in der Ecke. Die
+// Zahlen sind die alten Flecke bei 1024 x 768 umgerechnet (Radius mal dem
+// Anteil, bei dem der alte Verlauf auf null war), nicht neu gewaehlt.
+//
+// "weg" sind drei Wegpunkte, in px von der Ruhelage aus, nach rechts und nach
+// unten positiv. Jeder Fleck laeuft ein eigenes kleines Viereck ab - liefen
+// alle denselben Weg, bewegte sich das Bild als Ganzes. Die Wege sind eine
+// Entscheidung, keine Messung: unter 55 px Ausschlag, damit es "leicht" bleibt.
+export const PUNKTE = [
+  { x: "left", dx: -413, y: "top", dy: -310, b: 990, h: 682, weg: [[36, 22], [18, 48], [-14, 26]] },
+  { x: "right", dx: -344, y: "top", dy: -199, b: 853, h: 582, weg: [[-30, 30], [-52, 8], [-20, -18]] },
+  { x: "right", dx: -123, y: "bottom", dy: -270, b: 821, h: 756, weg: [[-24, -36], [12, -52], [30, -20]] },
+  { x: "left", dx: -139, y: "bottom", dy: -101, b: 728, h: 541, weg: [[34, -20], [52, 10], [20, 30]] },
+];
+
+// Wo eine Ebene steht, wenn ihr Fleck um (rechts, unten) verschoben ist.
+// Gemessen wird von der Kante aus, an der die Ebene haengt - von rechts und
+// von unten zaehlt es deshalb umgekehrt.
+function punktLage(p, rechts = 0, unten = 0) {
+  const ax = p.x === "left" ? p.dx + rechts : p.dx - rechts;
+  const ay = p.y === "top" ? p.dy + unten : p.dy - unten;
+  return `${p.x} ${ax}px ${p.y} ${ay}px`;
+}
+
+// Der Wert fuer --lovelace-background: vier Farben fuer die Punkte, drei fuer
+// den Grund. Ohne "fixed" - das haengt stelleFest() an.
+export function punkteBild(farben, grund) {
+  const ebenen = PUNKTE.map((p, i) =>
+    `radial-gradient(closest-side, ${farben[i]}, transparent) ${punktLage(p)} / ${p.b}px ${p.h}px no-repeat`);
+  ebenen.push(`linear-gradient(155deg, ${grund[0]} 0%, ${grund[1]} 50%, ${grund[2]} 100%)`);
+  return ebenen.join(", ");
+}
+
+// An den Kommas der obersten Ebene trennen - die in rgba(...) zaehlen nicht.
+function ebenenVon(wert) {
+  const teile = [];
+  let tiefe = 0, ab = 0;
+  for (let i = 0; i < wert.length; i++) {
+    const z = wert[i];
+    if (z === "(") tiefe++;
+    else if (z === ")") tiefe--;
+    else if (z === "," && tiefe === 0) { teile.push(wert.slice(ab, i).trim()); ab = i + 1; }
+  }
+  teile.push(wert.slice(ab).trim());
+  return teile;
+}
+
+// Ist das ein Bild aus Farbpunkten - mit genau dieser Lage und Groesse?
+//
+// Die Farben sind frei, die Geometrie nicht: Die Bewegung der Punkte faehrt
+// feste Wegpunkte ab und beginnt in der Ruhelage. Auf ein anderes Bild
+// angewendet, verschoebe sie dessen erste Ebene - ein Foto rutschte dann aus
+// seinem Rahmen.
+export function istPunkteBild(wert) {
+  if (typeof wert !== "string") return false;
+  const ebenen = ebenenVon(ohneFest(wert));
+  if (ebenen.length !== PUNKTE.length + 1) return false;
+  if (!ebenen[PUNKTE.length].startsWith("linear-gradient(")) return false;
+  return PUNKTE.every((p, i) => {
+    const e = ebenen[i];
+    const ende = `) ${punktLage(p)} / ${p.b}px ${p.h}px no-repeat`;
+    return e.startsWith("radial-gradient(closest-side, ") && e.endsWith(", transparent" + ende);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Zehn Farbverlaeufe
+//
+// Auf Ansage vom 13.10.2026: "als erstes sollen die farbpunkte sich leicht
+// bewegen und die farben aendern. dafuer in den einstellungen 10
+// farbverlaeufe als auswahl anbieten."
+//
+// Jeder nennt vier Toene fuer die Punkte, als Farbwinkel und Saettigung. Hell
+// und dunkel entstehen daraus mit fester Helligkeit - so ist ein Verlauf im
+// Dunkelmodus derselbe wie im Hellmodus, nur tiefer, und kein Punkt faellt
+// aus der Reihe, weil jemand eine Zahl anders gewaehlt hat.
+//
+// DIE TOENE SIND EINE ENTSCHEIDUNG, KEINE MESSUNG. Gemessen ist nur, was
+// daraus folgt: Der Grund bleibt im Hellmodus hell genug fuer dunkle Schrift
+// und im Dunkelmodus dunkel genug fuer helle (tests/hats-hintergrund.test.js).
+//
+// Der erste ist der bisherige, mit den Farben der Projektwerkbank - woertlich,
+// nicht gerechnet, damit Panel und Theme dieselbe Sprache sprechen.
+
+function hsl(h, s, l) {
+  const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    const wert = l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * wert).toString(16).padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// Helligkeit der Punkte und des Grundes je Modus.
+const STUFE_HELL = { punkt: 76, grund: 95, grundSatt: 0.75 };
+const STUFE_DUNKEL = { punkt: 33, grund: 8, grundSatt: 0.6, punktSatt: 0.8 };
+
+function ausToenen(toene) {
+  const hell = punkteBild(
+    toene.map(([h, s]) => hsl(h, s, STUFE_HELL.punkt)),
+    [toene[0], toene[3], toene[2]].map(([h, s]) => hsl(h, s * STUFE_HELL.grundSatt, STUFE_HELL.grund)));
+  const dunkel = punkteBild(
+    toene.map(([h, s]) => hsl(h, s * STUFE_DUNKEL.punktSatt, STUFE_DUNKEL.punkt)),
+    [toene[0], toene[3], toene[2]].map(([h, s]) => hsl(h, s * STUFE_DUNKEL.grundSatt, STUFE_DUNKEL.grund)));
+  return { hell, dunkel };
+}
+
+const WERKBANK = {
+  hell: punkteBild(["#7db5ff", "#ff9ec7", "#5ee0d0", "#c08cff"], ["#e6eeff", "#f3ecff", "#e3fbf6"]),
+  dunkel: punkteBild(["#1f4d9e", "#7a2a5c", "#0d6b63", "#4b2a86"], ["#0b1020", "#140d26", "#07201f"]),
+};
+
+// id, deutsch, englisch, wozu, und die vier Toene: oben links, oben rechts,
+// unten rechts, unten links.
+const VERLAUF_LISTE = [
+  ["inseln", "Werkbank", "Workbench", "Blau, Rosa, Tuerkis, Violett - die Farben des Panels.", "Blue, pink, teal, violet - the colours of the panel.", null],
+  ["nordlicht", "Nordlicht", "Aurora", "Gruen ueber Tuerkis nach Violett.", "Green through teal to violet.", [[150, 70], [178, 72], [268, 62], [212, 78]]],
+  ["abendrot", "Abendrot", "Sunset", "Orange, Rosa und ein spaetes Violett.", "Orange, pink and a late violet.", [[24, 92], [338, 82], [282, 58], [44, 90]]],
+  ["ozean", "Ozean", "Ocean", "Vier Blautoene, vom Tiefen ins Helle.", "Four blues, from deep to bright.", [[222, 80], [192, 78], [170, 62], [246, 66]]],
+  ["wald", "Wald", "Forest", "Gruentoene mit etwas Moos und Licht.", "Greens with a little moss and light.", [[136, 52], [96, 50], [166, 56], [58, 58]]],
+  ["lavendel", "Lavendel", "Lavender", "Violett, Flieder und ein kuehles Blau.", "Violet, lilac and a cool blue.", [[266, 70], [318, 60], [230, 72], [290, 56]]],
+  ["glut", "Glut", "Ember", "Rot, Orange und Bernstein.", "Red, orange and amber.", [[6, 80], [28, 90], [332, 68], [42, 88]]],
+  ["pastell", "Pastell", "Candy", "Rosa, Himmelblau, Mint und Pfirsich - weich.", "Pink, sky blue, mint and peach - soft.", [[336, 68], [202, 70], [152, 52], [30, 76]]],
+  ["sand", "Sand", "Dune", "Warme, gedeckte Erdtoene.", "Warm, muted earth tones.", [[38, 44], [18, 42], [350, 32], [88, 24]]],
+  ["graphit", "Graphit", "Graphite", "Fast ohne Farbe: kuehle Grautoene.", "Almost colourless: cool greys.", [[214, 20], [200, 16], [276, 12], [182, 14]]],
+];
+
+export const FARBVERLAEUFE = VERLAUF_LISTE.map(([id, de, en, zweckDe, zweckEn, toene]) => {
+  const bild = toene ? ausToenen(toene) : WERKBANK;
+  // Die vier Farben nebeneinander - fuer eine Kachel, die zeigt, was man waehlt.
+  const streifen = (wert) => `linear-gradient(90deg, ${ebenenVon(wert).slice(0, PUNKTE.length)
+    .map((e) => e.slice("radial-gradient(closest-side, ".length, e.indexOf(", transparent"))).join(", ")})`;
+  return {
+    id, de, en, zweckDe, zweckEn,
+    // Fest: Ohne das Wort haengt die Flaeche absolut und ist so hoch wie der
+    // ganze Inhalt. Die Punkte unten haengen dann am Ende der Seite.
+    light: { "--lovelace-background": stelleFest(bild.hell, true) },
+    dark: { "--lovelace-background": stelleFest(bild.dunkel, true) },
+    vorschau: { light: streifen(bild.hell), dark: streifen(bild.dunkel) },
+  };
+});
 
 export const HINTERGRUENDE = [
   {
@@ -142,19 +285,12 @@ export const HINTERGRUENDE = [
     zweckEn: "Home Assistant's own background.",
     light: { "--lovelace-background": "" }, dark: { "--lovelace-background": "" },
   },
-  {
-    id: "inseln",
-    de: "Farbinseln", en: "Colour islands",
-    zweckDe: "Vier weiche Farbflecke in den Ecken. Glas braucht etwas, das es bricht.",
-    zweckEn: "Four soft colour patches in the corners. Glass needs something to refract.",
-    light: { "--lovelace-background": stelleFest(INSELN_HELL, true) },
-    dark: { "--lovelace-background": stelleFest(INSELN_DUNKEL, true) },
-  },
+  ...FARBVERLAEUFE,
   {
     id: "verlauf",
     de: "Ruhiger Verlauf", en: "Quiet gradient",
-    zweckDe: "Ein schraeger Verlauf, zwei Toene. Genug fuer Glas, ruhiger als die Inseln.",
-    zweckEn: "One diagonal gradient, two tones. Enough for glass, calmer than the islands.",
+    zweckDe: "Ein schraeger Verlauf, zwei Toene. Genug fuer Glas, ruhiger als die Punkte.",
+    zweckEn: "One diagonal gradient, two tones. Enough for glass, calmer than the dots.",
     light: { "--lovelace-background": "linear-gradient(155deg, #e9eef7 0%, #f4f1f8 55%, #eaf4f2 100%)" },
     dark:  { "--lovelace-background": "linear-gradient(155deg, #0e1220 0%, #151225 55%, #0c1d1f 100%)" },
   },
@@ -179,10 +315,13 @@ export const HINTERGRUENDE = [
 
 export const BEWEGUNG_ID = "hintergrund-bewegung";
 export const BEWEGUNG_STUFEN = 10;
-export const BEWEGUNG_VORGABE = { drift: 4, farbe: 0, weite: 40 };
+export const BEWEGUNG_VORGABE = { drift: 4, punkte: 0, farbe: 0, weite: 40 };
 
 const DRIFT_NAME = "hats-hintergrund-drift";
 const FARBE_NAME = "hats-hintergrund-farbe";
+const PUNKTE_NAME = "hats-hintergrund-punkte";
+// Wie oft je Sekunde die Punkte einen Schritt tun - siehe bewegung().
+const PUNKTE_TAKT = 10;
 
 function stufe(wert, vorgabe) {
   const z = Math.round(Number(wert));
@@ -202,6 +341,12 @@ function grad(wert) {
 // Stufe 1 ist die langsamste. Die Bewegung braucht dann eine Minute fuer einen
 // Weg, der Farbwechsel fuenf - er soll auffallen, wenn man hinsieht, nicht
 // waehrenddessen.
+// Ein Umlauf der Punkte. Langsamer als das Treiben: Sie legen nur ein paar
+// Dutzend Pixel zurueck, und bei Stufe 4 sind das etwa drei in der Sekunde.
+export function punkteDauer(st) {
+  const s = stufe(st, 0);
+  return s ? Math.round(240 / s) : 0;
+}
 export function driftDauer(st) {
   const s = stufe(st, BEWEGUNG_VORGABE.drift);
   return s ? Math.round(60 / s) : 0;
@@ -211,11 +356,20 @@ export function farbDauer(st) {
   return s ? Math.round(300 / s) : 0;
 }
 
-export function bewegung(einstellung = {}) {
+// bild.punkte sagt, ob der Hintergrund ein Bild aus Farbpunkten ist
+// (istPunkteBild). Die Punkte einzeln zu bewegen geht nur dort - auf jedem
+// anderen Bild verschoebe derselbe Block dessen erste Ebene. Der Aufrufer
+// kennt den Hintergrund, diese Funktion nicht: Mit { punkte: false } faellt
+// die Punktbewegung weg, auch wenn eine Stufe verlangt ist. Ohne die Angabe
+// bleibt sie, wie sie verlangt ist - so verliert ein Aufrufer, der nur eine
+// andere Groesse aendert und den Rest aus leseBewegung() durchreicht, sie
+// nicht nebenbei.
+export function bewegung(einstellung = {}, bild = {}) {
   const drift = stufe(einstellung.drift, BEWEGUNG_VORGABE.drift);
   const farbe = stufe(einstellung.farbe, BEWEGUNG_VORGABE.farbe);
   const weite = grad(einstellung.weite);
-  if (!drift && !farbe) return null;
+  const punkte = bild.punkte === false ? 0 : stufe(einstellung.punkte, BEWEGUNG_VORGABE.punkte);
+  if (!drift && !farbe && !punkte) return null;
 
   const laeufe = [];
   if (drift) laeufe.push(`${DRIFT_NAME} ${driftDauer(drift)}s ease-in-out infinite alternate`);
@@ -224,12 +378,20 @@ export function bewegung(einstellung = {}) {
       ? `${FARBE_NAME} ${farbDauer(farbe)}s linear infinite`
       : `${FARBE_NAME} ${farbDauer(farbe)}s ease-in-out infinite alternate`);
   }
+  if (punkte) {
+    // In Schritten, zehnmal je Sekunde, nicht in jedem Bild. background-position
+    // rechnet nicht die Grafikkarte: Jeder neue Wert malt die Flaeche neu, und
+    // jede Glaskarte darueber zeichnet ihre Weichzeichnung mit. Bei drei Pixeln
+    // in der Sekunde ist ein Schritt ein Drittel Pixel - zu sehen ist der
+    // Unterschied nicht, gemalt wird ein Sechstel so oft.
+    const dauer = punkteDauer(punkte);
+    laeufe.push(`${PUNKTE_NAME} ${dauer}s steps(${Math.max(1, Math.round(dauer / (PUNKTE.length) * PUNKTE_TAKT))}) infinite`);
+  }
   const wandel = [drift ? "transform" : "", farbe ? "filter" : ""].filter(Boolean).join(", ");
 
   const teile = [];
-  teile.push(`/* Der Hintergrund selbst wird bewegt, nicht sein Bild: transform und filter
-   rechnet die Grafikkarte, background-position und Farbwerte muessten in
-   jedem Bild neu gemalt werden - unter Glas mit jeder Karte darueber. */
+  teile.push(`/* Treiben und Farbwechsel bewegen die Flaeche selbst, mit transform und
+   filter - beides rechnet die Grafikkarte, ohne dass neu gemalt wird. */
 hui-view-background {${drift ? `
   /* Fest am Fenster und rundum 14 % groesser, damit beim Verschieben kein
      Rand ins Bild laeuft. Home Assistant deckelt die Breite sonst auf 100 %. */
@@ -239,9 +401,23 @@ hui-view-background {${drift ? `
   height: 128% !important;
   max-width: none !important;
   max-height: none !important;` : ""}
-  animation: ${laeufe.join(", ")};
-  will-change: ${wandel};
+  animation: ${laeufe.join(", ")};${wandel ? `
+  will-change: ${wandel};` : ""}
 }`);
+  if (punkte) {
+    // Jeder Punkt laeuft sein eigenes Viereck ab und kommt in der Ruhelage
+    // wieder an. Die fuenfte Angabe gehoert dem Grundverlauf - er bleibt stehen.
+    const lage = (k) => PUNKTE.map((p) => (k === 0 ? punktLage(p) : punktLage(p, p.weg[k - 1][0], p.weg[k - 1][1]))).join(", ") + ", 0 0";
+    teile.push(`/* Die Farbpunkte, jeder auf seinem eigenen Weg - in Schritten, zehnmal je
+   Sekunde. Jeder Schritt malt die Flaeche neu, und jede Glaskarte darueber
+   zeichnet mit; bei wenigen Pixeln in der Sekunde sieht man den Takt nicht. */
+@keyframes ${PUNKTE_NAME} {
+  0%, 100% { background-position: ${lage(0)}; }
+  25% { background-position: ${lage(1)}; }
+  50% { background-position: ${lage(2)}; }
+  75% { background-position: ${lage(3)}; }
+}`);
+  }
   if (drift) {
     teile.push(`@keyframes ${DRIFT_NAME} {
   0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
@@ -274,7 +450,7 @@ hui-view-background {${drift ? `
     en: "Moving background",
     zweckDe: "Der Hintergrund treibt langsam und kann dabei seine Farbe wechseln. Wirkt auf Dashboards und auf der Home-Seite.",
     zweckEn: "The background drifts slowly and can shift its colour while doing so. Applies to dashboards and the home page.",
-    einstellung: { drift, farbe, weite },
+    einstellung: { drift, punkte, farbe, weite },
     css: teile.join("\n"),
   };
 }
@@ -295,6 +471,7 @@ export function leseBewegung(text) {
   if (block === null) return null;
   const d = new RegExp(`${DRIFT_NAME}\\s+([\\d.]+)s`).exec(block);
   const f = new RegExp(`${FARBE_NAME}\\s+([\\d.]+)s`).exec(block);
+  const pk = new RegExp(`${PUNKTE_NAME}\\s+([\\d.]+)s`).exec(block);
   const w = /hue-rotate\((-?[\d.]+)deg\)\s*;?\s*}\s*to\s*{\s*filter:\s*hue-rotate\((-?[\d.]+)deg\)/.exec(block);
   const ausDauer = (dauer, basis) => {
     const z = Number(dauer);
@@ -303,9 +480,37 @@ export function leseBewegung(text) {
   };
   return {
     drift: d ? ausDauer(d[1], 60) : 0,
+    punkte: pk ? ausDauer(pk[1], 240) : 0,
     farbe: f ? ausDauer(f[1], 300) : 0,
     weite: w ? grad(Math.abs(Number(w[2]) - Number(w[1]))) : BEWEGUNG_VORGABE.weite,
   };
+}
+
+// Was einschalten, wenn jemand "die Farbpunkte sollen sich leicht bewegen und
+// die Farben aendern" meint und sonst nichts sagt. Eine Entscheidung, keine
+// Messung: ein Umlauf in 80 Sekunden, der Farbton pendelt in zweieinhalb
+// Minuten um 40 Grad. Die Flaeche selbst bleibt stehen - beides zugleich zoege
+// die Punkte aus ihren Ecken.
+export const PUNKTE_VORGABE = { drift: 0, punkte: 3, farbe: 2, weite: 40 };
+
+// Passt die Bewegung im Theme noch zum Hintergrund?
+//
+// Wechselt jemand von den Farbpunkten zu einem Foto oder einem einfachen
+// Verlauf, waehrend die Punkte laufen, verschiebt der Block von da an die
+// erste Ebene des neuen Bildes. Aufzurufen nach JEDER Aenderung am Hintergrund.
+//
+//   text    der Inhalt des Stilziels uix-root
+//   werte   alle gesetzten Werte von lovelace-background (flach, hell, dunkel)
+//
+//   zurueck undefined   alles passt, nichts zu tun
+//           Vorlage     mit vorlageAn() schreiben - dieselbe Bewegung ohne Punkte
+//           null        mit vorlageAus() abschalten - es gab nur die Punkte
+export function bewegungNachBild(text, werte) {
+  const b = leseBewegung(text);
+  if (!b || !b.punkte) return undefined;
+  const gesetzt = (werte || []).filter((w) => typeof w === "string" && w.trim());
+  if (gesetzt.length && gesetzt.every(istPunkteBild)) return undefined;
+  return bewegung(b, { punkte: false });
 }
 
 // ---------------------------------------------------------------------------

@@ -49,7 +49,10 @@ const teil = (id) => HINTERGRUENDE.find((h) => h.id === id);
 pruefe("Der Baukasten fuehrt genau die Hintergruende aus hintergrund.js", () => {
   assert.strictEqual(AUS_BAUKASTEN, HINTERGRUENDE, "baukasten.js haelt eine eigene Liste");
   assert.strictEqual(BAUKASTEN.hintergrund.teile, HINTERGRUENDE);
-  assert.deepStrictEqual(HINTERGRUENDE.map((h) => h.id), ["keiner", "inseln", "verlauf"]);
+  // Vorn "keiner", hinten der ruhige Verlauf, dazwischen die zehn Farbverlaeufe.
+  assert.strictEqual(HINTERGRUENDE.length, 12);
+  assert.deepStrictEqual([HINTERGRUENDE[0].id, HINTERGRUENDE[1].id, HINTERGRUENDE[11].id], ["keiner", "inseln", "verlauf"]);
+  assert.strictEqual(new Set(HINTERGRUENDE.map((h) => h.id)).size, 12, "eine Kennung ist doppelt");
   for (const h of HINTERGRUENDE) {
     for (const modus of ["light", "dark"]) assert.deepStrictEqual(Object.keys(h[modus]), ["--" + FELD], `${h.id}/${modus}`);
     for (const k of ["de", "en", "zweckDe", "zweckEn"]) assert.ok(h[k], `${h.id} ohne ${k}`);
@@ -66,7 +69,8 @@ pruefe("Die Farbinseln stehen fest, und zwar so, dass Home Assistant es erkennt"
     assert.strictEqual(teil("keiner")[modus]["--" + FELD], "");
   }
   // Hell und dunkel sind verschiedene Farben an denselben Stellen.
-  const stellen = (w) => [...w.matchAll(/at (\d+% \d+%)/g)].map((t) => t[1]);
+  const stellen = (w) => [...w.matchAll(/(left|right) -?\d+px (top|bottom) -?\d+px/g)].map((t) => t[0]);
+  assert.strictEqual(stellen(teil("inseln").light["--" + FELD]).length, 4);
   assert.deepStrictEqual(stellen(teil("inseln").light["--" + FELD]), stellen(teil("inseln").dark["--" + FELD]));
   assert.notStrictEqual(teil("inseln").light["--" + FELD], teil("inseln").dark["--" + FELD]);
 });
@@ -140,12 +144,12 @@ pruefe("Bewegung: jeder Regler aendert nur seine Groesse, null und null schaltet
   const m = leeresModell("t");
   assert.strictEqual(hintergrundStand(m).bewegung, null);
   assert.deepStrictEqual(hintergrundAendern(m, "drift", 4).felder, ["uix-root"]);
-  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 4, farbe: 0, weite: 40 });
+  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 4, punkte: 0, farbe: 0, weite: 40 });
   hintergrundAendern(m, "farbe", 3);
   hintergrundAendern(m, "weite", 90);
-  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 4, farbe: 3, weite: 90 });
+  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 4, punkte: 0, farbe: 3, weite: 90 });
   hintergrundAendern(m, "drift", 0);
-  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 0, farbe: 3, weite: 90 });
+  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 0, punkte: 0, farbe: 3, weite: 90 });
   // Derselbe Wert noch einmal: keine Aenderung gemeldet, das Feld waechst nicht.
   const davor = m.flach["uix-root"];
   assert.deepStrictEqual(hintergrundAendern(m, "farbe", 3).felder, []);
@@ -164,7 +168,7 @@ pruefe("Himmel: an, umstellen, aus - und fremdes CSS im Stilziel bleibt stehen",
   hintergrundAendern(m, "staerke", 9);
   hintergrundAendern(m, "drift", 5);
   assert.deepStrictEqual(hintergrundStand(m).himmel, { wetter: "weather.forecast_home", staerke: 9 });
-  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 5, farbe: 0, weite: 40 });
+  assert.deepStrictEqual(hintergrundStand(m).bewegung, { drift: 5, punkte: 0, farbe: 0, weite: 40 });
   assert.ok(m.flach["uix-root"].startsWith(kopf), "die Kopfleiste wurde angefasst");
   hintergrundAendern(m, "wetter", "");
   hintergrundAendern(m, "drift", 0);
@@ -209,7 +213,7 @@ pruefe("Was die Seite schreibt, uebersteht die Theme-Datei", () => {
   const datei = schreibeTheme(m);
   const zurueck = leseTheme(datei);
   const s = hintergrundStand(zurueck);
-  assert.deepStrictEqual(s.bewegung, { drift: 6, farbe: 2, weite: 180 });
+  assert.deepStrictEqual(s.bewegung, { drift: 6, punkte: 0, farbe: 2, weite: 180 });
   assert.deepStrictEqual(s.himmel, { wetter: "weather.demo_weather_north", staerke: 4 });
   assert.strictEqual(s.fest, true);
   assert.deepStrictEqual(s.stoerungen, []);
@@ -341,7 +345,7 @@ pruefe("Schalter, Auswahl und Ausschlag reichen den richtigen Wert weiter", () =
   assert.ok(haIstFest(m.light[FELD]));
   assert.strictEqual(leseHimmel(m.flach["uix-root"]).wetter, "weather.forecast_home");
   // Der Regler steht auf der STELLE im Raster, geschrieben wird der Winkel.
-  assert.deepStrictEqual(leseBewegung(m.flach["uix-root"]), { drift: 0, farbe: 2, weite: 180 });
+  assert.deepStrictEqual(leseBewegung(m.flach["uix-root"]), { drift: 0, punkte: 0, farbe: 2, weite: 180 });
   assert.deepStrictEqual(gemeldet, [FELD, "uix-root", "uix-root", "uix-root"]);
   // Ohne offene Theme geschieht nichts, auch kein Fehler.
   const ohne = element("range", "drift", 5);
