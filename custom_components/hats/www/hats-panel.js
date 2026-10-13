@@ -24,6 +24,7 @@ import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
 import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
+import { UIX_ZIELE } from "./uix.js";
 
 const HATS_VERSION = "0.2.0b2";
 
@@ -216,7 +217,11 @@ const STUFEN = [
         // trotzdem (hui-root). Als Text, nicht als Farbe: hier passt ein
         // Verlauf oder ein url() hinein, nicht nur ein Hexwert.
         { t: "Dashboard-Hintergrund", art: "text", v: "--lovelace-background", ebene: "getrennt",
-          platzhalter: "linear-gradient(160deg, #dcebfb, #8fbdea)" } ] },
+          platzhalter: "linear-gradient(160deg, #dcebfb, #8fbdea)" },
+        // Bubble liest es VOR lovelace-background fuer seine Pop-ups. Steht
+        // wie jenes nicht in ha_blanko, weil HA es nicht vorbelegt.
+        { t: "Pop-up-Hintergrund", art: "text", v: "--popup-custom-wallpaper", ebene: "getrennt",
+          platzhalter: "url(/local/bild.jpg)" } ] },
       { name: "Karten", felder: [
         { t: "Kartenflaeche", art: "farbe", v: "--ha-card-background", ebene: "getrennt",
           sync: { bubble: "--bubble-main-background-color" } },
@@ -796,6 +801,15 @@ const BEKANNT = new Set([
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Add-ons": "Add-ons",
+    "Felder angebunden": "fields wired up",
+    "von": "of", "Stilzielen an": "style targets on",
+    "Herkunft": "Source",
+    "Hintergrundbild": "Background image",
+    "Pop-up-Hintergrund": "Pop-up background",
+    "Hell + dunkel": "Light + dark", "Nur hell": "Light only", "Nur dunkel": "Dark only",
+    "Diese Dateien hat HATS gebaut - oder oben eine neue beginnen": "These files were built with HATS - or start a new one above",
+    "Noch keine Theme - oben eine neue beginnen oder eine Datei einlesen": "No theme yet - start a new one above, or read in a file",
     "Oeffnen": "Open",
     "Aenderungen verwerfen": "Discard changes",
     "Aenderungen verworfen": "changes discarded",
@@ -897,6 +911,7 @@ const ZUSTAND = {
   start: true,
   dateien: null,     // null = noch nicht geholt, [] = geholt und leer
   bericht: null,     // was beim letzten Einlesen herauskam
+  uixAus: {},        // CSS abgeschalteter Stilziele - abschalten darf nichts vernichten
   modell: null,
   name: "",
   geaendert: new Set(),
@@ -945,6 +960,56 @@ class HatsPanel extends HTMLElement {
       ZUSTAND.ladefehler = String(e.message || e.code || e);
     }
     this.zeichne();
+  }
+
+  // Die Add-on-Spalte rechts: Bubble, Mushroom, UIX.
+  //
+  // Oben HA, rechts die Add-ons - auf Ansage vom 13.10.2026. Die beiden
+  // Kartensammlungen fuehren in ihre Stufe; UIX bekommt hier seine eigene
+  // Liste, weil es kein Feld je Eigenschaft ist, sondern ein Block CSS je
+  // Stilziel.
+  addonSpalte(T) {
+    const m = ZUSTAND.modell;
+    const zahl = (vor) => Object.keys(ZUORDNUNG).filter((k) => k.startsWith(vor)).length;
+    const anUix = m ? UIX_ZIELE.filter((z) => m.flach["uix-" + z.id] !== undefined).length : 0;
+
+    return `
+      <aside class="addons">
+        <div class="addonkopf">${T("Add-ons")}</div>
+
+        <button class="addonblock" data-addon-stufe="6">
+          <div class="addontitel"><ha-icon icon="mdi:card-multiple-outline"></ha-icon>Bubble Card</div>
+          <div class="addontext">${zahl("bubble-")} ${T("Felder angebunden")}</div>
+        </button>
+
+        <button class="addonblock" data-addon-stufe="6">
+          <div class="addontitel"><ha-icon icon="mdi:mushroom-outline"></ha-icon>Mushroom</div>
+          <div class="addontext">${zahl("mush-")} ${T("Felder angebunden")}</div>
+        </button>
+
+        <div class="addonblock offen">
+          <div class="addontitel"><ha-icon icon="mdi:auto-fix"></ha-icon>UIX</div>
+          <div class="addontext">${anUix} ${T("von")} ${UIX_ZIELE.length} ${T("Stilzielen an")}</div>
+          <div class="uixliste">
+            ${UIX_ZIELE.map((z) => {
+              const name = "uix-" + z.id;
+              const an = m ? m.flach[name] !== undefined : false;
+              const wert = m ? (m.flach[name] ?? ZUSTAND.uixAus[name] ?? "") : "";
+              return `
+                <div class="uixziel ${an ? "an" : ""}">
+                  <label class="uixkopf">
+                    <input type="checkbox" data-uix="${z.id}" ${an ? "checked" : ""}
+                           ${m ? "" : "disabled"}>
+                    <span>${this.spr === "en" ? z.en : z.de}</span>
+                    <code>${name}</code>
+                  </label>
+                  ${an ? `<textarea class="uixcss" data-uix-css="${z.id}" spellcheck="false"
+                            placeholder="ha-card { ... }">${String(wert).replace(/</g, "&lt;")}</textarea>` : ""}
+                </div>`;
+            }).join("")}
+          </div>
+        </div>
+      </aside>`;
   }
 
   // Der Bericht nach dem Einlesen. Er sagt, was bedienbar ist, was
@@ -1056,22 +1121,45 @@ class HatsPanel extends HTMLElement {
     const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
 
     return `
-      <div class="startwege drei">
-        <button class="weg neu">
-          <span class="wegtitel">${T("Neue Theme")}</span>
-          <span class="wegtext">${T("Leere Grundlage auf HA 2026.10, ohne Altlasten")}</span>
-        </button>
-        <button class="weg importieren">
-          <span class="wegtitel">${T("Datei oder Text")}</span>
-          <span class="wegtext">${T("Eine Theme von anderswo einlesen")}</span>
-        </button>
-        <div class="weg ${meine.length ? "" : "aus"}">
-          <span class="wegtitel">${T("Vorhandene oeffnen")}</span>
-          <span class="wegtext">${meine.length
-            ? T("Diese Dateien hat HATS gebaut")
-            : T("Noch keine - die erste entsteht beim Speichern")}</span>
+      <!-- Die Starteinstellungen gehoeren hierher, nicht als Kachelgruppe in
+           Stufe 1: Name, Herkunft und Modus entscheiden sich, BEVOR man an
+           Farben geht, und die Hintergrundbilder gehoeren dazu. Ohne offene
+           Theme sind die Felder leer und gesperrt - anzeigen und sperren ist
+           besser als verstecken, siehe die Schalterreihe. -->
+      <div class="starteinst">
+        <div class="sezeile">
+          <label>${T("Name der Theme")}</label>
+          <input class="se-name" type="text" value="${ZUSTAND.name || ""}"
+                 placeholder="mein_theme" spellcheck="false" ${ZUSTAND.modell ? "" : "disabled"}>
         </div>
+        <div class="sezeile">
+          <label>${T("Herkunft")}</label>
+          <span class="sewert">${ZUSTAND.modell ? (ZUSTAND.meta.Grundlage || "ha_blanko") : "—"}</span>
+        </div>
+        <div class="sezeile">
+          <label>${T("Modus")}</label>
+          <div class="be-segmente klein">
+            ${[["beide", T("Hell + dunkel")], ["hell", T("Nur hell")], ["dunkel", T("Nur dunkel")]]
+              .map(([w, n]) => `<button class="se-modus ${ZUSTAND.meta.Modus === w ? "an" : ""}"
+                      data-se-modus="${w}" ${ZUSTAND.modell ? "" : "disabled"}>${n}</button>`).join("")}
+          </div>
+        </div>
+        ${[["--lovelace-background", T("Hintergrundbild")],
+           ["--popup-custom-wallpaper", T("Pop-up-Hintergrund")]].map(([v, n]) => `
+        <div class="sezeile zwei">
+          <label>${n}</label>
+          <input class="se-bild" data-v="${v}" data-modus="light" type="text"
+                 value="${(ZUSTAND.modell?.light?.[v.slice(2)] ?? "").replace(/"/g, "&quot;")}"
+                 placeholder="${T("hell")}" spellcheck="false" ${ZUSTAND.modell ? "" : "disabled"}>
+          <input class="se-bild" data-v="${v}" data-modus="dark" type="text"
+                 value="${(ZUSTAND.modell?.dark?.[v.slice(2)] ?? "").replace(/"/g, "&quot;")}"
+                 placeholder="${T("dunkel")}" spellcheck="false" ${ZUSTAND.modell ? "" : "disabled"}>
+        </div>`).join("")}
       </div>
+
+      <p class="startnotiz">${meine.length
+        ? T("Diese Dateien hat HATS gebaut - oder oben eine neue beginnen")
+        : T("Noch keine Theme - oben eine neue beginnen oder eine Datei einlesen")}</p>
 
       ${meine.length ? `<div class="liste schmal">
         ${meine.map((x) => `
@@ -1276,39 +1364,43 @@ class HatsPanel extends HTMLElement {
       <div class="buehne">
         <div class="wolke a"></div><div class="wolke b"></div>
         <div class="fenster">
-          <!-- Die Leiste traegt jetzt echte Symbole, eins je Stufe - wie in
-               HATG. ha-icon ist ein globales Bauteil von Home Assistant und
-               funktioniert auch in diesem Shadow Root. -->
-          <nav class="rail">
-            <div class="marke"></div>
-            ${STUFEN.map((st) => `
-              <button class="railknopf ${this._offen === st.n ? "an" : ""}"
-                      data-rail="${st.n}" title="${st.n}. ${T(st.titel)}"
-                      aria-label="${st.n}. ${T(st.titel)}"
-                      ${ZUSTAND.start ? "disabled" : ""}>
-                <ha-icon icon="${st.symbol}"></ha-icon>
-              </button>`).join("")}
-            <div class="railfuss"></div>
-          </nav>
-          <section class="inhalt">
-            <!-- Die Schalter stehen oben links und IMMER da - auch auf dem
-                 Startbild. Was dort nicht greift, ist gedaempft statt weg:
-                 Ein Knopf, der mal da ist und mal nicht, laesst einen suchen.
-                 Dieselbe Entscheidung wie bei der Leiste. -->
-            <div class="schalter">
+          <!-- Eine Leiste statt dreier Stellen: links die acht Stufen, rechts
+               die Aktionen. Nach dem Vorbild der Menuekarte auf dem Dashboard
+               des Nutzers - Pille, Symbol plus Beschriftung, die aktuelle im
+               Akzent. NUR Symbole: Die Uebersichtsseite darunter nennt jede
+               Stufe ohnehin beim Namen, und so passt die Leiste in jede Breite.
+               Speichern steht bewusst NICHT hier, sondern im Kopf - zweimal
+               derselbe Knopf nebeneinander ist einer zu viel. -->
+          <nav class="menueleiste">
+            <div class="ml-marke"></div>
+            <div class="ml-stufen">
+              ${STUFEN.map((st) => `
+                <button class="ml-knopf ${this._offen === st.n ? "an" : ""}"
+                        data-rail="${st.n}" title="${st.n}. ${T(st.titel)}"
+                        aria-label="${st.n}. ${T(st.titel)}"
+                        ${ZUSTAND.start ? "disabled" : ""}>
+                  <ha-icon icon="${st.symbol}"></ha-icon>
+                </button>`).join("")}
+            </div>
+            <div class="ml-trenner"></div>
+            <div class="ml-aktionen">
               ${[
-                { id: "oeffnen",  icon: "mdi:folder-open-outline",   t: T("Oeffnen"),      aus: ZUSTAND.start },
-                { id: "verwerfen", icon: "mdi:undo-variant",         t: T("Aenderungen verwerfen"), aus: ZUSTAND.start || !ZUSTAND.geaendert.size },
-                { id: "speichern2", icon: "mdi:content-save-outline", t: T("Speichern"),   aus: ZUSTAND.start },
-                { id: "laden2",    icon: "mdi:download-outline",     t: T("Als Datei herunterladen"), aus: ZUSTAND.start },
-                { id: "kopie2",    icon: "mdi:content-copy",         t: T("In die Zwischenablage"),   aus: ZUSTAND.start },
+                { id: "neu",      icon: "mdi:file-plus-outline",    t: T("Neue Theme") },
+                { id: "lesen",    icon: "mdi:file-import-outline",  t: T("Datei oder Text") },
+                { id: "oeffnen",  icon: "mdi:folder-open-outline",  t: T("Oeffnen"),      aus: ZUSTAND.start },
+                { id: "verwerfen", icon: "mdi:undo-variant",        t: T("Aenderungen verwerfen"), aus: ZUSTAND.start || !ZUSTAND.geaendert.size },
+                { id: "laden2",   icon: "mdi:download-outline",     t: T("Als Datei herunterladen"), aus: ZUSTAND.start },
+                { id: "kopie2",   icon: "mdi:content-copy",         t: T("In die Zwischenablage"),   aus: ZUSTAND.start },
               ].map((k) => `
-                <button class="schalterknopf" data-schalter="${k.id}"
+                <button class="ml-knopf" data-schalter="${k.id}"
                         title="${k.t}" aria-label="${k.t}" ${k.aus ? "disabled" : ""}>
                   <ha-icon icon="${k.icon}"></ha-icon>
                 </button>`).join("")}
             </div>
+          </nav>
 
+          <div class="rumpf">
+            <section class="inhalt">
             <header class="kopf">
               <div>
                 <h1>${ZUSTAND.start ? T("Womit faengst du an?") : T("Guten Tag")}</h1>
@@ -1336,7 +1428,9 @@ class HatsPanel extends HTMLElement {
             <div class="liste">
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
             </div>`}
-          </section>
+            </section>
+            ${this.addonSpalte(T)}
+          </div>
         </div>
       </div>
 
@@ -1362,20 +1456,65 @@ class HatsPanel extends HTMLElement {
     const sp = this.shadowRoot.querySelector(".speichern");
     if (sp) sp.addEventListener("click", () => this.speichern());
 
-    const neuKnopf = this.shadowRoot.querySelector(".weg.neu");
-    if (neuKnopf) neuKnopf.addEventListener("click", () => this.neuBeginnen());
-    const impKnopf = this.shadowRoot.querySelector(".weg.importieren");
-    if (impKnopf) impKnopf.addEventListener("click", () => this.zeigeImport());
+    const seName = this.shadowRoot.querySelector(".se-name");
+    if (seName) seName.addEventListener("input", () => { ZUSTAND.name = seName.value.trim(); });
+    this.shadowRoot.querySelectorAll("[data-se-modus]").forEach((b) =>
+      b.addEventListener("click", () => {
+        ZUSTAND.meta.Modus = b.dataset.seModus;
+        this.zeichne();
+      })
+    );
+    this.shadowRoot.querySelectorAll(".se-bild").forEach((el) =>
+      el.addEventListener("change", () => {
+        const name = el.dataset.v.replace(/^--/, "");
+        const w = el.value.trim();
+        if (!ZUSTAND.modell) return;
+        if (w) setze(ZUSTAND.modell, name, w, el.dataset.modus === "dark" ? "dark" : "light");
+        else { delete ZUSTAND.modell[el.dataset.modus === "dark" ? "dark" : "light"][name]; }
+        ZUSTAND.geaendert.add(name);
+        this.zeichneZaehler();
+      })
+    );
     this.shadowRoot.querySelectorAll(".zeile.datei:not(.gesperrt)").forEach((z) =>
       z.addEventListener("click", () => this.oeffneDatei(z.dataset.datei))
+    );
+    this.shadowRoot.querySelectorAll("[data-addon-stufe]").forEach((b) =>
+      b.addEventListener("click", () => this.oeffne(Number(b.dataset.addonStufe)))
+    );
+    // Ein Stilziel an- oder abschalten. Abschalten wirft das CSS NICHT weg,
+    // sondern parkt es in ZUSTAND.uixAus - ein Schalter, der Arbeit
+    // vernichtet, ist kein Schalter.
+    this.shadowRoot.querySelectorAll("[data-uix]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const name = "uix-" + el.dataset.uix;
+        if (el.checked) {
+          setze(ZUSTAND.modell, name, ZUSTAND.uixAus[name] ?? "", "beide");
+          delete ZUSTAND.uixAus[name];
+        } else {
+          ZUSTAND.uixAus[name] = ZUSTAND.modell.flach[name] ?? "";
+          entferne(ZUSTAND.modell, name);
+        }
+        ZUSTAND.geaendert.add(name);
+        this.zeichne();
+      })
+    );
+    this.shadowRoot.querySelectorAll("[data-uix-css]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        setze(ZUSTAND.modell, "uix-" + el.dataset.uixCss, el.value, "beide");
+        ZUSTAND.geaendert.add("uix-" + el.dataset.uixCss);
+        this.zeichneZaehler();
+      })
     );
     this.shadowRoot.querySelectorAll("[data-rail]").forEach((b) =>
       b.addEventListener("click", () => this.oeffne(Number(b.dataset.rail)))
     );
     const schalter = {
+      neu: () => this.neuBeginnen(),
+      lesen: () => this.zeigeImport(),
       oeffnen: () => this.zumStart(),
       verwerfen: () => this.verwerfen(),
-      speichern2: () => this.speichern(),
       laden2: () => this.herunterladen(),
       kopie2: () => this.kopieren(),
     };
@@ -2045,7 +2184,8 @@ class HatsPanel extends HTMLElement {
       .wolke.b { width: 460px; height: 380px; right: -100px; top: -120px; background: #7fd8f7; }
 
       .fenster {
-        position: relative; display: flex; gap: 0; min-height: 100%;
+        /* Keine linke Spalte mehr - die Leiste sitzt oben, im Inhalt. */
+        position: relative; display: block; min-height: 100%;
         border-radius: var(--s-r-gross); overflow: hidden;
         background: var(--s-glas);
         -webkit-backdrop-filter: blur(30px) saturate(1.6);
@@ -2053,28 +2193,74 @@ class HatsPanel extends HTMLElement {
         box-shadow: var(--s-schatten), inset 0 1px 0 var(--s-kante);
       }
 
-      .rail {
-        width: 72px; flex: none; display: flex; flex-direction: column; align-items: center;
-        gap: 14px; padding: 18px 0; background: rgba(255,255,255,.18);
-        border-right: 1px solid rgba(255,255,255,.35);
-      }
-      .marke { width: 44px; height: 44px; border-radius: 13px; margin-bottom: 10px;
-               background: linear-gradient(145deg, #c6f24d, #8fd92a); box-shadow: var(--s-schatten-klein); }
-      .railknopf { width: 38px; height: 38px; border: 0; border-radius: 12px; cursor: pointer;
-                   background: rgba(255,255,255,.35); display: flex; align-items: center;
-                   justify-content: center; color: var(--s-tinte);
-                   transition: background .15s ease, box-shadow .15s ease; }
-      .railknopf ha-icon { --mdc-icon-size: 20px; color: var(--s-tinte-leise); }
-      .railknopf:hover:not([disabled]) { background: rgba(255,255,255,.65); }
-      .railknopf.an { background: rgba(255,255,255,.85); box-shadow: var(--s-schatten-klein); }
-      .railknopf.an ha-icon { color: var(--s-tinte); }
-      /* Auf dem Startbild gibt es noch keine Stufe zum Oeffnen. Die Knoepfe
-         dann anzuzeigen, aber tot zu lassen, waere schlimmer als sie zu
-         daempfen - so sieht man, dass es sie gibt und wann sie greifen. */
-      .railknopf[disabled] { cursor: default; opacity: .4; }
-      .railfuss { margin-top: auto; width: 30px; height: 30px; border-radius: 50%; background: rgba(27,36,48,.55); }
+      /* ---- Die Menueleiste oben: HA ----
+         Vorbild ist die Menuekarte auf dem Dashboard des Nutzers: eine Pille,
+         Symbol plus Beschriftung, die aktuelle Seite im Akzent. Sie ersetzt
+         die linke Symbolleiste UND die runde Schalterreihe - drei Stellen
+         fuer Navigation waren zwei zu viel. */
+      .menueleiste { display: flex; align-items: center; gap: 4px;
+                     padding: 6px; margin-bottom: 16px;
+                     border-radius: 999px; background: var(--s-glas-innen);
+                     box-shadow: inset 0 1px 0 var(--s-kante); }
+      .ml-marke { width: 30px; height: 30px; flex: none; border-radius: 9px; margin: 0 6px 0 2px;
+                  background: linear-gradient(145deg, #c6f24d, #8fd92a);
+                  box-shadow: var(--s-schatten-klein); }
+      .ml-stufen { display: flex; gap: 2px; min-width: 0; overflow: hidden; }
+      .ml-aktionen { display: flex; gap: 2px; }
+      .ml-trenner { width: 1px; align-self: stretch; margin: 4px 8px;
+                    background: var(--s-linie); margin-left: auto; }
+      .ml-knopf { display: flex; align-items: center; justify-content: center; flex: none;
+                  width: 38px; height: 38px; border: 0; background: none;
+                  color: var(--s-tinte); cursor: pointer; border-radius: 999px;
+                  transition: background .15s ease, box-shadow .15s ease; }
+      .ml-knopf ha-icon { --mdc-icon-size: 19px; color: var(--s-tinte-leise); flex: none; }
+      .ml-knopf:hover:not([disabled]) { background: rgba(255,255,255,.7); }
+      .ml-knopf.an { background: linear-gradient(145deg, #c6f24d, #8fd92a);
+                     font-weight: 600; box-shadow: var(--s-schatten-klein); }
+      .ml-knopf.an ha-icon { color: var(--s-tinte); }
+      /* Nicht verfuegbar heisst leiser, nicht unsichtbar - siehe die alte
+         Schalterreihe, wo opacity .35 den Knopf verschwinden liess. */
+      .ml-knopf[disabled] { cursor: default; }
+      .ml-knopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
 
+      /* ---- Rumpf: Inhalt links, Add-ons rechts ---- */
+      .rumpf { display: flex; align-items: flex-start; min-width: 0; }
       .inhalt { flex: 1; min-width: 0; padding: 26px 30px 30px; }
+      .addons { width: 290px; flex: none; align-self: stretch;
+                padding: 20px 18px; border-left: 1px solid var(--s-linie);
+                max-height: calc(100vh - 150px); overflow: auto; }
+      .addonkopf { font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+                   color: var(--s-tinte-leise); margin-bottom: 12px; }
+      .addonblock { display: block; width: 100%; text-align: left; border: 0;
+                    background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
+                    border-radius: var(--s-r); padding: 12px 14px; margin-bottom: 10px;
+                    font: inherit; color: var(--s-tinte); cursor: pointer;
+                    transition: background .15s ease; }
+      .addonblock.offen { cursor: default; }
+      .addonblock:not(.offen):hover { background: #fff; }
+      .addontitel { display: flex; align-items: center; gap: 8px;
+                    font-size: 14px; font-weight: 600; }
+      .addontitel ha-icon { --mdc-icon-size: 18px; color: var(--s-tinte-leise); }
+      .addontext { font-size: 12px; color: var(--s-tinte-leise); margin-top: 3px; }
+      .uixliste { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+      .uixziel { border-radius: 9px; padding: 5px 7px; }
+      .uixziel.an { background: rgba(255,255,255,.6); }
+      .uixkopf { display: grid; grid-template-columns: auto 1fr; gap: 7px;
+                 align-items: center; font-size: 12.5px; cursor: pointer; }
+      .uixkopf code { grid-column: 2; font-size: 10.5px; color: var(--s-tinte-leise);
+                      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .uixcss { width: 100%; box-sizing: border-box; margin-top: 6px; min-height: 70px;
+                resize: vertical; border: 0; border-radius: 8px; padding: 8px 10px;
+                background: rgba(27,36,48,.05); color: var(--s-tinte);
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+      .uixcss:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 1px rgba(27,36,48,.18); }
+      /* Schmal wird die Spalte zur Zeile unter dem Inhalt - nebeneinander
+         bliebe fuer beide zu wenig. */
+      @media (max-width: 980px) {
+        .rumpf { flex-direction: column; }
+        .addons { width: auto; border-left: 0; border-top: 1px solid var(--s-linie);
+                  max-height: none; align-self: auto; }
+      }
 
       .kopf { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
       .kopf h1 { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; }
@@ -2124,21 +2310,37 @@ class HatsPanel extends HTMLElement {
                transition: background .18s ease, box-shadow .18s ease; }
       .zeile:hover { background: #fff; box-shadow: var(--s-schatten-klein); }
 
-      /* ---- Startbild ---- */
-      .startwege { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-      .weg { display: flex; flex-direction: column; gap: 6px; text-align: left;
-             padding: 18px 20px; border: 0; border-radius: var(--s-r-gross);
-             background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
-             color: var(--s-tinte); font: inherit; cursor: pointer;
-             transition: background .18s ease, box-shadow .18s ease, transform .18s ease; }
-      .weg:hover { background: #fff; box-shadow: var(--s-schatten); transform: translateY(-1px); }
-      /* Der rechte Weg ist kein Knopf, sondern die Ueberschrift der Liste
-         darunter - er darf sich nicht anfuehlen wie einer. */
-      .weg:not(button) { cursor: default; }
-      .weg:not(button):hover { background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante); transform: none; }
-      .weg.aus { opacity: .55; }
-      .wegtitel { font-size: 16px; font-weight: 600; }
-      .wegtext { font-size: 13px; color: var(--s-tinte-leise); }
+      /* ---- Startbild ----
+         Die drei Karten sind am 13.10.2026 entfallen: Geladen wird ueber die
+         Symbolreihe oben, und zwei Wege zur selben Sache nebeneinander sind
+         einer zu viel. Geblieben ist eine Zeile, die sagt, was die Liste ist. */
+      .startnotiz { font-size: 13px; color: var(--s-tinte-leise); margin: 0 0 10px; }
+
+      /* ---- Starteinstellungen ---- */
+      .starteinst { background: var(--s-glas-innen); border-radius: var(--s-r-gross);
+                    box-shadow: inset 0 1px 0 var(--s-kante); padding: 16px 20px;
+                    margin-bottom: 16px; }
+      .sezeile { display: grid; grid-template-columns: 150px 1fr; gap: 12px;
+                 align-items: center; padding: 7px 0; }
+      .sezeile.zwei { grid-template-columns: 150px 1fr 1fr; }
+      .sezeile + .sezeile { border-top: 1px solid var(--s-linie); }
+      .sezeile label { font-size: 13px; color: var(--s-tinte-leise); }
+      .sezeile .sewert { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                         font-size: 12.5px; }
+      .sezeile input { border: 0; background: rgba(27,36,48,.05); color: var(--s-tinte);
+                       font: inherit; font-size: 13px; padding: 8px 12px;
+                       border-radius: 999px; min-width: 0; }
+      .sezeile input:focus { outline: none; background: #fff;
+                             box-shadow: inset 0 0 0 1px rgba(27,36,48,.18); }
+      .sezeile input[disabled] { opacity: .5; }
+      .se-modus { border: 0; background: none; font: inherit; font-size: 12.5px;
+                  padding: 6px 14px; border-radius: 999px; cursor: pointer;
+                  color: var(--s-tinte); }
+      .se-modus.an { background: #fff; box-shadow: var(--s-schatten-klein); }
+      .se-modus[disabled] { opacity: .5; cursor: default; }
+      @media (max-width: 620px) {
+        .sezeile, .sezeile.zwei { grid-template-columns: 1fr; gap: 6px; }
+      }
       .liste.schmal { margin-top: 10px; }
       .liste.fremd { background: rgba(255,255,255,.34); }
       .zeilentext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -2152,10 +2354,6 @@ class HatsPanel extends HTMLElement {
          schlimmer: wer seine Datei nicht findet, sucht den Fehler bei sich. */
       .zeile.gesperrt { cursor: not-allowed; opacity: .5; }
       .zeile.gesperrt:hover { background: none; box-shadow: none; }
-      .startwege.drei { grid-template-columns: repeat(3, 1fr); }
-      @media (max-width: 860px) { .startwege.drei { grid-template-columns: 1fr 1fr; } }
-      @media (max-width: 620px) { .startwege, .startwege.drei { grid-template-columns: 1fr; } }
-
       /* ---- Die Schalterreihe oben links ---- */
       .schalter { display: flex; gap: 8px; margin-bottom: 16px; }
       .schalterknopf { width: 38px; height: 38px; flex: none; border: 0; border-radius: 50%;
@@ -2467,7 +2665,6 @@ class HatsPanel extends HTMLElement {
          gleich, nur kleiner. */
       @media (max-width: 760px) {
         :host { --s-rand: 12px; }
-        .fenster { flex-direction: column; }
         .rail {
           width: auto; flex-direction: row; align-items: center;
           gap: 10px; padding: 10px 14px;

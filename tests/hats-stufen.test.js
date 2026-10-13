@@ -134,11 +134,12 @@ pruefe("Jede Stufe hat ein Symbol fuer die Leiste", () => {
   assert.strictEqual(new Set(symbole).size, 8, `Symbole doppelt vergeben: ${symbole}`);
 });
 
-pruefe("Die Leiste wird aus STUFEN erzeugt, nicht getippt", () => {
+pruefe("Die Menueleiste wird aus STUFEN erzeugt, nicht getippt", () => {
   // Gegenprobe gegen eine handgeschriebene Knopfreihe: Die waere beim
-  // naechsten Umbau still veraltet.
-  assert.match(quelle, /STUFEN\.map\(\(st\) => `\s*\n\s*<button class="railknopf/);
-  assert.doesNotMatch(quelle, /<button class="railknopf an" title="1">/, "Platzhalter sind zurueck");
+  // naechsten Umbau still veraltet. Seit dem 13.10.2026 heisst sie
+  // Menueleiste und sitzt oben statt links.
+  assert.match(quelle, /STUFEN\.map\(\(st\) => `\s*\n\s*<button class="ml-knopf/);
+  assert.doesNotMatch(quelle, /<button class="railknopf/, "die alte Seitenleiste ist zurueck");
 });
 
 console.log(`\n${n} Pruefungen`);

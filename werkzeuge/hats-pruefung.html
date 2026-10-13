@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HATS – Prüfung</title>
+<!--
+  Läuft IM BROWSER DES NUTZERS und schreibt hin, was dort ankommt.
+
+  Hintergrund: Das Panel blieb bei einem Nutzer leer, während es auf dem
+  Entwicklungsrechner einwandfrei rendert. Die Datei ist byteweise identisch,
+  die Adresse stimmt, HA liefert richtig aus. Was dazwischen liegt, ist der
+  Browser - und den sieht man von außen nicht.
+
+  Diese Seite braucht kein Home Assistant drumherum. Sie lädt das Modul so,
+  wie HA es lädt, und zeigt den echten Fehler statt einer leeren Fläche.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.6 system-ui, -apple-system, sans-serif; margin: 0;
+         padding: 24px; max-width: 900px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.unter { color: #777; margin: 0 0 22px; font-size: 13px; }
+  .zeile { display: flex; gap: 12px; align-items: flex-start; padding: 11px 14px;
+           border-radius: 10px; margin-bottom: 7px; background: rgba(127,127,127,.09); }
+  .zeile b { flex: none; width: 26px; font-size: 15px; }
+  .zeile .was { flex: 1; min-width: 0; }
+  .zeile .wert { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                 font-size: 12.5px; color: #666; word-break: break-all;
+                 white-space: pre-wrap; margin-top: 3px; }
+  .gut  { background: rgba(80,170,80,.16); }
+  .rot  { background: rgba(210,70,60,.16); }
+  .warn { background: rgba(230,160,40,.18); }
+  button { font: inherit; padding: 10px 18px; border: 0; border-radius: 999px;
+           background: #2a2520; color: #fff; cursor: pointer; margin-top: 14px; }
+</style>
+</head>
+<body>
+<h1>HATS – Prüfung</h1>
+<p class="unter">Diese Seite lädt das Panel-Modul genauso, wie Home Assistant es lädt,
+und zeigt, was dabei wirklich passiert. Mach einen Screenshot davon.</p>
+<div id="aus"></div>
+<button id="sw">Service Worker und Caches löschen, dann neu prüfen</button>
+
+<script type="module">
+const aus = document.getElementById("aus");
+function sag(stand, was, wert = "") {
+  const d = document.createElement("div");
+  d.className = "zeile " + stand;
+  d.innerHTML = `<b>${stand === "gut" ? "✓" : stand === "rot" ? "✕" : "!"}</b>
+                 <div class="was">${was}${wert ? `<div class="wert">${wert}</div>` : ""}</div>`;
+  aus.appendChild(d);
+}
+
+sag("warn", "Browser", navigator.userAgent);
+
+// 1) Kommt die Datei überhaupt an, und welche?
+let text = "";
+try {
+  const r = await fetch("/hats_static/hats-panel.js", { cache: "no-store" });
+  text = await r.text();
+  sag(r.ok ? "gut" : "rot", `Datei geladen – Status ${r.status}`, `${text.length} Zeichen`);
+} catch (e) {
+  sag("rot", "Datei NICHT ladbar", String(e));
+}
+
+// 2) Ist es der aktuelle Stand?
+const v = /const HATS_VERSION = "([^"]+)"/.exec(text);
+sag(v ? "gut" : "rot", "Version im ausgelieferten Code", v ? v[1] : "nicht gefunden");
+sag(text.includes("zeichneWirklich") ? "gut" : "rot",
+    "Enthält die Fehleranzeige (zeichneWirklich)",
+    text.includes("zeichneWirklich") ? "ja" : "nein – dein Browser hat einen ALTEN Stand");
+
+// 3) Lässt sich das Modul in DIESEM Browser ausführen?
+//    Hier zeigt sich ein Syntaxfehler oder eine fehlende Sprachfunktion.
+try {
+  await import("/hats_static/hats-panel.js?pruefung=" + Date.now());
+  sag("gut", "Modul ausgeführt, ohne Fehler");
+} catch (e) {
+  sag("rot", "Modul wirft beim Ausführen", String(e && e.stack || e));
+}
+
+sag(customElements.get("hats-panel") ? "gut" : "rot",
+    "Element hats-panel registriert",
+    customElements.get("hats-panel") ? "ja" : "nein");
+
+// 4) Der häufigste unsichtbare Übeltäter: ein Service Worker liefert eine
+//    alte Fassung aus, und kein Neuladen hilft dagegen.
+try {
+  const regs = await navigator.serviceWorker?.getRegistrations?.() ?? [];
+  sag(regs.length ? "warn" : "gut", `Service Worker: ${regs.length}`,
+      regs.map((r) => r.active?.scriptURL || r.scope).join("\n"));
+  const namen = await caches?.keys?.() ?? [];
+  sag(namen.length ? "warn" : "gut", `Caches: ${namen.length}`, namen.join("\n"));
+} catch (e) {
+  sag("warn", "Service Worker nicht abfragbar", String(e));
+}
+
+document.getElementById("sw").addEventListener("click", async () => {
+  for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+  for (const n of await caches.keys()) await caches.delete(n);
+  location.reload();
+});
+</script>
+</body>
+</html>

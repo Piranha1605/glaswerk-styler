@@ -92,7 +92,6 @@ pruefe("Die Zaehlung je Ebene stimmt", () => {
 pruefe("Fremde Dateien sind nicht mehr gesperrt", () => {
   assert.doesNotMatch(panel, /zeile datei gesperrt/,
     "fremde Dateien lassen sich wieder nicht oeffnen");
-  assert.match(panel, /class="weg importieren"/, "der dritte Startweg fehlt");
 });
 
 pruefe("Es gibt einen Ausgang ausser Speichern", () => {
@@ -178,20 +177,26 @@ pruefe("Gegenprobe: ohne Blockskalar waere es kaputt", () => {
 // ---------------------------------------------------------------------------
 // Die Schalterreihe oben links.
 
-pruefe("Fuenf runde Schalter, immer im Markup", () => {
-  // "Immer sichtbar" heisst: auch auf dem Startbild. Was dort nicht greift,
-  // ist gedaempft statt weg - ein Knopf, der mal da ist und mal nicht, laesst
-  // einen suchen.
-  const block = panel.slice(panel.indexOf('<div class="schalter">'), panel.indexOf('<header class="kopf">'));
+pruefe("Eine Leiste oben statt Seitenleiste und Schalterreihe", () => {
+  // Drei Stellen fuer Navigation waren zwei zu viel. Seit dem 13.10.2026 eine
+  // Pille oben: links die acht Stufen, rechts die Aktionen.
+  const block = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
+  assert.ok(block.length > 600, "die Leiste wurde nicht gefunden");
   const ids = [...block.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
-  assert.deepStrictEqual(ids, ["oeffnen", "verwerfen", "speichern2", "laden2", "kopie2"]);
-  assert.match(block, /ha-icon icon="\$\{k\.icon\}"/, "die Schalter tragen keine Symbole");
-  assert.doesNotMatch(block, /ZUSTAND\.start \? "" :/, "die Reihe verschwindet auf dem Startbild");
+  // Speichern steht bewusst NICHT dabei - es bleibt im Kopf, und zweimal
+  // derselbe Knopf nebeneinander ist einer zu viel.
+  assert.deepStrictEqual(ids, ["neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
+  assert.match(block, /data-rail="\$\{st\.n\}"/, "die Stufen fehlen in der Leiste");
+  assert.doesNotMatch(panel, /class="rail"/, "die alte Seitenleiste ist zurueck");
 });
 
-pruefe("Rund, nicht eckig", () => {
-  const css = panel.slice(panel.indexOf(".schalterknopf {"), panel.indexOf(".schalterknopf {") + 400);
-  assert.match(css, /border-radius: 50%/);
+pruefe("Nur Symbole, keine Beschriftung", () => {
+  // Die Uebersichtsseite darunter nennt jede Stufe beim Namen - ein zweites
+  // Mal daneben braucht es nicht, und so passt die Leiste in jede Breite.
+  const block = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
+  assert.doesNotMatch(block, /<span>\$\{T\(st\.titel\)\}<\/span>/, "die Beschriftungen sind zurueck");
+  assert.match(block, /aria-label="\$\{st\.n\}\. \$\{T\(st\.titel\)\}"/,
+    "ohne Beschriftung braucht es wenigstens ein aria-label");
 });
 
 pruefe("Verwerfen geht auf den Stand beim Oeffnen zurueck", () => {
@@ -206,6 +211,14 @@ pruefe("Oeffnen fragt bei Ungespeichertem nach", () => {
   const b = panel.slice(panel.indexOf("  zumStart() {"), panel.indexOf("  verwerfen() {"));
   assert.match(b, /ZUSTAND\.geaendert\.size && !this\._startBestaetigt/,
     "zumStart wirft Ungespeichertes ohne Rueckfrage weg");
+});
+
+pruefe("Die Startkarten sind weg, die Wege stehen in der Reihe", () => {
+  // Zwei Wege zur selben Sache nebeneinander sind einer zu viel.
+  assert.doesNotMatch(panel, /class="startwege/, "die Karten sind zurueck");
+  assert.doesNotMatch(panel, /\.weg \{/, "das CSS der Karten liegt noch herum");
+  assert.match(panel, /neu: \(\) => this\.neuBeginnen\(\)/);
+  assert.match(panel, /lesen: \(\) => this\.zeigeImport\(\)/);
 });
 
 pruefe("Die Texte der Schalter stehen IM en-Block", () => {
@@ -226,5 +239,42 @@ pruefe("Deaktiviert heisst leiser, nicht unsichtbar", () => {
   assert.match(css, /background:/, "der Kreis selbst verschwindet");
 });
 
+
+// ---------------------------------------------------------------------------
+// Die Starteinstellungen auf dem Startbild.
+
+pruefe("Name, Herkunft, Modus und beide Hintergruende stehen dort", () => {
+  // Sie entscheiden sich, BEVOR man an Farben geht - deshalb hierher und
+  // nicht als Kachelgruppe in Stufe 1.
+  const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
+  assert.ok(b.length > 400, "der Block wurde nicht gefunden");
+  assert.match(b, /class="se-name"/, "Name fehlt");
+  assert.match(b, /T\("Herkunft"\)/, "Herkunft fehlt");
+  assert.match(b, /data-se-modus/, "Modus fehlt");
+  assert.match(b, /--lovelace-background/, "Hintergrundbild fehlt");
+  assert.match(b, /--popup-custom-wallpaper/, "Pop-up-Hintergrund fehlt");
+});
+
+pruefe("Hintergrund und Pop-up gibt es je Modus", () => {
+  const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
+  assert.match(b, /data-modus="light"/);
+  assert.match(b, /data-modus="dark"/);
+});
+
+pruefe("Ohne offene Theme gesperrt, nicht versteckt", () => {
+  // Dieselbe Entscheidung wie bei der Schalterreihe: Ein Feld, das mal da ist
+  // und mal nicht, laesst einen suchen.
+  const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
+  assert.match(b, /ZUSTAND\.modell \? "" : "disabled"/);
+});
+
+pruefe("Beide neuen Felder sind auch als Kachel erreichbar", () => {
+  // Sonst zaehlt der Import-Bericht sie als "mitgenommen", obwohl HATS sie
+  // sehr wohl schreiben kann.
+  const stufen = panel.slice(panel.indexOf("const STUFEN = ["), panel.indexOf("const STAND_TEXT"));
+  assert.match(stufen, /v: "--lovelace-background"/);
+  assert.match(stufen, /v: "--popup-custom-wallpaper"/);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 23) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 28) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

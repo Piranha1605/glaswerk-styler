@@ -402,6 +402,61 @@ sondern die ganze Datei.
 Nach der Korrektur: dieselbe Datei, **null unlesbare Zeilen**, 287 bedienbar,
 400 mitgenommen, 13 Stilziele.
 
+## Der Aufbau der Oberfläche
+
+Am 13.10.2026 festgelegt: **oben HA, rechts die Add-ons.**
+
+```
+┌───────────────────────────────────────────────┐
+│ ● [8 Stufen]            │ [6 Aktionen]        │   Menüleiste
+├──────────────────────────────────┬────────────┤
+│  Guten Tag / Startbild           │  Add-ons   │
+│  Kennzahlen                      │  Bubble    │
+│  Stufenliste                     │  Mushroom  │
+│                                  │  UIX  ○○○  │
+└──────────────────────────────────┴────────────┘
+```
+
+**Eine Leiste statt dreier Stellen.** Vorher gab es eine Symbolleiste links,
+eine runde Schalterreihe oben und Startkarten in der Mitte — drei Orte für
+dasselbe. Jetzt eine Pille oben, nach dem Vorbild der Menükarte auf dem
+Dashboard des Nutzers: links die acht Stufen, rechts die Aktionen, die
+aktuelle Stufe im Akzent.
+
+**Nur Symbole, keine Beschriftung** — die Übersichtsseite darunter nennt jede
+Stufe ohnehin beim Namen, und so passt die Leiste in jede Breite. Dafür trägt
+jeder Knopf `title` und `aria-label`.
+
+**Speichern steht im Kopf, nicht in der Leiste.** Zweimal derselbe Knopf
+nebeneinander ist einer zu viel.
+
+### Die Starteinstellungen gehören aufs Startbild
+
+Name, Herkunft, Modus und die beiden Hintergrundbilder entscheiden sich,
+**bevor** man an Farben geht. Sie standen als Kachelgruppe in Stufe 1 und
+sitzen jetzt dort, wo man eine Theme öffnet. Ohne offene Theme sind die Felder
+gesperrt, nicht versteckt — dieselbe Entscheidung wie bei der Menüleiste.
+
+`--popup-custom-wallpaper` ist dafür dazugekommen. Es steht wie
+`--lovelace-background` nicht in `ha_blanko`, weil HA es nicht vorbelegt;
+Bubble liest es vor `lovelace-background` für seine Pop-ups.
+
+### UIX: Stilziele an- und abschalten, mehr nicht
+
+Rechts, unter den Add-ons, stehen die **28 Stilziele** von UI eXtension, jedes
+mit einem Schalter und einem Feld für CSS. `custom_components/hats/www/uix.js`
+hält die Namen — zeichengenau aus HATG übernommen, denn es sind die Typnamen
+von UIX. Stimmt einer nicht, entsteht ein Feld, das nie gelesen wird; HATG hat
+das mit `uix-states-history-charts` teuer gelernt.
+
+**Nur die einfache Form, kein `-yaml`.** Ein `-yaml`-Feld verdeckt sein
+einfaches Feld vollständig: Liegt `uix-<typ>-yaml` im Theme, wird `uix-<typ>`
+nie mehr gelesen. Wer Shadow-DOM-Pfade braucht, nimmt HATG.
+
+**Abschalten vernichtet nichts.** Das CSS wandert nach `ZUSTAND.uixAus` und
+kommt beim Wiedereinschalten wortgetreu zurück — ein Schalter, der Arbeit
+vernichtet, ist kein Schalter.
+
 ## Werkzeuge
 
 ```bash
