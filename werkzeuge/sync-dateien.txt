@@ -1,13 +1,26 @@
-www/hats-panel.js
-www/theme.js
-www/bedienelemente.js
-www/palette.js
-www/zuordnung.js
-www/uix.js
+# Erzeugt von werkzeuge/sync-liste-bauen.sh - nicht von Hand aendern.
+# Links der Pfad beim Entwicklungsrechner, rechts nach | das Ziel auf
+# der Instanz. Ohne | landet die Datei unter /config/custom_components/hats.
+
 __init__.py
-const.py
 config_flow.py
+const.py
 manifest.json
+translations/de.json
+translations/en.json
+www/bedienelemente.js
+www/hats-panel.js
+www/palette.js
+www/theme.js
+www/uix.js
 www/vorlagen.js
-werkzeuge/themes/liquid_glass.yaml|/config/themes/liquid_glass.yaml
+www/vorschau/glas-karten-nachher.jpg
+www/vorschau/glas-karten-vorher.jpg
+www/vorschau/glas-lichtkante-nachher.jpg
+www/vorschau/glas-lichtkante-vorher.jpg
+www/vorschau/glas-symbolkachel-nachher.jpg
+www/vorschau/glas-symbolkachel-vorher.jpg
+www/zuordnung.js
+
 werkzeuge/vorschau.js|/config/www/hats-vorschau.js
+werkzeuge/themes/liquid_glass.yaml|/config/themes/liquid_glass.yaml

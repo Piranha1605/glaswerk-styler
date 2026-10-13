@@ -838,6 +838,7 @@ const TEXTE = {
     "Vorlagen an": "templates on",
     "Stilziele fuer eigenes CSS": "Style targets for your own CSS",
     "noch kein Bild": "no preview yet",
+    "vorher": "before",
     "an": "on",
     "erst eine Theme oeffnen": "open a theme first",
     "UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Eine Vorlage legt einen fertigen Block an; ein Stilziel gibt dir ein leeres Feld fuer eigenes CSS.":
@@ -1190,9 +1191,18 @@ class HatsPanel extends HTMLElement {
     const ziel = UIX_ZIELE.find((z) => z.id === v.ziel);
     return `
       <div class="vorlage ${offen ? "an" : ""}">
-        <div class="vbild" data-vorlage-bild="${v.id}">
-          <img src="/hats_static/vorschau/${v.id}.png" alt="" loading="lazy"
+        <!-- Zwei Bilder uebereinander: oben das Nachher, darunter das Vorher.
+             Beim Ueberfahren blendet das obere weg - damit sieht man den
+             Unterschied an derselben Stelle, statt zwei Bilder nebeneinander
+             vergleichen zu muessen.
+             Beide Bilder zeigen DIESELBE Theme; der einzige Unterschied ist
+             diese eine Vorlage. Ein Vorher-Bild mit einer anderen Theme waere
+             ein Vergleich zweier Dinge auf einmal. -->
+        <div class="vbild">
+          <img class="vvorher" src="/hats_static/vorschau/${v.id}-vorher.jpg" alt="" loading="lazy">
+          <img class="vnachher" src="/hats_static/vorschau/${v.id}-nachher.jpg" alt="" loading="lazy"
                onerror="this.closest('.vbild').classList.add('ohne')">
+          <span class="vmarke">${T("vorher")}</span>
           <span class="vleer">${T("noch kein Bild")}</span>
         </div>
         <div class="vtext">
@@ -2515,10 +2525,18 @@ class HatsPanel extends HTMLElement {
          ein Raster mit unterschiedlich hohen Bildern sieht zerfallen aus. */
       .vbild { position: relative; aspect-ratio: 16 / 10; background: rgba(27,36,48,.06); }
       .vbild img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .vbild .vnachher { position: absolute; inset: 0; transition: opacity .18s ease; }
+      .vorlage:hover .vbild .vnachher { opacity: 0; }
+      /* Die Marke erscheint nur, waehrend das Vorher zu sehen ist - sonst
+         weiss niemand, welchen der beiden Zustaende er gerade ansieht. */
+      .vmarke { position: absolute; left: 8px; top: 8px; opacity: 0;
+                background: rgba(16,24,40,.72); color: #fff; font-size: 10.5px;
+                padding: 2px 8px; border-radius: 999px; transition: opacity .18s ease; }
+      .vorlage:hover .vmarke { opacity: 1; }
       .vbild .vleer { display: none; position: absolute; inset: 0;
                       align-items: center; justify-content: center;
                       font-size: 12px; color: var(--s-tinte-leise); }
-      .vbild.ohne img { display: none; }
+      .vbild.ohne img, .vbild.ohne .vmarke { display: none; }
       .vbild.ohne .vleer { display: flex; }
       .vtext { padding: 11px 13px 4px; flex: 1; }
       .vtext b { font-size: 13.5px; display: block; }
