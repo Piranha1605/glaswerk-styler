@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 23:10:37
+# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 23:19:26
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -6,7 +6,8 @@
 # 
 # Ohne Hintergrund kein Glas: Eine durchscheinende Flaeche vor einer
 # einfarbigen Wand sieht aus wie eine etwas hellere einfarbige Wand. Der
-# lovelace-background traegt deshalb vier Farbinseln, nicht einen Verlauf.
+# lovelace-background traegt deshalb vier Farbinseln, nicht einen Verlauf -
+# hier die Glut: Rot, Orange und Bernstein.
 
 liquid_glass:
   amber-color: "#ffc107"
@@ -901,7 +902,7 @@ liquid_glass:
       input-outlined-disabled-border-color: "#0000000f"
       input-outlined-hover-border-color: "#000000de"
       input-outlined-idle-border-color: "#00000061"
-      lovelace-background: "radial-gradient(closest-side, #7db5ff, transparent) left -413px top -310px / 990px 682px no-repeat, radial-gradient(closest-side, #ff9ec7, transparent) right -344px top -199px / 853px 582px no-repeat, radial-gradient(closest-side, #5ee0d0, transparent) right -123px bottom -270px / 821px 756px no-repeat, radial-gradient(closest-side, #c08cff, transparent) left -139px bottom -101px / 728px 541px no-repeat, linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%) fixed"
+      lovelace-background: "radial-gradient(closest-side, #f39b91, transparent) left -413px top -310px / 990px 682px no-repeat, radial-gradient(closest-side, #f9be8b, transparent) right -344px top -199px / 853px 582px no-repeat, radial-gradient(closest-side, #eb98bf, transparent) right -123px bottom -270px / 821px 756px no-repeat, radial-gradient(closest-side, #f8d78c, transparent) left -139px bottom -101px / 728px 541px no-repeat, linear-gradient(155deg, #faeceb 0%, #fbf6ea 50%, #f9ecf2 100%) fixed"
       mdc-dialog-scrim-color: "rgba(16, 24, 44, 0.32)"
       outline-color: "#0000001f"
       outline-hover-color: "#0000003d"
@@ -1051,7 +1052,7 @@ liquid_glass:
       input-outlined-disabled-border-color: "rgba(255, 255, 255, 0.06)"
       input-outlined-hover-border-color: "rgba(255, 255, 255, 0.87)"
       input-outlined-idle-border-color: "rgba(255, 255, 255, 0.38)"
-      lovelace-background: "radial-gradient(closest-side, #1f4d9e, transparent) left -413px top -310px / 990px 682px no-repeat, radial-gradient(closest-side, #7a2a5c, transparent) right -344px top -199px / 853px 582px no-repeat, radial-gradient(closest-side, #0d6b63, transparent) right -123px bottom -270px / 821px 756px no-repeat, radial-gradient(closest-side, #4b2a86, transparent) left -139px bottom -101px / 728px 541px no-repeat, linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%) fixed"
+      lovelace-background: "radial-gradient(closest-side, #8a291e, transparent) left -413px top -310px / 990px 682px no-repeat, radial-gradient(closest-side, #915018, transparent) right -344px top -199px / 853px 582px no-repeat, radial-gradient(closest-side, #822651, transparent) right -123px bottom -270px / 821px 756px no-repeat, radial-gradient(closest-side, #8f6c19, transparent) left -139px bottom -101px / 728px 541px no-repeat, linear-gradient(155deg, #1e0d0b 0%, #1f190a 50%, #1d0c14 100%) fixed"
       map-filter: "invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3)"
       mdc-dialog-scrim-color: "rgba(0, 0, 0, 0.52)"
       mdc-linear-progress-buffer-color: "rgba(255, 255, 255, 0.1)"

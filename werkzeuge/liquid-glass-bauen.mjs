@@ -23,7 +23,12 @@ import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergru
 // einordnet.
 //
 // Zwei Orte fuer dieselben vier Farben waren von Anfang an einer zu viel.
-const INSELN = HINTERGRUENDE.find((h) => h.id === "inseln");
+//
+// Welcher der zwoelf es ist, steht hier in EINER Zeile. Am 14.10.2026 auf
+// Ansage von "inseln" (Werkbank, die Farben des Panels) auf "glut" gewechselt -
+// Rot, Orange und Bernstein. Umstellen heisst: diese Zeile, neu bauen,
+// einspielen. Im Panel ist es ein Klick auf die Kachel.
+const GRUND = HINTERGRUENDE.find((h) => h.id === "glut");
 
 const NAME = "liquid_glass";
 
@@ -74,8 +79,8 @@ const W = {
     // laeuft er unter ihr durch. Zweitens sassen zwei der vier Farbinseln
     // vorher unter dem ersten Bildschirm, weil die Flaeche so hoch war wie der
     // Inhalt. Das Wort steht im Baukasten-Teil, nicht hier.
-    INSELN.light["--lovelace-background"],
-    INSELN.dark["--lovelace-background"],
+    GRUND.light["--lovelace-background"],
+    GRUND.dark["--lovelace-background"],
   ],
 
   // --- Karten ---
@@ -250,7 +255,8 @@ m.kopf = [
   "",
   "Ohne Hintergrund kein Glas: Eine durchscheinende Flaeche vor einer",
   "einfarbigen Wand sieht aus wie eine etwas hellere einfarbige Wand. Der",
-  "lovelace-background traegt deshalb vier Farbinseln, nicht einen Verlauf.",
+  "lovelace-background traegt deshalb vier Farbinseln, nicht einen Verlauf -",
+  "hier die Glut: Rot, Orange und Bernstein.",
 ];
 
 // --- Schreiben -------------------------------------------------------------
