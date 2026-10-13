@@ -32,7 +32,7 @@ import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE,
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
 
-const HATS_VERSION = "0.2.0b4";
+const HATS_VERSION = "0.2.0b5";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1

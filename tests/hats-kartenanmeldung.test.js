@@ -72,8 +72,15 @@ class Liste:
         # gescheitert, und zwar am Nachbau, nicht am Abgleich.
         return Liste(self.data.values() if self.loaded else self._gespeichert)
 
-EINS = "/hats_static/hats-control-card.js?v=0.2.0b3.aaaaaaaa"
-ZWEI = "/hats_static/hats-control-card.js?v=0.2.0b3.bbbbbbbb"
+# Die Pruefsumme steht seit dem 14.10.2026 im PFAD, nicht in der Abfrage -
+# sonst erbten die Module des Panels sie nicht. Fuer die Karte heisst das: Die
+# Adresse aendert sich bei JEDER Aenderung im www-Ordner, nicht nur an ihr
+# selbst. Ein Vergleich auf Gleichheit wuerde dann jedes Mal einen zweiten
+# Eintrag anlegen, und Home Assistant laedt beide.
+PRAEFIX = "/hats_static"
+ALT  = "/hats_static/hats-control-card.js?v=0.2.0b4"            # vor dem Umbau
+EINS = "/hats_static/aaaaaaaa/hats-control-card.js?v=0.2.0b5"
+ZWEI = "/hats_static/bbbbbbbb/hats-control-card.js?v=0.2.0b5"
 FREMD = [
     {"id": "fremd-1", "type": "module", "url": "/hacsfiles/Bubble-Card/bubble-card.js?hacstag=1"},
     {"id": "fremd-2", "type": "module", "url": "/hacsfiles/lovelace-mushroom/mushroom.js"},
@@ -95,36 +102,36 @@ def ok(was):
 async def lauf():
     # 1. Leere Liste
     l = Liste()
-    assert await karte.ressource_abgleichen(l, EINS) == "angelegt"
+    assert await karte.ressource_abgleichen(l, EINS, PRAEFIX) == "angelegt"
     assert [(e["type"], e["url"]) for e in l.async_items()] == [("module", EINS)]
     ok("In eine leere Liste kommt genau ein Eintrag, als Modul")
 
     # 2. Noch einmal dasselbe: nichts wird geschrieben
     l.schreiben.clear()
-    assert await karte.ressource_abgleichen(l, EINS) == "unveraendert"
+    assert await karte.ressource_abgleichen(l, EINS, PRAEFIX) == "unveraendert"
     assert l.schreiben == [], l.schreiben
     ok("Ein zweiter Lauf mit derselben Adresse schreibt nichts")
 
     # 3. Nach einem Neustart ist die Liste ungeladen - und trotzdem kein Doppel
     l2 = l.neustart()
     assert l2.async_items() == [], "der Nachbau laedt von selbst - die Pruefung waere leer"
-    assert await karte.ressource_abgleichen(l2, EINS) == "unveraendert"
+    assert await karte.ressource_abgleichen(l2, EINS, PRAEFIX) == "unveraendert"
     assert len(l2.async_items()) == 1 and l2.schreiben == []
     ok("Nach einem Neustart entsteht kein zweiter Eintrag")
 
     # 4. Neue Pruefsumme: derselbe Eintrag, neue Adresse
     vorher = l2.async_items()[0]["id"]
-    assert await karte.ressource_abgleichen(l2, ZWEI) == "erneuert"
+    assert await karte.ressource_abgleichen(l2, ZWEI, PRAEFIX) == "erneuert"
     assert [(e["id"], e["url"]) for e in l2.async_items()] == [(vorher, ZWEI)]
     ok("Eine neue Pruefsumme erneuert den Eintrag, statt einen zweiten anzulegen")
 
     # 5. Fremdes bleibt woertlich stehen
     l3 = Liste(FREMD)
     davor = [dict(e) for e in FREMD]
-    assert await karte.ressource_abgleichen(l3, EINS) == "angelegt"
+    assert await karte.ressource_abgleichen(l3, EINS, PRAEFIX) == "angelegt"
     assert [e for e in l3.async_items() if ist_fremd(e)] == davor
     assert len(eigene(l3)) == 1
-    await karte.ressource_abgleichen(l3, ZWEI)
+    await karte.ressource_abgleichen(l3, ZWEI, PRAEFIX)
     assert [e for e in l3.async_items() if ist_fremd(e)] == davor
     ok("Fremde Eintraege bleiben stehen, auch die mit aehnlichem Namen")
 
@@ -134,26 +141,55 @@ async def lauf():
         {"id": "b", "type": "module", "url": "/hats_static/hats-control-card.js"},
         {"id": "c", "type": "module", "url": ZWEI},
     ])
-    assert await karte.ressource_abgleichen(l4, ZWEI) == "erneuert"
+    assert await karte.ressource_abgleichen(l4, ZWEI, PRAEFIX) == "erneuert"
     assert [(e["id"], e["url"]) for e in eigene(l4)] == [("a", ZWEI)]
     assert fremde(l4) == ["fremd-1", "fremd-2", "fremd-3", "fremd-4"]
     ok("Von doppelten eigenen Eintraegen bleibt einer")
 
     # 7. Falscher Typ wird berichtigt
     l5 = Liste([{"id": "a", "type": "js", "url": EINS}])
-    assert await karte.ressource_abgleichen(l5, EINS) == "erneuert"
+    assert await karte.ressource_abgleichen(l5, EINS, PRAEFIX) == "erneuert"
     assert l5.async_items() == [{"id": "a", "type": "module", "url": EINS}]
     ok("Ein Eintrag mit falschem Typ wird zum Modul")
 
     # 8. Entfernen nimmt nur das Eigene mit
     l6 = Liste(FREMD + [{"id": "a", "type": "module", "url": EINS}])
-    assert await karte.ressource_entfernen(l6, "/hats_static/hats-control-card.js") == 1
+    assert await karte.ressource_entfernen(l6, "/hats_static/hats-control-card.js", PRAEFIX) == 1
     assert fremde(l6) == ["fremd-1", "fremd-2", "fremd-3", "fremd-4"] and eigene(l6) == []
     # Gegenprobe: Auf einer Liste ohne uns passiert nichts.
     l7 = Liste(FREMD)
-    assert await karte.ressource_entfernen(l7, EINS) == 0
+    assert await karte.ressource_entfernen(l7, EINS, PRAEFIX) == 0
     assert l7.schreiben == [] and len(l7.async_items()) == 4
     ok("Entfernen nimmt den eigenen Eintrag mit und sonst nichts")
+
+    # 9. Der Eintrag von vor dem Umbau wird WIEDERGEFUNDEN, nicht verdoppelt.
+    #    Das ist der Fall, den dieser Umbau haette kaputt machen koennen: Jede
+    #    bestehende Installation hat den unversionierten Pfad in der Liste.
+    l8 = Liste(FREMD + [{"id": "a", "type": "module", "url": ALT}])
+    assert await karte.ressource_abgleichen(l8, EINS, PRAEFIX) == "erneuert"
+    assert [(e["id"], e["url"]) for e in eigene(l8)] == [("a", EINS)]
+    assert fremde(l8) == ["fremd-1", "fremd-2", "fremd-3", "fremd-4"]
+    # Und dasselbe weiter: Wer von einer Summe zur naechsten geht, bleibt bei
+    # einem Eintrag, ueber beliebig viele Aenderungen.
+    for summe in ("cccccccc", "dddddddd", "eeeeeeee"):
+        await karte.ressource_abgleichen(
+            l8, f"/hats_static/{summe}/hats-control-card.js?v=0.2.0b5", PRAEFIX)
+    assert len(eigene(l8)) == 1, [e["url"] for e in eigene(l8)]
+    ok("Ein Eintrag von vor dem Umbau wird erneuert, nicht verdoppelt")
+
+    # 10. Gegenprobe zum neuen, weiteren Vergleich: Er darf nicht alles fangen.
+    #     Ein anderer Dateiname unter demselben Praefix ist NICHT unserer, und
+    #     unser Dateiname ausserhalb des Praefix auch nicht.
+    l9 = Liste([
+        {"id": "x1", "type": "module", "url": "/hats_static/aaaaaaaa/hats-panel.js"},
+        {"id": "x2", "type": "module", "url": "/hats_statisch/aaaaaaaa/hats-control-card.js"},
+        {"id": "x3", "type": "module", "url": "/hats_static/hats-control-card.js.map"},
+    ])
+    assert await karte.ressource_abgleichen(l9, EINS, PRAEFIX) == "angelegt"
+    assert len(l9.async_items()) == 4, [e["url"] for e in l9.async_items()]
+    assert await karte.ressource_entfernen(l9, EINS, PRAEFIX) == 1
+    assert sorted(e["id"] for e in l9.async_items()) == ["x1", "x2", "x3"]
+    ok("Der weitere Vergleich fasst nur die eigene Datei unter dem eigenen Praefix")
 
 asyncio.run(lauf())
 print("ANZAHL", n)
@@ -170,8 +206,8 @@ pruefe("python3 faehrt den Abgleich gegen den Nachbau der Liste", () => {
 });
 // Die Zeilen aus Python zaehlen mit - jede ist eine eigene Pruefung.
 for (const zeile of ausgabe.split("\n").filter((z) => z.startsWith("ok "))) { n++; console.log(zeile); }
-pruefe("Alle acht Faelle sind gelaufen", () => {
-  assert.match(ausgabe, /^ANZAHL 8$/m, "Python hat nicht alle Faelle erreicht:\n" + ausgabe);
+pruefe("Alle zehn Faelle sind gelaufen", () => {
+  assert.match(ausgabe, /^ANZAHL 10$/m, "Python hat nicht alle Faelle erreicht:\n" + ausgabe);
 });
 
 const init = lies("custom_components/hats/__init__.py");
@@ -189,12 +225,34 @@ pruefe("lovelace steht in den Abhaengigkeiten", () => {
 });
 
 pruefe("Angemeldet wird ueber die Ressourcenliste, das Modul ist nur der Ausweg", () => {
-  assert.ok(/await ressource_abgleichen\(lovelace\.resources, karten_url\)/.test(init));
+  assert.ok(/await ressource_abgleichen\(\s*lovelace\.resources, karten_url, STATIC_PATH\)/.test(init),
+    "der Abgleich bekommt den Praefix nicht - er faende den Eintrag unter einer anderen Summe nicht wieder");
   assert.ok(/resource_mode == MODE_STORAGE/.test(init), "YAML-Ressourcen werden nicht erkannt");
   // Genau ein Aufruf, und der steht NACH dem Abgleich - also im Ausweg.
   const stellen = [...init.matchAll(/frontend\.add_extra_js_url\(/g)].map((m) => m.index);
   assert.strictEqual(stellen.length, 1);
   assert.ok(stellen[0] > init.indexOf("await ressource_abgleichen("));
+});
+
+pruefe("Die Pruefsumme steht im Pfad und deckt den ganzen www-Ordner", () => {
+  // Haengt sie als ?v=... an der Einstiegsdatei, erben die statisch
+  // importierten Module sie nicht - sie kommen dann aus dem Cache.
+  assert.match(init, /basis = f"\{STATIC_PATH\}\/\{summe\}"/,
+    "die Summe steht nicht im Pfad");
+  assert.match(init, /module_url = f"\{basis\}\/\{PANEL_FILE\}/);
+  assert.match(init, /karten_url = f"\{basis\}\/\{CARD_FILE\}/);
+  // Gerechnet wird ueber den Ordner, nicht ueber eine Datei: Sonst aendert
+  // eine geaenderte vorlagen.js die Adresse nicht.
+  const fn = /def _www_pruefsumme\([\s\S]*?(?=\ndef |\nasync def )/.exec(init);
+  assert.ok(fn, "_www_pruefsumme fehlt");
+  assert.match(fn[0], /rglob\("\*"\)/, "es wird nicht der ganze Ordner gelesen");
+  assert.match(fn[0], /relative_to\(www\)/, "der Name geht nicht in die Summe ein");
+  assert.match(fn[0], /return ""/, "ohne Rueckfall bliebe das Panel bei einem Lesefehler weg");
+  // Der versionierte Pfad darf cachen, der unversionierte nicht.
+  assert.match(init, /StaticPathConfig\(basis, str\(www_path\), True\)/);
+  assert.match(init, /StaticPathConfig\(STATIC_PATH, str\(www_path\), False\)/);
+  // Gegenprobe: der alte Weg ist wirklich weg.
+  assert.ok(!/_mit_pruefsumme/.test(init), "die alte Summe an der Abfrage steht noch da");
 });
 
 pruefe("Beim Entfernen der Integration geht der Eintrag mit, beim Reload nicht", () => {
@@ -208,4 +266,4 @@ pruefe("Beim Entfernen der Integration geht der Eintrag mit, beim Reload nicht",
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 14) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 17) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

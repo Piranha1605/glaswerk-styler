@@ -36,6 +36,7 @@ from .const import (
     CARD_FILE,
     DOMAIN,
     FRONTEND_MODULE,
+    PANEL_FILE,
     PANEL_ICON,
     PANEL_TAG,
     PANEL_TITLE,
@@ -123,6 +124,35 @@ def _freier_bildpfad(ordner: Path, name: str) -> Path:
         if not ziel.exists():
             return ziel
         n += 1
+
+
+def _www_pruefsumme(www: Path) -> str:
+    """Eine kurze Summe ueber den GANZEN www-Ordner.
+
+    Ueber den Ordner, nicht ueber eine Datei: Die Summe steht im Pfad, unter
+    dem auch die Module liegen, und sie muss sich deshalb aendern, sobald
+    IRGENDEINE von ihnen sich aendert. Eine Summe nur ueber hats-panel.js
+    liesse genau den Fall durch, der den Fehler ausgemacht hat - geaenderte
+    vorlagen.js, unveraenderter Einstieg.
+
+    Der Name geht mit in die Summe, nicht nur der Inhalt: Sonst waere eine
+    umbenannte Datei dieselbe.
+
+    Faellt das Lesen aus, kommt "" zurueck - dann bleibt es beim
+    unversionierten Pfad. Ein Panel ohne Cache-Buster ist besser als keines.
+    """
+    h = hashlib.md5(usedforsecurity=False)
+    try:
+        for p in sorted(www.rglob("*")):
+            if not p.is_file():
+                continue
+            h.update(str(p.relative_to(www)).encode("utf-8"))
+            h.update(b"\0")
+            h.update(p.read_bytes())
+            h.update(b"\0")
+    except OSError:
+        return ""
+    return h.hexdigest()[:8]
 
 
 def _ist_sicherer_name(name: str) -> bool:
@@ -405,36 +435,45 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             BILDER_LOCAL_PATH,
         )
 
-    # Der Cache-Buster haengt am Inhalt, nicht nur an der Versionsnummer.
-    # Home Assistant liefert /hats_static mit max-age=2678400 aus: Wer die
-    # Panel-Datei innerhalb derselben Version austauscht - beim Entwickeln die
-    # Regel, nicht die Ausnahme -, bekommt im Browser 31 Tage lang den alten
-    # Stand, obwohl die Kopfzeile die neue Version zeigt. Faellt das Lesen aus,
-    # bleibt es bei der Version.
-    def _mit_pruefsumme(datei: str, adresse: str) -> str:
-        try:
-            kurz = hashlib.md5((www_path / datei).read_bytes()).hexdigest()[:8]
-        except OSError:
-            return adresse
-        return f"{adresse}.{kurz}"
+    # Die Pruefsumme steht im PFAD, nicht in der Abfrage - und sie deckt den
+    # ganzen Ordner ab, nicht nur die Einstiegsdatei.
+    #
+    # Vorher hing sie als "?v=<version>.<summe>" an hats-panel.js und an der
+    # Karte. Das Panel importiert seine Module aber statisch und ohne Abfrage
+    # ("./vorlagen.js"), und die kamen damit weiter aus dem Cache: neuer
+    # Einstieg, alte Teile. Am 13.10.2026 gemeldet als "ich habe immer noch den
+    # alten Stand", nachdem an einem Tag 18 Modul-Commits gelaufen waren.
+    #
+    # Liegt die Summe im Pfad, loest sich das von selbst: Ein relativer Import
+    # wird gegen die Adresse SEINES Moduls aufgeloest, also erbt jedes Modul
+    # die Summe, ohne dass eine Importzeile sich aendert.
+    summe = await hass.async_add_executor_job(_www_pruefsumme, www_path)
 
-    module_url = await hass.async_add_executor_job(
-        _mit_pruefsumme, "hats-panel.js", FRONTEND_MODULE
-    )
-    karten_url = await hass.async_add_executor_job(
-        _mit_pruefsumme, CARD_FILE, f"{STATIC_PATH}/{CARD_FILE}?v={VERSION}"
-    )
+    # Beide Pfade werden angemeldet:
+    #
+    #   /hats_static/<summe>/...  der Produktpfad, einen Monat cachebar -
+    #                             richtig, weil eine Aenderung die Adresse
+    #                             aendert
+    #   /hats_static/...          unversioniert, ohne Cache-Kopfzeile. Die
+    #                             Werkzeuge lesen darueber byteweise gegen
+    #                             (einspielen-test.sh), und er ist der
+    #                             Rueckfall, wenn sich die Summe nicht
+    #                             rechnen laesst.
+    #
+    # Die Reihenfolge ist egal: aiohttp laeuft die Pfadteile von hinten nach
+    # vorn ab und nimmt den laengsten passenden Praefix zuerst. Der
+    # versionierte Pfad gewinnt also auch, wenn er spaeter dazukommt.
+    pfade = [StaticPathConfig(STATIC_PATH, str(www_path), False)]
+    basis = STATIC_PATH
+    if summe:
+        basis = f"{STATIC_PATH}/{summe}"
+        pfade.insert(0, StaticPathConfig(basis, str(www_path), True))
+    await hass.http.async_register_static_paths(pfade)
 
-    # Dritter Parameter ist cache_headers. Bewusst False, solange entwickelt
-    # wird: Mit True liefert HA die Datei mit max-age=2678400 aus, also 31
-    # Tage. Der Cache-Buster oben haengt zwar am Inhalt, aber er wird nur
-    # HIER gerechnet - wer die Datei austauscht, ohne die Integration neu zu
-    # laden, bekommt im Browser wochenlang den alten Stand bei scheinbar
-    # richtiger Adresse. Genau das ist am 12.10.2026 passiert. Vor dem ersten
-    # Release wieder auf True.
-    await hass.http.async_register_static_paths(
-        [StaticPathConfig(STATIC_PATH, str(www_path), False)]
-    )
+    # Die Version steht trotzdem in der Abfrage - sie beweist nichts, aber in
+    # der Netzwerkansicht sieht man ohne Nachschlagen, welche geladen ist.
+    module_url = f"{basis}/{PANEL_FILE}?v={VERSION}" if summe else FRONTEND_MODULE
+    karten_url = f"{basis}/{CARD_FILE}?v={VERSION}"
 
     await panel_custom.async_register_panel(
         hass,
@@ -469,7 +508,7 @@ async def _karte_anmelden(hass: HomeAssistant, karten_url: str) -> None:
     lovelace = hass.data.get(LOVELACE_DATA)
     if lovelace is not None and lovelace.resource_mode == MODE_STORAGE:
         try:
-            was = await ressource_abgleichen(lovelace.resources, karten_url)
+            was = await ressource_abgleichen(lovelace.resources, karten_url, STATIC_PATH)
         except Exception:  # noqa: BLE001 - die Liste gehoert Home Assistant
             _LOGGER.exception(
                 "Die Steuerkarte liess sich nicht in die Ressourcen eintragen. "
@@ -520,6 +559,8 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     if lovelace is None or lovelace.resource_mode != MODE_STORAGE:
         return
     try:
-        await ressource_entfernen(lovelace.resources, f"{STATIC_PATH}/{CARD_FILE}")
+        await ressource_entfernen(
+            lovelace.resources, f"{STATIC_PATH}/{CARD_FILE}", STATIC_PATH
+        )
     except Exception:  # noqa: BLE001 - die Liste gehoert Home Assistant
         _LOGGER.exception("Der Eintrag der Steuerkarte liess sich nicht entfernen")

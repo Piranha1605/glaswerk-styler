@@ -555,48 +555,81 @@ den man vergisst; dann sucht man den Fehler im Code, und er liegt im Cache.
 REST-API will einen Token. Lesen geht über Port 80. Würde SSH oder Samba
 eingerichtet, fiele der Terminal-Umweg weg.
 
-## Der Cache-Buster schuetzt nur die Einstiegsdatei
+## Der Cache-Buster steht im Pfad, nicht in der Abfrage
 
-Am 13.10.2026 gemeldet: *„ich habe immer noch den alten stand."* Gemessen,
-woran es lag — und es trifft nicht nur beim Entwickeln.
+Am 13.10.2026 gemeldet: *„ich habe immer noch den alten stand."* Am 14.10.2026
+behoben. Der Abschnitt steht ausfuehrlich da, weil die Diagnose teurer war als
+die Behebung.
 
-`/hats_static` ist mit `cache_headers=False` registriert. Home Assistant setzt
-dann **gar kein** `Cache-Control`, nur `ETag` und `Last-Modified`:
-
-    Etag: "18de2d01990f997e-6cff"   Last-Modified: Tue, 13 Oct 2026 19:19:47 GMT
-
-Ohne `Cache-Control` darf ein Browser **heuristisch** cachen, und Chrome tut
-es. `__init__.py` haengt deshalb eine Pruefsumme an die Panel-Adresse
-(`?v=0.2.0b3.36cec128`) — aber **nur an `hats-panel.js` und die Karte.** Das
-Panel importiert seine sechs Module statisch:
+**Der Fehler.** `/hats_static` ist mit `cache_headers=False` registriert. Home
+Assistant setzt dann **gar kein** `Cache-Control`, nur `ETag` und
+`Last-Modified` — und ohne `Cache-Control` darf ein Browser **heuristisch**
+cachen. Chrome tut es. Die Pruefsumme hing als `?v=0.2.0b3.36cec128` an der
+Einstiegsdatei, aber das Panel importiert seine Module statisch und ohne
+Abfrage:
 
     import { VORLAGEN } from "./vorlagen.js";
 
-Ohne Parameter. Die Einstiegsdatei kommt also frisch, die Module kommen aus
-dem Cache. **Neuer Einstieg, alte Teile.**
+**Neuer Einstieg, alte Teile.** Nicht nur beim Entwickeln: Nach einem Update
+ueber HACS aendert sich die Version und damit die Panel-Adresse — die Module
+behalten ihre und bleiben im Cache. Am 13.10.2026 gab es 18 Modul-Commits an
+einem Tag, 13 davon an `vorlagen.js` und `baukasten.js`, also genau an dem,
+was der Nutzer im Baukasten sieht.
 
-**Das ist kein reines Entwicklungsproblem.** Nach einem Update ueber HACS
-aendert sich die Version und damit die Panel-Adresse — die Module behalten ihre
-und bleiben im Cache. Ein Nutzer sieht dann ein Panel, dessen Haelfte alt ist.
-Am 13.10.2026 gab es 18 Modul-Commits an einem Tag, 13 davon an `vorlagen.js`
-und `baukasten.js`; das sind genau die, die der Nutzer im Baukasten sieht.
+**Die Behebung: die Summe in den Pfad.**
 
-**Woran man es erkennt:** Die Datei liegt byteweise neu auf der Instanz
-(`einspielen-test.sh` meldet „angekommen"), die Pruefsumme in der Adresse ist
-neu, und das Panel verhaelt sich trotzdem wie vorher. Ein Blick in die
-Netzwerkansicht zeigt die Module ohne Parameter.
+    vorher   /hats_static/hats-panel.js?v=0.2.0b4.36cec128
+    nachher  /hats_static/deed68b7/hats-panel.js?v=0.2.0b5
 
-**Sofort hilft** ein hartes Neuladen, und beim Messen
-`await import("./modul.js?" + Date.now())`.
+Ein **relativer Import wird gegen die Adresse SEINES Moduls aufgeloest**. Liegt
+die Summe im Pfad, erbt sie damit jedes Modul, ohne dass eine einzige
+Importzeile sich aendert — und jedes kuenftige auch. Gemessen nach dem Umbau:
+zehn Dateien, alle unter `/hats_static/deed68b7/`.
 
-**Die Dauerloesung ist noch nicht gebaut.** Zwei Wege, beide nicht umsonst:
+**Die Summe deckt den ganzen `www`-Ordner**, nicht nur die Einstiegsdatei —
+sonst liesse sie genau den Fall durch, der den Fehler ausgemacht hat. Der
+Dateiname geht mit ein, nicht nur der Inhalt: Sonst waere eine umbenannte Datei
+dieselbe. Faellt das Lesen aus, bleibt es beim unversionierten Pfad; ein Panel
+ohne Cache-Buster ist besser als keines.
 
-| | |
-|---|---|
-| dynamische Importe | `const V = new URL(import.meta.url).search` und `await import("./vorlagen.js" + V)`. Traegt die Pruefsumme weiter, baut aber sechs Importzeilen von `hats-panel.js` zu top-level `await` um — in der Datei, an der mehrere Sitzungen arbeiten. |
-| eigene View | `Cache-Control: no-cache` statt `StaticPathConfig`. Der Browser revalidiert dann per ETag und bekommt meist ein 304. Kostet eine eigene View in `__init__.py`, also auch eine geteilte Datei. |
+**Angemeldet sind beide Pfade, mit verschiedenen Kopfzeilen** — gemessen:
 
-Wer das angeht, stimmt es vorher ab — siehe `/Users/enricofischer/Projekte/TEAM.md`.
+    /hats_static/<summe>/…   Cache-Control: public, max-age=2678400
+    /hats_static/…           keine Cache-Control-Kopfzeile
+
+Der versionierte ist der Produktpfad, und einen Monat zu cachen ist dort
+**richtig**, weil jede Aenderung die Adresse aendert. Der unversionierte bleibt
+fuer die Werkzeuge: `einspielen-test.sh` liest darueber byteweise gegen, ohne
+die Summe kennen zu muessen.
+
+**Die Reihenfolge der Anmeldung ist egal.** Aus aiohttps `UrlDispatcher.resolve`
+gelesen: Es laeuft die Pfadteile von hinten nach vorn ab („to ensure the most
+explicit match is found first"), also gewinnt `/hats_static/<summe>` auch, wenn
+es spaeter dazukommt als `/hats_static`.
+
+**Was dabei beinahe kaputtgegangen waere: der Eintrag der Steuerkarte.**
+`karte.py` erkannte ihn an der Adresse ohne Abfrage, auf Gleichheit. Die aendert
+sich jetzt bei **jeder** Aenderung irgendwo im www-Ordner — der Abgleich haette
+also jedes Mal einen **zweiten** Eintrag angelegt und den alten stehen lassen.
+Und weil der unversionierte Pfad weiter ausgeliefert wird, laedt Home Assistant
+die Karte dann zweimal. `_eigene()` vergleicht deshalb zweierlei: Der Pfad liegt
+unter `/hats_static/`, und die letzte Stelle ist `hats-control-card.js`. An der
+Instanz gegengeprueft: nach dem Umbau **ein** Eintrag, auf dem neuen Pfad, bei
+neun Ressourcen insgesamt wie vorher.
+
+**Die Gegenprobe, die den Umbau beweist** — eine Datei aendern, die der alte
+Mechanismus gar nicht gesehen haette:
+
+    uix.js auf der Instanz um eine Zeile ergaenzt, Integration neu geladen
+    deed68b7  ->  99a9fe6a      alle zehn Module auf dem neuen Pfad
+    Datei zurueckgespielt
+    99a9fe6a  ->  deed68b7      dieselbe Summe wieder - sie haengt am Inhalt
+
+`tests/hats-kartenanmeldung.test.js` haelt beides fest, 17 Pruefungen: dass die
+Summe im Pfad steht und ueber den Ordner geht, und dass ein Eintrag **von vor
+dem Umbau** wiedergefunden statt verdoppelt wird. Dazu die Gegenprobe, dass der
+weitere Vergleich nicht alles fasst — ein anderer Dateiname unter demselben
+Praefix ist nicht unserer, und unser Dateiname ausserhalb auch nicht.
 
 ## Nie ein Feld schreiben, das HATS nicht anbietet
 

@@ -7,14 +7,19 @@ Konfigurationseintraege der Nutzer - also vor dem ersten Release festlegen.
 
 DOMAIN = "hats"
 NAME = "HATS"
-VERSION = "0.2.0b4"
+VERSION = "0.2.0b5"
 
 PANEL_URL = "hats"
 PANEL_TITLE = "HATS"
 PANEL_ICON = "mdi:palette-outline"
 PANEL_TAG = "hats-panel"
 STATIC_PATH = "/hats_static"
-FRONTEND_MODULE = "/hats_static/hats-panel.js?v=0.2.0b4"
+PANEL_FILE = "hats-panel.js"
+# Die unversionierte Adresse. Benutzt wird sie nur als Rueckfall, wenn sich die
+# Pruefsumme ueber den www-Ordner nicht rechnen laesst - sonst steht sie im Pfad
+# (siehe __init__.py). Sie bleibt als Literal stehen, weil ein Test sie gegen
+# das Manifest prueft.
+FRONTEND_MODULE = "/hats_static/hats-panel.js?v=0.2.0b5"
 
 # Die Steuerkarte. Ihre Adresse wird aus STATIC_PATH und VERSION gebaut, nicht
 # hier ausgeschrieben - die Versionsnummer steht schon an vier Stellen, und

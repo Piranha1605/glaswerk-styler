@@ -33,12 +33,28 @@ def ohne_abfrage(url: str) -> str:
     return url.split("?", 1)[0]
 
 
-def _eigene(ressourcen: Any, url: str) -> list[dict]:
-    basis = ohne_abfrage(url)
-    return [r for r in ressourcen.async_items() if ohne_abfrage(r.get("url", "")) == basis]
+def _eigene(ressourcen: Any, url: str, praefix: str) -> list[dict]:
+    """Die Eintraege, die auf unsere Karte zeigen - egal unter welcher Summe.
+
+    Verglichen wird nicht die ganze Adresse, sondern zweierlei: Der Pfad liegt
+    unter unserem Praefix, und die letzte Stelle ist unsere Datei. Das ist
+    noetig, seit die Pruefsumme im Pfad steht (/hats_static/<summe>/...): Ein
+    Vergleich auf Gleichheit haette bei jeder Aenderung an irgendeiner Datei
+    im www-Ordner einen ZWEITEN Eintrag angelegt und den alten stehen lassen -
+    und weil der unversionierte Pfad weiter ausgeliefert wird, laedt Home
+    Assistant die Karte dann zweimal.
+    """
+    datei = ohne_abfrage(url).rsplit("/", 1)[-1]
+    unter = praefix.rstrip("/") + "/"
+
+    def passt(roh: str) -> bool:
+        b = ohne_abfrage(roh)
+        return b.startswith(unter) and b.rsplit("/", 1)[-1] == datei
+
+    return [r for r in ressourcen.async_items() if passt(r.get("url", ""))]
 
 
-async def ressource_abgleichen(ressourcen: Any, url: str) -> str:
+async def ressource_abgleichen(ressourcen: Any, url: str, praefix: str) -> str:
     """Dafuer sorgen, dass GENAU EIN Eintrag auf die Karte zeigt, und zwar dieser.
 
     Gibt zurueck, was geschah: "angelegt", "erneuert" oder "unveraendert".
@@ -52,7 +68,7 @@ async def ressource_abgleichen(ressourcen: Any, url: str) -> str:
     # bei jedem Start ein weiteres Mal eingetragen.
     await ressourcen.async_get_info()
 
-    eigene = _eigene(ressourcen, url)
+    eigene = _eigene(ressourcen, url, praefix)
     if not eigene:
         await ressourcen.async_create_item({"res_type": "module", "url": url})
         return "angelegt"
@@ -68,10 +84,10 @@ async def ressource_abgleichen(ressourcen: Any, url: str) -> str:
     return ergebnis
 
 
-async def ressource_entfernen(ressourcen: Any, url: str) -> int:
+async def ressource_entfernen(ressourcen: Any, url: str, praefix: str) -> int:
     """Den eigenen Eintrag wieder herausnehmen. Gibt die Anzahl zurueck."""
     await ressourcen.async_get_info()
-    eigene = _eigene(ressourcen, url)
+    eigene = _eigene(ressourcen, url, praefix)
     for eintrag in eigene:
         await ressourcen.async_delete_item(eintrag["id"])
     return len(eigene)
