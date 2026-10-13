@@ -1104,6 +1104,23 @@ in **einer** Datei und erben von derselben Klasse `Steuerung`; Karte und Badge
 liefern nur Rahmen und Stilblatt. Ein Test hält fest, dass keine der beiden
 Klicks, Zustand oder Konfiguration überschreibt — sonst liefen sie auseinander.
 
+**Die Badges immer mitziehen.** Ansage vom 13.10.2026, wörtlich: *„die
+badgets immer mitziehen."* Gefragt war, ob die Freigabe zum Drücken der Karte
+auch für das Badge gilt — die Antwort reicht weiter, und so lese ich sie:
+
+- Was die Karte bekommt, bekommt das Badge im selben Zug. Ein neues Bedienteil
+  kommt in `BEDIENTEILE` und in `Steuerung._baue`, also in beide Formen auf
+  einmal; ein Stilblatt allein reicht dann nicht, **beide** brauchen ihre Maße.
+- Was für die Karte geprüft wird, wird am Badge mitgeprüft — an der
+  Testmaschine beide drücken, nicht nur eine.
+- Was für die Karte freigegeben ist, ist es für das Badge (steht so in
+  `FREIGABEN.md`).
+- Und beim Aussehen: Zieht die Theme die Karten nach, gehören die Badges dazu.
+  Siehe `glas-badges` weiter unten.
+
+Der erste Punkt ist durch den Aufbau gesichert, nicht durch guten Willen: Die
+beiden Formen können kein Bedienteil für sich allein haben.
+
 **Die Fläche zeichnet `ha-badge`.** An der Instanz gemessen:
 
     Eigenschaften    type, label, iconOnly
