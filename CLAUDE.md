@@ -815,6 +815,68 @@ das Berechnete beweist, dass ein Wert ankommt.
 Das Ereignis `settheme` bleibt tabu — die Theme des Nutzers wird nicht
 umgeschaltet.
 
+### Ein toter Tab sieht aus wie ein lebender
+
+Am 13.10.2026 gemessen, nachdem die Musterseite serverseitig auf `{"views":[]}`
+stand — 12 Bytes — während ein offener Tab sie noch vollständig zeigte.
+
+**Eine abgerissene WebSocket-Verbindung ist von außen nicht zu sehen.** Der Tab
+war angemeldet (`hass.user` gesetzt), die Seite gezeichnet, alle 25 Karten da.
+Jede Anfrage scheiterte trotzdem — und zwar mit der **nackten Zahl 3**:
+
+    try { await conn.sendMessagePromise({type: "lovelace/config", url_path: "x"}) }
+    catch (e) { e.message }      // undefined
+                                 // JSON.stringify(e)  ->  "3"
+
+`3` ist `ERR_CONNECTION_LOST` aus `home-assistant-js-websocket` (1 =
+`ERR_CANNOT_CONNECT`, 2 = `ERR_INVALID_AUTH`, 4 = `ERR_HASS_HOST_REQUIRED`, 5 =
+`ERR_INVALID_HTTPS_TO_HTTP`). Wer `e.message` loggt, bekommt `undefined` und
+sucht den Fehler an der falschen Stelle. **Vor jeder Messung an einer Instanz
+erst `conn.sendMessagePromise({type: "ping"})`** — sonst misst man den Tod der
+Leitung und hält ihn für einen Befund.
+
+**Der gerenderte Zustand überlebt den Verlust.** Das ist die Falle: Ein Tab
+zeigt weiter alles, was beim letzten erfolgreichen Laden ankam. Zwei Tabs auf
+derselben Seite können deshalb Verschiedenes zeigen, und der, der noch etwas
+zeigt, ist nicht der mit der besseren Verbindung — nur der mit dem älteren
+Stand.
+
+**Gerettet werden konnte sie nur durch Glück:** Jedes `hui-card`-Element trägt
+seine `config` als Eigenschaft, auch wenn der Server nichts mehr hergibt.
+
+```js
+[...document.querySelectorAll("hui-card")].map((k) => k.config)
+```
+
+Daraus ließen sich 4 Abschnitte und 25 Karten rekonstruieren, samt des langen
+`styles`-Blocks auf der Bubble-Karte. Ein Neuladen des Tabs hätte das vernichtet.
+
+**Was daraus folgt: vorher sichern, nicht hinterher rekonstruieren.**
+`werkzeuge/dashboards-sichern.js` holt jede Dashboard-Konfiguration über
+`lovelace/dashboards/list` und `lovelace/config` als Download. Die Sicherungen
+liegen in `werkzeuge/sicherungen/dashboards/` und sind **nicht** committet. Am
+13.10.2026 standen dort 195 Karten in 10 Ansichten allein für das
+Haupt-Dashboard — das ist die Größenordnung, um die es geht.
+
+**Was offen bleibt: wodurch die Seite leer wurde.** Nicht bewiesen. Was dafür
+spricht, dass der Editor es war: Der tote Tab stand auf `?edit=1`, und ein
+Lovelace-Editor, der mit leerer Konfiguration öffnet und dann speichert,
+schreibt leer zurück. Was dagegen spricht: Der Hergang ließ sich nicht
+nachstellen, und ein Schreibbefehl scheitert auf einer toten Leitung genauso wie
+ein Lesebefehl. Bis das geklärt ist, gilt die Vorsichtsregel: **einen Tab im
+Bearbeitungsmodus nicht offen stehen lassen**, erst recht keinen, dessen
+Verbindung gezuckt hat.
+
+Zurückgeschrieben wird mit demselben Befehl, den der Editor benutzt — und
+danach **vom Server gegengelesen**, nicht aus dem Speicher:
+
+```js
+await conn.sendMessagePromise({ type: "lovelace/config/save",
+                                url_path: "musterseite", config: gerettet });
+await conn.sendMessagePromise({ type: "lovelace/config",
+                                url_path: "musterseite", force: true });
+```
+
 ## Schreibstil
 
 Sachlich, per du, **keine Emojis, kein Marketing-Sprech**. Funktionen
