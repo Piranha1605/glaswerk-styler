@@ -9,7 +9,7 @@ import assert from "node:assert";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { BEDIENTEILE, modusLage, modusDetail, pruefeConfig, sprache }
+import { BEDIENTEILE, modusLage, modusDetail, pruefeConfig, sprache, badgeKurzform }
   from "../custom_components/hats/www/hats-control-card.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
@@ -170,11 +170,25 @@ pruefe("Deutsch bei de, sonst englisch", () => {
 
 // ---- Was die Datei benutzt ------------------------------------------------
 
-pruefe("Die Datei laedt nichts nach", () => {
+pruefe("Die Datei steht allein - bis jemand den Regler der Bewegung oeffnet", () => {
   assert.ok(!/^\s*import\s/m.test(quelle), "ein import - die Karte muss allein stehen");
-  assert.ok(!/\bimport\s*\(/.test(quelle), "ein dynamischer import");
   assert.ok(!/https?:\/\//.test(quelle), "eine fremde Adresse");
   assert.ok(!/@import|url\(/.test(quelle), "CSS, das etwas nachlaedt");
+  // Nachgeladen wird genau zweierlei, und zwar HATS' eigene Module neben der
+  // Karte: Der Regler schreibt die Theme mit dem Code des Panels, nicht mit
+  // einem zweiten. Nichts von aussen, und nichts ausserhalb von ladeWerkzeug.
+  const code = quelle.split("\n").filter((z) => !/^\s*\/\//.test(z)).join("\n");
+  const nach = [...code.matchAll(/\bimport\s*\(([^)]*\))/g)].map((m) => m[1]);
+  assert.deepStrictEqual(nach, [
+    'new URL("./theme.js", import.meta.url)',
+    'new URL("./hintergrund.js", import.meta.url)',
+  ]);
+  const lader = /function ladeWerkzeug\(\) \{([\s\S]*?)\n\}/.exec(quelle);
+  assert.ok(lader && (lader[1].match(/\bimport\s*\(/g) || []).length === 2, "ein import ausserhalb von ladeWerkzeug");
+  // Und die beiden Dateien gibt es dort wirklich.
+  for (const datei of ["theme.js", "hintergrund.js"]) {
+    assert.ok(existsSync(path.join(wurzel, "custom_components/hats/www", datei)), datei + " fehlt");
+  }
 });
 
 pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
@@ -210,7 +224,7 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     // fuer das Badge dazugekommen
     "--ha-space-1", "--ha-border-radius-pill", "--divider-color",
     // mit der Menueleiste dazugekommen
-    "--ha-space-3", "--ha-font-weight-medium",
+    "--ha-space-3", "--ha-font-size-s", "--ha-font-weight-medium",
     "--white-color", "--black-color", "--state-active-color",
     "--card-background-color", "--ha-card-border-radius", "--ha-card-box-shadow",
   ];
@@ -321,12 +335,20 @@ pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formula
   const badge = klasse("HatsControlBadge");
   const karte = klasse("HatsControlCard");
 
-  // Das Badge reicht nur controls und kiosk_only weiter ...
-  assert.ok(/pruefeConfig\(\{ controls: config\?\.controls, kiosk_only: config\?\.kiosk_only \}\)/.test(badge));
-  // ... und `buttons` ist dort ein Fehler, kein Feld, das still verschwindet.
-  assert.ok(/if \(config\?\.buttons !== undefined\) throw new Error\(/.test(badge));
-  // Gegenprobe: Die Karte reicht alles durch.
+  // Das Badge liest ueber badgeKurzform, die Karte reicht alles durch.
+  assert.ok(/_liesConfig\(config\) \{ return pruefeConfig\(badgeKurzform\(config\)\); \}/.test(badge));
   assert.ok(/_liesConfig\(config\) \{ return pruefeConfig\(config\); \}/.test(karte));
+
+  // Nur controls und kiosk_only kommen an - die Einstellungen der Leiste nicht.
+  assert.deepStrictEqual(badgeKurzform({ controls: ["mode"], kiosk_only: true, collapse: "always", menu_size: "large" }),
+    { controls: ["mode"], kiosk_only: true });
+  assert.deepStrictEqual(badgeKurzform({}), { controls: undefined, kiosk_only: undefined });
+  // Ziele, Schalter und die uebrigen Funktionen sind im Badge ein Fehler,
+  // kein Feld, das still verschwindet.
+  for (const fremd of [[{ link: "/x" }], [{ entity: "light.x" }], [{ function: "weather" }], [{ function: "motion" }],
+                       [{ function: "mode", name: "Modus" }], "nope"]) {
+    assert.throws(() => badgeKurzform({ buttons: fremd }), /controls/, JSON.stringify(fremd));
+  }
 
   // Jede Form hat IHR Formular: das Badge die Auswahl der Bedienteile, die
   // Karte die Liste der Knoepfe. Und der Waehler legt an, was dazu passt.
@@ -334,6 +356,18 @@ pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formula
   assert.ok(/\{ name: "buttons",/.test(karte) && !/name: "controls"/.test(karte));
   assert.ok(/return \{ controls: \[\.\.\.BEDIENTEILE\] \};/.test(badge));
   assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(karte));
+});
+
+pruefe("Ein Badge aus der Stunde, in der der Waehler buttons anlegte, laeuft weiter", () => {
+  // Woertlich vom Server der Testmaschine, Ansicht "eigene", am 14.10.2026.
+  // Nach "die badgets bleiben wie sie sind" wies das Badge diese Form ab, und
+  // beim Maintainer stand eine Fehlermeldung, wo sein Badge gewesen war.
+  const vomServer = { type: "custom:hats-control-badge", buttons: [{ function: "mode" }, { function: "fullscreen" }] };
+  assert.deepStrictEqual(pruefeConfig(badgeKurzform(vomServer)).knoepfe.map((k) => k.function), ["mode", "fullscreen"]);
+  // Reihenfolge und Auswahl gelten auch in dieser Form.
+  assert.deepStrictEqual(badgeKurzform({ buttons: [{ function: "fullscreen" }] }).controls, ["fullscreen"]);
+  // Und sie ergibt dasselbe wie die Kurzform, nicht etwas Aehnliches.
+  assert.deepStrictEqual(pruefeConfig(badgeKurzform(vomServer)), pruefeConfig({ controls: ["mode", "fullscreen"] }));
 });
 
 pruefe("Das Badge steht in Home Assistants Badge-Liste, die Karte in der Kartenliste", () => {
@@ -372,4 +406,4 @@ pruefe("Die Karte steht in der Einspielliste", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 23) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 24) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

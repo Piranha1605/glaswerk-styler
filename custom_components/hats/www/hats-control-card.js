@@ -4,7 +4,7 @@
 //
 //   ein Ziel        link: /dashboard/ansicht      die Kapsel zeigt, wo du bist
 //   ein Schalter    entity: light.kueche          leuchtet, solange sie an ist
-//   eine Funktion   function: mode | theme | fullscreen | weather
+//   eine Funktion   function: mode | theme | fullscreen | weather | motion
 //   eine Aktion     tap_action: ...               alles, was Home Assistant kennt
 //
 //     type: custom:hats-control-card      als Karte
@@ -52,6 +52,10 @@
 // dagegen jedes Dashboard selbst. Die Leiste zeichnet ihre Knoepfe deshalb aus
 // button-Elementen und liest nur dieselben Variablen.
 //
+// Und EIN Knopf schreibt: function: motion stellt die Bewegung des Hintergrunds
+// und legt sie DAUERHAFT in die Theme-Datei. Dafuer - und nur dafuer - laedt
+// die Leiste HATS' eigene Module nach, siehe "Bewegung des Hintergrunds".
+//
 // ZWEI AUSNAHMEN von der Regel, beide beim Vollbild:
 //
 //   Das Vollbild des BROWSERS (requestFullscreen). Home Assistant hat kein
@@ -72,7 +76,7 @@ export const BEDIENTEILE = ["mode", "fullscreen"];
 
 // Was ein Knopf im Browser tut statt in Home Assistant. Ein solcher Knopf hat
 // weder Ziel noch Schalter.
-export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather"];
+export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion"];
 export const GROESSEN = ["small", "normal", "large"];
 export const FORMEN = ["theme", "pill"];
 export const EINKLAPPEN = ["never", "narrow", "always"];
@@ -115,8 +119,27 @@ const TEXTE = {
       function: "Eingebaute Funktion", temperature: "Temperatursensor (nur Wetter)",
       align_end: "Ans Ende der Leiste", separator_before: "Trennstrich davor",
     },
-    funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter" },
+    funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter",
+                motion: "Bewegung des Hintergrunds" },
     teil: { mode: "Modus", fullscreen: "Vollbild" },
+    bewegung: "Bewegung des Hintergrunds",
+    regler: { drift: "Treiben", punkte: "Farbpunkte", farbe: "Farbwechsel", weite: "Ausschlag" },
+    aus: "aus",
+    kreis: "im Kreis",
+    laedt: "Lese die Theme …",
+    speichert: "Speichere …",
+    gespeichert: (name) => `In ${name}.yaml gespeichert.`,
+    nichtGespeichert: "Nicht gespeichert",
+    punkteNur: "Nur bei einem Hintergrund aus Farbpunkten.",
+    weiteNur: "Nur mit Farbwechsel.",
+    grund: {
+      admin: () => "Die Bewegung steht in der Theme-Datei. Schreiben darf sie nur ein Administrator.",
+      ohneDatei: (name) => `Zur Theme „${name}“ gibt es keine Datei ${name}.yaml im Themes-Ordner.`,
+      unlesbar: (was) => `Die Theme-Datei ist nicht lesbar: ${was}`,
+      unklar: (n) => `${n} Zeile(n) der Theme-Datei sind nicht einzuordnen. Schreiben hieße, sie zu verlieren.`,
+      name: (name) => `In der Datei steht die Theme „${name}“, nicht die wirksame.`,
+      fremd: () => "Die Theme ist nicht mit HATS erzeugt. Eine Theme gehört einem Werkzeug.",
+    },
     nurKurzform: "Das Badge kennt nur `controls` - Ziele und Schalter gehören in die Karte.",
     wahl: {
       theme: "Rundung der Theme", pill: "ganz rund",
@@ -156,8 +179,27 @@ const TEXTE = {
       function: "Built-in function", temperature: "Temperature sensor (weather only)",
       align_end: "At the end of the bar", separator_before: "Separator before",
     },
-    funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather" },
+    funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather",
+                motion: "Background motion" },
     teil: { mode: "Mode", fullscreen: "Fullscreen" },
+    bewegung: "Background motion",
+    regler: { drift: "Drift", punkte: "Colour dots", farbe: "Colour shift", weite: "Range" },
+    aus: "off",
+    kreis: "full circle",
+    laedt: "Reading the theme …",
+    speichert: "Saving …",
+    gespeichert: (name) => `Saved to ${name}.yaml.`,
+    nichtGespeichert: "Not saved",
+    punkteNur: "Only with a background made of colour dots.",
+    weiteNur: "Only with colour shift.",
+    grund: {
+      admin: () => "The motion lives in the theme file. Only an administrator may write it.",
+      ohneDatei: (name) => `There is no file ${name}.yaml in the themes folder for the theme "${name}".`,
+      unlesbar: (was) => `The theme file cannot be read: ${was}`,
+      unklar: (n) => `${n} line(s) of the theme file cannot be placed. Writing would lose them.`,
+      name: (name) => `The file holds the theme "${name}", not the active one.`,
+      fremd: () => "The theme was not created with HATS. A theme belongs to one tool.",
+    },
     nurKurzform: "The badge only takes `controls` - targets and switches belong in the card.",
     wahl: {
       theme: "theme radius", pill: "fully round",
@@ -177,6 +219,7 @@ const SYMBOL = {
   wetter: "mdi:thermometer",
   menue: "mdi:menu",
   pfeil: "mdi:chevron-down",
+  bewegung: "mdi:motion-play-outline",
 };
 
 export function sprache(hass) {
@@ -314,6 +357,36 @@ export function eingeklappt(einstellung, breite) {
   if (einstellung.einklappen === "always") return true;
   if (einstellung.einklappen !== "narrow") return false;
   return breite > 0 && breite < einstellung.einklappbreite;
+}
+
+// Das Badge liest NUR die Kurzform. Was hier herauskommt, geht an
+// pruefeConfig - Ziele, Schalter und die Einstellungen der Leiste kommen
+// dabei gar nicht erst an.
+//
+// `buttons` ist im Badge ein Fehler und kein stilles Nichts: Ein Feld, das
+// angenommen und nie gelesen wird, saehe aus wie ein Badge, das nicht tut,
+// was man eingestellt hat.
+//
+// MIT EINER AUSNAHME, und die habe ich selbst verursacht: Am Abend des
+// 13.10.2026 legte der Waehler dem Badge eine knappe Stunde lang
+//
+//     buttons: [{ function: mode }, { function: fullscreen }]
+//
+// an statt `controls`. Der Maintainer hat in der Zeit ein Badge angelegt, und
+// als das Badge `buttons` danach abwies, stand dort eine Fehlermeldung statt
+// des Badges. Genau diese Form - nur Bedienteile, nichts sonst - meint dasselbe
+// wie die Kurzform und wird als sie gelesen.
+export function badgeKurzform(config) {
+  let controls = config?.controls;
+  const knoepfe = config?.buttons;
+  if (knoepfe !== undefined) {
+    const nurBedienteile = Array.isArray(knoepfe) && knoepfe.every((b) =>
+      b && typeof b === "object" && BEDIENTEILE.includes(b.function)
+      && Object.keys(b).every((feld) => feld === "function"));
+    if (!nurBedienteile) throw new Error(TEXTE[sprache()].nurKurzform);
+    controls = knoepfe.map((b) => b.function);
+  }
+  return { controls, kiosk_only: config?.kiosk_only };
 }
 
 export function pruefeConfig(config) {
@@ -454,6 +527,116 @@ export function wetterText(hass, k) {
     text: k.name ? `${k.name} ${wert}` : wert,
     wetter: wetter && wetter.state !== "unavailable" ? wetter : null,
   };
+}
+
+// ---- Bewegung des Hintergrunds ----------------------------------------------
+//
+// Auf Ansage vom 13.10.2026: "die soll dafuer gleich ein slider dafuer
+// einbauen" - und auf die Frage, ob er dauerhaft gelten soll oder nur bis zum
+// Neuladen: "soll dauerhaft gelten."
+//
+// Dauerhaft heisst: Die Bewegung steht als CSS im Stilziel uix-root IN DER
+// THEME-DATEI, und die Leiste schreibt sie dorthin. Sie ist damit das erste
+// Bauteil ausserhalb des Panels, das eine Theme schreibt. Drei Regeln folgen
+// daraus, jede aus einer Stelle, an der HATS oder HATG schon einmal bezahlt hat:
+//
+// 1. MIT DEM CODE DES PANELS, NICHT MIT EINEM ZWEITEN. Die Leiste laedt
+//    theme.js und hintergrund.js nach und ruft, was das Panel ruft. In der
+//    Datei steht dann derselbe Block mit denselben Markern, und das Panel
+//    liest ihn wieder. Ein eigener Schreiber waere ein zweiter Ort, an dem
+//    dieselbe Sache steht.
+// 2. LESEN DIREKT VOR JEDEM SCHREIBEN. Die Leiste haelt kein Modell. Jedes
+//    Speichern holt die Datei neu und aendert nur den einen Block.
+// 3. NUR SCHREIBEN, WENN NICHTS VERLOREN GEHEN KANN. Eine Datei, die sich
+//    nicht ganz lesen laesst, die nicht von HATS stammt oder eine andere Theme
+//    traegt als die wirksame, wird nicht angefasst - mit dem Grund im Regler.
+//
+// Was die Leiste NICHT loesen kann: Hat das Panel dieselbe Theme offen und
+// speichert spaeter, gewinnt sein Stand. Das Panel weiss nicht, dass die Datei
+// sich geaendert hat.
+
+// Das Raster des Ausschlags, wie im Panel (hintergrund-seite.js). Ein Test
+// vergleicht die beiden.
+export const AUSSCHLAEGE = [20, 40, 60, 90, 180, 360];
+
+const BEWEGUNG_AUS = { drift: 0, punkte: 0, farbe: 0, weite: 40 };
+// Dieselbe Zeichenfolge, an der der Server eine HATS-Datei erkennt.
+const HATS_MARKE = "Erzeugt mit HATS ";
+
+// Die Module erst laden, wenn jemand den Regler oeffnet - wer nur ein Menue
+// hat, laedt sie nie. Relativ zur Leiste selbst: Seit 0.2.0b5 steht die
+// Pruefsumme im PFAD, die Nachbarn liegen also unter derselben Summe und
+// koennen nicht aelter sein als sie.
+let werkzeugLaden = null;
+
+function ladeWerkzeug() {
+  werkzeugLaden ??= Promise.all([
+    import(new URL("./theme.js", import.meta.url).href),
+    import(new URL("./hintergrund.js", import.meta.url).href),
+  ]).then(([theme, hintergrund]) => ({ ...theme, ...hintergrund }), (fehler) => {
+    // Ein gescheitertes Laden nicht merken - der naechste Versuch darf gelingen.
+    werkzeugLaden = null;
+    throw fehler;
+  });
+  return werkzeugLaden;
+}
+
+// Aus dem Text der Theme-Datei: die vier Werte, und ob sie sich schreiben
+// laesst. `w` sind die Funktionen aus theme.js und hintergrund.js - hereingereicht,
+// damit ein Test dieselbe Strecke ohne Browser fahren kann.
+//
+//   zurueck  { grund, detail }               nicht anfassen
+//            { modell, werte, punktebild }   lesbar und schreibbar
+export function leseBewegungAusDatei(text, themeName, w) {
+  const m = w.leseTheme(text);
+  if (m.fehler) return { grund: "unlesbar", detail: m.fehler };
+  // Eine Zeile, die der Leser nicht einordnen kann, fehlte nach dem Schreiben.
+  if (m.unklar?.length) return { grund: "unklar", detail: m.unklar.length };
+  if (m.name !== themeName) return { grund: "name", detail: m.name };
+  if (!m.kopf?.some((zeile) => zeile.startsWith(HATS_MARKE))) return { grund: "fremd" };
+
+  // Die Punkte einzeln zu bewegen geht nur auf einem Bild aus Farbpunkten - in
+  // JEDEM Modus, in dem ein Hintergrund gesetzt ist. Dieselbe Frage stellt
+  // bewegungNachBild() im Panel.
+  const bilder = [m.flach, m.light, m.dark]
+    .map((ebene) => ebene["lovelace-background"])
+    .filter((wert) => typeof wert === "string" && wert.trim());
+  return {
+    modell: m,
+    werte: w.leseBewegung(m.flach[`uix-${w.HINTERGRUND_ZIEL}`]) ?? { ...BEWEGUNG_AUS },
+    punktebild: bilder.length > 0 && bilder.every(w.istPunkteBild),
+  };
+}
+
+// Der neue Text der Datei mit diesen vier Werten. Geaendert wird nur der eine
+// Block; alles andere geht durch leseTheme und schreibeTheme, wie es das Panel
+// auch taete.
+//
+//   zurueck  { grund, detail }   wie oben
+//            { yaml, werte }     werte sind die, die wirklich geschrieben wurden
+export function schreibeBewegungInDatei(text, themeName, werte, w) {
+  const stand = leseBewegungAusDatei(text, themeName, w);
+  if (stand.grund) return stand;
+  const vorlage = w.bewegung(werte, { punkte: stand.punktebild });
+  // Alles auf null heisst: der Block geht ganz. Ein leerer bliebe als Ballast
+  // in der Datei, und UIX legte dafuer trotzdem einen Knoten an.
+  if (vorlage) w.vorlageAn(stand.modell, vorlage);
+  else w.vorlageAus(stand.modell, { id: w.BEWEGUNG_ID, ziel: w.HINTERGRUND_ZIEL });
+  return {
+    yaml: w.schreibeTheme(stand.modell),
+    werte: vorlage ? vorlage.einstellung : { ...BEWEGUNG_AUS, weite: werte.weite ?? BEWEGUNG_AUS.weite },
+    punktebild: stand.punktebild,
+  };
+}
+
+// Der Ausschlag liegt auf einem Raster. Ein Wert aus der Datei, der daneben
+// liegt, zeigt auf die naechste Stelle.
+export function ausschlagStelle(grad) {
+  let beste = 0;
+  AUSSCHLAEGE.forEach((g, i) => {
+    if (Math.abs(g - grad) < Math.abs(AUSSCHLAEGE[beste] - grad)) beste = i;
+  });
+  return beste;
 }
 
 // ---- Vollbild ------------------------------------------------------------
@@ -712,7 +895,7 @@ const STIL_GEMEINSAM = `
   .modus[aria-disabled="true"] .wahl:hover:not([aria-pressed="true"])::before { opacity: 0; }
   .modus[aria-disabled="true"] .wahl[aria-pressed="true"] { color: var(--primary-text-color); }
 
-  .liste { display: none; }
+  .liste, .regler { display: none; }
   .leer { color: var(--secondary-text-color); font-size: var(--ha-font-size-m, 14px);
           padding: 0 var(--ha-space-2, 8px); white-space: nowrap; }
 `;
@@ -759,7 +942,7 @@ const STIL_KARTE = `
   :host([offen]) { position: relative; z-index: 4; }
   :host([offen]) ha-card { overflow: visible; }
   .pfeil { --mdc-icon-size: 16px; }
-  :host([offen]) .liste {
+  :host([offen="liste"]) .liste {
     display: flex; flex-direction: column; gap: 2px;
     position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
     inset-inline-start: 0; min-width: 200px; box-sizing: border-box;
@@ -772,6 +955,32 @@ const STIL_KARTE = `
   .liste .knopf { width: 100%; justify-content: flex-start; }
   .liste .knopf.nur-symbol { padding: 0 var(--_polster); }
   .liste .trenner { width: auto; height: 1px; margin: var(--ha-space-1, 4px) 0; }
+
+  /* Die Regler fuer die Bewegung des Hintergrunds. Der Schieber ist der des
+     Browsers, gefaerbt mit accent-color - wie die Knoepfe aus button gebaut
+     sind statt aus einem Bauteil, das vielleicht nicht angemeldet ist. */
+  :host([offen="bewegung"]) .regler {
+    display: flex; flex-direction: column; gap: var(--ha-space-2, 8px);
+    position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
+    width: min(340px, 100%); box-sizing: border-box; padding: var(--ha-space-3, 12px);
+    border-radius: var(--ha-card-border-radius, 12px);
+    background: var(--card-background-color);
+    border: 1px solid var(--divider-color);
+    box-shadow: var(--ha-card-box-shadow, none);
+    color: var(--primary-text-color); font-size: var(--ha-font-size-m, 14px);
+  }
+  .rtitel { font-weight: var(--ha-font-weight-medium, 500); }
+  .rzeile {
+    display: grid; grid-template-columns: 6.5em 1fr 5.5em;
+    align-items: center; gap: var(--ha-space-2, 8px);
+  }
+  .rzeile input { width: 100%; margin: 0; accent-color: var(--primary-color); }
+  .rzeile:has(input:disabled) { color: var(--disabled-text-color); }
+  .rwert, .rstatus {
+    color: var(--secondary-text-color); font-size: var(--ha-font-size-s, 12px);
+  }
+  .rwert { text-align: end; white-space: nowrap; }
+  .rstatus:empty { display: none; }
 `;
 
 // Das Badge. Die Flaeche zeichnet ha-badge selbst - Hoehe, Rundung, Rand,
@@ -822,8 +1031,12 @@ class Steuerung extends Basis {
     this._beiAdresse = () => this._zeichne();
     // Abfangend, damit auch eine Karte, die das Ereignis stoppt, die Liste
     // schliesst.
-    this._beiAussen = (ev) => { if (!ev.composedPath().includes(this)) this._listeZu(); };
-    this._beiTaste = (ev) => { if (ev.key === "Escape") this._listeZu(); };
+    this._beiAussen = (ev) => { if (!ev.composedPath().includes(this)) this._zu(); };
+    this._beiTaste = (ev) => { if (ev.key === "Escape") this._zu(); };
+    // Waehrend des Ziehens nur die Anzeige, geschrieben wird beim Loslassen:
+    // Jedes Schreiben ist eine Datei und ein Neuladen aller Themes.
+    this.shadowRoot.addEventListener("input", (ev) => this._beiRegler(ev, false));
+    this.shadowRoot.addEventListener("change", (ev) => this._beiRegler(ev, true));
   }
 
   // Drei Dinge haengen ausserhalb der Leiste und halten sie fest: die
@@ -868,7 +1081,7 @@ class Steuerung extends Basis {
     this._beobachter = null;
     this._knopfbeobachter?.disconnect();
     this._knopfbeobachter = null;
-    this._listeZu();
+    this._zu();
   }
 
   setConfig(config) {
@@ -916,7 +1129,7 @@ class Steuerung extends Basis {
   _baue(spr) {
     const t = TEXTE[spr];
     const c = this._config;
-    this._listeZu();
+    this._zu();
     this.shadowRoot.innerHTML = `<style>${STIL_GEMEINSAM}${this._stil()}</style>${this._rahmen()}`;
 
     const leiste = this.shadowRoot.querySelector(".leiste");
@@ -1051,6 +1264,13 @@ class Steuerung extends Basis {
         continue;
       }
 
+      if (k.function === "motion") {
+        this._beschrifte(e, k.icon || SYMBOL.bewegung, k.name, t.bewegung);
+        e.setAttribute("aria-haspopup", "true");
+        e.setAttribute("aria-expanded", String(this.getAttribute("offen") === "bewegung"));
+        continue;
+      }
+
       if (k.function === "weather") {
         const w = wetterText(hass, k);
         e._symbol.hass = hass;
@@ -1169,19 +1389,181 @@ class Steuerung extends Basis {
     this._beschrifte(b, symbol, gezeigt?.name ?? "", gezeigt?.name || t.menue);
   }
 
-  _listeAuf() {
-    this.setAttribute("offen", "");
-    this._menueknopf?.setAttribute("aria-expanded", "true");
+  // Unter der Leiste kann zweierlei aufklappen: die Liste der Ziele und die
+  // Regler der Bewegung. Nie beides - das Attribut traegt, was offen ist.
+  _oeffne(was) {
+    this._zu();
+    this.setAttribute("offen", was);
+    if (was === "liste") this._menueknopf?.setAttribute("aria-expanded", "true");
     document.addEventListener("click", this._beiAussen, true);
     document.addEventListener("keydown", this._beiTaste);
   }
 
-  _listeZu() {
+  _zu() {
     if (!this.hasAttribute?.("offen")) return;
     this.removeAttribute("offen");
     this._menueknopf?.setAttribute("aria-expanded", "false");
     document.removeEventListener("click", this._beiAussen, true);
     document.removeEventListener("keydown", this._beiTaste);
+  }
+
+  // ---- Die Regler der Bewegung ----
+
+  async _reglerAuf(knopf) {
+    const feld = this.shadowRoot.querySelector(".regler");
+    if (!feld) return;
+    const t = TEXTE[sprache(this._hass)];
+    this._oeffne("bewegung");
+    this._bewegung = null;
+    this._reglerMeldung(t.laedt);
+    // Unter den Knopf, aber nie ueber den Rand der Leiste hinaus.
+    const platz = feld.parentElement.clientWidth - feld.offsetWidth;
+    const links = knopf._inListe ? 0 : knopf.offsetLeft;
+    feld.style.insetInlineStart = `${Math.max(0, Math.min(links, platz))}px`;
+
+    let stand;
+    try {
+      stand = await this._bewegungLesen();
+    } catch (fehler) {
+      stand = { grund: "unlesbar", detail: fehler?.message || fehler?.code || String(fehler) };
+    }
+    // Inzwischen wieder geschlossen? Dann nichts mehr hineinzeichnen.
+    if (this.getAttribute("offen") !== "bewegung") return;
+    if (stand.grund) {
+      this._reglerMeldung(t.grund[stand.grund](stand.detail));
+      return;
+    }
+    this._bewegung = { ...stand.werte };
+    this._punktebild = stand.punktebild;
+    this._reglerBaue(t);
+  }
+
+  // Wer nicht schreiben darf oder wessen Theme keine Datei hat, erfaehrt es,
+  // BEVOR er an einem Regler zieht - nicht erst beim Speichern.
+  async _bewegungLesen() {
+    const hass = this._hass;
+    if (!hass.user?.is_admin) return { grund: "admin" };
+    const name = hass.themes?.theme;
+    // Dieselbe Regel wie auf dem Server (ws_load_theme_file).
+    if (!name || name === "default" || !/^[A-Za-z0-9_-]{1,64}$/.test(name)) {
+      return { grund: "ohneDatei", detail: name || "default" };
+    }
+    this._w = await ladeWerkzeug();
+    let text;
+    try {
+      text = (await hass.connection.sendMessagePromise({
+        type: "hats/load_theme_file", filename: `${name}.yaml` })).content;
+    } catch {
+      return { grund: "ohneDatei", detail: name };
+    }
+    return leseBewegungAusDatei(text, name, this._w);
+  }
+
+  _reglerMeldung(text) {
+    const feld = this.shadowRoot.querySelector(".regler");
+    const titel = neu("div", "rtitel");
+    titel.textContent = TEXTE[sprache(this._hass)].bewegung;
+    const meldung = neu("div", "rstatus");
+    meldung.textContent = text;
+    feld.replaceChildren(titel, meldung);
+  }
+
+  _reglerStatus(text) {
+    const status = this.shadowRoot.querySelector(".regler .rstatus");
+    if (status) status.textContent = text;
+  }
+
+  _reglerBaue(t) {
+    const feld = this.shadowRoot.querySelector(".regler");
+    const titel = neu("div", "rtitel");
+    titel.textContent = t.bewegung;
+    const zeilen = ["drift", "punkte", "farbe", "weite"].map((was) => {
+      const zeile = neu("label", "rzeile");
+      const name = neu("span", "rname");
+      name.textContent = t.regler[was];
+      const regler = neu("input");
+      regler.type = "range";
+      regler.min = "0";
+      regler.step = "1";
+      regler.max = String(was === "weite" ? AUSSCHLAEGE.length - 1 : (this._w.BEWEGUNG_STUFEN ?? 10));
+      regler.dataset.was = was;
+      zeile.append(name, regler, neu("span", "rwert"));
+      return zeile;
+    });
+    feld.replaceChildren(titel, ...zeilen, neu("div", "rstatus"));
+    this._reglerStelle(t);
+  }
+
+  // Die Sperren sind die des Panels: Punkte nur auf einem Punktebild, der
+  // Ausschlag nur mit Farbwechsel. Gesperrt heisst auch hier leiser, mit dem
+  // Grund als title - und die Dauer daneben sagt, was die Stufe bedeutet.
+  _reglerStelle(t) {
+    const b = this._bewegung;
+    const dauer = { drift: this._w.driftDauer, punkte: this._w.punkteDauer, farbe: this._w.farbDauer };
+    for (const regler of this.shadowRoot.querySelectorAll(".regler input")) {
+      const was = regler.dataset.was;
+      const zeile = regler.parentElement;
+      const wert = zeile.querySelector(".rwert");
+      if (was === "weite") {
+        const stelle = ausschlagStelle(b.weite);
+        regler.value = String(stelle);
+        regler.disabled = !b.farbe;
+        wert.textContent = AUSSCHLAEGE[stelle] === 360 ? t.kreis : `${AUSSCHLAEGE[stelle]}°`;
+        zeile.title = b.farbe ? "" : t.weiteNur;
+      } else {
+        regler.value = String(b[was]);
+        regler.disabled = was === "punkte" && !this._punktebild;
+        wert.textContent = b[was] ? `${b[was]} · ${dauer[was](b[was])} s` : t.aus;
+        zeile.title = regler.disabled ? t.punkteNur : "";
+      }
+    }
+  }
+
+  _beiRegler(ev, losgelassen) {
+    const regler = ev.target;
+    const was = regler?.dataset?.was;
+    if (!was || !this._bewegung) return;
+    this._bewegung[was] = was === "weite" ? AUSSCHLAEGE[Number(regler.value)] : Number(regler.value);
+    this._reglerStelle(TEXTE[sprache(this._hass)]);
+    if (losgelassen) this._bewegungSpeichern();
+  }
+
+  // Ein Speichern nach dem anderen. Kommt waehrenddessen ein neuer Wert,
+  // laeuft danach genau EIN weiteres - mit dem letzten Stand, nicht mit jedem
+  // Zwischenschritt.
+  async _bewegungSpeichern() {
+    if (this._speichert) { this._nochmal = true; return; }
+    this._speichert = true;
+    const t = TEXTE[sprache(this._hass)];
+    try {
+      do {
+        this._nochmal = false;
+        this._reglerStatus(t.speichert);
+        const hass = this._hass;
+        const name = hass.themes.theme;
+        // Frisch gelesen, jedes Mal: Was das Panel oder ein zweiter Browser
+        // inzwischen gespeichert hat, soll mit.
+        const text = (await hass.connection.sendMessagePromise({
+          type: "hats/load_theme_file", filename: `${name}.yaml` })).content;
+        const stand = schreibeBewegungInDatei(text, name, this._bewegung, this._w);
+        if (stand.grund) {
+          this._reglerStatus(t.grund[stand.grund](stand.detail));
+          return;
+        }
+        if (stand.yaml !== text) {
+          await hass.connection.sendMessagePromise({
+            type: "hats/save_theme", name, yaml: stand.yaml, overwrite: true });
+          await hass.callService("frontend", "reload_themes");
+        }
+        this._reglerStatus(t.gespeichert(name));
+      } while (this._nochmal);
+    } catch (fehler) {
+      // Der Server prueft mit PyYAML, bevor er schreibt. Seine Meldung
+      // woertlich - umschrieben waere sie nicht mehr nachschlagbar.
+      this._reglerStatus(`${t.nichtGespeichert}: ${fehler?.message || fehler?.code || fehler}`);
+    } finally {
+      this._speichert = false;
+    }
   }
 
   _klick(ev) {
@@ -1203,8 +1585,8 @@ class Steuerung extends Basis {
     }
 
     if (knopf === this._menueknopf) {
-      if (this.hasAttribute("offen")) this._listeZu();
-      else this._listeAuf();
+      if (this.getAttribute("offen") === "liste") this._zu();
+      else this._oeffne("liste");
       return;
     }
 
@@ -1222,6 +1604,11 @@ class Steuerung extends Basis {
       }
       return;
     }
+    if (k.function === "motion") {
+      if (this.getAttribute("offen") === "bewegung") this._zu();
+      else this._reglerAuf(knopf);
+      return;
+    }
     if (k.function === "weather") {
       // Ein Tippen oeffnet, was hinter dem Wert steht. Die Kapsel wandert
       // nicht dorthin: Der Knopf zeigt etwas, er fuehrt nirgends hin.
@@ -1231,7 +1618,7 @@ class Steuerung extends Basis {
     }
 
     // Ein Tippen in der Liste hat getan, wofuer es da war.
-    if (knopf._inListe) this._listeZu();
+    if (knopf._inListe) this._zu();
     // Die Kapsel wandert VOR der Navigation los, nicht erst, wenn die neue
     // Ansicht gezeichnet ist. Ein Schalter laesst sie, wo sie ist.
     if (!k.entity && knopfPfad(k)) {
@@ -1312,7 +1699,7 @@ class HatsControlCard extends Steuerung {
   _gruppenstrich() { return false; }
   _rahmen() {
     return `<ha-card><div class="leiste"><div class="reihe"><div class="kapsel"></div></div>`
-      + `<div class="liste"></div></div></ha-card>`;
+      + `<div class="liste"></div><div class="regler" role="group"></div></div></ha-card>`;
   }
 
   getCardSize() { return 1; }
@@ -1346,13 +1733,7 @@ class HatsControlBadge extends Steuerung {
     };
   }
 
-  // Das Badge liest NUR die Kurzform. `buttons` ist hier ein Fehler und kein
-  // stilles Nichts: Ein Feld, das angenommen und nie gelesen wird, sieht aus
-  // wie eine Karte, die nicht tut, was man eingestellt hat.
-  _liesConfig(config) {
-    if (config?.buttons !== undefined) throw new Error(TEXTE[sprache()].nurKurzform);
-    return pruefeConfig({ controls: config?.controls, kiosk_only: config?.kiosk_only });
-  }
+  _liesConfig(config) { return pruefeConfig(badgeKurzform(config)); }
   _stil() { return STIL_BADGE; }
   _einklappbar() { return false; }
   // Zwischen der Modus-Gruppe und einem Knopf daneben steht im Badge von

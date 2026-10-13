@@ -84,7 +84,7 @@ Without `buttons` it shows mode and fullscreen — the short form:
 | `tap_action` | any Home Assistant action; it wins over `link` and over toggling |
 | `state_background` | default `true`: a button that is on is filled |
 | `light_background` | default `true`: in the lamp's colour, otherwise in Home Assistant's state colour |
-| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather` |
+| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion` |
 | `temperature`, `temperature_source` | `weather` only: a sensor of your own, and whether the value comes from it (`sensor`) or from the weather entity (`weather`) |
 | `align_end`, `separator_before` | at the end of the bar; a thin line before it |
 
@@ -109,6 +109,16 @@ by hand; the log shows the line.
 | `show_highlight` | `true` | the pill on the current view |
 | `kiosk_only` | `false` | `true`: fullscreen in Home Assistant only, the browser window stays |
 | `controls` | `[mode, fullscreen]` | the short form, when there are no `buttons` |
+
+**The background motion** is set by a button with `function: motion`. It
+opens four sliders — drift, colour dots, colour shift and range:
+
+![The sliders for the background motion](docs/bilder/steuerleiste-bewegung.jpg)
+
+The values are permanent: on release the card writes them into the file of the
+active theme, using the same functions as the panel. This works for
+administrators only, and only for a theme created with HATS; otherwise the
+slider says why not.
 
 The editor lets you add, sort and edit the buttons:
 

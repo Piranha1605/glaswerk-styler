@@ -904,7 +904,7 @@ buttons:
     link: /dashboard-home
   - entity: light.kueche          # ein Schalter - leuchtet, solange sie an ist
     align_end: true
-  - function: weather             # mode | theme | fullscreen | weather
+  - function: weather             # mode | theme | fullscreen | weather | motion
     entity: weather.forecast_home
     align_end: true
 collapse: narrow                  # never | narrow | always
@@ -1209,6 +1209,85 @@ die neue zu ersetzen, nicht beide zu betreiben.
 `tests/hats-steuerleiste.test.js` trägt die Erwartungen aus den Tests der
 Menüleiste (`ha-karten`, `helpers.test.js`) als Maßstab: 21 Prüfungen, darunter
 die Leiste des Nutzers mit dem richtigen Knopf auf jeder Ansicht.
+
+### Der Regler für die Bewegung: die Karte schreibt eine Theme
+
+Auf Ansage vom 13.10.2026, weitergegeben von „HATS Aufbau": *„das geben wir an
+die theme steuerungskarte weiter. die soll dafuer gleich ein slider dafuer
+einbauen."* Auf die Frage, ob der Wert dauerhaft gelten soll oder nur bis zum
+Neuladen: *„soll dauerhaft gelten."*
+
+```yaml
+  - function: motion        # ein Knopf, der vier Regler aufklappt
+    align_end: true
+```
+
+Treiben, Farbpunkte, Farbwechsel (je 0 bis 10) und der Ausschlag auf dem Raster
+des Panels, mit der Dauer daneben. Geschrieben wird beim **Loslassen** — jedes
+Schreiben ist eine Datei und ein Neuladen aller Themes.
+
+**Dauerhaft heißt: in der Theme-Datei.** Die Bewegung steht als CSS im Stilziel
+`uix-root`, und die Steuerkarte ist damit das erste Bauteil außerhalb des
+Panels, das eine Theme schreibt. Drei Regeln, damit das nichts kostet:
+
+1. **Mit dem Code des Panels, nicht mit einem zweiten.** Die Karte lädt
+   `theme.js` und `hintergrund.js` nach — erst wenn jemand den Regler öffnet,
+   und relativ zu sich selbst (seit 0.2.0b5 steht die Prüfsumme im Pfad, die
+   Nachbarn liegen unter derselben Summe). Sie ruft `leseTheme`,
+   `leseBewegung`, `bewegung`, `vorlageAn`/`vorlageAus`, `schreibeTheme`. In
+   der Datei steht dann der Block, den das Panel schriebe, und das Panel liest
+   ihn wieder.
+2. **Lesen direkt vor jedem Schreiben.** Die Karte hält kein Modell. Jedes
+   Speichern holt die Datei neu und ändert nur den Block
+   `hintergrund-bewegung`.
+3. **Nur schreiben, wenn nichts verloren gehen kann.** Abgewiesen wird, mit dem
+   Grund im Regler: kein Administrator; keine Datei `<name>.yaml` zur
+   wirksamen Theme; ein anderer Theme-Name in der Datei; Zeilen, die
+   `leseTheme` nicht einordnen kann; kein „Erzeugt mit HATS" im Kopf.
+
+Gemessen an der Testmaschine, an der wirksamen Theme `macos`, mit einer zweiten
+Verbindung als Gegenprobe:
+
+    Regler öffnen        liest 5 / 4 / 7 / 40° - in der Datei 12 s, 60 s, 43 s
+    Farbwechsel 7 -> 8   gespeichert nach 0,1 s
+    in der Datei         EINE Zeile anders: 43s -> 38s, außerhalb des Blocks nichts
+    auf der Seite        hui-view-background läuft mit 38s
+    zurück auf 7         die Datei ist Byte für Byte die von vorher
+
+**Die Falle beim Messen:** Anderthalb Sekunden nach dem Speichern stand die
+laufende Animation noch auf 43 s, und es sah aus, als käme nichts an. Der
+Browser-Bereich war verdeckt (`document.visibilityState` „hidden") und
+zeichnete nicht; nach dem nächsten Bildschirmfoto standen Theme-Objekt,
+UIX-Knoten und Animation auf 38 s. Die Datei auf dem Server sagt, ob
+geschrieben wurde — die Seite sagt es erst, wenn sie gezeichnet hat.
+
+**Was die Karte nicht lösen kann:** Hat das Panel dieselbe Theme offen und
+speichert später, gewinnt sein Stand; es weiß nicht, dass die Datei sich
+geändert hat. Das Fenster ist klein, zu ist es nicht. Eine Sperre dafür
+gehört ins Panel.
+
+**Nicht gemessen:** die Sperre für Nicht-Administratoren (auf der Testmaschine
+gibt es nur einen Nutzer) und eine Theme ohne Datei. Die Gründe selbst sind
+geprüft, `tests/hats-steuerkarte-bewegung.test.js` — elf Prüfungen mit den
+echten Modulen und der echten Theme, fünf Mutationen gegengeprüft, und am Ende
+PyYAML: Was die Karte schreibt, liest Home Assistant.
+
+**Nur in der Karte.** Das Badge bleibt, wie es ist.
+
+### Ein Badge mit Fehlermeldung, von mir verursacht
+
+Beim Zusammenfügen legte der Kartenwähler dem Badge eine knappe Stunde lang
+`buttons: [{function: mode}, {function: fullscreen}]` an statt `controls`. Der
+Maintainer hat in der Zeit ein Badge angelegt. Mit „die Badges bleiben, wie
+sie sind" wies das Badge `buttons` dann ab — und bei ihm stand eine
+Fehlermeldung, wo sein Badge gewesen war. Gefunden habe ich es zufällig, beim
+Messen des Reglers, nicht durch einen Test.
+
+`badgeKurzform()` liest genau diese Form jetzt als Kurzform; alles andere in
+`buttons` bleibt ein Fehler. Der Test dazu trägt die Konfiguration wörtlich
+vom Server. **Die Lehre:** Wer ein Feld verbietet, das er eben noch selbst
+geschrieben hat, sieht vorher nach, was damit schon gespeichert wurde —
+`lovelace/config` kostet eine Zeile.
 
 ### Die kleine Form: das Badge
 

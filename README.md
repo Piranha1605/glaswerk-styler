@@ -86,7 +86,7 @@ Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form:
 | `tap_action` | jede Aktion von Home Assistant; sie schlägt `link` und das Umschalten |
 | `state_background` | Vorgabe `true`: ein eingeschalteter Knopf wird gefüllt |
 | `light_background` | Vorgabe `true`: in der Farbe der Lampe, sonst in Home Assistants Zustandsfarbe |
-| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather` |
+| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion` |
 | `temperature`, `temperature_source` | nur bei `weather`: eigener Sensor, und ob der Wert von dort (`sensor`) oder aus der Wetterentität (`weather`) kommt |
 | `align_end`, `separator_before` | ans Ende der Leiste; dünner Strich davor |
 
@@ -111,6 +111,16 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 | `show_highlight` | `true` | die Kapsel auf der aktuellen Ansicht |
 | `kiosk_only` | `false` | `true`: Vollbild nur in Home Assistant, das Browserfenster bleibt |
 | `controls` | `[mode, fullscreen]` | die kurze Form, wenn es keine `buttons` gibt |
+
+**Die Bewegung des Hintergrunds** stellt ein Knopf mit `function: motion`. Er
+klappt vier Regler auf — Treiben, Farbpunkte, Farbwechsel und Ausschlag:
+
+![Die Regler für die Bewegung des Hintergrunds](docs/bilder/steuerleiste-bewegung.jpg)
+
+Die Werte gelten dauerhaft: Die Karte schreibt sie beim Loslassen in die Datei
+der wirksamen Theme, mit denselben Funktionen wie das Panel. Das geht nur als
+Administrator und nur bei einer Theme, die mit HATS erzeugt wurde; sonst sagt
+der Regler, warum nicht.
 
 Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten:
 
