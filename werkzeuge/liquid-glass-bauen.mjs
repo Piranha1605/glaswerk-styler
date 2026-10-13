@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/hats/www/theme.js";
 import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
-import { HINTERGRUENDE } from "../custom_components/hats/www/hintergrund.js";
+import { HINTERGRUENDE, bewegung, PUNKTE_VORGABE } from "../custom_components/hats/www/hintergrund.js";
 
 // Der Hintergrund kommt aus dem Baukasten, nicht aus dieser Datei.
 //
@@ -187,6 +187,23 @@ for (const [name, wert] of Object.entries(W)) {
 // Theme.
 const NICHT_AN = ["glas-lichtkante"];
 for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
+
+// --- Die Farbpunkte bewegen sich -------------------------------------------
+//
+// Ansage des Maintainers vom 13.10.2026: "als erstes sollen die farbpunkte
+// sich leicht bewegen und die farben aendern." PUNKTE_VORGABE ist genau das,
+// was ein Neuling beim Klick auf eine der zehn Kacheln bekommt - ein Umlauf in
+// 80 Sekunden, der Farbton pendelt in 150 Sekunden um 40 Grad. Die Flaeche
+// selbst bleibt stehen: Treiben und Punkte zugleich zoege die Punkte aus ihren
+// Ecken.
+//
+// Am 14.10.2026 zuerst im Panel mit den Reglern gesetzt und gespeichert, dann
+// hier nachgezogen - und beide Dateien byteweise verglichen. Die Theme ist der
+// Nachweis, dass das Panel es kann; sie darf ihm deshalb nicht voraus sein.
+//
+// Der Block gehoert NACH die Vorlagen: vorlageAn haengt an, und die
+// Reihenfolge im Stilziel entscheidet ueber die Kaskade.
+vorlageAn(m, bewegung(PUNKTE_VORGABE, { punkte: true }));
 
 // --- Der Kopf -------------------------------------------------------------
 //

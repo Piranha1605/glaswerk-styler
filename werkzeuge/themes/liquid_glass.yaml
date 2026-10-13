@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 22:49:44
+# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 22:56:18
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -735,6 +735,31 @@ liquid_glass:
       border-bottom: 1px solid rgba(255, 255, 255, .16);
     }
     /* HATS:glas-kopfleiste:ENDE */
+    /* HATS:hintergrund-bewegung:START */
+    /* Treiben und Farbwechsel bewegen die Flaeche selbst, mit transform und
+       filter - beides rechnet die Grafikkarte, ohne dass neu gemalt wird. */
+    hui-view-background {
+      animation: hats-hintergrund-farbe 150s ease-in-out infinite alternate, hats-hintergrund-punkte 80s steps(200) infinite;
+      will-change: filter;
+    }
+    /* Die Farbpunkte, jeder auf seinem eigenen Weg - in Schritten, zehnmal je
+       Sekunde. Jeder Schritt malt die Flaeche neu, und jede Glaskarte darueber
+       zeichnet mit; bei wenigen Pixeln in der Sekunde sieht man den Takt nicht. */
+    @keyframes hats-hintergrund-punkte {
+      0%, 100% { background-position: left -413px top -310px, right -344px top -199px, right -123px bottom -270px, left -139px bottom -101px, 0 0; }
+      25% { background-position: left -377px top -288px, right -314px top -169px, right -99px bottom -234px, left -105px bottom -81px, 0 0; }
+      50% { background-position: left -395px top -262px, right -292px top -191px, right -135px bottom -218px, left -87px bottom -111px, 0 0; }
+      75% { background-position: left -427px top -284px, right -324px top -217px, right -153px bottom -250px, left -119px bottom -131px, 0 0; }
+    }
+    @keyframes hats-hintergrund-farbe {
+      from { filter: hue-rotate(-20deg); }
+      to { filter: hue-rotate(20deg); }
+    }
+    /* Wer am Geraet "Bewegung reduzieren" eingestellt hat, bekommt keine. */
+    @media (prefers-reduced-motion: reduce) {
+      hui-view-background { animation: none !important; }
+    }
+    /* HATS:hintergrund-bewegung:ENDE */
   uix-sidebar: |-
     /* HATS:glas-seitenleiste:START */
     /* Die Flaechenfarbe kommt aus dem Theme-Feld sidebar-background-color.
