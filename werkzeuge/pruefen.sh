@@ -65,14 +65,32 @@ done
 
 echo
 echo "== Versionen =="
-# Die Nummer steht an drei Stellen und muss ueberall gleich sein.
+# Die Nummer steht an VIER Stellen. Dieser Pruefer kannte am 13.10.2026 nur
+# drei und meldete gruen, waehrend HATS_VERSION im Panel noch auf der alten
+# stand - genau die Sorte Fehler, gegen die er gebaut ist. Gefunden hat es
+# tests/hats-version.test.js, nicht dieses Skript.
 v_const=$(grep -oE 'VERSION = "([^"]+)"' custom_components/hats/const.py | cut -d'"' -f2)
 v_modul=$(grep -oE 'hats-panel\.js\?v=([^"]+)' custom_components/hats/const.py | cut -d= -f2)
 v_mani=$(python3 -c "import json;print(json.load(open('custom_components/hats/manifest.json')).get('version',''))")
-if [ -n "$v_const" ] && [ "$v_const" = "$v_modul" ] && [ "$v_const" = "$v_mani" ]; then
-  ok "ueberall $v_const"
+v_panel=$(grep -oE '^const HATS_VERSION = "([^"]+)"' custom_components/hats/www/hats-panel.js | cut -d'"' -f2)
+if [ -n "$v_const" ] && [ "$v_const" = "$v_modul" ] && [ "$v_const" = "$v_mani" ] && [ "$v_const" = "$v_panel" ]; then
+  ok "ueberall $v_const (vier Stellen)"
 else
-  fehl "const.py=$v_const  FRONTEND_MODULE=$v_modul  manifest=$v_mani"
+  fehl "const.py=$v_const  FRONTEND_MODULE=$v_modul  manifest=$v_mani  Panel=$v_panel"
+fi
+
+# Steht die Nummer noch auf dem Stand von vor zig Aenderungen? Die
+# Pruefsumme in der Adresse faengt das meistens ab - aber nur, wenn die
+# Integration auch neu geladen wurde. Die Nummer ist der Hebel, der
+# unabhaengig davon greift. Am 13.10.2026 standen 28 Commits dazwischen.
+letzte=$(git log --format=%H -1 -S"VERSION = \"$v_const\"" -- custom_components/hats/const.py 2>/dev/null)
+if [ -n "$letzte" ]; then
+  seitdem=$(git log --oneline "$letzte..HEAD" -- custom_components/hats/www custom_components/hats/*.py 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${seitdem:-0}" -gt 12 ]; then
+    printf "  \033[33mhinweis\033[0m  %s Commits seit dem letzten Versionssprung - Zeit fuer eine neue Nummer\n" "$seitdem"
+  else
+    ok "$seitdem Commits seit dem Versionssprung"
+  fi
 fi
 
 echo

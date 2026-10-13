@@ -25,7 +25,7 @@ import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
 import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 
-const HATS_VERSION = "0.2.0b1";
+const HATS_VERSION = "0.2.0b2";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1
