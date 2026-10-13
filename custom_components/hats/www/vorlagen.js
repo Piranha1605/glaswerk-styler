@@ -152,12 +152,18 @@ ha-card {
   /* Die Lichtkante steckt IM Schatten, nicht in --bubble-border.
      --bubble-border ist ein echtes border und verschiebt das Layout um seine
      Breite - bei einer 56px hohen Bubble-Zeile sieht man das sofort. Ein
-     inset-Schatten liegt dagegen in der Flaeche. */
+     inset-Schatten liegt dagegen in der Flaeche.
+
+     Die Kanten kommen aus --ha-card-box-shadow, nicht als feste Werte hierher.
+     Hier standen bis zum 13.10.2026 rgba(255,255,255,.6) und
+     rgba(10,20,45,.08) - Hell-Werte. Ein uix-Feld gilt aber fuer Hell und
+     Dunkel zugleich, und im Dunkelmodus war die obere Kante damit ein greller
+     Strich und die untere unsichtbar. Das Theme-Feld traegt je Modus die
+     richtigen vier Schatten; Bubble bekommt damit genau das Bild der
+     HA-Karten. */
   --bubble-border: none;
-  --bubble-box-shadow:
-    inset 0 1.5px 0 0 rgba(255, 255, 255, .6),
-    inset 0 -1.5px 0 0 rgba(10, 20, 45, .08),
-    var(--ha-card-box-shadow, 0 10px 30px rgba(22, 40, 78, .14));
+  --bubble-box-shadow: var(--ha-card-box-shadow,
+    0 10px 30px rgba(22, 40, 78, .14));
 }
 
 /* Die Weichzeichnung auf den Container, nicht auf den Wirt. */
@@ -353,6 +359,53 @@ ha-card {
 
   // -------------------------------------------------------------------------
   {
+    id: "abschnitte-trennen",
+    gruppe: "sync",
+    ziel: "grid-section",
+    de: "Abschnitte mit einer Linie trennen",
+    en: "Separate sections with a line",
+    zweckDe: "Zieht eine feine Linie ueber jeden Abschnitt eines Sections-Dashboards, damit die Reihen optisch auseinandergehen.",
+    zweckEn: "Draws a thin line above each section of a sections dashboard so the rows read as separate blocks.",
+    css: `/* Auf einem Sections-Dashboard stehen die Abschnitte in einem Raster und
+   brechen um. Wo zwei Reihen aufeinandertreffen, laeuft der letzte Inhalt der
+   oberen direkt in die Ueberschrift der unteren - gemeldet am 13.10.2026:
+   "kannst du hier eine trennlienie ziehen das die reihen optisch getrennt
+   sind."
+
+   Als ::before, nicht als border-top: Ein echtes border verschiebt den
+   Abschnitt um seine Breite nach unten, und bei sechs Abschnitten summiert
+   sich das sichtbar. Ein absolut gesetztes ::before liegt ausserhalb des
+   Flusses und kostet keinen Platz.
+
+   :host steht im Normalfall auf position: static - an der laufenden Instanz
+   nachgemessen. Ohne das relative Hostelement bezoege sich das ::before auf
+   das naechste positionierte Element weiter oben und liefe quer ueber die
+   Seite.
+
+   JEDER Abschnitt bekommt die Linie, auch der erste. Eine Ausnahme fuer den
+   ersten geht nicht: Jede hui-grid-section ist das einzige Kind ihrer eigenen
+   hui-section, :first-of-type trifft also auf alle zu. Ueber der ersten Reihe
+   steht die Linie unter der Kopfleiste und liest sich dort als Abschluss. */
+:host {
+  position: relative;
+}
+
+:host::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: -14px;
+  height: 1px;
+  /* Dieselbe Farbe wie jede andere Trennlinie in Home Assistant, und je Modus
+     im Theme gesetzt - im Hellen dunkel, im Dunkeln hell. */
+  background: var(--divider-color);
+  /* Die Linie liegt ueber der Flaeche und darf keine Klicks abfangen. */
+  pointer-events: none;
+}`,
+  },
+
+  // -------------------------------------------------------------------------
+  {
     id: "sync-bedienelemente",
     gruppe: "sync",
     ziel: "card",
@@ -486,15 +539,51 @@ ha-tile-icon {
    ha-list-nav. Die drei alten bleiben als zusaetzliche Selektoren stehen: Wer
    eine aeltere HA faehrt, braucht sie, und eine tote Zeile kostet nichts.
 
-   Nur ein INNERER Schatten. Ein Aussenschatten wird von der Liste
-   abgeschnitten und steht dann als dunkles Rechteck um die runde Pille. */
+   DIE FLAECHE LIEGT IM ::before, NICHT AM ELEMENT. Gemeldet am 13.10.2026,
+   der Eintrag sah aus wie ein abgeschnittener Rahmen. Gemessen:
+
+       Element      background rgba(0,0,0,0)   border-radius 999px
+       ::before     background --sidebar-selected-icon-color
+                    border-radius var(--ha-border-radius-sm)   also 4px
+                    opacity      var(--dark-divider-opacity)   also .12
+
+   Das Element nur zu runden rundet also nichts Sichtbares: Die runde Linie
+   kam vom inset-Schatten und gehoerte zu einer Flaeche, die darunter als
+   4px-Rechteck mit 12 Prozent Deckkraft lag. Die Rundung muss ans ::before. */
 ha-list-item-button.selected,
 .selected,
 .iron-selected,
 a[role="option"][aria-selected="true"],
 ha-md-list-item[selected] {
   border-radius: 999px !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+  /* Nur ein INNERER Schatten. Ein Aussenschatten wird von ha-list-nav
+     abgeschnitten (overflow: hidden auto) und steht dann als dunkles Rechteck
+     um die runde Pille. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+}
+
+/* Die Flaeche selbst: rund, in der Akzentfarbe, voll deckend.
+
+   opacity bleibt bei 1 statt bei HAs .12 - sonst traegt die Pille keine
+   Farbe, und genau das war der gemeldete Fehler. Die Akzentfarbe ist je Modus
+   im Theme gesetzt, der Block gilt also fuer beide. */
+ha-list-item-button.selected::before,
+.selected::before {
+  border-radius: 999px !important;
+  background-color: var(--accent-color) !important;
+  opacity: 1 !important;
+}
+
+/* Schrift und Symbol auf der Akzentflaeche. HA faerbt beide mit
+   --sidebar-selected-icon-color, und das ist jetzt die FLAECHE - ohne diesen
+   Block stuende der Text in seiner eigenen Hintergrundfarbe.
+
+   --text-accent-color ist HAs Name fuer "Schrift auf einer Akzentflaeche";
+   faellt sie aus, traegt --text-primary-color. */
+ha-list-item-button.selected::part(headline),
+ha-list-item-button.selected ha-svg-icon[slot="start"],
+ha-list-item-button.selected ha-icon[slot="start"] {
+  color: var(--text-accent-color, var(--text-primary-color)) !important;
 }`,
   },
 

@@ -6,7 +6,8 @@
 //   Alles       eine Karte je Kartentyp, als Flaeche fuer Vorlagen
 //
 // Idempotent: Ein zweiter Lauf erzeugt kein zweites Dashboard und keine
-// zweite Ansicht.
+// zweite Ansicht. Und er fasst NUR seine eigenen Ansichten an - die Ansicht
+// "Eigene" und alles, was sonst noch dazukommt, bleibt woertlich stehen.
 //
 // Die Entitaeten kommen aus der Demo-Integration und sind auf der
 // Testmaschine schaltbar - anders als im Haus, wo nur Zuchtbecken und
@@ -114,11 +115,35 @@ try {
     console.log("Dashboard gibt es schon:", URL_PFAD);
   }
 
-  // Vorhandene Ansichten behalten, eigene ersetzen - idempotent.
+  // DIESES SKRIPT ERSETZT NUR SEINE EIGENEN ANSICHTEN.
+  //
+  // Alles andere bleibt woertlich stehen - wer eine Karte auf einer eigenen
+  // Ansicht ablegt, findet sie nach dem naechsten Lauf unveraendert wieder.
+  // Ohne diese Trennung waere jeder Lauf ein stiller Datenverlust, und genau
+  // das ist am 13.10.2026 an anderer Stelle schon einmal passiert.
+  const MEINE = ["vergleich", "alles"];
+
   let alt = { views: [] };
   try { alt = await ha.ruf({ type: "lovelace/config", url_path: URL_PFAD, force: true }); } catch { /* noch leer */ }
-  const fremd = (alt.views || []).filter((v) => !["vergleich", "alles"].includes(v.path));
-  const config = { views: [...fremd, vergleich, alles] };
+  const fremd = (alt.views || []).filter((v) => !MEINE.includes(v.path));
+
+  // Eine leere Ansicht zum Selberbauen, einmalig angelegt und nie wieder
+  // angefasst. Sie steht hinten, damit die Vergleichsansicht vorn bleibt.
+  const hatEigene = fremd.some((v) => v.path === "eigene");
+  const eigene = hatEigene ? [] : [{
+    title: "Eigene", path: "eigene", icon: "mdi:plus-box",
+    type: "sections", max_columns: 3,
+    sections: [{ type: "grid", cards: [
+      { type: "heading", heading: "Zum Selberbauen", heading_style: "title", icon: "mdi:hammer-wrench" },
+      { type: "markdown", content:
+        "Diese Ansicht gehoert dir. `dashboard-bauen.mjs` fasst sie **nie** an " +
+        "- Karten hier bleiben erhalten, auch wenn das Skript wieder laeuft.\n\n" +
+        "Die Ansichten *Vergleich* und *Alles* werden dagegen bei jedem Lauf " +
+        "neu geschrieben." },
+    ] }],
+  }];
+
+  const config = { views: [...fremd, ...eigene, vergleich, alles] };
 
   await ha.ruf({ type: "lovelace/config/save", url_path: URL_PFAD, config });
 

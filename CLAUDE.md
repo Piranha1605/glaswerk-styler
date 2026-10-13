@@ -881,6 +881,18 @@ zugriff ohne netzwerk. und unser aktiefes system hat ruhe"*
     http://localhost:8123        Home Assistant OS 18.3, HA 2026.10.1
     /Users/enricofischer/Projekte/haos-test/
 
+**Achtung bei den Ports — die beiden Instanzen machen es genau umgekehrt:**
+
+| | Adresse | warum |
+|---|---|---|
+| Testmaschine | `localhost:**8123**` | QEMU reicht Mac-8123 auf **VM-Port 80** durch |
+| Heimnetz | `192.168.178.31` (**Port 80**) | HAOS liefert dort direkt auf 80 aus |
+
+Innerhalb beider Maschinen laeuft Home Assistant auf Port 80. Die Notiz „Port
+80, nicht 8123" weiter unten gilt **nur fuer das Heimnetz**; bei der
+Testmaschine fuehrt sie in die Irre. Port 80 am Mac ist frei und soll es
+bleiben — ihn zu belegen braucht Admin-Rechte und bringt nichts.
+
 Eine QEMU-Maschine auf dem Mac, kein Container. HACS, UIX 8.4.0, Bubble Card,
 Mushroom, HATG und HATS sind installiert. Die Instanz im Heimnetz
 (`192.168.178.31`) bleibt in Ruhe und wird nur noch angefasst, wenn

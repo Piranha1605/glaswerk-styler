@@ -60,15 +60,35 @@ const W = {
   // 0.32 statt 0.42: Je weniger Eigenfarbe die Flaeche hat, desto mehr vom
   // Hintergrund kommt durch - und genau das ist der Effekt. Unter etwa 0.25
   // kippt es, dann verliert der Text seinen Grund.
-  "--ha-card-background": ["rgba(255, 255, 255, 0.32)", "rgba(22, 28, 46, 0.38)"],
-  "--ha-card-backdrop-filter": "blur(26px) saturate(190%)",
-  "--ha-card-border-radius": "24px",
+  "--ha-card-background": ["rgba(255, 255, 255, 0.42)", "rgba(22, 28, 46, 0.46)"],
+  "--ha-card-backdrop-filter": "blur(26px) saturate(180%)",
+  "--ha-card-border-radius": "20px",
   "--ha-card-border-width": "0",
-  // Zwei Schatten in einem Wert: der weiche grosse traegt die Karte, der
-  // schmale dunkle direkt darunter gibt ihr eine Kante gegen den Hintergrund.
-  // Ohne den zweiten schwimmt die Karte, ohne den ersten klebt sie.
+
+  // VIER Schatten in einem Wert, und die Reihenfolge ist keine Geschmacksfrage:
+  // zwei innere Kanten, dann zwei aeussere.
+  //
+  //   inset oben    die Lichtkante - laesst die Flaeche nach vorn treten
+  //   inset unten   die Abschlusskante nach hinten
+  //   aussen gross  traegt die Karte
+  //   aussen klein  setzt sie gegen den Hintergrund ab
+  //
+  // DIE KANTEN GEHOEREN HIERHER, NICHT IN DIE VORLAGE. Ein uix-Feld gilt fuer
+  // Hell und Dunkel zugleich; eine Kante in rgba(255,255,255,.72) ist im
+  // Hellen richtig und im Dunkeln ein greller Strich. Am 13.10.2026 gemeldet:
+  // "kannst du den karten im dunkelmodus die selbe farbe rahmen schatten und
+  // alles was dazu gehoert von der werkbank geben". Die Vorlage liest
+  // var(--ha-card-box-shadow) und bekommt damit je Modus die richtigen Werte.
+  //
+  // Die Zahlen sind die der Projektwerkbank, damit beide Oberflaechen
+  // dieselbe Sprache sprechen (--kante-hell, --kante-dunkel, --schatten).
   "--ha-card-box-shadow": [
+    "inset 0 1.5px 0 0 rgba(255, 255, 255, .72), " +
+    "inset 0 -1.5px 0 0 rgba(10, 20, 45, .1), " +
     "0 18px 46px rgba(22, 40, 78, .16), 0 2px 6px rgba(22, 40, 78, .08)",
+
+    "inset 0 1.5px 0 0 rgba(255, 255, 255, .16), " +
+    "inset 0 -1.5px 0 0 rgba(0, 0, 0, .35), " +
     "0 20px 52px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3)",
   ],
 
