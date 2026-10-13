@@ -10,6 +10,48 @@ werkzeuge/einspielen.sh www/theme.js   # nur eine
 
 ---
 
+## Zuerst: die Schleife starten, dann arbeiten
+
+**Ohne das kostet jede Aenderung einen Browser-Umweg mit Tipperei im Terminal.**
+Am 13.10.2026 so eingerichtet und gemessen: eine lokale Aenderung liegt nach
+**neun Sekunden** auf der Instanz.
+
+Zwei Dinge muessen laufen:
+
+```bash
+# 1. Auf dem Mac, einmal am Tag - liefert das Projekt ins LAN
+cd /Users/enricofischer/Projekte/ha-theme-studio && python3 -m http.server 8778 --bind 0.0.0.0
+```
+
+```
+2. Im Terminal des Studio Code Server, einmal am Tag, EINE Zeile:
+
+curl -sSf -o /config/sync-hats.sh http://192.168.178.47:8778/werkzeuge/sync-instanz.sh && chmod +x /config/sync-hats.sh && nohup /config/sync-hats.sh 192.168.178.47 > /config/sync-hats.log 2>&1 &
+```
+
+Danach holt die Instanz alle drei Sekunden, was sich geaendert hat. Die Liste
+der Dateien kommt aus `werkzeuge/sync-dateien.txt` und wird **jede Runde neu
+geholt** - eine neue Datei dort eingetragen wirkt sofort, ohne Neustart der
+Schleife.
+
+**Und der Reload entfaellt beim Entwickeln.** `/hats_static` ist mit
+`cache_headers=False` registriert; die Antwort traegt kein `Cache-Control`, nur
+ETag und Last-Modified. Ein normales Neuladen der Seite holt damit die neue
+Datei. Der Reload des Konfigurationseintrags ist nur noetig, wenn die
+**Pruefsumme in der Adresse** stimmen soll - und fuer jede Aenderung an Python.
+
+Pruefen, ob die Schleife laeuft (vom Mac aus, ohne Terminal):
+
+```bash
+echo "// probe $(date +%s)" >> custom_components/hats/www/uix.js
+sleep 9 && curl -s http://192.168.178.31/hats_static/uix.js | tail -1
+```
+
+Die Panel-Adresse ist **`http://192.168.178.31/hats`** - nicht `/hats-studio`,
+das gibt 404.
+
+---
+
 ## Die Schleife beim Entwickeln
 
 ```

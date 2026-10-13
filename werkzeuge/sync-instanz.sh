@@ -26,7 +26,12 @@ STOPP="/config/sync-hats.stop"
 # Acht Stunden bei drei Sekunden Takt. Eine Schleife ohne Ende auf einem
 # fremden System waere unhoeflich.
 MAX_LAEUFE=9600
-DATEIEN="www/hats-panel.js www/theme.js www/bedienelemente.js www/palette.js www/zuordnung.js __init__.py const.py config_flow.py manifest.json"
+# Die Liste kommt vom Entwicklungsrechner, nicht aus diesem Skript. Sonst
+# muesste die Schleife neu gestartet werden, sobald eine Datei dazukommt - und
+# genau das ist am 13.10.2026 passiert: www/uix.js stand nicht drin, die Datei
+# kam nie an, und der Fehler sah aus wie ein Fehler im Panel.
+DATEIEN_FALLBACK="www/hats-panel.js www/theme.js www/bedienelemente.js www/palette.js www/zuordnung.js www/uix.js __init__.py const.py config_flow.py manifest.json"
+LISTE="http://$IP:$PORT/werkzeuge/sync-dateien.txt"
 
 echo "$(date '+%H:%M:%S') Sync gestartet, Quelle $QUELLE"
 rm -f "$STOPP"
@@ -36,6 +41,10 @@ stumm=0
 while [ "$lauf" -lt "$MAX_LAEUFE" ]; do
   lauf=$((lauf + 1))
   [ -f "$STOPP" ] && { echo "$(date '+%H:%M:%S') Stoppdatei gefunden - Ende"; rm -f "$STOPP"; exit 0; }
+
+  # Jede Runde neu holen - so wirkt eine ergaenzte Liste sofort.
+  DATEIEN=$(curl -sSf --max-time 8 "$LISTE" 2>/dev/null | grep -v '^#' | tr '\n' ' ')
+  [ -z "$DATEIEN" ] && DATEIEN="$DATEIEN_FALLBACK"
 
   erreichbar=0
   geaendert=""

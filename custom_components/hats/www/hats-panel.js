@@ -801,6 +801,8 @@ const BEKANNT = new Set([
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Beginne oben: neue Theme, Datei einlesen oder eine vorhandene oeffnen.": "Start above: new theme, read in a file, or open an existing one.",
+    "von HATS": "from HATS", "fremde": "foreign",
     "Bild waehlen": "Choose an image",
     "Bild hochladen...": "Upload an image...",
     "Kein Bild": "No image",
@@ -1277,32 +1279,62 @@ class HatsPanel extends HTMLElement {
         </div>`).join("")}
       </div>`}
 
-      <p class="startnotiz">${meine.length
-        ? T("Diese Dateien hat HATS gebaut - oder oben eine neue beginnen")
-        : T("Noch keine Theme - oben eine neue beginnen oder eine Datei einlesen")}</p>
-
-      ${meine.length ? `<div class="liste schmal">
-        ${meine.map((x) => `
-          <div class="zeile datei" data-datei="${x.name}">
-            <span class="punkt"></span>
-            <div class="zeilentext">
-              <b>${x.name.replace(/\.yaml$/, "")}</b>
-              <small>${x.kopf || T("Mit HATS gebaut")} &middot; ${kb(x.bytes)}</small>
-            </div>
-            <span class="stempel">${T("oeffnen")}</span>
-          </div>`).join("")}
-      </div>` : ""}
-
-      ${fremde.length ? `<div class="liste schmal fremd">
-        <p class="leer">${T("Mit einem anderen Werkzeug gebaut. Lesen geht - was HATS nicht kennt, bleibt unveraendert in der Datei:")}</p>
-        ${fremde.map((x) => `
-          <div class="zeile datei" data-datei="${x.name}">
-            <span class="punkt"></span>
-            <div class="zeilentext"><b>${x.name.replace(/\.yaml$/, "")}</b><small>${kb(x.bytes)}</small></div>
-            <span class="stempel">${T("lesen")}</span>
-          </div>`).join("")}
-      </div>` : ""}
+      ${ZUSTAND.modell ? "" : `
+      <p class="startleer">${T("Beginne oben: neue Theme, Datei einlesen oder eine vorhandene oeffnen.")}</p>`}
     `;
+  }
+
+  // Die Dateiliste als Dialog hinter dem Ordner-Symbol.
+  //
+  // Sie stand bis zum 13.10.2026 auf der Startseite. Geoeffnet wird aber ueber
+  // die Symbole - dann gehoert die Liste auch dorthin und nicht als staendiger
+  // Block in die Seite.
+  async zeigeDateien() {
+    const T = (x) => t(x, this.spr);
+    if (ZUSTAND.dateien === null) await this.ladeListe();
+    const d = ZUSTAND.dateien || [];
+    const meine = d.filter((x) => x.hats && x.name !== "ha_blanko.yaml");
+    const fremde = d.filter((x) => !x.hats && x.name !== "ha_blanko.yaml");
+    const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
+
+    const dlg = this.shadowRoot.querySelector(".overlay.zwei .dialog");
+    dlg.innerHTML = `
+      <header class="dkopf">
+        <div><h2>${T("Vorhandene oeffnen")}</h2>
+             <p>${meine.length} ${T("von HATS")} &middot; ${fremde.length} ${T("fremde")}</p></div>
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+      <div class="feldseite">
+        ${meine.length ? `<div class="liste schmal">
+          ${meine.map((x) => `
+            <div class="zeile datei" data-datei="${x.name}">
+              <span class="punkt"></span>
+              <div class="zeilentext">
+                <b>${x.name.replace(/\.yaml$/, "")}</b>
+                <small>${x.kopf || T("Mit HATS gebaut")} &middot; ${kb(x.bytes)}</small>
+              </div>
+              <span class="stempel">${T("oeffnen")}</span>
+            </div>`).join("")}
+        </div>` : `<p class="leer">${T("Noch keine - die erste entsteht beim Speichern")}</p>`}
+
+        ${fremde.length ? `<div class="liste schmal fremd">
+          <p class="leer">${T("Mit einem anderen Werkzeug gebaut. Lesen geht - was HATS nicht kennt, bleibt unveraendert in der Datei:")}</p>
+          ${fremde.map((x) => `
+            <div class="zeile datei" data-datei="${x.name}">
+              <span class="punkt"></span>
+              <div class="zeilentext"><b>${x.name.replace(/\.yaml$/, "")}</b><small>${kb(x.bytes)}</small></div>
+              <span class="stempel">${T("lesen")}</span>
+            </div>`).join("")}
+        </div>` : ""}
+      </div>`;
+
+    dlg.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    dlg.querySelectorAll(".zeile.datei").forEach((z) =>
+      z.addEventListener("click", () => { this.schliesseFeld(); this.oeffneDatei(z.dataset.datei); })
+    );
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
   }
 
   // Die Liste der vorhandenen Themes. Der Server sagt je Datei, ob sie von
@@ -1507,7 +1539,7 @@ class HatsPanel extends HTMLElement {
               ${[
                 { id: "neu",      icon: "mdi:file-plus-outline",    t: T("Neue Theme") },
                 { id: "lesen",    icon: "mdi:file-import-outline",  t: T("Datei oder Text") },
-                { id: "oeffnen",  icon: "mdi:folder-open-outline",  t: T("Oeffnen"),      aus: ZUSTAND.start },
+                { id: "oeffnen",  icon: "mdi:folder-open-outline",  t: T("Vorhandene oeffnen") },
                 { id: "verwerfen", icon: "mdi:undo-variant",        t: T("Aenderungen verwerfen"), aus: ZUSTAND.start || !ZUSTAND.geaendert.size },
                 { id: "laden2",   icon: "mdi:download-outline",     t: T("Als Datei herunterladen"), aus: ZUSTAND.start },
                 { id: "kopie2",   icon: "mdi:content-copy",         t: T("In die Zwischenablage"),   aus: ZUSTAND.start },
@@ -1595,9 +1627,6 @@ class HatsPanel extends HTMLElement {
         this.zeichneZaehler();
       })
     );
-    this.shadowRoot.querySelectorAll(".zeile.datei:not(.gesperrt)").forEach((z) =>
-      z.addEventListener("click", () => this.oeffneDatei(z.dataset.datei))
-    );
     this.shadowRoot.querySelectorAll("[data-galerie]").forEach((b) =>
       b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
@@ -1636,7 +1665,7 @@ class HatsPanel extends HTMLElement {
     const schalter = {
       neu: () => this.neuBeginnen(),
       lesen: () => this.zeigeImport(),
-      oeffnen: () => this.zumStart(),
+      oeffnen: () => this.zeigeDateien(),
       verwerfen: () => this.verwerfen(),
       laden2: () => this.herunterladen(),
       kopie2: () => this.kopieren(),
@@ -2437,7 +2466,8 @@ class HatsPanel extends HTMLElement {
          Die drei Karten sind am 13.10.2026 entfallen: Geladen wird ueber die
          Symbolreihe oben, und zwei Wege zur selben Sache nebeneinander sind
          einer zu viel. Geblieben ist eine Zeile, die sagt, was die Liste ist. */
-      .startnotiz { font-size: 13px; color: var(--s-tinte-leise); margin: 0 0 10px; }
+      .startleer { font-size: 14px; color: var(--s-tinte-leise); margin: 0;
+                   padding: 40px 0; text-align: center; }
 
       /* ---- Starteinstellungen ---- */
       .starteinst { background: var(--s-glas-innen); border-radius: var(--s-r-gross);

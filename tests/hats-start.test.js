@@ -49,11 +49,22 @@ pruefe("Der Server liefert die Herkunft je Datei mit", () => {
   assert.match(py, /"files":/, "Die alte Form files ist weggefallen - das bricht aeltere Panels");
 });
 
-pruefe("Nur HATS-Dateien sind anklickbar", () => {
-  // Die Sperre haengt an der Klasse, und die Verdrahtung muss sie beachten.
-  assert.match(panel, /\.zeile\.datei:not\(\.gesperrt\)/,
-    "Die Verdrahtung schliesst gesperrte Zeilen nicht aus");
+pruefe("Eigene und fremde Dateien werden getrennt gezeigt", () => {
+  // Gesperrt ist seit dem 13.10.2026 keine mehr - lesen geht bei allen, und
+  // der Bericht sagt, was dabei herauskommt. Getrennt bleiben sie trotzdem:
+  // bei einer fremden steht "lesen" statt "oeffnen", und darueber der Hinweis.
   assert.match(panel, /!x\.hats/, "Fremde Dateien werden nicht getrennt behandelt");
+  assert.match(panel, /T\("lesen"\)/, "der Unterschied ist nicht mehr sichtbar");
+});
+
+pruefe("Die Dateiliste steht im Dialog, nicht auf der Startseite", () => {
+  // "wir oeffnen die dateien nur ueber die icons" - dann gehoert die Liste
+  // auch dorthin und nicht als staendiger Block in die Seite.
+  assert.match(panel, /async zeigeDateien\(\) \{/, "der Dialog fehlt");
+  assert.match(panel, /oeffnen: \(\) => this\.zeigeDateien\(\)/,
+    "das Ordner-Symbol fuehrt nicht zur Liste");
+  const start = panel.slice(panel.indexOf("  startbild(T) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
+  assert.doesNotMatch(start, /liste schmal/, "die Liste steht wieder auf der Startseite");
 });
 
 pruefe("Der Start laedt nicht von allein eine Grundlage", () => {
@@ -96,7 +107,7 @@ pruefe("Gegenprobe: ein Text ausserhalb des Blocks zaehlt nicht", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 8) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 9) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
 
 // ---------------------------------------------------------------------------
 // Der Feld-Dialog zeigt das MODELL, nicht die laufende Theme.

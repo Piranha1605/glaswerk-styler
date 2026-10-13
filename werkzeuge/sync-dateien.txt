@@ -1,0 +1,10 @@
+www/hats-panel.js
+www/theme.js
+www/bedienelemente.js
+www/palette.js
+www/zuordnung.js
+www/uix.js
+__init__.py
+const.py
+config_flow.py
+manifest.json
