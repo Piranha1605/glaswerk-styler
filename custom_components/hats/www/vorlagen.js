@@ -296,7 +296,19 @@ header.top-app-bar {
    Ein Filter macht den Dialog zum Bezugsrahmen fuer position: fixed. Die
    Auswahllisten darin sind fixed: Sie landen neben dem sichtbaren Bereich,
    und die Liste bleibt leer. An der Versionsauswahl von HACS und am
-   Info-Dialog von HA gemessen. Ein Filter auf einem ::before hilft nicht. */
+   Info-Dialog von HA gemessen. Ein Filter auf einem ::before hilft nicht.
+
+   Welcher Selektor unter HA 2026 traegt, ist am 13.10.2026 an einem offenen
+   Info-Dialog gemessen: In keinem der Dialog-Bauteile kommt noch eine einzige
+   mdc-Klasse vor. Der Dialog ist eine wa-dialog von Web Awesome, und sie gibt
+   ihre Flaeche als CSS-Teil nach aussen - ein Teil reicht durch die
+   Shadow-Grenze, deshalb greift wa-dialog::part(dialog) von hier aus.
+   Nachgemessen: Radius 26px, Schatten gesetzt.
+
+   Die mdc-Zeile bleibt trotzdem stehen. Sie ist unter HA 2026 tot, aber wer
+   eine aeltere Instanz faehrt, braucht sie - und eine tote Zeile kostet
+   nichts. Die Korrektur gehoert als ZUSAETZLICHER Selektor geschrieben, nicht
+   als Ersatz. */
 .mdc-dialog__surface,
 wa-dialog::part(dialog),
 wa-drawer::part(dialog) {
