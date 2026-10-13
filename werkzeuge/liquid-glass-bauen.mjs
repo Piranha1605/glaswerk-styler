@@ -85,7 +85,14 @@ const W = {
   // Der Akzent ist das Violett aus der Vorlage. Im Dunkeln eine Stufe heller:
   // Blau und Violett haben die geringste Wahrnehmungshelligkeit aller
   // Farbtoene, und derselbe Ton waere auf dunklem Grund kaum noch zu sehen.
-  "--accent-color": ["#6f5cf0", "#8f7dff"],
+  // #6350e4 statt des naheliegenden #6f5cf0: Letzteres kommt auf der hellen
+  // Kartenflaeche nur auf 4.23 : 1 und verfehlt damit WCAG AA (4.5) fuer Text.
+  // Am 13.10.2026 an der gerenderten Karte gemessen, nicht gerechnet - die
+  // Flaeche ist durchscheinend, der Kontrast haengt also davon ab, was
+  // dahinter liegt. Im Dunkeln ist derselbe Ton zu dunkel; dort eine Stufe
+  // heller, weil Violett die geringste Wahrnehmungshelligkeit aller Farbtoene
+  // hat und auf dunklem Grund sonst verschwindet.
+  "--accent-color": ["#6350e4", "#8f7dff"],
   // --primary-color steht hier bewusst NICHT.
   //
   // HATS fuehrt es nicht als Feld - es gehoert zur alten Farbebene, und HATS

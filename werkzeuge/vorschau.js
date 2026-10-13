@@ -271,3 +271,65 @@ export async function nurVorlage(themeName, vorlagenId, modus = "light") {
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Kontraste messen - an der gerenderten Seite, nicht an den Zahlen der Theme.
+//
+// Der Unterschied ist bei Glas entscheidend: Die Kartenflaeche ist
+// durchscheinend, ihr wirksamer Ton haengt also davon ab, was dahinter liegt.
+// Wer gegen --ha-card-background rechnet, rechnet gegen rgba(255,255,255,.32)
+// und bekommt Unsinn.
+//
+//   await kontraste('liquid_glass')
+//
+// WCAG AA verlangt 4.5 : 1 fuer Text, 3 : 1 fuer grafische Objekte und grossen
+// Text. In HATS ist schon einmal die Seitenleiste auf 1.19 : 1 gefallen, ohne
+// dass es jemandem auffiel - die Symbole waren schlicht weg.
+function _lum(r, g, b) {
+  const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+function _farbe(s) {
+  const t = String(s).trim();
+  const h = t.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);
+  if (h) return { r: parseInt(h[1], 16), g: parseInt(h[2], 16), b: parseInt(h[3], 16), a: 1 };
+  const m = t.match(/rgba?\(([^)]+)\)/);
+  if (!m) return null;
+  const z = m[1].split(",").map((x) => parseFloat(x));
+  return { r: z[0], g: z[1], b: z[2], a: z[3] === undefined ? 1 : z[3] };
+}
+function _ueber(vorn, hinten) {
+  if (!vorn || !hinten) return null;
+  const a = vorn.a === undefined ? 1 : vorn.a;
+  return { r: vorn.r * a + hinten.r * (1 - a), g: vorn.g * a + hinten.g * (1 - a), b: vorn.b * a + hinten.b * (1 - a) };
+}
+function _k(a, b) {
+  if (!a || !b) return null;
+  const l1 = _lum(a.r, a.g, a.b), l2 = _lum(b.r, b.g, b.b);
+  return Number(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(2));
+}
+
+export async function kontraste(themeName, grundHell = "#e6eeff", grundDunkel = "#0b1020") {
+  const raus = {};
+  for (const modus of ["light", "dark"]) {
+    await an(themeName, modus);
+    await new Promise((r) => setTimeout(r, 800));
+    const cs = getComputedStyle(document.documentElement);
+    const grund = _farbe(modus === "light" ? grundHell : grundDunkel);
+    const flaeche = _ueber(_farbe(cs.getPropertyValue("--ha-card-background")), grund);
+    const sb = _ueber(_farbe(cs.getPropertyValue("--sidebar-background-color")), grund);
+    const paar = (name, auf) => _k(_ueber(_farbe(cs.getPropertyValue(name)), auf), auf);
+    raus[modus] = {
+      haupttext: paar("--primary-text-color", flaeche),
+      nebentext: paar("--secondary-text-color", flaeche),
+      akzent: paar("--accent-color", flaeche),
+      sidebarText: paar("--sidebar-text-color", sb),
+      sidebarIcon: paar("--sidebar-icon-color", sb),
+    };
+    raus[modus].durchgefallen = Object.entries(raus[modus])
+      .filter(([k, v]) => typeof v === "number" && v < 4.5 && k !== "sidebarIcon")
+      .map(([k, v]) => `${k} ${v}`);
+  }
+  aus();
+  return raus;
+}

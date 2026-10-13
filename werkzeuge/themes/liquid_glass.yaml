@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 15:22:04
+# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 15:46:10
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -545,7 +545,7 @@ liquid_glass:
 
   modes:
     light:
-      accent-color: "#6f5cf0"
+      accent-color: "#6350e4"
       app-header-background-color: "rgba(255, 255, 255, 0.3)"
       card-background-color: "#ffffff"
       clear-background-color: "#fff"
