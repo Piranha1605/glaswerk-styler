@@ -50,6 +50,13 @@ export const PALETTEN = [
     // zu viel. Dieses Teil ruehrt die Palette deshalb nicht an.
     farben: null,
     akzent: { light: "#009ac7", dark: "#37c8fd" },
+    // HAs eigene Tinte, aus ha_blanko. Steht hier, damit ein Wechsel von einer
+    // anderen Palette wirklich zurueckfuehrt - ohne diese Werte bliebe die
+    // Schrift der vorigen stehen.
+    light: { "--primary-text-color": "#212121", "--secondary-text-color": "#727272",
+             "--divider-color": "#0000001f" },
+    dark:  { "--primary-text-color": "#e1e1e1", "--secondary-text-color": "#9b9b9b",
+             "--divider-color": "rgba(225, 225, 225, 0.12)" },
   },
   {
     id: "liquid",
@@ -70,6 +77,14 @@ export const PALETTEN = [
     // #6f5cf0 verfehlt es mit 4.23:1.
     farben: null,
     akzent: { light: "#6350e4", dark: "#8f7dff" },
+    // Die Tinte der Projektwerkbank: ein blaustichiges Anthrazit statt HAs
+    // neutralem Grau. Auf einer durchscheinenden Flaeche vor farbigem Grund
+    // liest sich das ruhiger - reines Grau nimmt die Faerbung des
+    // Hintergrunds an und wirkt dann schmutzig.
+    light: { "--primary-text-color": "#17203a", "--secondary-text-color": "#5a6480",
+             "--divider-color": "rgba(23, 32, 58, 0.1)" },
+    dark:  { "--primary-text-color": "#eef1f8", "--secondary-text-color": "#a8b2c8",
+             "--divider-color": "rgba(255, 255, 255, 0.12)" },
   },
   {
     id: "warm",
@@ -163,6 +178,22 @@ export const SCHRIFTEN = [
 const KARTENFELDER = ["--ha-card-background", "--ha-card-backdrop-filter", "--ha-card-border-radius",
                       "--ha-card-border-width", "--ha-card-border-color", "--ha-card-box-shadow"];
 
+// Ein Stil hoert nicht an der Kartenkante auf.
+//
+// Am 13.10.2026 beim Nachbau der laufenden Theme gemessen: Mit den sechs
+// Feldern oben kam der Baukasten auf 235 von 236 flachen Feldern - und liess
+// Dialoge, Seitenleiste und Kopfleiste deckend stehen. Eine Oberflaeche, bei
+// der die Karten durchscheinen und die Leisten nicht, sieht nicht nach Glas
+// aus, sondern nach einem halben Umbau.
+//
+// mdc-dialog-scrim-color gehoert dazu, weil der Schleier hinter einem Dialog
+// die Flaeche davor erst lesbar macht; card-background-color, weil es die
+// DECKENDE Rueckfallfarbe ist - Auswahllisten und Menues lesen sie, und
+// durchscheinend waeren sie unlesbar.
+const FLAECHENFELDER = ["--ha-dialog-surface-background", "--mdc-dialog-scrim-color",
+                        "--sidebar-background-color", "--app-header-background-color",
+                        "--app-header-backdrop-filter", "--card-background-color"];
+
 export const KARTENSTILE = [
   {
     id: "glas",
@@ -176,15 +207,33 @@ export const KARTENSTILE = [
     // waere im Dunkeln ein greller Strich.
     flach: { "--ha-card-backdrop-filter": "blur(26px) saturate(180%)",
              "--ha-card-border-radius": "20px", "--ha-card-border-width": "0",
-             "--ha-card-border-color": "" },
+             "--ha-card-border-color": "",
+             // Die Leisten bekommen dieselbe Weichzeichnung, nur schwaecher:
+             // Sie liegen am Rand und sollen den Blick nicht fangen.
+             "--app-header-backdrop-filter": "blur(22px) saturate(170%)" },
     light: { "--ha-card-background": "rgba(255, 255, 255, 0.42)",
              "--ha-card-box-shadow": "inset 0 1.5px 0 0 rgba(255, 255, 255, .72), " +
                "inset 0 -1.5px 0 0 rgba(10, 20, 45, .1), " +
-               "0 18px 46px rgba(22, 40, 78, .16), 0 2px 6px rgba(22, 40, 78, .08)" },
+               "0 18px 46px rgba(22, 40, 78, .16), 0 2px 6px rgba(22, 40, 78, .08)",
+             // Der Dialog deckender als die Karte: Darin steht Text, der
+             // gelesen werden will, und darunter liegt oft eine volle Seite.
+             "--ha-dialog-surface-background": "rgba(255, 255, 255, 0.86)",
+             "--mdc-dialog-scrim-color": "rgba(16, 24, 44, 0.32)",
+             "--sidebar-background-color": "rgba(255, 255, 255, 0.4)",
+             "--app-header-background-color": "rgba(255, 255, 255, 0.3)",
+             // DECKEND, und das ist Absicht: Auswahllisten und Menues lesen
+             // diese Farbe. Durchscheinend schlaegt der Text der Karte
+             // darunter durch, und sie sind unlesbar.
+             "--card-background-color": "#ffffff" },
     dark:  { "--ha-card-background": "rgba(22, 28, 46, 0.46)",
              "--ha-card-box-shadow": "inset 0 1.5px 0 0 rgba(255, 255, 255, .16), " +
                "inset 0 -1.5px 0 0 rgba(0, 0, 0, .35), " +
-               "0 20px 52px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3)" },
+               "0 20px 52px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3)",
+             "--ha-dialog-surface-background": "rgba(26, 31, 48, 0.9)",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.52)",
+             "--sidebar-background-color": "rgba(20, 25, 40, 0.42)",
+             "--app-header-background-color": "rgba(20, 25, 40, 0.34)",
+             "--card-background-color": "#1c2234" },
     braucht: { hintergrund: true },
   },
   {
@@ -195,9 +244,20 @@ export const KARTENSTILE = [
     // Die Kante kommt aus --divider-color, also derselben Farbe wie jede
     // andere Trennlinie in Home Assistant - je Modus gesetzt.
     flach: { "--ha-card-backdrop-filter": "none", "--ha-card-border-radius": "12px",
-             "--ha-card-border-width": "1px", "--ha-card-border-color": "var(--divider-color)" },
-    light: { "--ha-card-background": "#ffffff", "--ha-card-box-shadow": "none" },
-    dark:  { "--ha-card-background": "#1c2234", "--ha-card-box-shadow": "none" },
+             "--ha-card-border-width": "1px", "--ha-card-border-color": "var(--divider-color)",
+             "--app-header-backdrop-filter": "none" },
+    light: { "--ha-card-background": "#ffffff", "--ha-card-box-shadow": "none",
+             "--ha-dialog-surface-background": "#ffffff",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.32)",
+             "--sidebar-background-color": "#ffffff",
+             "--app-header-background-color": "#ffffff",
+             "--card-background-color": "#ffffff" },
+    dark:  { "--ha-card-background": "#1c2234", "--ha-card-box-shadow": "none",
+             "--ha-dialog-surface-background": "#1c2234",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.52)",
+             "--sidebar-background-color": "#1c2234",
+             "--app-header-background-color": "#1c2234",
+             "--card-background-color": "#1c2234" },
   },
   {
     id: "erhaben",
@@ -207,11 +267,22 @@ export const KARTENSTILE = [
     // Die Schatten sind HAs eigene Stufe l - sie stehen ohnehin als Feld in
     // jeder Theme und sind damit auf HAs Oberflaeche abgestimmt.
     flach: { "--ha-card-backdrop-filter": "none", "--ha-card-border-radius": "16px",
-             "--ha-card-border-width": "0", "--ha-card-border-color": "" },
+             "--ha-card-border-width": "0", "--ha-card-border-color": "",
+             "--app-header-backdrop-filter": "none" },
     light: { "--ha-card-background": "#ffffff",
-             "--ha-card-box-shadow": "0 6px 12px -3px #0000001f, 0 16px 32px -6px #0003" },
+             "--ha-card-box-shadow": "0 6px 12px -3px #0000001f, 0 16px 32px -6px #0003",
+             "--ha-dialog-surface-background": "#ffffff",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.32)",
+             "--sidebar-background-color": "#fafafa",
+             "--app-header-background-color": "#ffffff",
+             "--card-background-color": "#ffffff" },
     dark:  { "--ha-card-background": "#1c2234",
-             "--ha-card-box-shadow": "0 6px 12px -3px rgba(0, 0, 0, 0.4), 0 16px 32px -6px rgba(0, 0, 0, 0.55)" },
+             "--ha-card-box-shadow": "0 6px 12px -3px rgba(0, 0, 0, 0.4), 0 16px 32px -6px rgba(0, 0, 0, 0.55)",
+             "--ha-dialog-surface-background": "#1c2234",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.52)",
+             "--sidebar-background-color": "#161b2b",
+             "--app-header-background-color": "#1c2234",
+             "--card-background-color": "#1c2234" },
   },
   {
     id: "papier",
@@ -219,11 +290,22 @@ export const KARTENSTILE = [
     zweckDe: "Deckend, kaum gerundet, nur ein Hauch Schatten. Ruhig und dicht.",
     zweckEn: "Opaque, barely rounded, just a hint of shadow. Calm and dense.",
     flach: { "--ha-card-backdrop-filter": "none", "--ha-card-border-radius": "4px",
-             "--ha-card-border-width": "1px", "--ha-card-border-color": "var(--divider-color)" },
+             "--ha-card-border-width": "1px", "--ha-card-border-color": "var(--divider-color)",
+             "--app-header-backdrop-filter": "none" },
     light: { "--ha-card-background": "#ffffff",
-             "--ha-card-box-shadow": "0 1px 2px 0 #00000014, 0 1px 3px 0 #0000001f" },
+             "--ha-card-box-shadow": "0 1px 2px 0 #00000014, 0 1px 3px 0 #0000001f",
+             "--ha-dialog-surface-background": "#ffffff",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.32)",
+             "--sidebar-background-color": "#f5f5f5",
+             "--app-header-background-color": "#ffffff",
+             "--card-background-color": "#ffffff" },
     dark:  { "--ha-card-background": "#1c2234",
-             "--ha-card-box-shadow": "0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.5)" },
+             "--ha-card-box-shadow": "0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.5)",
+             "--ha-dialog-surface-background": "#1c2234",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.52)",
+             "--sidebar-background-color": "#171c2c",
+             "--app-header-background-color": "#1c2234",
+             "--card-background-color": "#1c2234" },
   },
 ];
 
@@ -291,7 +373,7 @@ export function betrifft(teil) {
   return aus;
 }
 
-export const KARTENSTIL_FELDER = KARTENFELDER;
+export const KARTENSTIL_FELDER = [...KARTENFELDER, ...FLAECHENFELDER];
 
 // ---------------------------------------------------------------------------
 // Welche Vorlagen zu welcher Sorte gehoeren
@@ -403,10 +485,16 @@ export function teilAnwenden(sorte, teil, schreibe) {
       setz("accent-color", teil.akzent.light, "light");
       setz("accent-color", teil.akzent.dark, "dark");
     }
-    return { gesetzt: felder.length, felder };
+    // KEIN return hier. Eine Palette darf zusaetzlich Felder tragen - die
+    // Textfarben etwa, die je Modus verschieden sind und nicht aus der Rampe
+    // folgen. Ein frueher Ausstieg hat sie am 13.10.2026 verschluckt: Der
+    // Baukasten kam auf 418 von 424 Feldern, und die fehlenden drei waren
+    // genau primary-text-color, secondary-text-color und divider-color.
+    // Faellt nicht auf, weil die Grundlage dort HAs Werte stehen laesst - die
+    // Schrift ist also lesbar, nur eben nicht die der Palette.
   }
 
-  // Alle uebrigen Sorten sind reine Feldlisten, je Ebene.
+  // Feldlisten je Ebene - bei jeder Sorte, auch bei der Palette.
   for (const [k, v] of Object.entries(teil.felder || {})) setz(k, v, "beide");
   for (const [k, v] of Object.entries(teil.flach || {})) setz(k, v, "beide");
   for (const [k, v] of Object.entries(teil.light || {})) setz(k, v, "light");
