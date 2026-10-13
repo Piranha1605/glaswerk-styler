@@ -31,7 +31,7 @@ import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten } from "./hintergrund-seite.js";
 
-const HATS_VERSION = "0.2.0b3";
+const HATS_VERSION = "0.2.0b4";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1

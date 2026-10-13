@@ -7,14 +7,14 @@ Konfigurationseintraege der Nutzer - also vor dem ersten Release festlegen.
 
 DOMAIN = "hats"
 NAME = "HATS"
-VERSION = "0.2.0b3"
+VERSION = "0.2.0b4"
 
 PANEL_URL = "hats"
 PANEL_TITLE = "HATS"
 PANEL_ICON = "mdi:palette-outline"
 PANEL_TAG = "hats-panel"
 STATIC_PATH = "/hats_static"
-FRONTEND_MODULE = "/hats_static/hats-panel.js?v=0.2.0b3"
+FRONTEND_MODULE = "/hats_static/hats-panel.js?v=0.2.0b4"
 
 # Die Steuerkarte. Ihre Adresse wird aus STATIC_PATH und VERSION gebaut, nicht
 # hier ausgeschrieben - die Versionsnummer steht schon an vier Stellen, und
