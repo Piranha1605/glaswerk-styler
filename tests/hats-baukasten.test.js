@@ -160,5 +160,52 @@ pruefe("Gegenprobe: eine fremde Theme wird NICHT erkannt", () => {
     "erkenneTeil meldet einen Treffer, wo keiner ist");
 });
 
+// ---------------------------------------------------------------------------
+// Der Baukasten im Panel.
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+const hier = path.dirname(fileURLToPath(import.meta.url));
+const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
+
+pruefe("Der Knopf steht in der Leiste, vor UIX", () => {
+  // Zuerst zusammenstecken, dann feinjustieren - die Reihenfolge der Knoepfe
+  // ist die Reihenfolge der Arbeit.
+  const leiste = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
+  const ids = [...leiste.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  assert.strictEqual(ids[0], "baukasten", "der Baukasten steht nicht an erster Stelle");
+  assert.ok(ids.indexOf("baukasten") < ids.indexOf("uix"), "der Baukasten gehoert vor UIX");
+  assert.match(panel, /baukasten: \(\) => this\.oeffneBaukasten\(\)/, "der Knopf ist nicht verdrahtet");
+});
+
+pruefe("Ein leerer Wert entfernt das Feld, statt es leer zu schreiben", () => {
+  // Ein geschriebenes leeres Feld steht in der Datei und ueberschreibt HAs
+  // eigene Vorgabe mit nichts - der Hintergrund "keiner" wuerde damit nicht
+  // zu HAs Hintergrund zurueckkehren, sondern zu gar keinem.
+  const b = panel.slice(panel.indexOf("bindeBaukasten(wurzel) {"), panel.indexOf("oeffneUix() {"));
+  assert.ok(b.length > 400, "bindeBaukasten nicht gefunden");
+  assert.match(b, /if \(wert === "" \|\| wert === null \|\| wert === undefined\) entferne\(/,
+    "ein leerer Wert wird geschrieben statt entfernt");
+});
+
+pruefe("Die Texte stehen IM en-Block", () => {
+  // Ein Eintrag NEBEN dem en-Block ist stumm unerreichbar - in HATG standen so
+  // einmal 21 Stueck, und der Test war gruen, weil er im Quelltext suchte
+  // statt im Objekt.
+  const tab = panel.slice(panel.indexOf("const TEXTE = {"));
+  const en = tab.slice(tab.indexOf("en: {"), tab.indexOf("\n  },"));
+  for (const x of ["Baukasten", "Fertige Teile zusammenstecken", "Felder gesetzt",
+                   "Glas braucht einen Hintergrund, der etwas hergibt"])
+    assert.ok(en.includes(JSON.stringify(x)), `${x} fehlt im en-Block`);
+});
+
+pruefe("Der Hintergrund-Hinweis haengt an der Bedingung", () => {
+  const b = panel.slice(panel.indexOf("zeichneBaukasten() {"), panel.indexOf("bindeBaukasten(wurzel) {"));
+  assert.match(b, /glasOhneGrund = sitzt\.karten === "glas" && sitzt\.hintergrund === "keiner"/,
+    "der Hinweis haengt nicht an beiden Bedingungen");
+  assert.match(b, /\$\{glasOhneGrund \? `/, "der Hinweis steht immer da");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 11) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

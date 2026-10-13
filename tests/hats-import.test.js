@@ -186,8 +186,9 @@ pruefe("Eine Leiste oben statt Seitenleiste und Schalterreihe", () => {
   // Speichern steht bewusst NICHT dabei - es bleibt im Kopf, und zweimal
   // derselbe Knopf nebeneinander ist einer zu viel.
   // UIX steht seit dem 13.10.2026 hier oben statt in einer Spalte rechts -
-  // auf Ansage, damit rechts frei wird.
-  assert.deepStrictEqual(ids, ["uix", "neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
+  // auf Ansage, damit rechts frei wird. Der Baukasten steht davor: Er kommt
+  // in der Arbeit zuerst, UIX ist der Feinschliff danach.
+  assert.deepStrictEqual(ids, ["baukasten", "uix", "neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
   assert.match(block, /data-rail="\$\{st\.n\}"/, "die Stufen fehlen in der Leiste");
   assert.doesNotMatch(panel, /class="rail"/, "die alte Seitenleiste ist zurueck");
 });

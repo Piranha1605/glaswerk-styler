@@ -27,6 +27,7 @@ import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teile
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE } from "./baukasten.js";
 
 const HATS_VERSION = "0.2.0b3";
 
@@ -832,6 +833,14 @@ const TEXTE = {
     "Guten Tag": "Good afternoon",
     "Beginne oben: neue Theme, Datei einlesen oder eine vorhandene oeffnen.": "Start above: new theme, read in a file, or open an existing one.",
     "von HATS": "from HATS", "fremde": "foreign",
+    "Baukasten": "Kit",
+    "Fertige Teile zusammenstecken": "Snap together ready-made parts",
+    "Farben": "Colours", "Schrift": "Typeface", "Karten": "Cards", "Hintergrund": "Background",
+    "gewaehlt": "selected",
+    "Glas braucht einen Hintergrund, der etwas hergibt": "Glass needs a background with something to show through",
+    "Teile gesetzt": "parts applied",
+    "Felder gesetzt": "fields set",
+    "Danach feinjustieren in den acht Stufen": "Fine-tune afterwards in the eight stages",
     "Bild waehlen": "Choose an image",
     "Bild hochladen...": "Upload an image...",
     "Kein Bild": "No image",
@@ -1119,6 +1128,121 @@ class HatsPanel extends HTMLElement {
   // Die Spalte rechts ist damit weg - Bubble und Mushroom sind ueber Stufe 6
   // erreichbar, UIX ueber diesen Dialog. Der Inhalt braucht die Breite:
   // 28 Stilziele, jedes mit einem Block CSS.
+  // --- Baukasten -----------------------------------------------------------
+  //
+  // Vier Sorten Teile zum Zusammenstecken, bevor man in die acht Stufen geht.
+  // Der Baukasten ersetzt sie nicht, er fuellt sie.
+
+  oeffneBaukasten() {
+    this._offen = "baukasten";
+    this.zeichneBaukasten();
+    const o = this.shadowRoot.querySelector(".overlay");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+    document.addEventListener("keydown", this._esc);
+  }
+
+  zeichneBaukasten() {
+    const T = (x) => t(x, this.spr);
+    const m = ZUSTAND.modell;
+    const d = this.shadowRoot.querySelector(".dialog");
+
+    // Welches Teil sitzt gerade? Ueber die WERTE, nicht ueber einen Merker -
+    // eine von Hand bearbeitete Theme traegt keinen.
+    const lies = (name, ebene) => {
+      if (!m) return undefined;
+      const k = name.replace(/^--/, "");
+      return ebene === "beide" ? m.flach[k] : m[ebene]?.[k];
+    };
+    const sitzt = {};
+    if (m) for (const sorte of Object.keys(BAUKASTEN)) sitzt[sorte] = erkenneTeil(sorte, lies);
+
+    // Glas ohne Hintergrund sieht aus wie eine etwas hellere Wand. Der Hinweis
+    // steht nur dann da, wenn der Fall wirklich eintritt - ein Warnschild, das
+    // immer leuchtet, liest niemand mehr.
+    const glasOhneGrund = sitzt.karten === "glas" && sitzt.hintergrund === "keiner";
+
+    const sorteHtml = (schluessel) => {
+      const s = BAUKASTEN[schluessel];
+      const name = this.spr === "en" ? s.en : s.de;
+      return `
+        <section class="bk-sorte">
+          <h3>${name}</h3>
+          <div class="bk-teile">
+            ${s.teile.map((teil) => {
+              const an = sitzt[schluessel] === teil.id;
+              return `
+              <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
+                      data-bk-teil="${teil.id}" ${m ? "" : "disabled"}>
+                <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
+                <span class="bk-zweck">${this.spr === "en" ? teil.zweckEn : teil.zweckDe}</span>
+                ${an ? `<span class="bk-haken"><ha-icon icon="mdi:check"></ha-icon></span>` : ""}
+              </button>`;
+            }).join("")}
+          </div>
+        </section>`;
+    };
+
+    d.innerHTML = `
+      <header class="dkopf">
+        <div>
+          <h2>${T("Baukasten")}</h2>
+          <p>${T("Fertige Teile zusammenstecken")}${m ? "" : " · " + T("erst eine Theme oeffnen")}</p>
+        </div>
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+
+      <div class="dinhalt bk">
+        ${glasOhneGrund ? `
+        <p class="bk-hinweis">
+          <ha-icon icon="mdi:information-outline"></ha-icon>
+          ${T("Glas braucht einen Hintergrund, der etwas hergibt")}
+        </p>` : ""}
+
+        ${Object.keys(BAUKASTEN).map(sorteHtml).join("")}
+
+        <p class="bk-fuss">${T("Danach feinjustieren in den acht Stufen")}</p>
+      </div>
+    `;
+
+    d.querySelector(".zu")?.addEventListener("click", () => this.schliesse());
+    this.bindeBaukasten(d);
+  }
+
+  bindeBaukasten(wurzel) {
+    wurzel.querySelectorAll("[data-bk-teil]").forEach((b) =>
+      b.addEventListener("click", () => {
+        if (!ZUSTAND.modell) return;
+        const sorte = b.dataset.bkSorte;
+        const teil = BAUKASTEN[sorte]?.teile.find((x) => x.id === b.dataset.bkTeil);
+        if (!teil) return;
+
+        // teilAnwenden schreibt nicht selbst ins Modell - es bekommt ein
+        // schreibe() und meldet, was es gesetzt hat. So bleibt die
+        // Buchfuehrung hier, wo sie hingehoert.
+        const r = teilAnwenden(sorte, teil, (name, wert, ebene) => {
+          const k = name.replace(/^--/, "");
+          // Ein leerer Wert heisst "Feld weg", nicht "Feld leer": Ein
+          // geschriebenes leeres Feld steht in der Datei und ueberschreibt
+          // HAs eigene Vorgabe mit nichts.
+          if (wert === "" || wert === null || wert === undefined) entferne(ZUSTAND.modell, k);
+          else setze(ZUSTAND.modell, k, wert, ebene);
+          ZUSTAND.geaendert.add(k);
+        });
+
+        ZUSTAND.meldung = { art: "gut",
+          text: `${this.spr === "en" ? teil.en : teil.de} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
+        this.zeichneBaukasten();
+        this.zeichneZaehler();
+        // Die Meldung steht auf der Seite HINTER dem Dialog - sie wird erst
+        // beim Schliessen sichtbar. Der Haken am Teil ist die Rueckmeldung,
+        // die sofort ankommt.
+        const mz = this.shadowRoot.querySelector(".meldung");
+        if (mz) { mz.textContent = ZUSTAND.meldung.text; mz.className = "meldung gut"; }
+      })
+    );
+  }
+
   oeffneUix() {
     this._offen = "uix";
     this.zeichneUix();
@@ -1689,6 +1813,7 @@ class HatsPanel extends HTMLElement {
             <div class="ml-trenner"></div>
             <div class="ml-aktionen">
               ${[
+                { id: "baukasten", icon: "mdi:toy-brick-outline",  t: T("Baukasten"), aus: ZUSTAND.start },
                 { id: "uix",     icon: "mdi:auto-fix",             t: "UIX", aus: ZUSTAND.start },
                 { id: "neu",      icon: "mdi:file-plus-outline",    t: T("Neue Theme") },
                 { id: "lesen",    icon: "mdi:file-import-outline",  t: T("Datei oder Text") },
@@ -1786,6 +1911,7 @@ class HatsPanel extends HTMLElement {
       b.addEventListener("click", () => this.oeffne(Number(b.dataset.rail)))
     );
     const schalter = {
+      baukasten: () => this.oeffneBaukasten(),
       uix: () => this.oeffneUix(),
       neu: () => this.neuBeginnen(),
       lesen: () => this.zeigeImport(),
@@ -2783,6 +2909,38 @@ class HatsPanel extends HTMLElement {
       .zu { width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer; font-size: 15px;
             background: rgba(27,36,48,.06); color: var(--s-tinte-leise); }
       .zu:hover { background: rgba(27,36,48,.12); }
+
+      /* --- Baukasten --------------------------------------------------
+         Vier Sorten untereinander, je Sorte die Teile als breite Knoepfe. Kein
+         Raster mit festen Spalten: Die Zwecktexte sind unterschiedlich lang,
+         und in einer Spalte von 200px steht nach zwei Woertern Schluss. */
+      .dinhalt.bk { display: flex; flex-direction: column; gap: 26px; padding: 20px 26px 28px; }
+      .bk-sorte h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: .02em;
+                     text-transform: uppercase; color: var(--s-tinte-leise); }
+      .bk-teile { display: grid; gap: 10px;
+                  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+      .bk-teil { position: relative; text-align: left; cursor: pointer; font: inherit;
+                 display: flex; flex-direction: column; gap: 4px;
+                 background: var(--s-karte); color: var(--s-tinte);
+                 border: 1px solid rgba(27,36,48,.08); border-radius: var(--s-r);
+                 padding: 13px 15px; transition: border-color .15s, box-shadow .15s; }
+      .bk-teil:hover:not([disabled]) { border-color: var(--s-akzent); }
+      .bk-teil[disabled] { opacity: .45; cursor: default; }
+      /* Das gewaehlte Teil traegt die Akzentfarbe als Rahmen, nicht als
+         Flaeche: Eine gefuellte Kachel wuerde den Zwecktext darauf erschlagen,
+         und genau der ist die Entscheidungshilfe. */
+      .bk-teil.an { border-color: var(--s-akzent); box-shadow: inset 0 0 0 1px var(--s-akzent); }
+      .bk-name { font-size: 14px; font-weight: 500; }
+      .bk-zweck { font-size: 12px; line-height: 1.45; color: var(--s-tinte-leise); }
+      .bk-haken { position: absolute; top: 10px; right: 10px; color: var(--s-akzent);
+                  --mdc-icon-size: 18px; }
+      /* Der Hinweis erscheint NUR, wenn der Fall eintritt - ein Warnschild,
+         das immer leuchtet, liest niemand mehr. */
+      .bk-hinweis { display: flex; align-items: center; gap: 9px; margin: 0;
+                    padding: 11px 14px; border-radius: var(--s-r); font-size: 13px;
+                    background: rgba(255,166,0,.12); color: #8a5a00;
+                    --mdc-icon-size: 18px; }
+      .bk-fuss { margin: 0; font-size: 12.5px; color: var(--s-tinte-leise); }
 
       /* Listenansicht statt Kartenbrett: eine Gruppe untereinander, in
          derselben Sprache wie die Stufenliste der Hauptseite. */
