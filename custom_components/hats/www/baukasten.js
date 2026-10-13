@@ -274,11 +274,64 @@ export function betrifft(teil) {
 
 export const KARTENSTIL_FELDER = KARTENFELDER;
 
+// ---------------------------------------------------------------------------
+// Welche Vorlagen zu welcher Sorte gehoeren
+//
+// Ein Klick auf eine Kachel wendet das Teil an UND oeffnet seine Seite - dort
+// stehen die Tweaks, die zu dieser Sorte passen. Auf Ansage vom 13.10.2026:
+// "was haeltst du davon wenn man auf die kachel klickt eine seite zum
+// bearbeiten aufgeht mit den Tweaks."
+//
+// Die Zuordnung geht nach dem ORT, an dem eine Vorlage wirkt, nicht nach ihrem
+// Stilziel: glas-bubble und sync-bedienelemente zielen beide auf uix-card, die
+// eine macht Flaechen, die andere Bedienelemente - fuer den Nutzer sind das
+// zwei verschiedene Dinge am selben Ort, naemlich auf der Karte.
+//
+// Vierzehn Vorlagen auf fuenf Sorten. "Oberflaeche" ist dazugekommen, weil
+// Seitenleiste, Kopfleiste und Dialoge sonst nirgends hingehoert haetten -
+// sie sind weder Karte noch Hintergrund.
+
+export const SORTEN_VORLAGEN = {
+  karten: ["glas-karten", "glas-bubble", "glas-lichtkante", "glas-symbolkachel",
+           "sync-bedienelemente", "glas-knoepfe"],
+  hintergrund: ["abschnitte-trennen"],
+  oberflaeche: ["glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
+                "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast"],
+  palette: [],
+  schrift: [],
+};
+
+// Welche Felder einer Sorte lassen sich nach der Wahl noch von Hand drehen?
+//
+// Nur die, die wirklich etwas aendern, ohne das Teil zu zerreissen. Die
+// Kartenflaeche steht NICHT dabei: Sie gehoert zum Stil, und wer sie einzeln
+// dreht, bekommt Glas ohne Durchsicht oder eine deckende Flaeche mit
+// backdrop-filter. Wer das will, geht in die acht Stufen.
+export const SORTEN_FELDER = {
+  karten: [
+    { v: "--ha-card-border-radius", de: "Rundung", en: "Corner radius", art: "mass", min: 0, max: 40 },
+    { v: "--ha-card-border-width", de: "Rahmenbreite", en: "Border width", art: "mass", min: 0, max: 4 },
+  ],
+  schrift: [
+    { v: "--ha-font-size-scale", de: "Groesse", en: "Scale", art: "zahl", min: 0.8, max: 1.4, schritt: 0.05 },
+    { v: "--ha-line-height-normal", de: "Zeilenhoehe", en: "Line height", art: "zahl", min: 1.2, max: 2, schritt: 0.1 },
+  ],
+  palette: [], hintergrund: [], oberflaeche: [],
+};
+
+// Eine Sorte ohne eigene Teile: Sie traegt nur Vorlagen. Der Baukasten zeigt
+// sie trotzdem, damit die Seitenleiste nicht im UIX-Dialog versteckt bleibt.
+export const OBERFLAECHE_LEER = [];
+
 export const BAUKASTEN = {
   palette: { de: "Farben", en: "Colours", teile: PALETTEN },
   schrift: { de: "Schrift", en: "Typeface", teile: SCHRIFTEN },
   karten: { de: "Karten", en: "Cards", teile: KARTENSTILE },
   hintergrund: { de: "Hintergrund", en: "Background", teile: HINTERGRUENDE },
+  oberflaeche: { de: "Oberflaeche", en: "Chrome", teile: OBERFLAECHE_LEER,
+                 nurVorlagen: true,
+                 zweckDe: "Seitenleiste, Kopfleiste, Dialoge und Meldungen.",
+                 zweckEn: "Sidebar, header, dialogs and toasts." },
 };
 
 // ---------------------------------------------------------------------------

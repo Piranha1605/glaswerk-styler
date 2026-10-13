@@ -6,7 +6,8 @@
 
 import assert from "node:assert";
 import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE,
-         KARTENSTIL_FELDER, teilAnwenden, erkenneTeil } from "../custom_components/hats/www/baukasten.js";
+         KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN } from "../custom_components/hats/www/baukasten.js";
+import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
 
 let n = 0;
 function pruefe(was, fn) { fn(); n++; console.log("ok", was); }
@@ -16,10 +17,18 @@ function leer() { return { beide: {}, light: {}, dark: {} }; }
 function schreiberFuer(m) { return (name, wert, ebene) => { m[ebene === "beide" ? "beide" : ebene][name] = wert; }; }
 function leserFuer(m) { return (name, ebene) => (ebene === "beide" ? m.beide[name] : m[ebene][name]); }
 
-pruefe("Vier Sorten, jede mit Teilen und beiden Sprachen", () => {
-  assert.deepStrictEqual(Object.keys(BAUKASTEN), ["palette", "schrift", "karten", "hintergrund"]);
+pruefe("Fuenf Sorten, jede mit beiden Sprachen", () => {
+  // "oberflaeche" ist die fuenfte und traegt KEINE Teile, nur Vorlagen -
+  // Seitenleiste, Kopfleiste und Dialoge haetten sonst nirgends hingehoert.
+  assert.deepStrictEqual(Object.keys(BAUKASTEN),
+    ["palette", "schrift", "karten", "hintergrund", "oberflaeche"]);
   for (const [sorte, s] of Object.entries(BAUKASTEN)) {
     assert.ok(s.de && s.en, `${sorte}: eine Sprache fehlt`);
+    if (s.nurVorlagen) {
+      assert.strictEqual(s.teile.length, 0, `${sorte}: traegt nurVorlagen und trotzdem Teile`);
+      assert.ok(s.zweckDe && s.zweckEn, `${sorte}: ohne Teile braucht die Sorte selbst einen Zweck`);
+      continue;
+    }
     assert.ok(s.teile.length >= 3, `${sorte}: zu wenige Teile`);
     const ids = s.teile.map((t) => t.id);
     assert.strictEqual(new Set(ids).size, ids.length, `${sorte}: eine id kommt doppelt vor`);
@@ -112,6 +121,7 @@ pruefe("Kein anderes rgb-Feld wird geschrieben", () => {
 
 pruefe("Ein angewendetes Teil wird wiedererkannt", () => {
   for (const sorte of Object.keys(BAUKASTEN)) {
+    if (BAUKASTEN[sorte].nurVorlagen) continue;
     for (const teil of BAUKASTEN[sorte].teile) {
       const m = leer();
       teilAnwenden(sorte, teil, schreiberFuer(m));
@@ -207,5 +217,60 @@ pruefe("Der Hintergrund-Hinweis haengt an der Bedingung", () => {
   assert.match(b, /\$\{glasOhneGrund \? `/, "der Hinweis steht immer da");
 });
 
+pruefe("Jede Vorlage gehoert genau EINER Sorte", () => {
+  // Eine nicht zugeordnete Vorlage waere im Baukasten unsichtbar und nur noch
+  // ueber den UIX-Dialog erreichbar - genau die Zweigleisigkeit, die der
+  // Baukasten abschaffen soll. Eine doppelt zugeordnete staende an zwei
+  // Stellen und liesse sich an der einen ein- und an der anderen ausschalten.
+  const zugeordnet = Object.values(SORTEN_VORLAGEN).flat();
+  const alle = VORLAGEN.map((v) => v.id);
+  assert.strictEqual(new Set(zugeordnet).size, zugeordnet.length, "eine Vorlage ist doppelt zugeordnet");
+  for (const id of alle)
+    assert.ok(zugeordnet.includes(id), `${id} ist keiner Sorte zugeordnet`);
+  for (const id of zugeordnet)
+    assert.ok(alle.includes(id), `${id} ist zugeordnet, aber es gibt die Vorlage nicht`);
+});
+
+pruefe("Die Seite liegt im SELBEN Dialog, nicht darueber", () => {
+  // Ein Dialog im Dialog waere ein Kind eines Elements mit backdrop-filter -
+  // und das wird zum Bezugsrahmen fuer position: fixed. Genau daran sind
+  // Bubble-Pop-ups auf Hoehe 0 geschrumpft.
+  const b = panel.slice(panel.indexOf("zeichneBaukasten() {"), panel.indexOf("bkSeiteHtml("));
+  assert.match(b, /this\._bkSeite && BAUKASTEN\[this\._bkSeite\]/, "die Seite wird nicht umgeschaltet");
+  assert.doesNotMatch(b, /overlay zwei|schliesseFeld/, "die Seite oeffnet einen zweiten Dialog");
+  // Und beim Oeffnen wird zurueckgesetzt - eine Seite von letztem Mal waere
+  // eine Ueberraschung.
+  const o = panel.slice(panel.indexOf("oeffneBaukasten() {"), panel.indexOf("zeichneBaukasten() {"));
+  assert.match(o, /this\._bkSeite = null/, "die Seite wird beim Oeffnen nicht zurueckgesetzt");
+});
+
+pruefe("Ein Klick wendet an UND oeffnet die Seite", () => {
+  const b = panel.slice(panel.indexOf("bindeBaukasten(wurzel) {"), panel.indexOf("zeichneDialog()"));
+  assert.match(b, /this\._bkSeite = sorte/, "der Klick oeffnet die Seite nicht");
+  assert.match(b, /teilAnwenden\(sorte, teil/, "der Klick wendet nichts an");
+});
+
+pruefe("Die Regler schreiben erst beim Loslassen", () => {
+  // Ein input-Ereignis je Mauszucken wuerde den Aenderungszaehler fluten und
+  // bei jedem Schritt neu zeichnen.
+  const b = panel.slice(panel.indexOf("bindeBkSeite(wurzel) {"), panel.indexOf("bindeBaukasten(wurzel) {"));
+  assert.ok(b.length > 300, "bindeBkSeite nicht gefunden");
+  assert.match(b, /addEventListener\("change", \(\) => \{[\s\S]{0,200}setze\(/,
+    "es wird nicht beim change geschrieben");
+  const inputTeil = b.slice(b.indexOf('addEventListener("input"'), b.indexOf('addEventListener("change"'));
+  assert.doesNotMatch(inputTeil, /setze\(|geaendert\.add/, "das input-Ereignis schreibt ins Modell");
+});
+
+pruefe("Ein Klick auf das gewaehlte Teil wendet NICHT neu an", () => {
+  // Sonst verliert man jede Feinjustierung: Wer Glas waehlt, die Rundung auf
+  // 28px zieht und nochmal auf Glas klickt, steht wieder bei 20px. Das sieht
+  // nicht nach einem Fehler aus, sondern nach einem Wert, der nicht haelt.
+  const b = panel.slice(panel.indexOf("bindeBaukasten(wurzel) {"), panel.indexOf("zeichneDialog()"));
+  const i = b.indexOf('b.classList.contains("an")');
+  assert.ok(i > 0, "der Fall wird nicht abgefangen");
+  // Und der Ausstieg muss VOR dem Anwenden kommen.
+  assert.ok(i < b.indexOf("teilAnwenden("), "die Pruefung steht nach dem Anwenden");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 20) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

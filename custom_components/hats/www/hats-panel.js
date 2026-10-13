@@ -27,7 +27,8 @@ import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teile
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
-import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE } from "./baukasten.js";
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE,
+         SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 
 const HATS_VERSION = "0.2.0b3";
 
@@ -834,6 +835,8 @@ const TEXTE = {
     "Beginne oben: neue Theme, Datei einlesen oder eine vorhandene oeffnen.": "Start above: new theme, read in a file, or open an existing one.",
     "von HATS": "from HATS", "fremde": "foreign",
     "Baukasten": "Kit",
+    "Alle Teile": "All parts", "Tweaks": "Tweaks", "Nachjustieren": "Fine-tune",
+    "Oberflaeche": "Chrome",
     "Fertige Teile zusammenstecken": "Snap together ready-made parts",
     "Farben": "Colours", "Schrift": "Typeface", "Karten": "Cards", "Hintergrund": "Background",
     "gewaehlt": "selected",
@@ -1135,6 +1138,9 @@ class HatsPanel extends HTMLElement {
 
   oeffneBaukasten() {
     this._offen = "baukasten";
+    // Immer auf der Uebersicht beginnen. Eine Seite, die von letztem Mal noch
+    // offen steht, ist beim naechsten Oeffnen eine Ueberraschung.
+    this._bkSeite = null;
     this.zeichneBaukasten();
     const o = this.shadowRoot.querySelector(".overlay");
     o.hidden = false;
@@ -1165,9 +1171,31 @@ class HatsPanel extends HTMLElement {
     const sorteHtml = (schluessel) => {
       const s = BAUKASTEN[schluessel];
       const name = this.spr === "en" ? s.en : s.de;
-      return `
+      const vorlagen = (SORTEN_VORLAGEN[schluessel] || []).length;
+      const anV = ZUSTAND.modell
+        ? (SORTEN_VORLAGEN[schluessel] || []).filter((id) => {
+            const v = VORLAGEN.find((x) => x.id === id);
+            return v && vorlageIstAn(ZUSTAND.modell, v);
+          }).length
+        : 0;
+
+      // Eine Sorte, die nur Vorlagen traegt, hat keine Teile zur Auswahl -
+      // sie bekommt trotzdem eine Kachel, sonst waere sie unerreichbar.
+      if (s.nurVorlagen) return `
         <section class="bk-sorte">
           <h3>${name}</h3>
+          <div class="bk-teile">
+            <button class="bk-teil" data-bk-seite="${schluessel}" ${ZUSTAND.modell ? "" : "disabled"}>
+              <span class="bk-name">${T("Tweaks")}</span>
+              <span class="bk-zweck">${this.spr === "en" ? s.zweckEn : s.zweckDe}</span>
+              <span class="bk-zahl">${anV}/${vorlagen}</span>
+            </button>
+          </div>
+        </section>`;
+
+      return `
+        <section class="bk-sorte">
+          <h3>${name}${vorlagen ? ` <span class="bk-zahl">${anV}/${vorlagen} ${T("Tweaks")}</span>` : ""}</h3>
           <div class="bk-teile">
             ${s.teile.map((teil) => {
               const an = sitzt[schluessel] === teil.id;
@@ -1183,16 +1211,22 @@ class HatsPanel extends HTMLElement {
         </section>`;
     };
 
+    // Eine Sorte offen? Dann ihre Seite statt der Uebersicht - im SELBEN
+    // Dialog, mit einem Weg zurueck.
+    const seite = this._bkSeite && BAUKASTEN[this._bkSeite] ? this._bkSeite : null;
+    const sTitel = seite ? (this.spr === "en" ? BAUKASTEN[seite].en : BAUKASTEN[seite].de) : null;
+
     d.innerHTML = `
       <header class="dkopf">
         <div>
-          <h2>${T("Baukasten")}</h2>
-          <p>${T("Fertige Teile zusammenstecken")}${m ? "" : " · " + T("erst eine Theme oeffnen")}</p>
+          <h2>${seite ? sTitel : T("Baukasten")}</h2>
+          <p>${seite ? T("Baukasten") : T("Fertige Teile zusammenstecken")}${m ? "" : " · " + T("erst eine Theme oeffnen")}</p>
         </div>
         <button class="zu" aria-label="${T("Schließen")}">✕</button>
       </header>
 
       <div class="dinhalt bk">
+        ${seite ? this.bkSeiteHtml(seite, T) : `
         ${glasOhneGrund ? `
         <p class="bk-hinweis">
           <ha-icon icon="mdi:information-outline"></ha-icon>
@@ -1201,21 +1235,149 @@ class HatsPanel extends HTMLElement {
 
         ${Object.keys(BAUKASTEN).map(sorteHtml).join("")}
 
-        <p class="bk-fuss">${T("Danach feinjustieren in den acht Stufen")}</p>
+        <p class="bk-fuss">${T("Danach feinjustieren in den acht Stufen")}</p>`}
       </div>
     `;
 
     d.querySelector(".zu")?.addEventListener("click", () => this.schliesse());
-    this.bindeBaukasten(d);
+    if (seite) this.bindeBkSeite(d); else this.bindeBaukasten(d);
+  }
+
+  // Die Seite einer Sorte: das gewaehlte Teil, seine Stellschrauben, seine
+  // Vorlagen.
+  //
+  // IM SELBEN Dialog, nicht als zweiter darueber. Ein Dialog im Dialog waere
+  // ein Kind eines Elements mit backdrop-filter - und das wird zum
+  // Bezugsrahmen fuer position: fixed. Genau daran sind Bubble-Pop-ups auf
+  // Hoehe 0 geschrumpft.
+  bkSeiteHtml(schluessel, T) {
+    const s = BAUKASTEN[schluessel];
+    const m = ZUSTAND.modell;
+    const lies = (name, ebene) => {
+      if (!m) return undefined;
+      const k = name.replace(/^--/, "");
+      return ebene === "beide" ? m.flach[k] : m[ebene]?.[k];
+    };
+    const teilId = s.nurVorlagen ? null : erkenneTeil(schluessel, lies);
+    const teil = s.teile.find((x) => x.id === teilId);
+    const felder = SORTEN_FELDER[schluessel] || [];
+    const vorlagenIds = SORTEN_VORLAGEN[schluessel] || [];
+    const vorlagen = vorlagenIds.map((id) => VORLAGEN.find((v) => v.id === id)).filter(Boolean);
+
+    return `
+      <div class="bk-seite">
+        <button class="bk-zurueck" data-bk-zurueck>
+          <ha-icon icon="mdi:arrow-left"></ha-icon> ${T("Alle Teile")}
+        </button>
+
+        ${teil ? `
+        <div class="bk-gewaehlt">
+          <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
+          <span class="bk-zweck">${this.spr === "en" ? teil.zweckEn : teil.zweckDe}</span>
+        </div>` : (s.nurVorlagen ? `
+        <p class="bk-zweck">${this.spr === "en" ? s.zweckEn : s.zweckDe}</p>` : "")}
+
+        ${felder.length ? `
+        <section class="bk-sorte">
+          <h3>${T("Nachjustieren")}</h3>
+          <div class="bk-regler">
+            ${felder.map((f) => {
+              const wert = lies(f.v, "beide") ?? "";
+              const zahl = parseFloat(String(wert)) || (f.art === "zahl" ? 1 : 0);
+              return `
+              <label class="bk-regel">
+                <span>${this.spr === "en" ? f.en : f.de}</span>
+                <input type="range" data-bk-feld="${f.v}" data-bk-art="${f.art}"
+                       min="${f.min}" max="${f.max}" step="${f.schritt ?? 1}" value="${zahl}">
+                <b data-bk-wert="${f.v}">${wert || "–"}</b>
+              </label>`;
+            }).join("")}
+          </div>
+        </section>` : ""}
+
+        ${vorlagen.length ? `
+        <section class="bk-sorte">
+          <h3>${T("Tweaks")}</h3>
+          <div class="bk-tweaks">
+            ${vorlagen.map((v) => {
+              const an = m ? vorlageIstAn(m, v) : false;
+              return `
+              <label class="bk-tweak ${an ? "an" : ""}">
+                <input type="checkbox" data-bk-vorlage="${v.id}" ${an ? "checked" : ""} ${m ? "" : "disabled"}>
+                <span class="bk-name">${this.spr === "en" ? v.en : v.de}</span>
+                <span class="bk-zweck">${this.spr === "en" ? v.zweckEn : v.zweckDe}</span>
+              </label>`;
+            }).join("")}
+          </div>
+        </section>` : ""}
+      </div>`;
+  }
+
+  bindeBkSeite(wurzel) {
+    wurzel.querySelector("[data-bk-zurueck]")?.addEventListener("click", () => {
+      this._bkSeite = null;
+      this.zeichneBaukasten();
+    });
+
+    // Die Regler schreiben erst beim Loslassen ins Modell, nicht bei jedem
+    // Pixel: Ein input-Ereignis je Mauszucken wuerde den Aenderungszaehler
+    // fluten und bei jedem Schritt neu zeichnen.
+    wurzel.querySelectorAll("[data-bk-feld]").forEach((r) => {
+      const anzeige = wurzel.querySelector(`[data-bk-wert="${r.dataset.bkFeld}"]`);
+      const text = () => r.dataset.bkArt === "mass" ? r.value + "px" : r.value;
+      r.addEventListener("input", () => { if (anzeige) anzeige.textContent = text(); });
+      r.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const k = r.dataset.bkFeld.replace(/^--/, "");
+        setze(ZUSTAND.modell, k, text(), "beide");
+        ZUSTAND.geaendert.add(k);
+        this.zeichneZaehler();
+      });
+    });
+
+    wurzel.querySelectorAll("[data-bk-vorlage]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const v = VORLAGEN.find((x) => x.id === el.dataset.bkVorlage);
+        if (!v) return;
+        // vorlageAn haengt an, statt zu ersetzen - eigenes CSS im selben Feld
+        // bleibt stehen.
+        if (el.checked) vorlageAn(ZUSTAND.modell, v); else vorlageAus(ZUSTAND.modell, v);
+        ZUSTAND.geaendert.add("uix-" + v.ziel);
+        this.zeichneBaukasten();
+        this.zeichneZaehler();
+      })
+    );
   }
 
   bindeBaukasten(wurzel) {
+    // Eine Sorte ohne Teile - sie wird nur geoeffnet, nichts angewendet.
+    wurzel.querySelectorAll("[data-bk-seite]").forEach((b) =>
+      b.addEventListener("click", () => {
+        this._bkSeite = b.dataset.bkSeite;
+        this.zeichneBaukasten();
+      })
+    );
     wurzel.querySelectorAll("[data-bk-teil]").forEach((b) =>
       b.addEventListener("click", () => {
         if (!ZUSTAND.modell) return;
         const sorte = b.dataset.bkSorte;
         const teil = BAUKASTEN[sorte]?.teile.find((x) => x.id === b.dataset.bkTeil);
         if (!teil) return;
+
+        // Ein Klick auf das Teil, das schon sitzt, oeffnet nur seine Seite -
+        // er wendet es NICHT noch einmal an.
+        //
+        // Sonst verliert man beim zweiten Klick jede Feinjustierung: Wer Glas
+        // waehlt, die Rundung auf 28px zieht und dann nochmal auf Glas klickt,
+        // steht wieder bei 20px. Am 13.10.2026 beim Durchspielen genau so
+        // passiert - und es sieht nicht nach einem Fehler aus, sondern nach
+        // einem Wert, der nicht haelt.
+        if (b.classList.contains("an")) {
+          this._bkSeite = sorte;
+          this.zeichneBaukasten();
+          return;
+        }
 
         // teilAnwenden schreibt nicht selbst ins Modell - es bekommt ein
         // schreibe() und meldet, was es gesetzt hat. So bleibt die
@@ -1232,6 +1394,9 @@ class HatsPanel extends HTMLElement {
 
         ZUSTAND.meldung = { art: "gut",
           text: `${this.spr === "en" ? teil.en : teil.de} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
+        // Anwenden UND oeffnen, nicht zweimal klicken lassen: Wer ein Teil
+        // waehlt, will als Naechstes sehen, was daran noch zu drehen ist.
+        this._bkSeite = sorte;
         this.zeichneBaukasten();
         this.zeichneZaehler();
         // Die Meldung steht auf der Seite HINTER dem Dialog - sie wird erst
@@ -2941,6 +3106,41 @@ class HatsPanel extends HTMLElement {
                     background: rgba(255,166,0,.12); color: #8a5a00;
                     --mdc-icon-size: 18px; }
       .bk-fuss { margin: 0; font-size: 12.5px; color: var(--s-tinte-leise); }
+      .bk-zahl { font-size: 11px; font-weight: 400; letter-spacing: 0;
+                 color: var(--s-tinte-leise); text-transform: none;
+                 font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+      /* --- Die Seite einer Sorte ---------------------------------------- */
+      .bk-seite { display: flex; flex-direction: column; gap: 22px; }
+      .bk-zurueck { align-self: flex-start; display: flex; align-items: center; gap: 6px;
+                    border: 0; background: none; cursor: pointer; font: inherit; font-size: 13px;
+                    color: var(--s-tinte-leise); padding: 4px 0; --mdc-icon-size: 18px; }
+      .bk-zurueck:hover { color: var(--s-akzent); }
+      .bk-gewaehlt { display: flex; flex-direction: column; gap: 3px;
+                     padding: 14px 16px; border-radius: var(--s-r);
+                     background: var(--s-karte); border: 1px solid var(--s-akzent); }
+
+      /* Regler mit Wert daneben. Der Wert steht rechts und ist breit genug
+         fuer "1.15" - sonst springt die Zeile bei jedem Schritt. */
+      .bk-regler { display: flex; flex-direction: column; gap: 12px; }
+      .bk-regel { display: grid; grid-template-columns: 140px 1fr 56px; gap: 12px;
+                  align-items: center; font-size: 13px; }
+      .bk-regel input[type="range"] { width: 100%; accent-color: var(--s-akzent); }
+      .bk-regel b { font-size: 12px; text-align: right;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+      /* Tweaks als anklickbare Zeilen, nicht als nackte Haken: Der Zwecktext
+         ist die Entscheidungshilfe und gehoert mit in die Klickflaeche. */
+      .bk-tweaks { display: grid; gap: 8px;
+                   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+      .bk-tweak { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;
+                  align-items: start; cursor: pointer; padding: 11px 13px;
+                  border-radius: var(--s-r); background: var(--s-karte);
+                  border: 1px solid rgba(27,36,48,.08); transition: border-color .15s; }
+      .bk-tweak:hover { border-color: var(--s-akzent); }
+      .bk-tweak.an { border-color: var(--s-akzent); box-shadow: inset 0 0 0 1px var(--s-akzent); }
+      .bk-tweak input { grid-row: span 2; margin: 2px 0 0; accent-color: var(--s-akzent); }
+      .bk-tweak .bk-zweck { grid-column: 2; }
 
       /* Listenansicht statt Kartenbrett: eine Gruppe untereinander, in
          derselben Sprache wie die Stufenliste der Hauptseite. */
