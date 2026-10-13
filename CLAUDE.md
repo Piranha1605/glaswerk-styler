@@ -70,7 +70,8 @@ custom_components/hats/
 ├── manifest.json         Domain hats
 ├── translations/         de.json und en.json
 └── www/
-    └── hats-panel.js     das Panel
+    ├── hats-panel.js     das Panel
+    └── hats-control-card.js   die Steuerkarte fuer Dashboards
 docs/beispiele/           Start-Themes
 werkzeuge/                Prüfwerkzeuge
 ```
@@ -228,12 +229,15 @@ und `var(--ha-color-neutral-00)` — die Palette hat keine Stufe `00`, sie fäng
 bei `05` an. Beide lösen zu nichts auf, ohne Meldung.
 `tests/hats-blanko.test.js` hält alles fest, mit Gegenproben.
 
-**Den Modus umzuschalten geht von außen nicht.** Weder `frontend.set_theme`
-(setzt nur die globale Zuordnung) noch `frontend/set_user_data` noch
-`localStorage` noch die `prefers-color-scheme`-Emulation des Browsers greifen
-durch: HA schreibt seinen aufgelösten Stand bei jedem Laden zurück. Der einzige
-Weg wäre das `settheme`-Ereignis, und das ist verboten. Wer im Dunkeln messen
-will, lässt den Nutzer einmal im Profil umschalten.
+**Den Modus von außen umzuschalten geht — der Satz, der hier stand, war
+falsch.** Er lautete „geht von außen nicht", und gemessen war er mit dem
+falschen Schlüssel. Der richtige steht unten im Abschnitt *Die Steuerkarte*:
+`frontend/set_user_data` mit dem Schlüssel `theme`. Was weiter stimmt:
+`frontend.set_theme` setzt nur die globale Zuordnung, und in den `localStorage`
+schreibt HA seinen aufgelösten Stand zurück.
+
+An der Instanz im Heimnetz bleibt es trotzdem dabei, dass der Nutzer selbst im
+Profil umschaltet: Die Wahl gilt für **jedes** Gerät, an dem er angemeldet ist.
 
 ### Erst Bubbles eigene Rückfallkette lesen, dann zuordnen
 
@@ -507,6 +511,7 @@ werkzeuge/einspielen.sh                Dateien auf die Instanz, mit Gegenprobe
 werkzeuge/sync-instanz.sh              die Schleife: die Instanz holt von selbst
 werkzeuge/vorschau.js                  eine Theme ansehen, ohne sie zu aktivieren
 werkzeuge/liquid-glass-bauen.mjs       die Beispiel-Theme bauen
+werkzeuge/test/vollbild-messen.mjs     das Vollbild der Steuerkarte an einem echten Chrome
 ```
 
 **Die Schleife ist der Hebel.** Ohne sie kostet jede Änderung einen Gang in den
@@ -782,10 +787,15 @@ zielte darauf und traf nichts.
 
 ### Eine Theme lässt sich von außen nicht aktivieren
 
-Alle drei Wege am 13.10.2026 gemessen, keiner greift durch: `frontend.set_theme`
-setzt nur `default_theme`, `frontend/set_user_data` wird beim Laden
-überschrieben, und in den `localStorage` schreibt HA seinen aufgelösten Stand
-zurück. Der einzige echte Hebel wäre das `settheme`-Ereignis, und das ist tabu.
+**Die Überschrift stimmt nicht mehr.** Am 13.10.2026 standen hier drei Wege,
+„keiner greift durch". Zwei davon stimmen: `frontend.set_theme` setzt nur
+`default_theme`, und in den `localStorage` schreibt HA seinen aufgelösten Stand
+zurück. Der dritte war mit dem falschen Schlüssel gemessen —
+`frontend/set_user_data` unter `selectedTheme`, den Home Assistant nie liest.
+Unter **`theme`** greift er sofort und ohne Neuladen; siehe *Die Steuerkarte*.
+
+Für eine Messung an einer einzelnen Vorlage bleibt die Vorschau trotzdem der
+bessere Weg: Sie schaltet nichts um, was der Nutzer danach zurückstellen müsste.
 
 Dafür gibt es `werkzeuge/vorschau.js`: Es schreibt die Felder selbst auf
 `<html>` und hängt das `uix-`CSS von Hand in die Shadow Roots. Zwei Dinge sind
@@ -797,6 +807,209 @@ dabei nötig, sonst lügt die Messung:
   `ha-card` nicht mehr, und Überschriftenkarten behalten ihre Fläche.
 - **Die `uix-node`-Knoten der aktiven Theme stilllegen** (auf der Instanz des
   Nutzers 39 Stück). Sonst misst man einen Kampf statt eine Vorlage.
+
+## Die Steuerkarte
+
+Seit dem 13.10.2026 bringt HATS eine Karte für Dashboards mit. Sie schaltet im
+Moment zwei Dinge: den Modus (automatisch, hell, dunkel) und das Vollbild.
+
+```yaml
+type: custom:hats-control-card
+controls: [mode, fullscreen]    # Auswahl und Reihenfolge; fehlt die Zeile: beide
+kiosk_only: false               # true: kein Vollbild des Browsers
+```
+
+Sie liegt in `custom_components/hats/www/hats-control-card.js` und wird mit
+`frontend.add_extra_js_url` angemeldet, **nicht** als Lovelace-Ressource: Eine
+Ressource stünde in der Konfiguration des Nutzers und bliebe liegen, wenn HATS
+geht. Der Name `hats-control-card` steht in jedem Dashboard, das die Karte
+benutzt — wie die Domain ist er **bis zum ersten Release** frei, danach nicht.
+
+### Die Regel: alles, was sie benutzt, stellt Home Assistant
+
+Auf Ansage vom 13.10.2026: *„bedenke das alles was benutzt wird von ha gestellt
+werden muss"*. Keine Bibliothek, keine fremde Karte, kein eigenes Symbol, keine
+eigene Farbe.
+
+| | |
+|---|---|
+| Bauteile | `ha-card`, `ha-icon` (mdi), `ha-ripple` |
+| Farben und Maße | dieselben Variablen, die `ha-control-select` und `ha-control-button` lesen — aus deren `elementStyles` abgeschrieben |
+| Modus | das Ereignis `settheme` |
+| Vollbild | das Ereignis `hass-kiosk-mode` |
+| Meldung | das Ereignis `hass-notification` (HAs Toast) |
+| Editor | `getConfigForm` — Home Assistant zeichnet das Formular selbst |
+
+`tests/hats-steuerkarte.test.js` hält das fest: nur diese drei Bauteile, nur
+diese drei Ereignisse, keine Farbe außer dem Weiß, das auch in
+`ha-control-select` fest steht, und jede gelesene Variable muss in der Liste
+der gemessenen stehen.
+
+**Die Maße, an der Testinstanz neben einer Kachel abgelesen:** Spur
+`rgb(70,70,70)` bei 20 Prozent und 12px Rundung — bei der Karte wie bei HAs
+eigener Auswahlleiste. 40px hoch, 20px-Symbole, die ganze Karte 56px, also
+genau eine Zeile im Sections-Raster. UIX hängt seinen Knoten von selbst in den
+Shadow Root der Karte; Fläche, Weichzeichnung, Rundung und Schatten waren
+dieselben wie an der Kachel daneben, ohne eine Zeile dafür.
+
+**Warum nicht `ha-control-select` selbst:** Ein nicht angemeldetes Element
+zeichnet nichts, ohne Meldung. Ob Home Assistant dieses Bauteil auf jedem
+Dashboard anmeldet, ließ sich nicht klären — an der Testinstanz war es auch
+auf einer Ansicht ohne Kachel da, aber dort laden Mushroom und Bubble mit.
+
+### `settheme`: was Home Assistant damit tut
+
+Aus dem Bündel von 2026.10.1 gelesen und an der Testinstanz nachgemessen. Die
+Funktionsnamen sind dort verkürzt; `storeState` und `saveThemePreferences`
+sind meine Lesart dessen, was die beiden Aufrufe tun:
+
+```js
+this.addEventListener("settheme", (e) => {
+  this._updateHass({ selectedTheme: { ...this.hass.selectedTheme, ...e.detail } });
+  this._applyTheme(mql.matches);
+  storeState(this.hass);                          // localStorage
+  saveThemePreferences(this.hass, selectedTheme); // frontend/set_user_data, key "theme"
+});
+```
+
+- **Der Hörer sitzt am Element `<home-assistant>`.** Das Ereignis muss
+  aufsteigen und `composed` sein, sonst bleibt es im Shadow Root der Karte.
+- **Das Detail wird gemischt.** Die Karte schickt nur `{dark: …}`, der
+  Theme-Name bleibt stehen. Für „automatisch" muss der Schlüssel **da** sein
+  und `undefined` tragen — fehlt er, bleibt der alte Wert.
+- **Die Wahl liegt beim Nutzer auf dem Server, nicht im Browser.** Schlüssel
+  `theme` in den Nutzerdaten, und Home Assistant abonniert ihn. Gemessen: Ein
+  Schreiben über eine **zweite** Verbindung schaltete den offenen Browser von
+  hell auf dunkel, ohne dass ihn jemand anfasste.
+
+      nach Klick „Hell"        Server {"dark":false,"theme":"liquid_glass"}
+      nach Klick „Automatisch" Server {"theme":"liquid_glass"}
+      Schreiben von außen      Browser folgt in unter zwei Sekunden
+
+  **Wer auf dem Wandtablett umschaltet, schaltet also auch sein Telefon um**,
+  wenn beide denselben Nutzer haben. Das ist Home Assistants Verhalten, nicht
+  das der Karte — aber es gehört gesagt, bevor es jemand als Fehler meldet.
+
+Gemessen ist das Umschalten des **Modus**. Dass derselbe Weg auch den
+Theme-Namen trägt, steht im selben Code, ist aber nicht nachgemessen: Auf der
+Testinstanz gibt es nur eine Theme.
+
+**Das Verbot von `settheme` gilt weiter für das Messen.** Die Karte löst es
+aus, wenn der Nutzer drückt — genau wie die Zeile im Profil. Ich löse es nicht
+aus, um an der Instanz im Heimnetz etwas anzusehen.
+
+### Wann der Modus überhaupt schaltbar ist
+
+Das entscheidet die Theme, nach HAs `_applyTheme`:
+
+```js
+if (theme) {
+  if (theme.modes && "dark" in theme.modes) {
+    if (!("light" in theme.modes)) dunkel = true;
+  } else dunkel = false;
+}
+```
+
+Eine Theme ohne `modes.dark` ist **immer** hell, eine nur mit `modes.dark`
+immer dunkel. Das Ereignis käme an und würde gespeichert, zu sehen wäre nichts.
+Die Karte sperrt die Wahl dann, zeigt den Modus, der gilt, und sagt beim
+Drücken über HAs Toast, warum. Gesperrt, nicht versteckt, und **nicht**
+`disabled`: Ein abgeschalteter Knopf kann nichts mehr melden.
+
+Gelesen wird `hass.themes.theme` — die **wirksame** Theme, nicht die Wahl im
+Profil. Die Standard-Theme hat keinen Eintrag in `themes.themes` und kann beides.
+
+Der Test dazu prüft nicht gegen die eigene Regel: Er rechnet mit HAs
+Funktion aus, was am Ende angezeigt wird, und verlangt, dass „schaltbar" genau
+dann gilt, wenn hell und dunkel zu verschiedenen Ergebnissen führen.
+
+### `hass-kiosk-mode`: Home Assistants Vollbild ist keins
+
+```js
+window.addEventListener("hass-kiosk-mode",
+  (e) => this._updateHass({ kioskMode: e.detail.enable }));
+```
+
+An einem 1024px breiten Fenster gemessen:
+
+    Seitenleiste     255px -> 0
+    Kopfzeile        bleibt, 57px hoch
+    darin bleiben    die Reiter und Assist
+    darin gehen      Menüknopf, Hinzufügen, Suchen, Bearbeiten
+
+- **Es wird nicht gespeichert.** Ein Neuladen stellt alles zurück.
+- **Es gibt keinen Menüknopf mehr.** Wer im Kiosk-Modus auf eine Ansicht ohne
+  die Karte wechselt, kommt nur über ein Neuladen wieder heraus.
+- **Die Kopfzeile bleibt.** Dafür hat Home Assistant keinen Schalter; sie
+  auszublenden hieße, CSS in `hui-root` zu legen, und das stellt HA nicht.
+- **Ein eigenes Vollbild hat Home Assistant nicht.** In den 107 Bündeln, die
+  ein Dashboard lädt, kommt `requestFullscreen` nicht vor.
+
+Deshalb die **eine Ausnahme** von der Regel oben: Die Karte fragt zusätzlich
+den Browser nach seinem Vollbild. Mit `kiosk_only: true` bleibt es bei dem, was
+Home Assistant selbst kann. Die beiden sind gekoppelt — wer das Vollbild mit
+Esc verlässt, verlässt auch den Kiosk-Modus —, und die Karte räumt nur auf, was
+sie selbst geöffnet hat: Ein Kamerabild im Vollbild beendet sie nicht.
+
+**Das Vollbild des Browsers lässt sich im eingebauten Browser der Claude-App
+nicht messen.** Dort blieb `requestFullscreen()` offen: echter Klick,
+`navigator.userActivation.isActive` war `true`, und das Versprechen wurde weder
+erfüllt noch abgelehnt. Gemessen ist es deshalb an einem echten Chrome, kopflos
+und ohne Home Assistant:
+
+```bash
+node werkzeuge/test/vollbild-messen.mjs
+```
+
+Das Skript öffnet `werkzeuge/test/vollbild-probe.html` — die Karte mit einem
+nachgebauten `hass` — und klickt über das Debug-Protokoll. Am 13.10.2026 mit
+Chrome 155, acht Prüfungen:
+
+    Klick auf die Karte          Kiosk an, <html> im Vollbild
+    Vollbild endet von außen     Kiosk aus            (das, was Esc tut)
+    Klick, Klick                 Vollbild zu, Kiosk aus, nichts doppelt
+    kiosk_only                   Kiosk an, kein Vollbild
+    fremdes Vollbild auf und zu  Kiosk bleibt         (Gegenprobe)
+
+Dieselbe Seite lässt sich von Hand öffnen, solange der Dateiserver läuft:
+`http://localhost:8778/werkzeuge/test/vollbild-probe.html`.
+
+**Zwei Fallen beim Messen, beide bezahlt.** `fullscreenchange` kommt erst mit
+dem nächsten gezeichneten Bild, und ein kopfloser Chrome zeichnet nur, wenn ihn
+etwas dazu bringt: Nach festen 700 ms stand `fullscreenElement` schon, das
+Ereignis kam erst im nächsten Schritt an und verfälschte den. Das Skript wartet
+jetzt auf den Zustand und stößt das Zeichnen mit einem Bildschirmfoto an. Und
+ein Klick auf eine ausgerechnete Stelle traf daneben — das Fenster ist 700
+Pixel hoch, der sichtbare Bereich nicht. Koordinaten kommen aus der Seite.
+
+`tests/hats-steuerkarte-vollbild.test.js` fährt dieselbe Kopplung ohne Browser
+gegen ein nachgebautes `document`, zwölf Fälle. Dort stehen die, die sich an
+einem Browser nicht herstellen lassen: die Anfrage, die offen bleibt, und die
+Erlaubnis, die erst nach dem Abwählen kommt.
+
+**Nicht gemessen:** Safari, Firefox und die Companion-Apps. Wo es
+`requestFullscreen` nicht gibt, bleibt es beim Kiosk-Modus — das ist geprüft,
+aber an keinem solchen Gerät angesehen.
+
+### `kiosk_only` heißt so herum, weil ein Formular Fehlendes als „aus" zeigt
+
+HAs Schalter im Editor zeigt ein fehlendes Feld als aus. Hieße das Feld
+`browser_fullscreen` mit Vorgabe an, stünde der Schalter auf aus, während die
+Karte das Gegenteil täte. Dieselbe Überlegung bei `controls`: Der Kartenwähler
+legt die Liste ausdrücklich an (`getStubConfig`), sonst zeigte der Editor ein
+leeres Auswahlfeld neben einer Karte mit beiden Teilen.
+
+Ein unbekannter Name in `controls` ist ein **Fehler**, kein stilles Nichts —
+sonst verschwände bei einem Tippfehler einfach ein Knopf.
+
+### Dabei gefunden: `ws.mjs` hielt jedes Skript zwei Minuten fest
+
+`ruf()` stellte seine Uhr nicht ab, wenn die Antwort kam. `dashboard-bauen.mjs`
+war nach 60 Millisekunden fertig und kehrte nach 120 Sekunden zurück — und mit
+`| tail` dahinter sah man bis dahin keine Zeile. Zweimal für einen Hänger
+gehalten und abgebrochen, obwohl beide Läufe längst geschrieben hatten. Die
+Uhr wird jetzt mit der Antwort gelöscht. Und `{type: "ping"}` beantwortet Home
+Assistant mit `pong`, nicht mit `result`; `ruf()` kannte nur das zweite.
 
 ## Zustand im DOM: drei Familien, drei Marken
 

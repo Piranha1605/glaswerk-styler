@@ -39,6 +39,47 @@ The measured knowledge about Home Assistant, Bubble Card and Mushroom lives in
 HATG's `CLAUDE.md` and in `docs/uebergabe-neues-projekt.md`. HATS builds on it
 instead of working it out again.
 
+## The control card
+
+HATS ships a card for dashboards. It switches the mode (auto, light, dark) and
+fullscreen.
+
+![The control card in light mode](docs/bilder/steuerkarte-hell.jpg)
+![The control card in dark mode](docs/bilder/steuerkarte-dunkel.jpg)
+
+The card three times at the top, two Home Assistant tiles below for comparison.
+
+```yaml
+type: custom:hats-control-card
+```
+
+It appears in the card picker as soon as the integration is set up. There is
+no resource to register.
+
+| Field | Default | |
+|---|---|---|
+| `controls` | `[mode, fullscreen]` | which controls, in which order |
+| `kiosk_only` | `false` | `true`: fullscreen in Home Assistant only, the browser window stays |
+
+Everything the card uses is provided by Home Assistant: the elements, the
+icons, the colour variables and the two switches behind it. It therefore
+follows any theme and needs no further card from HACS.
+
+Worth knowing:
+
+- **The mode belongs to the user, not to the device.** Since 2026.10 Home
+  Assistant stores the choice with the user on the server. Switching on the
+  wall tablet also switches every other device the same user is logged in on.
+- **A theme with only one mode cannot be switched.** The card then locks the
+  choice and says why when pressed.
+- **Fullscreen means two things.** Home Assistant hides the sidebar and the
+  header buttons (its kiosk mode), and the browser goes fullscreen where it
+  offers that. The header row with the view tabs stays — Home Assistant has no
+  switch for it.
+- **Fullscreen is not stored.** Reloading the page resets everything. That is
+  also the way out after moving to a view without the card while in
+  fullscreen: there is no menu button any more.
+
 ## Installation
 
 Not via HACS yet. To try it, copy the `custom_components/hats` folder into

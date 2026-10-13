@@ -19,6 +19,14 @@ await hass.connection.sendMessagePromise({
 });
 ```
 
+**Nachtrag vom Abend: Der Schluessel oben ist der falsche.** Home Assistant
+liest die Wahl unter `theme`, nicht unter `selectedTheme` (an der Testinstanz
+gemessen, siehe CLAUDE.md, Abschnitt Steuerkarte). Was hier geschrieben wurde -
+das Setzen wie das Zurueckstellen -, hat an der Theme-Wahl also nie etwas
+geaendert. Unter `selectedTheme` liegt seitdem ein Eintrag in den Nutzerdaten,
+den niemand liest; er stoert nicht. Angefasst habe ich die Instanz dafuer
+nicht noch einmal.
+
 Aktiv war zu dem Zeitpunkt uebrigens `hats_studio`, nicht `hats_test` - die
 Profilwahl und das, was wirkt, koennen auseinanderlaufen. Gemessen wird deshalb
 immer mit `getComputedStyle`, nie am Theme-Objekt.

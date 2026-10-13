@@ -18,11 +18,14 @@
 //   Meldung    das Ereignis "hass-notification" (HAs eigener Toast)
 //   Editor     getConfigForm - Home Assistant zeichnet das Formular selbst
 //
-// Warum nicht ha-control-select selbst, wo es doch genau so aussieht: Das
-// Bauteil laedt Home Assistant erst mit den Kachel-Funktionen nach. Auf einem
-// Dashboard ohne solche Kachel waere es nicht angemeldet, und ein nicht
-// angemeldetes Element zeichnet nichts - ohne Meldung. ha-card und ha-icon
-// stehen dagegen auf jedem Dashboard.
+// Warum nicht ha-control-select selbst, wo es doch genau so aussieht: Ein
+// nicht angemeldetes Element zeichnet nichts, ohne Meldung - und ob Home
+// Assistant dieses Bauteil auf JEDEM Dashboard anmeldet, liess sich nicht
+// klaeren. An der Testinstanz war es auch auf einer Ansicht ohne Kachel da,
+// aber dort laden Mushroom und Bubble mit, und wer von den dreien es
+// angemeldet hat, ist von aussen nicht zu sehen. ha-card und ha-icon braucht
+// dagegen jedes Dashboard selbst. Die Karte zeichnet ihre Knoepfe deshalb aus
+// button-Elementen und liest nur dieselben Variablen.
 //
 // Die eine Ausnahme von der Regel ist das Vollbild des BROWSERS
 // (requestFullscreen). Home Assistant hat kein eigenes: Sein Kiosk-Modus

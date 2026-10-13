@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<title>Vollbild-Probe der Steuerkarte</title>
+<!--
+  Misst die Kopplung der Steuerkarte zwischen Kiosk-Modus und dem Vollbild des
+  Browsers - an einem ECHTEN Browser, ohne Home Assistant und ohne Anmeldung.
+
+  Warum es diese Seite gibt: Im eingebauten Browser der Claude-App bleibt
+  requestFullscreen() offen, weder erfuellt noch abgelehnt. Dort laesst sich
+  nur der Kiosk-Teil messen.
+
+  Aufruf, waehrend der Dateiserver des Projekts laeuft (einspielen-test.sh
+  startet ihn):
+
+      http://localhost:8778/werkzeuge/test/vollbild-probe.html
+
+  Von Hand: den Knopf druecken, mit Esc zurueck, das Protokoll lesen.
+  Ohne Hand: werkzeuge/test/vollbild-messen.mjs faehrt dasselbe mit Chrome.
+
+  Home Assistant ist hier nachgebaut, und zwar nur das, was die Karte davon
+  braucht: ein hass-Objekt mit kioskMode und der Hoerer auf window.
+-->
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 32px; color: #17203a;
+         --primary-color: #009ac7; --disabled-color: #bdbdbd; --primary-text-color: #17203a;
+         --secondary-text-color: #5b6478; }
+  #platz { display: flex; gap: 24px; margin: 16px 0; }
+  #platz > div { width: 220px; }
+  pre { background: #f2f4f8; padding: 12px; border-radius: 8px; min-height: 6em; }
+</style>
+<h1>Vollbild-Probe</h1>
+<p>Links die Karte mit Vollbild des Browsers, rechts mit <code>kiosk_only</code>.</p>
+<div id="platz">
+  <div id="beide"></div>
+  <div id="nurkiosk"></div>
+</div>
+<pre id="protokoll"></pre>
+<script type="module">
+  import "/custom_components/hats/www/hats-control-card.js";
+
+  const stand = window.stand = { kiosk: [], vollbild: [] };
+  const zeige = () => {
+    document.getElementById("protokoll").textContent =
+      "hass-kiosk-mode    " + JSON.stringify(stand.kiosk) + "\n" +
+      "fullscreenchange   " + JSON.stringify(stand.vollbild) + "\n" +
+      "im Vollbild        " + (document.fullscreenElement ? document.fullscreenElement.tagName : "nein");
+  };
+
+  let hass = { language: "de", kioskMode: false, selectedTheme: null,
+               themes: { theme: "default", themes: {} } };
+  const karten = [["beide", {}], ["nurkiosk", { kiosk_only: true }]].map(([wo, extra]) => {
+    const k = document.createElement("hats-control-card");
+    k.setConfig({ controls: ["fullscreen"], ...extra });
+    k.hass = hass;
+    document.getElementById(wo).append(k);
+    return k;
+  });
+
+  // Was Home Assistant mit dem Ereignis tut: kioskMode umlegen und das neue
+  // hass-Objekt an jede Karte reichen.
+  window.addEventListener("hass-kiosk-mode", (e) => {
+    stand.kiosk.push(e.detail.enable);
+    hass = { ...hass, kioskMode: e.detail.enable };
+    for (const k of karten) k.hass = hass;
+    zeige();
+  });
+  document.addEventListener("fullscreenchange", () => {
+    stand.vollbild.push(document.fullscreenElement ? document.fullscreenElement.tagName : null);
+    zeige();
+  });
+  zeige();
+  window.bereit = true;
+</script>
+</html>

@@ -252,13 +252,27 @@ das sagt, was gespeichert ist, nicht was wirkt.
 getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
 ```
 
-### Die aktive Theme lässt sich von außen nicht umschalten
+### Die Wahl von Theme und Modus liegt in den Nutzerdaten, Schlüssel `theme`
 
-Weder `frontend.set_theme` noch `frontend/set_user_data` noch `localStorage`
-noch die `prefers-color-scheme`-Emulation greifen durch: HA schreibt seinen
-aufgelösten Stand bei jedem Laden zurück. Der einzige Hebel wäre das
-`settheme`-Ereignis, und das ist tabu. Für eine Messung im anderen Modus muss
-der Nutzer einmal im Profil umschalten.
+Hier stand bis zum 13.10.2026, sie lasse sich von außen nicht umschalten. Das
+war mit dem falschen Schlüssel gemessen (`selectedTheme`, den Home Assistant
+nie liest). Der richtige:
+
+```js
+await hass.connection.sendMessagePromise({
+  type: "frontend/set_user_data", key: "theme",
+  value: { theme: "liquid_glass", dark: true },   // dark weglassen = automatisch
+});
+```
+
+Home Assistant abonniert den Schlüssel; ein offener Browser folgt ohne
+Neuladen. `frontend.set_theme` setzt dagegen nur die globale Zuordnung, und in
+den `localStorage` schreibt HA seinen aufgelösten Stand zurück.
+
+**Das gilt für jedes Gerät des Nutzers.** Auf der Testmaschine ist das egal,
+an der Instanz im Heimnetz nicht — dort schaltet weiter der Nutzer selbst im
+Profil um. Und danach zurückstellen, nicht vergessen: vorher lesen mit
+`frontend/get_user_data`.
 
 **Reihenfolge beim Anwenden:** erst `frontend.reload_themes`, dann die Auswahl.
 Andersherum kennt HA die Datei noch nicht und fällt auf eine andere zurück.

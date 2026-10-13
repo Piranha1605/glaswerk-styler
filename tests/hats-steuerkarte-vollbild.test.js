@@ -1,11 +1,15 @@
 // Das Vollbild der Steuerkarte: Kiosk-Modus von Home Assistant und Vollbild
 // des Browsers, gekoppelt.
 //
-// Warum eine eigene Datei und ein nachgebautes document: Die Kopplung laesst
-// sich im eingebauten Browser der Claude-App nicht messen. Am 13.10.2026
-// blieb requestFullscreen() dort einfach offen - ein echter Klick, die Seite
-// galt als aktiviert, und das Versprechen wurde weder erfuellt noch
-// abgelehnt. Der Kiosk-Teil ist an der Instanz gemessen, dieser hier nicht.
+// Warum ein nachgebautes document: Hier stehen die Faelle, die sich an einem
+// Browser nicht herstellen lassen. Im eingebauten Browser der Claude-App
+// blieb requestFullscreen() am 13.10.2026 einfach offen - ein echter Klick,
+// die Seite galt als aktiviert, und das Versprechen wurde weder erfuellt noch
+// abgelehnt. Genau diesen Fall und die Erlaubnis, die zu spaet kommt, kann
+// nur ein Nachbau liefern.
+//
+// Die Faelle, die ein Browser liefern KANN, sind an einem echten Chrome
+// gemessen: werkzeuge/test/vollbild-messen.mjs.
 //
 // Die Karte haengt ihren Hoerer beim Laden an document. Der Nachbau muss also
 // stehen, BEVOR das Modul geladen wird - deshalb der import weiter unten.
