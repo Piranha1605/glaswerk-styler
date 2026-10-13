@@ -1238,7 +1238,35 @@ class HatsPanel extends HTMLElement {
     return s.startsWith("en") ? "en" : "de";
   }
 
+  // Ein Fehler beim Zeichnen hinterliess bisher eine leere Flaeche - und wer
+  // die sieht, kann nichts damit anfangen und ich auch nicht. Jetzt steht der
+  // Fehler da, wo sonst die Oberflaeche waere, mit Datei und Zeile.
   zeichne() {
+    try {
+      this.zeichneWirklich();
+    } catch (e) {
+      this.shadowRoot.innerHTML = `
+        <style>
+          .panne { font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+                   padding: 28px; color: #2a2520; background: #fff5f4;
+                   min-height: 100vh; box-sizing: border-box; }
+          .panne h2 { font: 600 17px system-ui, sans-serif; margin: 0 0 6px; }
+          .panne p { font: 13px system-ui, sans-serif; color: #6b6359; margin: 0 0 18px; }
+          .panne pre { white-space: pre-wrap; word-break: break-word;
+                       background: #fff; border-radius: 10px; padding: 14px;
+                       box-shadow: inset 0 0 0 1px rgba(42,37,32,.12); }
+        </style>
+        <div class="panne">
+          <h2>HATS konnte die Oberflaeche nicht zeichnen</h2>
+          <p>Version ${HATS_VERSION} &middot; schick diesen Text weiter, dann muss niemand raten.</p>
+          <pre>${String(e && e.stack || e).replace(/</g, "&lt;")}</pre>
+        </div>`;
+      // Zusaetzlich in die Konsole, fuer den Fall dass auch das Markup scheitert.
+      console.error("[HATS] zeichne()", e);
+    }
+  }
+
+  zeichneWirklich() {
     const T = (s) => t(s, this.spr);
     const fertig = STUFEN.filter((s) => s.stand === "fertig").length;
     const offen = STUFEN.length - fertig;
