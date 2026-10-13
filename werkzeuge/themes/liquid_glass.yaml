@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 17:28:24
+# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 19:28:37
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -537,6 +537,101 @@ liquid_glass:
       --bubble-icon-border-radius: 28%;
     }
     /* HATS:glas-symbolkachel:ENDE */
+    /* HATS:sync-bedienelemente:START */
+    /* Alle drei Familien zeigen dieselbe Lampe verschieden. Am 13.10.2026 an
+       einer Lampe in rgb(129,173,255) gemessen, bevor etwas angefasst wurde:
+
+           Slider         HA #81adff   Mushroom #81adff   Bubble rgb(119,160,237)
+           Symbolflaeche  HA  20 %     Mushroom  25 %     Bubble  Weiss 32 %
+           Symbolgroesse  HA  36 px    Mushroom  36 px    Bubble  42 px
+
+       Bubble rechnet die Lichtfarbe selbst ab - rgb(119,160,237) ist dieselbe
+       Farbe, um den Faktor .925 abgedunkelt. Dieser Block zieht die anderen
+       beiden dorthin nach, statt Bubble aufzuhellen: Der dunklere Ton steht
+       besser auf Glas.
+
+       DER FAKTOR .925 IST GEMESSEN, NICHT GEWAEHLT. color-mix(... 92.5%, black)
+       ergibt rgb(119,160,236) - Bubbles Wert auf eine Einheit genau. Er bleibt
+       als Zahl stehen, weil er Bubbles interne Rechnung nachbildet; ein
+       Theme-Feld dafuer waere ein zweiter Ort fuer dieselbe Entscheidung.
+
+       --- Home Assistant ---------------------------------------------------
+       Der Slider liegt zwei Shadow-Grenzen tiefer als dieser Block, eine Regel
+       erreicht ihn also nie. Der Weg fuehrt ueber die Variablenkette:
+
+           hui-tile-card      setzt  --feature-color: var(--tile-color)
+           hui-card-features  setzt  --control-slider-color: var(--feature-color)
+
+       --tile-color steht inline an der ha-card und traegt die Lichtfarbe. Gezielt
+       wird auf hui-card-features, weil das Element IN diesem Shadow Root liegt -
+       ein Wert an der ha-card wird dort ueberschrieben und kommt nie an. Das
+       !important ist noetig, weil die Regel des Bauteils aus adoptedStyleSheets
+       kommt und bei Gleichstand immer zuletzt gilt. */
+    hui-card-features {
+      --feature-color: color-mix(in srgb, var(--tile-color, var(--primary-color)) 92.5%, black) !important;
+    }
+
+    /* --- Mushroom ----------------------------------------------------------
+       Hier geht der Variablenweg NICHT. Mushroom schreibt die Lichtfarbe inline
+       als --slider-color an mushroom-light-brightness-control - also an genau das
+       Element, das ueberschrieben werden muesste. Eine Ableitung daraus waere ein
+       Zyklus (--slider-color aus --slider-color), und CSS verwirft dann beide
+       Deklarationen stillschweigend. Ein Umweg ueber eine Hilfsvariable am selben
+       Element schliesst den Zyklus genauso.
+
+       Deshalb filter statt Farbe: brightness(.925) multipliziert jeden Kanal mit
+       .925 und ist damit rechnerisch dasselbe wie color-mix(... 92.5%, black) -
+       nur greift es an der gemalten Flaeche an und braucht keine Quelle. Es
+       faerbt Fuellung und Spur gemeinsam, was hier richtig ist: beide tragen
+       dieselbe Farbe.
+
+       ACHTUNG, falls weitere Steuerelemente dazukommen: Ein filter macht sein
+       Element zum Bezugsrahmen fuer position: fixed. Diese drei sind geprueft -
+       kein fixed-Kind darin. Ein Pop-up-Traeger duerfte hier nicht stehen. */
+    mushroom-light-brightness-control,
+    mushroom-cover-position-control,
+    mushroom-fan-percentage-control {
+      filter: brightness(.925);
+    }
+
+    /* --- Bubble ------------------------------------------------------------
+       Die Farbe bringt Bubble schon mit. Was stoert, ist die Deckkraft: Bubble
+       legt .7 ueber die Fuellung, waehrend HA und Mushroom voll deckend malen.
+
+           .slider-use-light-color { background-color: ...; opacity: 0.7 }
+
+       Nebenbei: --bubble-slider-color gibt es NICHT. Bubble 3.2.0 nennt den Namen
+       kein einziges Mal; gelesen wird --bubble-slider-fill-color, und das setzt
+       Bubble inline. Wer in einer Kartenkonfiguration var(--bubble-slider-color,
+       var(--accent-color)) schreibt, trifft also immer nur den Ausweichwert. */
+    .bubble-range-fill.slider-use-light-color {
+      opacity: 1 !important;
+    }
+
+    /* --- Symbolflaeche: ueberall die Zustandsfarbe bei 25 % ----------------
+       HA zeichnet sie als ::before auf .background, mit opacity .2 aus
+       --tile-icon-opacity. Mushroom steht bereits auf 25 %, bleibt also
+       unberuehrt. --tile-icon-opacity setzt das Bauteil in seinem eigenen :host,
+       deshalb !important. */
+    ha-tile-icon {
+      --tile-icon-opacity: .25 !important;
+    }
+
+    /* Bubble haelt keine Zustandsfarbe als Variable bereit - alle naheliegenden
+       Namen (--bubble-light-color, --bubble-accent-color, --bubble-state-color)
+       sind leer. Die Farbe steht als color am Container, also ist currentColor
+       die Quelle.
+
+       Die Groesse kommt aus min-width/min-height (42 px), nicht aus einer
+       Variablen: Bubbles Stylesheet kennt ueberhaupt keinen --bubble-*-size-Namen
+       fuer den Symbolbehaelter. Darum eine Regel - und damit 36 px wie bei den
+       anderen beiden. */
+    .bubble-icon-container {
+      background-color: color-mix(in srgb, currentColor 25%, transparent) !important;
+      min-width: 36px !important;
+      min-height: 36px !important;
+    }
+    /* HATS:sync-bedienelemente:ENDE */
     /* HATS:glas-knoepfe:START */
     /* Nur Variablen, keine Regeln auf das Innere des Knopfes.
 

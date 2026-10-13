@@ -31,14 +31,20 @@ ip=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
 if [ $# -gt 0 ]; then
   dateien=("$@")
 else
-  # Alles, was gegenueber der Instanz abweicht. Lieber eine zu viel als eine
-  # zu wenig - ein vergessener Deploy kostet mehr Zeit als ein ueberfluessiger.
+  # Die Liste kommt aus sync-dateien.txt - DERSELBEN Quelle wie die
+  # Sync-Schleife. Vorher stand hier eine zweite, von Hand gepflegte Liste,
+  # und sie war am 13.10.2026 veraltet: www/vorlagen.js und www/uix.js fehlten.
+  # Wer ueber dieses Skript einspielte, bekam Vorlagen nie auf die Instanz -
+  # und merkte es nicht, weil der Rest ankam und gruen gemeldet wurde.
+  liste="$(dirname "$0")/sync-dateien.txt"
+  [ -f "$liste" ] || { echo "sync-dateien.txt fehlt - sync-liste-bauen.sh laufen lassen."; exit 1; }
   dateien=()
-  for f in __init__.py const.py config_flow.py manifest.json \
-           www/hats-panel.js www/theme.js www/bedienelemente.js \
-           www/palette.js www/zuordnung.js; do
-    dateien+=("$f")
-  done
+  while IFS= read -r zeile; do
+    case "$zeile" in ""|\#*) continue ;; esac
+    case "$zeile" in *"|"*) continue ;; esac   # eigenes Ziel: nicht unter custom_components
+    dateien+=("$zeile")
+  done < "$liste"
+  [ ${#dateien[@]} -gt 0 ] || { echo "sync-dateien.txt ist leer."; exit 1; }
 fi
 
 pkill -f "http.server $PORT" 2>/dev/null

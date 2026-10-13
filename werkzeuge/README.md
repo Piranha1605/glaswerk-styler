@@ -1,14 +1,81 @@
 # Werkzeuge
 
-Zwei Skripte und eine Liste von Fallen. Kein `npm install` nötig.
-
 ```bash
-werkzeuge/pruefen.sh              # alles ohne Instanz: Syntax, Tests, Versionen
-werkzeuge/einspielen.sh           # Dateien auf die Instanz, mit Gegenprobe
-werkzeuge/einspielen.sh www/theme.js   # nur eine
+pruefen.sh                     alles ohne Instanz: Syntax, Tests, Versionen
+einspielen-test.sh             auf die Testmaschine am Mac  <- der Normalfall
+test-reload.sh                 Integration dort neu laden
+einspielen.sh                  auf die Instanz im Heimnetz (nur wenn noetig)
 ```
 
 ---
+
+## Der Arbeitsplatz ist die Testmaschine
+
+**Seit dem 13.10.2026, auf Ansage.** Eine QEMU-Maschine auf dem Mac mit
+Home Assistant OS 18.3 / HA 2026.10.1, Oberflaeche unter
+**http://localhost:8123**, Dateien unter
+`/Users/enricofischer/Projekte/haos-test/`.
+
+Der Unterschied ist nicht Bequemlichkeit, sondern dass **niemand mehr etwas
+tippen muss**: Die serielle Konsole der Maschine haengt an einem Socket, und
+`konsole.py` schickt Befehle direkt hinein.
+
+```bash
+cd /Users/enricofischer/Projekte/ha-theme-studio
+werkzeuge/einspielen-test.sh        # Dateien rein, mit byteweiser Gegenprobe
+werkzeuge/test-reload.sh            # Integration neu laden (JS)
+werkzeuge/test-reload.sh --neustart # ganz neu starten (Python)
+```
+
+**Die Maschine erreicht den Mac unter `10.0.2.2`** — darueber holt sie sich
+die Dateien, ohne dass etwas durchs Heimnetz muss. Ein Dateiserver auf Port
+8778 wird gestartet, falls keiner laeuft; ein laufender wird **behalten**.
+
+**Demo-Geraete sind an** (`demo:` in der configuration.yaml): Lichter mit
+Farbe, Luefter, Cover, Klima, Media Player, Schloss. Auf der Testmaschine darf
+geschaltet werden — anders als im Haus, wo nur Zuchtbecken und Terrarium frei
+sind. Damit lassen sich Zustaende wirklich durchprobieren statt abzuwarten,
+bis zufaellig einer eintritt.
+
+### Die Fallen der Maschine
+
+**Die serielle Konsole schneidet eine zu lange Zeile ab, ohne es zu melden.**
+Am 13.10.2026 mit 19 Dateien in einem Befehl gemessen: `curl: (2) no URL
+specified`, und sieben Dateien fehlten. Der Fehler sieht aus wie ein
+curl-Problem und ist ein Laengenproblem. `einspielen-test.sh` geht deshalb in
+Bloecken zu drei Dateien.
+
+**Keine Semikolons, keine Schleifen, nur `&&`** — gilt hier wie im Terminal des
+Studio Code Server.
+
+**Der Reload bleibt noetig.** `/hats_static` traegt kein `Cache-Control`, und
+dann darf ein Browser heuristisch cachen. Erst eine neue Pruefsumme in der
+Adresse bringt den neuen Stand durch, und die wird nur beim Setup gerechnet.
+Fuer Python reicht ein Reload nicht — er ruft `async_unload_entry` und
+`async_setup_entry` auf demselben, schon importierten Modul auf.
+
+---
+
+## Die Instanz im Heimnetz
+
+**Nur noch, wenn wirklich dort gemessen werden muss.** Was sie gekostet hat,
+bevor der Umzug kam — jede Zeile ein verlorener Nachmittag:
+
+- Jeder Deploy brauchte einen Menschen, der eine Zeile in den Terminal des
+  Studio Code Server tippt.
+- Die Sync-Schleife umging das, fiel aber aus, ohne es zu sagen. Gemerkt hat
+  man es an einer Messung, die nicht passte.
+- `einspielen.sh` schoss mit `pkill -f "http.server"` den Dateiserver ab, von
+  dem die Sync-Schleife lebte — es zerstoerte also genau das, was es brauchte.
+  (Behoben; es erkennt einen laufenden Server jetzt.)
+- Ein `fetch()` vom Browser ins LAN wird blockiert, und die Meldung
+  (`TypeError: Failed to fetch`) sieht nach einem Server-Problem aus.
+- Ein Fehlgriff trifft das Dashboard des Hauses. Am 13.10.2026 stand die
+  Musterseite serverseitig auf `{"views":[]}`.
+
+Wenn es doch sein muss, steht der Weg in `einspielen.sh` und in der Historie
+dieser Datei.
+
 
 ## Zuerst: die Schleife starten, dann arbeiten
 

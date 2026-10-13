@@ -871,7 +871,70 @@ schlägt jede Regel und Bubbles Regel trägt selbst `!important`.
 `var(--bubble-slider-color, var(--accent-color))` schreibt, trifft nie die
 Lichtfarbe — der erste Name ist tot, also greift immer der Ausweichwert.
 
-## Die Instanz
+## Gearbeitet wird auf der Testinstanz, nicht am laufenden Haus
+
+**Auf Ansage vom 13.10.2026**, nachdem ein Nachmittag an Terminal-Umwegen,
+einer abgerissenen Sync-Schleife und einem leer geschriebenen Dashboard
+verloren ging: *„warum arbeiten wir nicht auf dem system da hast du vollen
+zugriff ohne netzwerk. und unser aktiefes system hat ruhe"*
+
+    http://localhost:8123        Home Assistant OS 18.3, HA 2026.10.1
+    /Users/enricofischer/Projekte/haos-test/
+
+Eine QEMU-Maschine auf dem Mac, kein Container. HACS, UIX 8.4.0, Bubble Card,
+Mushroom, HATG und HATS sind installiert. Die Instanz im Heimnetz
+(`192.168.178.31`) bleibt in Ruhe und wird nur noch angefasst, wenn
+ausdrücklich etwas **dort** zu prüfen ist.
+
+**Was dadurch wegfällt — jede dieser Stellen hat schon Zeit gekostet:**
+
+| vorher, Heimnetz | jetzt, Testinstanz |
+|---|---|
+| Befehl in den Terminal des Studio Code Server tippen lassen | `konsole.py` schickt ihn direkt |
+| Sync-Schleife, deren Ausfall man erst an einer falschen Messung merkt | ein Aufruf, mit byteweiser Gegenprobe |
+| Dateiserver, den `einspielen.sh` beim Start selbst abschoss | ein laufender Server wird erkannt und behalten |
+| `fetch()` ins LAN, vom Browser blockiert | alles auf `localhost` |
+| ein Fehlgriff trifft das Dashboard des Hauses | ein Fehlgriff trifft eine Testmaschine |
+
+### Die Werkzeuge der Maschine
+
+Sie liegen bei der Maschine, nicht im Projekt — sie gehören ihr, nicht HATS:
+
+    ./starten.sh / ./stoppen.sh     Maschine an und aus
+    ./konsole.py "<befehl>"         Shell in der Maschine, ueber die serielle Konsole
+    ha.py                           REST-Zugang (Token aus zugang.conf, wird nie ausgegeben)
+    ws.mjs                          Websocket
+
+Die Konfiguration liegt in der Maschine unter
+`/mnt/data/supervisor/homeassistant`. Den Mac erreicht sie unter **`10.0.2.2`**
+— darüber holt sie sich Dateien, ohne dass etwas durchs Heimnetz muss.
+
+### Einspielen
+
+```bash
+werkzeuge/einspielen-test.sh              alles aus sync-dateien.txt
+werkzeuge/einspielen-test.sh www/theme.js nur diese
+werkzeuge/test-reload.sh                  Integration neu laden (JS)
+werkzeuge/test-reload.sh --neustart       ganz neu starten (Python)
+```
+
+**Die serielle Konsole schneidet eine zu lange Zeile ab, ohne es zu melden.**
+Am 13.10.2026 mit 19 Dateien in einem Befehl gemessen: `curl: (2) no URL
+specified`, und sieben Dateien fehlten. Der Fehler sieht aus wie ein
+curl-Problem und ist ein Längenproblem. Deshalb geht das Einspielen in Blöcken
+zu drei Dateien.
+
+**Der Reload bleibt nötig**, aus demselben Grund wie im Heimnetz: `/hats_static`
+trägt kein `Cache-Control`, und dann darf ein Browser heuristisch cachen. Erst
+eine neue Prüfsumme in der Adresse bringt den neuen Stand durch, und die wird
+nur beim Setup gerechnet. Für Python reicht ein Reload nicht — er ruft
+`async_unload_entry` und `async_setup_entry` auf demselben, schon importierten
+Modul auf.
+
+## Die Instanz im Heimnetz
+
+**Nur noch fuer Messungen, die wirklich dort stattfinden muessen** — der
+Arbeitsplatz ist die Testinstanz oben.
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
 `/dashboard-home/ubersicht`. Der Browser-Bereich der Claude-App hält die

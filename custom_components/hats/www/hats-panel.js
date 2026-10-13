@@ -28,7 +28,7 @@ import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
 
-const HATS_VERSION = "0.2.0b2";
+const HATS_VERSION = "0.2.0b3";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1
