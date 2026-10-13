@@ -197,10 +197,32 @@ pruefe("Kein ::part durch zwei Shadow-Grenzen", () => {
   }
 });
 
+pruefe("Bubbles Filter liegt auf dem Container, nicht auf dem Wirt", () => {
+  // Ein backdrop-filter auf :host macht den Wirt zum Bezugsrahmen fuer
+  // position: fixed - und ein Bubble-Pop-up ist fixed. Es faellt dann auf die
+  // Groesse des Wirts zusammen.
+  //
+  // Am 13.10.2026 mit offenem Pop-up gegengeprueft: .bubble-pop-up ist ein
+  // GESCHWISTER von .bubble-container, kein Kind. Die Regel trifft es deshalb
+  // nicht, und das Pop-up stand mit 843 x 540 Pixeln. Wer den Filter
+  // stattdessen auf :host legt, bekommt Hoehe 0.
+  const v = VORLAGEN.find((x) => x.id === "glas-bubble");
+  assert.ok(v, "glas-bubble fehlt");
+  const ohneKommentar = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.match(ohneKommentar, /\.bubble-container\s*\{[^}]*backdrop-filter/,
+    "die Weichzeichnung steht nicht auf .bubble-container");
+  // Und der Separator ist ausgenommen - sonst liegt ein verschwommener Balken
+  // mit heller Oberkante hinter jedem Gruppentitel.
+  assert.match(ohneKommentar, /\.bubble-separator/,
+    "die Ausnahme fuer Separatoren fehlt");
+  assert.doesNotMatch(ohneKommentar, /\.bubble-separator-container/,
+    "den Namen .bubble-separator-container gibt es nicht");
+});
+
 pruefe("Gegenprobe: ein verschachteltes ::part wuerde auffallen", () => {
   const boese = "ha-icon-button ha-button::part(base) { background: red; }";
   assert.match(boese, /[a-z-]+\s+[a-z-]+::part\(/, "die Pruefung oben findet nichts");
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 14) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
