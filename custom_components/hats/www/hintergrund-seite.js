@@ -18,8 +18,8 @@
 import { vorlageAn, vorlageAus } from "./theme.js";
 import {
   istFest, festUnerkannt, stelleFest,
-  bewegung, leseBewegung, bewegungNachBild, driftDauer, farbDauer, punkteDauer,
-  istPunkteBild, PUNKTE_VORGABE,
+  bewegung, leseBewegung, bewegungNachWahl, driftDauer, farbDauer, punkteDauer,
+  istPunkteBild,
   BEWEGUNG_ID, BEWEGUNG_STUFEN, BEWEGUNG_VORGABE,
   himmel, leseHimmel, istWetterEntitaet, HIMMEL_ID, HIMMEL_STUFEN, HIMMEL_VORGABE,
   vertraegtVorlage, HINTERGRUND_ZIEL,
@@ -143,11 +143,15 @@ export function hintergrundAendern(modell, was, wert) {
 // 1. Wer von den Farbpunkten zu einem Foto wechselt, waehrend die Punkte
 //    laufen, verschiebt von da an die erste Ebene des Fotos. Das sieht nach
 //    einem kaputten Bild aus, nicht nach einer Bewegung.
-// 2. "Die Farbpunkte sollen sich leicht bewegen" - Ansage des Maintainers vom
-//    13.10.2026. Wer einen der Farbverlaeufe waehlt und noch gar keine
-//    Bewegung eingestellt hat, bekommt sie deshalb. Wer schon eine hat, behaelt
-//    seine: Eine Vorgabe, die eine Einstellung ueberschreibt, ist keine
-//    Vorgabe, sondern ein Verlust.
+// 2. "Ja die punkte sollen gleich starten" - Ansage des Maintainers vom
+//    13.10.2026. Wer ein Punktebild waehlt, bekommt laufende Punkte.
+//
+// Beide Faelle stehen in bewegungNachWahl() im Modul, in EINER Regel. Hier
+// stand zuerst ein eigenes "wenn noch gar keine Bewegung eingestellt ist" -
+// das liess einen zweiten Fall durch: Nordlicht, dann der ruhige Verlauf, dann
+// Sand, und bei Sand standen die Punkte auf 0, weil vom vorigen Mal noch der
+// Farbwechsel im Block lag. Die Regel gehoert an einen Ort, und der ist das
+// Modul.
 //
 // zurueck: die Felder, die sich geaendert haben - dieselbe Form wie oben.
 export function hintergrundGewaehlt(modell) {
@@ -155,12 +159,10 @@ export function hintergrundGewaehlt(modell) {
   if (!modell) return aus;
   modell.flach = modell.flach || {};
   const vorher = stilText(modell);
-  const s = hintergrundStand(modell);
 
-  const r = bewegungNachBild(vorher, EBENEN.map((e) => modell?.[e]?.[FELD]));
+  const r = bewegungNachWahl(vorher, EBENEN.map((e) => modell?.[e]?.[FELD]));
   if (r === null) vorlageAus(modell, { id: BEWEGUNG_ID, ziel: HINTERGRUND_ZIEL });
   else if (r) vorlageAn(modell, r);
-  else if (!s.bewegung && s.punkteMoeglich) vorlageAn(modell, bewegung(PUNKTE_VORGABE, { punkte: true }));
 
   if (stilText(modell) !== vorher) aus.felder = [STILZIEL];
   return aus;

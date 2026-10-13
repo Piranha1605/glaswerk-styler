@@ -449,6 +449,12 @@ pruefe("Eine andere Groesse nimmt die Punkte nicht mit, wenn das Bild sie nicht 
   assert.strictEqual(leseBewegung(g.flach["uix-root"]).punkte, 4);
 });
 
+// Der Rueckweg muss stimmen, sonst beweist die Pruefung oben nur sich selbst.
+const ok_rueckweg = (m) => {
+  const b = leseBewegung(m.flach["uix-root"]);
+  assert.ok(b && b.punkte >= 1 && b.punkte <= 10, "die Stufe ist nicht zurueckzulesen");
+};
+
 pruefe("Nach der Wahl eines Hintergrunds passt die Bewegung zum Bild", () => {
   // 1. Noch keine Bewegung, und das neue Bild traegt Punkte -> Vorgabe an.
   const m = leeresModell("t");
@@ -480,7 +486,27 @@ pruefe("Nach der Wahl eines Hintergrunds passt die Bewegung zum Bild", () => {
   assert.strictEqual(gb.drift, 7);
   assert.strictEqual(gb.punkte, 0, "die Vorgabe hat eine Einstellung ueberschrieben");
 
-  // 5. Gegenprobe: "Keiner" setzt kein Feld - dann auch keine Bewegung.
+  // 5. Der Fall, den die Hintergrund-Abteilung am 13.10. nachgereicht hat:
+  //    Nordlicht, dann der ruhige Verlauf, dann Sand. Bei Sand lag vom vorigen
+  //    Mal noch der Farbwechsel im Block - mit der alten Regel ("nur wenn
+  //    ueberhaupt keine Bewegung da ist") standen die Punkte dann auf 0.
+  const w = leeresModell("t");
+  wende(w, "hintergrund", HINTERGRUENDE.find((h) => h.id === "nordlicht"));
+  hintergrundGewaehlt(w);
+  assert.strictEqual(leseBewegung(w.flach["uix-root"]).punkte, PUNKTE_VORGABE.punkte);
+  for (const e of ["flach", "light", "dark"]) delete w[e][FELD];
+  wende(w, "hintergrund", HINTERGRUENDE.find((h) => h.id === "verlauf"));
+  hintergrundGewaehlt(w);
+  assert.strictEqual(leseBewegung(w.flach["uix-root"]).punkte, 0, "auf dem Verlauf duerfen keine Punkte laufen");
+  assert.strictEqual(leseBewegung(w.flach["uix-root"]).farbe, PUNKTE_VORGABE.farbe, "der Farbwechsel ist mit weggefallen");
+  for (const e of ["flach", "light", "dark"]) delete w[e][FELD];
+  wende(w, "hintergrund", HINTERGRUENDE.find((h) => h.id === "sand"));
+  hintergrundGewaehlt(w);
+  assert.strictEqual(leseBewegung(w.flach["uix-root"]).punkte, PUNKTE_VORGABE.punkte,
+    "bei der zweiten Wahl eines Punktebildes stehen die Punkte still");
+  ok_rueckweg(w);
+
+  // 6. Gegenprobe: "Keiner" setzt kein Feld - dann auch keine Bewegung.
   const k = leeresModell("t");
   wende(k, "hintergrund", HINTERGRUENDE.find((h) => h.id === "keiner"));
   assert.deepStrictEqual(hintergrundGewaehlt(k).felder, []);
