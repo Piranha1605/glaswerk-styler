@@ -157,5 +157,29 @@ pruefe("Gegenprobe: die Fallenpruefungen wuerden anschlagen", () => {
   assert.match(":host,\nha-card {\n  background: red;\n", malt, "eine Flaeche wird nicht erkannt");
 });
 
+
+pruefe("Kein ::part durch zwei Shadow-Grenzen", () => {
+  // ::part reicht genau EINE Shadow-Grenze durch. Von einer Karte aus liegen
+  // zwischen der Regel und dem inneren .button zwei: Karte -> ha-icon-button
+  // -> ha-button. Und ha-button traegt kein exportparts.
+  //
+  // Am 13.10.2026 gemessen: Die Regel kam an und traf nichts - die Fuellung
+  // blieb rgba(0, 0, 0, 0). In HATG geht derselbe Griff, weil dort eine
+  // Pfadangabe das CSS direkt in den Shadow Root von ha-icon-button legt.
+  // HATS kennt diese Pfadform bewusst nicht.
+  for (const v of VORLAGEN) {
+    const ohneKommentar = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
+    assert.doesNotMatch(ohneKommentar, /[a-z-]+\s+[a-z-]+::part\(/,
+      `${v.id}: ein ::part hinter einem zweiten Element greift nicht`);
+    assert.doesNotMatch(ohneKommentar, /ha-icon-button::part\(/,
+      `${v.id}: ha-icon-button::part greift von aussen nicht - ha-button hat kein exportparts`);
+  }
+});
+
+pruefe("Gegenprobe: ein verschachteltes ::part wuerde auffallen", () => {
+  const boese = "ha-icon-button ha-button::part(base) { background: red; }";
+  assert.match(boese, /[a-z-]+\s+[a-z-]+::part\(/, "die Pruefung oben findet nichts");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 11) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 13) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

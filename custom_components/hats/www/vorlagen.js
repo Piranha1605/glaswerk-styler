@@ -434,31 +434,40 @@ ha-toast {
     id: "glas-knoepfe",
     gruppe: "glas",
     ziel: "card",
-    de: "Symbolknoepfe mit Glasflaeche",
-    en: "Icon buttons on glass",
-    zweckDe: "Legt den Symbolknoepfen in Karten eine gerundete Glasflaeche unter.",
-    zweckEn: "Puts a rounded glass surface under the icon buttons inside cards.",
-    css: `/* ::part(base) ist das innere .button von ha-button, das ha-icon-button als
-   CSS-Teil nach aussen gibt - ein Teil reicht durch die Shadow-Grenze.
+    de: "Symbolknoepfe anpassen",
+    en: "Icon buttons",
+    zweckDe: "Groesse, Rundung, Schatten und die Klick-Welle der Symbolknoepfe - alles ueber Variablen, die durch jede Shadow-Grenze erben.",
+    zweckEn: "Size, radius, shadow and the ripple of icon buttons - all through variables, which inherit through every shadow boundary.",
+    css: `/* Nur Variablen, keine Regeln auf das Innere des Knopfes.
 
-   Die FUELLUNG braucht !important: ha-button steht auf appearance="plain",
-   und :host([appearance~="plain"]) .button setzt ein hartes
-   background-color: rgba(0,0,0,0) ohne Variable davor. Rundung, Schatten und
-   Filter kommen dagegen ohne durch.
+   Der naheliegende Weg waere ha-icon-button::part(base) - das innere .button
+   von ha-button. Am 13.10.2026 an der Instanz gemessen: Er funktioniert NICHT
+   von hier aus. ::part reicht genau EINE Shadow-Grenze durch, und ha-button
+   traegt kein exportparts; von der Karte aus liegen aber zwei Grenzen
+   dazwischen (Karte -> ha-icon-button -> ha-button). Die Regel kam an und traf
+   nichts:
 
-   Die Deckkraft von ::after bleibt in Ruhe: Sie traegt die Rueckmeldung beim
-   Zeigen und Druecken (0 -> 0.1). Ein !important darauf legt sie still. */
-ha-icon-button::part(base),
-ha-icon-button ha-button::part(base) {
-  background-color: rgba(255, 255, 255, .14) !important;
-  border-radius: var(--ha-button-border-radius, 14px);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
-}
-/* Der Schimmer beim Zeigen bekommt die Form des Knopfes statt eines Kreises. */
-ha-icon-button ha-button::after {
-  border-radius: var(--ha-button-border-radius, 14px) !important;
+       ha-icon-button ha-button::part(base) { background-color: … !important }
+       -> gemessen: rgba(0, 0, 0, 0), also unveraendert
+
+   In HATG geht das, weil dort eine Pfadangabe das CSS direkt in den Shadow
+   Root von ha-icon-button legt (uix-card-yaml mit "ha-icon-button $"). HATS
+   kennt diese Pfadform bewusst nicht - ein -yaml-Feld verdeckt sein einfaches
+   Feld vollstaendig, und das ist eine Falle, die HATS sich nicht einhandelt.
+
+   Was ohne Pfad geht, sind Variablen: Die erben durch jede Shadow-Grenze.
+   Die Fuellung des Knopfes gehoert nicht dazu - ha-button steht auf
+   appearance="plain" und setzt dort ein hartes background-color ohne Variable
+   davor. Groesse, Form und Rueckmeldung dagegen schon. */
+:host,
+ha-card {
+  --ha-icon-button-size: 40px;
+  --ha-button-border-radius: 14px;
+  /* Die Klick-Welle in der Akzentfarbe statt in Grau - das ist die einzige
+     Farbe am Knopf, die von aussen erreichbar ist. */
+  --ha-ripple-color: var(--accent-color);
+  --ha-ripple-hover-opacity: 0.1;
+  --ha-ripple-pressed-opacity: 0.16;
 }`,
   },
 ];
