@@ -216,10 +216,25 @@ pruefe("Oeffnen fragt bei Ungespeichertem nach", () => {
     "zumStart wirft Ungespeichertes ohne Rueckfrage weg");
 });
 
-pruefe("Die Startkarten sind weg, die Wege stehen in der Reihe", () => {
-  // Zwei Wege zur selben Sache nebeneinander sind einer zu viel.
-  assert.doesNotMatch(panel, /class="startwege/, "die Karten sind zurueck");
-  assert.doesNotMatch(panel, /\.weg \{/, "das CSS der Karten liegt noch herum");
+pruefe("Die Startwege stehen NUR auf der leeren Startseite", () => {
+  // Hier stand bis zum 13.10.2026 das Gegenteil: "Die Startkarten sind weg,
+  // zwei Wege zur selben Sache nebeneinander sind einer zu viel." Das stimmte,
+  // solange die Karten NEBEN der Symbolleiste lagen.
+  //
+  // Jetzt liegen sie dort, wo die Leiste nichts tun kann: Ohne offene Theme
+  // sind ihre Knoepfe gesperrt (aus: ZUSTAND.start), unbeschriftet und damit
+  // unlesbar. Auf Ansage: "warum machen wir auf der seite womit faengst du an
+  // nicht grosse buttons mit laden neu aus vorlage und so weiter".
+  //
+  // Die Bedingung ist deshalb das Entscheidende an dieser Pruefung - sobald
+  // eine Theme offen ist, verschwinden die Karten und die Leiste uebernimmt.
+  const sb = panel.slice(panel.indexOf("startbild(T) {"), panel.indexOf("zeigeDateien("));
+  assert.match(sb, /class="startwege/, "die Startwege fehlen");
+  assert.match(sb, /\$\{ZUSTAND\.modell \? "" : `[\s\S]{0,900}class="startwege/,
+    "die Startwege haengen nicht daran, dass KEINE Theme offen ist");
+  // Sie fuehren zu denselben Aktionen wie die Leiste, ueber einen eigenen
+  // Namen - sonst kaeme ein Klick zweimal an.
+  assert.match(panel, /querySelectorAll\("\[data-start\]"\)/, "die Wege sind nicht verdrahtet");
   assert.match(panel, /neu: \(\) => this\.neuBeginnen\(\)/);
   assert.match(panel, /lesen: \(\) => this\.zeigeImport\(\)/);
 });

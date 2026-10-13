@@ -836,6 +836,15 @@ const TEXTE = {
     "Beginne oben: neue Theme, Datei einlesen oder eine vorhandene oeffnen.": "Start above: new theme, read in a file, or open an existing one.",
     "von HATS": "from HATS", "fremde": "foreign",
     "Baukasten": "Kit",
+    "Mit dem Baukasten": "With the kit",
+    "Leer anfangen, mit Home Assistants eigenen Farben als Grundlage.":
+      "Start empty, on Home Assistant's own colours.",
+    "Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.":
+      "Snap ready-made parts together: colours, type, cards, background.",
+    "Theme auf dieser Instanz": "theme on this instance",
+    "Themes auf dieser Instanz": "themes on this instance",
+    "Eine Theme von anderswo einlesen - auch eine fremde.":
+      "Read in a theme from elsewhere - a foreign one too.",
     "Alle Teile": "All parts", "Tweaks": "Tweaks", "Nachjustieren": "Fine-tune",
     "Oberflaeche": "Chrome",
     "Fertige Teile zusammenstecken": "Snap together ready-made parts",
@@ -1685,6 +1694,8 @@ class HatsPanel extends HTMLElement {
     const meine = d.filter((x) => x.hats && x.name !== "ha_blanko.yaml");
     const fremde = d.filter((x) => !x.hats && x.name !== "ha_blanko.yaml");
     const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
+    // ha_blanko zaehlt nicht mit - es ist die Grundlage, keine Theme zum Oeffnen.
+    const zahlDateien = meine.length + fremde.length;
 
     return `
       <!-- Die Starteinstellungen gehoeren hierher, nicht als Kachelgruppe in
@@ -1733,7 +1744,31 @@ class HatsPanel extends HTMLElement {
       </div>`}
 
       ${ZUSTAND.modell ? "" : `
-      <p class="startleer">${T("Beginne oben: neue Theme, Datei einlesen oder eine vorhandene oeffnen.")}</p>`}
+      <!-- Vier Wege, gross und beschriftet.
+           Hier stand bis zum 13.10.2026 ein einzelner Satz in der Mitte einer
+           leeren Seite, waehrend die Wege als kleine Symbole oben rechts lagen -
+           gesperrt, unbeschriftet und damit unlesbar. Auf Ansage: "warum machen
+           wir auf der seite womit faengst du an nicht grosse buttons mit laden
+           neu aus vorlage und so weiter".
+           Die Symbolleiste bleibt, sie ist der schnelle Weg fuer den, der das
+           Panel kennt. Diese Karten sind der erste. -->
+      <div class="startwege">
+        ${[
+          { id: "neu", icon: "mdi:file-plus-outline", t: T("Neue Theme"),
+            p: T("Leer anfangen, mit Home Assistants eigenen Farben als Grundlage.") },
+          { id: "baukasten", icon: "mdi:toy-brick-outline", t: T("Mit dem Baukasten"),
+            p: T("Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.") },
+          { id: "oeffnen", icon: "mdi:folder-open-outline", t: T("Vorhandene oeffnen"),
+            p: `${zahlDateien} ${zahlDateien === 1 ? T("Theme auf dieser Instanz") : T("Themes auf dieser Instanz")}` },
+          { id: "lesen", icon: "mdi:file-import-outline", t: T("Datei oder Text"),
+            p: T("Eine Theme von anderswo einlesen - auch eine fremde.") },
+        ].map((w) => `
+        <button class="startweg" data-start="${w.id}">
+          <ha-icon icon="${w.icon}"></ha-icon>
+          <b>${w.t}</b>
+          <span>${w.p}</span>
+        </button>`).join("")}
+      </div>`}
     `;
   }
 
@@ -2099,6 +2134,19 @@ class HatsPanel extends HTMLElement {
     };
     this.shadowRoot.querySelectorAll("[data-schalter]").forEach((b) =>
       b.addEventListener("click", () => schalter[b.dataset.schalter]?.())
+    );
+    // Die grossen Karten auf der Startseite fuehren zu denselben Aktionen wie
+    // die Symbolleiste - ein eigener Name, damit ein Klick nicht zweimal
+    // ankommt, falls eine Karte je in der Leiste landet.
+    this.shadowRoot.querySelectorAll("[data-start]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        const was = b.dataset.start;
+        // "Mit dem Baukasten" ist kein eigener Weg, sondern zwei: erst eine
+        // neue Theme, dann der Baukasten darueber. Ohne Theme waere er leer
+        // und alle Kacheln gesperrt.
+        if (was === "baukasten") { await this.neuBeginnen(); this.oeffneBaukasten(); return; }
+        schalter[was]?.();
+      })
     );
 
     this.shadowRoot.querySelectorAll(".punkte").forEach((b) =>
@@ -3118,6 +3166,23 @@ class HatsPanel extends HTMLElement {
                     background: rgba(255,166,0,.12); color: #8a5a00;
                     --mdc-icon-size: 18px; }
       .bk-fuss { margin: 0; font-size: 12.5px; color: var(--s-tinte-leise); }
+
+      /* --- Die vier Wege auf der Startseite ------------------------------
+         Gross genug, dass die Beschriftung die Arbeit macht und nicht das
+         Symbol. Zwei Spalten ab 560px: Vier Karten nebeneinander waeren auf
+         einem Tablet schmaler als ihr eigener Text. */
+      .startwege { display: grid; gap: 14px; margin-top: 8px;
+                   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+      .startweg { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+                  text-align: left; cursor: pointer; font: inherit; color: var(--s-tinte);
+                  background: var(--s-karte); border: 1px solid rgba(27,36,48,.08);
+                  border-radius: var(--s-r); padding: 20px 20px 18px;
+                  box-shadow: var(--s-schatten-klein);
+                  transition: border-color .15s, transform .15s; }
+      .startweg:hover { border-color: var(--s-akzent); transform: translateY(-1px); }
+      .startweg ha-icon { --mdc-icon-size: 26px; color: var(--s-akzent); margin-bottom: 2px; }
+      .startweg b { font-size: 15.5px; font-weight: 500; }
+      .startweg span { font-size: 12.5px; line-height: 1.45; color: var(--s-tinte-leise); }
       .bk-zahl { font-size: 11px; font-weight: 400; letter-spacing: 0;
                  color: var(--s-tinte-leise); text-transform: none;
                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
