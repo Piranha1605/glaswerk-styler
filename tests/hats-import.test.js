@@ -12,6 +12,7 @@ import path from "node:path";
 import { leseTheme, schreibeTheme, berichtUeberTheme, uixSchalterSetzen, UIX_SCHALTER }
   from "../custom_components/hats/www/theme.js";
 import { UIX_ZIELE } from "../custom_components/hats/www/uix.js";
+import { begleiter } from "../custom_components/hats/www/palette.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
 const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
@@ -331,6 +332,26 @@ pruefe("Der eigene Schalter uix-theme gilt nicht als fremd", () => {
   assert.deepStrictEqual(berichtUeberTheme(falsch, new Set(), ziele).stilziele, ["uix-gibtesnicht"]);
 });
 
+pruefe("Was begleiter() mitschreibt, gilt dem Bericht nicht als fremd", () => {
+  // Eine Palette MIT eigenen Farben (Warm, Kuehl, Monochrom, macOS) laesst
+  // palette.js vier Begleiter und rgb-primary-color mitschreiben. Vier haben
+  // eine Kachel, rgb-primary-color mit Absicht nicht - und ohne diese Zeile in
+  // BEKANNT meldete der Bericht es als "kennt HATS nicht".
+  assert.match(panel, /\.\.\.Object\.keys\(begleiter\("#[0-9a-f]{6}"\) \|\| \{\}\),/,
+    "BEKANNT kennt die Begleiter nicht");
+  const geschrieben = Object.keys(begleiter("#808080") || {});
+  assert.ok(geschrieben.includes("rgb-primary-color"), "begleiter schreibt es gar nicht mehr");
+  // Gegenprobe: Die Begleiter stehen in BEKANNT, aber rgb-primary-color hat
+  // KEINE Kachel - sonst waere die Regel "kein eigenes rgb-Feld" durchloechert.
+  const kacheln = [...panel.matchAll(/\bv:\s*"--([a-z0-9-]+)"/g)].map((x) => x[1]);
+  assert.ok(!kacheln.includes("rgb-primary-color"),
+    "rgb-primary-color hat eine Kachel bekommen - die eine Ausnahme soll nicht einstellbar sein");
+  for (const k of geschrieben) {
+    if (k === "rgb-primary-color") continue;
+    assert.ok(kacheln.includes(k), `${k} hat keine Kachel mehr`);
+  }
+});
+
 pruefe("Die Kennzahl auf der Startseite zaehlt die Theme, nicht das Panel", () => {
   // Hier stand felderGesamt - die Summe ueber alle acht Stufen, also was das
   // Panel ANBIETEN kann. Unter "Dein Theme im Ueberblick", neben zwei Zahlen,
@@ -350,4 +371,4 @@ pruefe("Die Kennzahl auf der Startseite zaehlt die Theme, nicht das Panel", () =
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 30) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 31) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

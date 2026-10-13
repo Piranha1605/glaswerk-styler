@@ -29,6 +29,7 @@ www/zuordnung.js
 
 werkzeuge/vorschau.js|/config/www/hats-vorschau.js
 werkzeuge/themes/liquid_glass.yaml|/config/themes/liquid_glass.yaml
+werkzeuge/themes/macos.yaml|/config/themes/macos.yaml
 
 # Die Grundlage fuer jede neue Theme. HATS laedt sie ueber
 # hats/load_theme_file aus dem Themes-Ordner und erwartet den Namen MIT

@@ -57,10 +57,11 @@ function wendeLose(m, h) {
 pruefe("Der Baukasten fuehrt genau die Hintergruende aus hintergrund.js", () => {
   assert.strictEqual(AUS_BAUKASTEN, HINTERGRUENDE, "baukasten.js haelt eine eigene Liste");
   assert.strictEqual(BAUKASTEN.hintergrund.teile, HINTERGRUENDE);
-  // Vorn "keiner", hinten der ruhige Verlauf, dazwischen die zehn Farbverlaeufe.
-  assert.strictEqual(HINTERGRUENDE.length, 12);
-  assert.deepStrictEqual([HINTERGRUENDE[0].id, HINTERGRUENDE[1].id, HINTERGRUENDE[11].id], ["keiner", "inseln", "verlauf"]);
-  assert.strictEqual(new Set(HINTERGRUENDE.map((h) => h.id)).size, 12, "eine Kennung ist doppelt");
+  // Vorn "keiner", hinten der ruhige Verlauf, dazwischen die Farbverlaeufe -
+  // seit dem 14.10.2026 elf statt zehn (macOS ist dazugekommen).
+  assert.strictEqual(HINTERGRUENDE.length, 13);
+  assert.deepStrictEqual([HINTERGRUENDE[0].id, HINTERGRUENDE[1].id, HINTERGRUENDE.at(-1).id], ["keiner", "inseln", "verlauf"]);
+  assert.strictEqual(new Set(HINTERGRUENDE.map((h) => h.id)).size, 13, "eine Kennung ist doppelt");
   for (const h of HINTERGRUENDE) {
     for (const modus of ["light", "dark"]) assert.deepStrictEqual(Object.keys(h[modus]), ["--" + FELD], `${h.id}/${modus}`);
     for (const k of ["de", "en", "zweckDe", "zweckEn"]) assert.ok(h[k], `${h.id} ohne ${k}`);
@@ -527,7 +528,7 @@ pruefe("Das Panel zieht die Bewegung nach und zeigt die Farben auf der Kachel", 
   assert.match(panel, /class="bk-streifen"/);
   assert.match(panel, /teil\.vorschau && teil\.vorschau\[dunkel \? "dark" : "light"\]/);
   const mitVorschau = HINTERGRUENDE.filter((h) => h.vorschau && h.vorschau.light && h.vorschau.dark);
-  assert.strictEqual(mitVorschau.length, 10, "nicht zehn Verlaeufe mit Vorschau");
+  assert.strictEqual(mitVorschau.length, 11, "nicht elf Verlaeufe mit Vorschau");
   for (const h of mitVorschau) assert.match(h.vorschau.dark, /^linear-gradient\(90deg,/);
   // Gegenprobe: "Keiner" und der ruhige Verlauf haben keine - sie sind keine
   // Farbpunkte, und ein Streifen aus vier Farben waere dort gelogen.

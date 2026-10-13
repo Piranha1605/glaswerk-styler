@@ -219,11 +219,18 @@ const helligkeit = (hex) => {
 };
 const farbenIm = (wert) => (wert.match(/#[0-9a-f]{6}/gi) || []);
 
-pruefe("Zehn Farbverlaeufe, jeder mit eigenem Namen und eigenen Farben", () => {
-  assert.strictEqual(FARBVERLAEUFE.length, 10);
-  for (const k of ["id", "de", "en"]) assert.strictEqual(new Set(FARBVERLAEUFE.map((f) => f[k])).size, 10, `${k} doppelt`);
+// Zehn waren es auf Ansage ("10 farbverlaeufe als auswahl anbieten"), elf
+// sind es seit dem 14.10.2026: Der Maintainer wollte Apples Systemfarben als
+// Vorlage, und als Hintergrund sind das vier Toene wie bei den anderen auch.
+// Die Zahl steht hier als Zahl, damit ein VERLUST auffaellt - wer einen
+// dazunimmt, aendert sie bewusst.
+const ZAHL = 11;
+
+pruefe("Elf Farbverlaeufe, jeder mit eigenem Namen und eigenen Farben", () => {
+  assert.strictEqual(FARBVERLAEUFE.length, ZAHL);
+  for (const k of ["id", "de", "en"]) assert.strictEqual(new Set(FARBVERLAEUFE.map((f) => f[k])).size, ZAHL, `${k} doppelt`);
   const werte = FARBVERLAEUFE.flatMap((f) => [f.light[feld], f.dark[feld]]);
-  assert.strictEqual(new Set(werte).size, 20, "zwei Verlaeufe sind gleich, oder hell gleich dunkel");
+  assert.strictEqual(new Set(werte).size, ZAHL * 2, "zwei Verlaeufe sind gleich, oder hell gleich dunkel");
   for (const f of FARBVERLAEUFE) {
     assert.ok(f.zweckDe && f.zweckEn, `${f.id} ohne Zweck`);
     for (const modus of ["light", "dark"]) {
@@ -240,7 +247,7 @@ pruefe("Zehn Farbverlaeufe, jeder mit eigenem Namen und eigenen Farben", () => {
   }
   // Im Baukasten stehen sie zwischen "keiner" und dem ruhigen Verlauf.
   assert.deepStrictEqual(HINTERGRUENDE.map((h) => h.id),
-    ["keiner", "inseln", "nordlicht", "abendrot", "ozean", "wald", "lavendel", "glut", "pastell", "sand", "graphit", "verlauf"]);
+    ["keiner", "inseln", "nordlicht", "abendrot", "ozean", "wald", "lavendel", "glut", "pastell", "sand", "graphit", "macos", "verlauf"]);
   // Der erste traegt weiter die Farben der Werkbank, woertlich.
   assert.deepStrictEqual(farbenIm(FARBVERLAEUFE[0].light[feld]).slice(0, 4), ["#7db5ff", "#ff9ec7", "#5ee0d0", "#c08cff"]);
   assert.deepStrictEqual(farbenIm(FARBVERLAEUFE[0].dark[feld]).slice(0, 4), ["#1f4d9e", "#7a2a5c", "#0d6b63", "#4b2a86"]);

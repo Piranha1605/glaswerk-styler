@@ -106,6 +106,48 @@ export const PALETTEN = [
     akzent: { light: "#00897b", dark: "#2dd4bf" },
   },
   {
+    id: "macos",
+    de: "macOS", en: "macOS",
+    zweckDe: "Apples Systemfarben, an macOS 26 ausgelesen. Blau, Grau und die drei Zustandstoene.",
+    zweckEn: "Apple's system colours, read from macOS 26. Blue, grey and the three state tones.",
+    // GEMESSEN, nicht abgeschrieben: werkzeuge/test/macos-farben.swift liest
+    // die NSColor-Werte je Erscheinungsbild aus. Am 14.10.2026 an macOS 26.5.2
+    // gelaufen - und die bekannten Werte aus aelteren Versionen stimmen nicht
+    // mehr:
+    //
+    //     systemRed     #ff3b30  ->  #ff383c
+    //     systemBlue    #007aff  ->  #0088ff (hell) / #0091ff (dunkel)
+    //     systemOrange  #ff9500  ->  #ff8d28
+    //
+    // Der Primaerton ist bewusst controlAccentColor und nicht systemBlue: Die
+    // Rampe steht FLACH, gilt also fuer beide Modi, und controlAccentColor ist
+    // als einziges Apple-Blau in beiden Modi derselbe Wert (#007aff). Mit
+    // systemBlue muesste man sich fuer einen der zwei entscheiden und laege im
+    // anderen Modus daneben.
+    farben: { primary: "#007aff", neutral: "#8e8e93", red: "#ff383c", green: "#34c759", orange: "#ff8d28" },
+    // Der Akzent darf je Modus verschieden sein - hier also Apples eigene
+    // beide systemBlue-Werte.
+    akzent: { light: "#0088ff", dark: "#0091ff" },
+    // Apples Schriftfarben sind Schwarz und Weiss mit Deckkraft
+    // (labelColor #000 bei 84.7 %, secondaryLabel bei 49.8 %). So kann HATS
+    // sie nicht schreiben: Home Assistant leitet seine RGB-Tripel nur aus
+    // Werten mit "#" ab, und Mushroom baut daraus seine Zustandsfarben. Also
+    // VERRECHNET, auf Apples eigenem Grund - windowBackgroundColor, hell
+    // #ffffff und dunkel #1e1e1e:
+    //
+    //     hell    #000 @ 84.7 %  auf #ffffff  ->  #272727
+    //             #000 @ 49.8 %  auf #ffffff  ->  #808080
+    //     dunkel  #fff @ 84.7 %  auf #1e1e1e  ->  #dddddd
+    //             #fff @ 54.9 %  auf #1e1e1e  ->  #9a9a9a
+    //
+    // Der Trenner darf dagegen durchscheinend bleiben: Aus ihm leitet HA kein
+    // Tripel ab, und Apples separatorColor ist genau das - 9,8 % Deckkraft.
+    light: { "--primary-text-color": "#272727", "--secondary-text-color": "#808080",
+             "--divider-color": "rgba(0, 0, 0, 0.098)" },
+    dark:  { "--primary-text-color": "#dddddd", "--secondary-text-color": "#9a9a9a",
+             "--divider-color": "rgba(255, 255, 255, 0.098)" },
+  },
+  {
     id: "mono",
     de: "Monochrom", en: "Monochrome",
     zweckDe: "Nur Graustufen als Akzent. Die Farbe kommt dann allein aus den Geraeten.",

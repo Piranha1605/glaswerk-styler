@@ -267,6 +267,12 @@ const VERLAUF_LISTE = [
   ["pastell", "Pastell", "Candy", "Rosa, Himmelblau, Mint und Pfirsich - weich.", "Pink, sky blue, mint and peach - soft.", [[336, 68], [202, 70], [152, 52], [30, 76]]],
   ["sand", "Sand", "Dune", "Warme, gedeckte Erdtoene.", "Warm, muted earth tones.", [[38, 44], [18, 42], [350, 32], [88, 24]]],
   ["graphit", "Graphit", "Graphite", "Fast ohne Farbe: kuehle Grautoene.", "Almost colourless: cool greys.", [[214, 20], [200, 16], [276, 12], [182, 14]]],
+  // Apples vier Systemfarben, am 14.10.2026 an macOS 26.5.2 ausgelesen
+  // (werkzeuge/test/macos-farben.swift), nicht aus der Dokumentation:
+  // systemBlue #0088ff, systemPurple #cb30e0, systemTeal #00c3d0,
+  // systemIndigo #6155f5. Hier als Farbton und Saettigung, weil die Helligkeit
+  // je Modus gerechnet wird.
+  ["macos", "macOS", "macOS", "Apples Systemfarben: Blau, Violett, Tuerkis, Indigo.", "Apple's system colours: blue, purple, teal, indigo.", [[208, 100], [292, 74], [184, 100], [244, 89]]],
 ];
 
 export const FARBVERLAEUFE = VERLAUF_LISTE.map(([id, de, en, zweckDe, zweckEn, toene]) => {

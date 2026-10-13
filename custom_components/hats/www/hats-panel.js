@@ -823,6 +823,21 @@ const BEKANNT = new Set([
   ...STUFEN.flatMap((s) => s.gruppen.flatMap((g) => g.felder))
     .filter((f) => f.v).map((f) => f.v.replace(/^--/, "")),
   ...Object.keys(ZUORDNUNG),
+  // Und was begleiter() aus der Primaerfarbe mitschreibt - dieselbe
+  // Begruendung wie bei der Zuordnung.
+  //
+  // Vier davon haben eine Kachel, rgb-primary-color mit Absicht nicht: Es ist
+  // die eine Ausnahme von "kein eigenes rgb-Feld" (CLAUDE.md), weil
+  // primary-color als var(--ha-color-primary-40) gar nicht im Theme steht und
+  // Home Assistant deshalb kein Tripel dafuer ableitet. Einstellbar soll es
+  // trotzdem nicht sein.
+  //
+  // Ohne diese Zeile meldete der Bericht "1 Feld kennt HATS nicht" - bei jeder
+  // Theme, die eine Palette MIT eigenen Farben benutzt (Warm, Kuehl,
+  // Monochrom, macOS). Am 14.10.2026 beim Bau der macOS-Theme aufgefallen,
+  // derselbe Fehler wie bei uix-theme am selben Tag: ein Feld, das HATS selbst
+  // schreibt, als fremd gemeldet.
+  ...Object.keys(begleiter("#808080") || {}),
 ]);
 
 // Die Kennungen der Stilziele, fuer den Bericht. Damit unterscheidet er ein
