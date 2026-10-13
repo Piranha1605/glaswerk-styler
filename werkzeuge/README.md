@@ -5,6 +5,8 @@ pruefen.sh                     alles ohne Instanz: Syntax, Tests, Versionen
 einspielen-test.sh             auf die Testmaschine am Mac  <- der Normalfall
 test-reload.sh                 Integration dort neu laden
 einspielen.sh                  auf die Instanz im Heimnetz (nur wenn noetig)
+test/gegenpruefen.mjs          zwei Themes Feld fuer Feld vergleichen
+test/empfangen.py              Dateien von der Maschine zurueckholen
 ```
 
 ---
@@ -36,6 +38,44 @@ Farbe, Luefter, Cover, Klima, Media Player, Schloss. Auf der Testmaschine darf
 geschaltet werden — anders als im Haus, wo nur Zuchtbecken und Terrarium frei
 sind. Damit lassen sich Zustaende wirklich durchprobieren statt abzuwarten,
 bis zufaellig einer eintritt.
+
+### Modul fuer Modul gegenpruefen
+
+**Eine Theme, die falsch ist, sieht nicht falsch aus.** Sie sieht nur anders
+aus — und wer sie nicht gegen eine Referenz haelt, merkt es nicht.
+
+Am 13.10.2026 wurde die laufende Theme einmal komplett ueber das Panel
+nachgebaut. Erst der Vergleich zeigte drei Fehler, die beim Draufschauen
+unsichtbar waren:
+
+- die Palettenteile faerbten HAs Primaerrampe um (daran haengt jeder gefuellte
+  Knopf und jede Verlinkung)
+- der Kartenstil hoerte an der Kartenkante auf — Dialoge, Seitenleiste und
+  Kopfleiste blieben deckend
+- `teilAnwenden` stieg bei einer Palette zu frueh aus und verschluckte ihre
+  Textfarben
+
+Jedes Mal sah die Theme gut aus.
+
+```bash
+# 1. Im Panel bauen, speichern, dann von der Maschine holen
+werkzeuge/test/empfangen.py 8782 &
+/Users/enricofischer/Projekte/haos-test/konsole.py \
+  "curl -sS --data-binary @/mnt/data/supervisor/homeassistant/themes/meine.yaml \
+   http://10.0.2.2:8782/meine.yaml"
+
+# 2. Feld fuer Feld gegen die Referenz halten
+node werkzeuge/test/gegenpruefen.mjs \
+  werkzeuge/themes/liquid_glass.yaml \
+  werkzeuge/sicherungen/von-der-maschine/meine.yaml
+```
+
+Der Lauf meldet `stimmt / abweichend / fehlt / zu viel` und zeigt jede
+Abweichung mit Soll und Ist. Rueckgabewert 0 nur bei Deckungsgleichheit, also
+auch in einem Skript brauchbar.
+
+**Geduldet wird genau ein Feld:** `uix-theme` traegt den eigenen Theme-Namen
+und muss abweichen. Alles andere ist ein Befund.
 
 ### Die Fallen der Maschine
 
