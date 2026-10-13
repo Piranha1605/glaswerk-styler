@@ -19,7 +19,8 @@
 
 IP="${1:-192.168.178.47}"
 PORT="${2:-8778}"
-QUELLE="http://$IP:$PORT/custom_components/hats"
+BASIS="http://$IP:$PORT"
+QUELLE="$BASIS/custom_components/hats"
 ZIEL="/config/custom_components/hats"
 STOPP="/config/sync-hats.stop"
 
@@ -42,22 +43,47 @@ while [ "$lauf" -lt "$MAX_LAEUFE" ]; do
   lauf=$((lauf + 1))
   [ -f "$STOPP" ] && { echo "$(date '+%H:%M:%S') Stoppdatei gefunden - Ende"; rm -f "$STOPP"; exit 0; }
 
+  # Sich selbst erneuern. Ohne das kostet jede Aenderung am Skript einen Gang
+  # in den Terminal des Studio Code Server - und genau den soll die Schleife
+  # ja ersetzen. Die Syntaxpruefung davor ist Pflicht: Ein kaputtes Skript
+  # wuerde sich sonst starten, sofort sterben und waere nicht mehr erreichbar.
+  neu="/tmp/sync-hats-selbst-$$"
+  if curl -sSf --max-time 8 -o "$neu" "$BASIS/werkzeuge/sync-instanz.sh" 2>/dev/null; then
+    if ! cmp -s "$neu" "$0" && sh -n "$neu" 2>/dev/null; then
+      echo "$(date '+%H:%M:%S') neue Fassung des Skripts - starte neu"
+      cp "$neu" "$0"
+      chmod +x "$0"
+      rm -f "$neu"
+      exec "$0" "$IP" "$PORT"
+    fi
+    rm -f "$neu"
+  fi
+
   # Jede Runde neu holen - so wirkt eine ergaenzte Liste sofort.
   DATEIEN=$(curl -sSf --max-time 8 "$LISTE" 2>/dev/null | grep -v '^#' | tr '\n' ' ')
   [ -z "$DATEIEN" ] && DATEIEN="$DATEIEN_FALLBACK"
 
   erreichbar=0
   geaendert=""
-  for f in $DATEIEN; do
+  for eintrag in $DATEIEN; do
+    # Zwei Formate in einer Liste:
+    #   www/theme.js                        -> /config/custom_components/hats/www/theme.js
+    #   werkzeuge/themes/x.yaml|/config/themes/x.yaml   explizites Ziel
+    # Trennzeichen ist | und nicht >, damit die Zeile keine Umleitung wird,
+    # falls jemand die Liste versehentlich in eine Shell kippt.
+    case "$eintrag" in
+      *"|"*) f="${eintrag%%|*}" ; ziel="${eintrag#*|}" ; quelle="$BASIS/$f" ;;
+      *)     f="$eintrag"       ; ziel="$ZIEL/$f"      ; quelle="$QUELLE/$f" ;;
+    esac
     tmp="/tmp/sync-hats-$$"
-    if curl -sSf --max-time 8 -o "$tmp" "$QUELLE/$f" 2>/dev/null; then
+    if curl -sSf --max-time 8 -o "$tmp" "$quelle" 2>/dev/null; then
       erreichbar=1
       # Nur schreiben, wenn sich wirklich etwas geaendert hat. Sonst wuerde
       # jeder Durchlauf die Zeitstempel anfassen, und HA haelt Dateien fuer
       # neu, die es nicht sind.
-      if ! cmp -s "$tmp" "$ZIEL/$f"; then
-        mkdir -p "$(dirname "$ZIEL/$f")"
-        cp "$tmp" "$ZIEL/$f"
+      if ! cmp -s "$tmp" "$ziel"; then
+        mkdir -p "$(dirname "$ziel")"
+        cp "$tmp" "$ziel"
         geaendert="$geaendert $f"
       fi
     fi

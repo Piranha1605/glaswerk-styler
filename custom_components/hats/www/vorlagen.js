@@ -139,18 +139,33 @@ ha-card::before {
      sichtbar bleibt, kostet hier nichts: 22 % Weiss am oberen Rand, nach
      55 % der Flaeche ist er ganz weg. */
   z-index: 0;
-  /* Der Ring: oben hell, unten fast weg. */
+  /* Der Ring. Drei Dinge, nicht eins:
+
+     Oben ein kraeftiger heller Saum - das ist die Kante, an der das Licht
+     bricht. Unten ein DUNKLER, denn eine Glasscheibe wirft an ihrer Unterkante
+     Schatten in sich selbst. Und an den Seiten ein schwacher heller.
+
+     Der dunkle Saum unten ist der Unterschied zwischen "durchsichtig" und
+     "dick". Ohne ihn liegt die Flaeche flach auf dem Hintergrund; mit ihm hat
+     sie eine Staerke. Auf hellem Grund ist er ausserdem das Einzige, was man
+     ueberhaupt sieht - ein heller Saum auf hellem Grund ist unsichtbar. */
   box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, .55),
-    inset 0 -1px 0 0 rgba(255, 255, 255, .08),
-    inset 1px 0 0 0 rgba(255, 255, 255, .18),
-    inset -1px 0 0 0 rgba(255, 255, 255, .18);
-  /* Der Schimmer: ein schmales helles Band, schraeg ueber die obere Haelfte. */
+    inset 0 1.5px 0 0 rgba(255, 255, 255, .72),
+    inset 0 -1.5px 0 0 rgba(10, 20, 45, .1),
+    inset 1px 0 0 0 rgba(255, 255, 255, .3),
+    inset -1px 0 0 0 rgba(255, 255, 255, .22),
+    inset 0 14px 22px -16px rgba(255, 255, 255, .5);
+  /* Der Schimmer: ein helles Band schraeg ueber die obere Haelfte, und ein
+     zweites, schwaecheres von unten rechts - so als laege eine zweite
+     Lichtquelle dort. Mit nur einem wirkt die Flaeche wie gekippt. */
   background:
     linear-gradient(135deg,
-      rgba(255, 255, 255, .22) 0%,
-      rgba(255, 255, 255, .06) 28%,
-      rgba(255, 255, 255, 0) 55%);
+      rgba(255, 255, 255, .34) 0%,
+      rgba(255, 255, 255, .1) 26%,
+      rgba(255, 255, 255, 0) 52%),
+    linear-gradient(315deg,
+      rgba(255, 255, 255, .14) 0%,
+      rgba(255, 255, 255, 0) 38%);
 }
 
 /* Karten ohne Flaeche bekommen auch keinen Saum - sonst schwebt ein heller
@@ -181,13 +196,34 @@ ha-card.text-only::before {
    Bei Mushroom muss es --mush-icon-border-radius sein, nicht
    --icon-border-radius: Mushroom setzt letzteres selbst weiter unten im Baum
    (--icon-border-radius: var(--mush-icon-border-radius, 50%)), ein Wert von
-   aussen traegt dort nicht. */
+   aussen traegt dort nicht.
+
+   UND BEI BUBBLE REICHT DER ALLGEMEINE NAME NICHT. Am 13.10.2026 an der
+   laufenden Instanz gemessen: Von fuenf Bubble-Icons wurden genau zwei eckig,
+   drei blieben rund - obwohl --bubble-icon-border-radius an jedem von ihnen
+   nachweislich auf 28 % stand. Der Grund steht in Bubbles eigener Kette:
+
+       border-radius: var(--bubble-card-type-icon-border-radius,
+                          var(--bubble-icon-border-radius,
+                              var(--bubble-border-radius, 50%)))
+
+   Die erste Stufe ist TYPSPEZIFISCH - Bubble setzt sie je Kartentyp selbst
+   (bei einem Separator etwa aus --bubble-separator-icon-border-radius). Wo sie
+   gesetzt ist, kommt die allgemeine nie zum Zug. Wer eine Form durchsetzen
+   will, muss deshalb die erste Stufe setzen.
+
+   Dasselbe Muster gilt fuer die Kartenflaeche:
+   var(--bubble-card-type-border-radius, var(--bubble-border-radius, ...)). */
 :host,
 ha-card {
   --ha-tile-icon-border-radius: 28%;
   --state-badge-border-radius: 28%;
   --mush-icon-border-radius: 28%;
+  /* Beide Stufen. Die erste gewinnt, die zweite faengt die Faelle, in denen
+     Bubble die erste nicht setzt. */
+  --bubble-card-type-icon-border-radius: 28%;
   --bubble-icon-border-radius: 28%;
+  --bubble-button-icon-border-radius: 28%;
 }`,
   },
 

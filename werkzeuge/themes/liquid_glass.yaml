@@ -1,0 +1,752 @@
+# ha_blanko - Home Assistant 2026.10 ohne Altlasten
+# 
+# Erzeugt aus einer laufenden Instanz (HA 2026.10.1), nicht aus Dokumentation.
+# Enthaelt nur Blaetter: Felder mit festem Wert. Was Home Assistant selbst aus
+# anderen Feldern ableitet (375 var()-Verweise), steht absichtlich nicht drin -
+# es soll weiter abgeleitet werden.
+# 
+# Drei Ebenen, und die Aufteilung ist nicht kosmetisch:
+# 
+#   flach (243)   Werte, die in beiden Modi gleich sind. Home Assistant
+#                 ueberschreibt sie im Dunkelmodus nicht - nachgewiesen daran,
+#                 dass keiner dieser Namen in HAs 143 Dunkelwerten vorkommt.
+#   light (27)    nur was sich zwischen hell und dunkel unterscheidet.
+#   dark (143)    genau die Werte, die HA im Dunkelmodus selbst anwendet
+#                 ({...darkSemanticVariables, ...darkColorVariables}).
+# 
+# Warum flach und nicht alles unter light: modes.light gilt NUR im Hellmodus.
+# Ein Feld, das nur dort steht, fehlt im Dunkeln - und mit ihm das Tripel, das
+# HA daraus ableitet (--rgb-<name>, nur fuer Werte die mit # beginnen). Mushroom
+# baut seine Farben aus genau diesen Tripeln; stehen die Palettenfarben unter
+# light, sind Mushroom-Karten im Dunkelmodus farblos. Ohne Fehlermeldung.
+# Siehe docs/zuordnung-neue-ebene.md.
+
+liquid_glass:
+  amber-color: "#ffc107"
+  app-header-backdrop-filter: "blur(22px) saturate(170%)"
+  black-color: "#000"
+  blue-color: "#2196f3"
+  blue-grey-color: "#607d8b"
+  brown-color: "#795548"
+  color-1: "#4269d0"
+  color-10: "#094bad"
+  color-11: "#c99000"
+  color-12: "#d84f3e"
+  color-13: "#49a28f"
+  color-14: "#048732"
+  color-15: "#d96895"
+  color-16: "#8043ce"
+  color-17: "#7599d1"
+  color-18: "#7a4c31"
+  color-19: "#6989f4"
+  color-2: "#f4bd4a"
+  color-20: "#ffd444"
+  color-21: "#ff957c"
+  color-22: "#8fe9d3"
+  color-23: "#62cc71"
+  color-24: "#ffadda"
+  color-25: "#c884ff"
+  color-26: "#badeff"
+  color-27: "#bf8b6d"
+  color-28: "#927acc"
+  color-29: "#97ee3f"
+  color-3: "#ff725c"
+  color-30: "#bf3947"
+  color-31: "#9f5b00"
+  color-32: "#f48758"
+  color-33: "#8caed6"
+  color-34: "#f2b94f"
+  color-35: "#eff26e"
+  color-36: "#e43872"
+  color-37: "#d9b100"
+  color-38: "#9d7a00"
+  color-39: "#698cff"
+  color-4: "#6cc5b0"
+  color-40: "#00d27e"
+  color-41: "#d06800"
+  color-42: "#009f82"
+  color-43: "#c49200"
+  color-44: "#cbe8ff"
+  color-45: "#fecddf"
+  color-46: "#c27eb6"
+  color-47: "#8cd2ce"
+  color-48: "#c4b8d9"
+  color-49: "#f883b0"
+  color-5: "#a463f2"
+  color-50: "#a49100"
+  color-51: "#f48800"
+  color-52: "#27d0df"
+  color-53: "#a04a9b"
+  color-54: "#4269d0"
+  color-6: "#ff8ab7"
+  color-7: "#9c6b4e"
+  color-8: "#97bbf5"
+  color-9: "#01ab63"
+  cyan-color: "#00bcd4"
+  dark-disabled-opacity: ".38"
+  dark-divider-opacity: ".12"
+  dark-grey-color: "#606060"
+  dark-primary-color: "#0288d1"
+  dark-primary-opacity: ".87"
+  dark-secondary-opacity: ".54"
+  darker-primary-color: "#016194"
+  deep-orange-color: "#ff6f22"
+  deep-purple-color: "#6e41ab"
+  direction: "ltr"
+  energy-battery-in-color: "#f06292"
+  energy-battery-out-color: "#4db6ac"
+  energy-gas-color: "#8e021b"
+  energy-grid-consumption-color: "#488fc2"
+  energy-non-fossil-color: "#0f9d58"
+  energy-solar-color: "#ff9800"
+  energy-water-color: "#00bcd4"
+  error-color: "#db4437"
+  float-end: "right"
+  float-start: "left"
+  green-color: "#4caf50"
+  grey-color: "#9e9e9e"
+  ha-animation-duration-fast: ".15s"
+  ha-animation-duration-instant: "75ms"
+  ha-animation-duration-none: "1ms"
+  ha-animation-duration-normal: ".25s"
+  ha-animation-duration-slow: ".35s"
+  ha-border-radius-2xl: "20px"
+  ha-border-radius-3xl: "24px"
+  ha-border-radius-4xl: "28px"
+  ha-border-radius-5xl: "32px"
+  ha-border-radius-6xl: "36px"
+  ha-border-radius-circle: "50%"
+  ha-border-radius-lg: "12px"
+  ha-border-radius-md: "8px"
+  ha-border-radius-pill: "9999px"
+  ha-border-radius-sm: "4px"
+  ha-border-radius-square: "0"
+  ha-border-radius-xl: "16px"
+  ha-border-width-lg: "3px"
+  ha-border-width-md: "2px"
+  ha-border-width-sm: "1px"
+  ha-card-backdrop-filter: "blur(26px) saturate(190%)"
+  ha-card-border-radius: "24px"
+  ha-card-border-width: "0"
+  ha-color-black: "#000"
+  ha-color-green-05: "#031608"
+  ha-color-green-10: "#052310"
+  ha-color-green-20: "#0a3a1d"
+  ha-color-green-30: "#0a5027"
+  ha-color-green-40: "#036730"
+  ha-color-green-50: "#00883c"
+  ha-color-green-60: "#00ac49"
+  ha-color-green-70: "#5dc36f"
+  ha-color-green-80: "#93da98"
+  ha-color-green-90: "#c2f2c1"
+  ha-color-green-95: "#e3f9e3"
+  ha-color-neutral-05: "#141414"
+  ha-color-neutral-10: "#202020"
+  ha-color-neutral-20: "#363636"
+  ha-color-neutral-30: "#4a4a4a"
+  ha-color-neutral-40: "#5e5e5e"
+  ha-color-neutral-50: "#7a7a7a"
+  ha-color-neutral-60: "#989898"
+  ha-color-neutral-70: "#b1b1b1"
+  ha-color-neutral-80: "#ccc"
+  ha-color-neutral-90: "#e6e6e6"
+  ha-color-neutral-95: "#f3f3f3"
+  ha-color-orange-05: "#280700"
+  ha-color-orange-10: "#3b0f00"
+  ha-color-orange-20: "#5e1c00"
+  ha-color-orange-30: "#7e2900"
+  ha-color-orange-40: "#9d3800"
+  ha-color-orange-50: "#c94e00"
+  ha-color-orange-60: "#f36d00"
+  ha-color-orange-70: "#ff9342"
+  ha-color-orange-80: "#ffbb89"
+  ha-color-orange-90: "#ffe0c8"
+  ha-color-orange-95: "#fff0e4"
+  ha-color-primary-05: "#001721"
+  ha-color-primary-10: "#002e3e"
+  ha-color-primary-20: "#004156"
+  ha-color-primary-30: "#006787"
+  ha-color-primary-40: "#009ac7"
+  ha-color-primary-50: "#18bcf2"
+  ha-color-primary-60: "#37c8fd"
+  ha-color-primary-70: "#7bd4fb"
+  ha-color-primary-80: "#b9e6fc"
+  ha-color-primary-90: "#dff3fc"
+  ha-color-primary-95: "#eff9fe"
+  ha-color-red-05: "#2a040b"
+  ha-color-red-10: "#3e0913"
+  ha-color-red-20: "#631323"
+  ha-color-red-30: "#8a132c"
+  ha-color-red-40: "#b30532"
+  ha-color-red-50: "#dc3146"
+  ha-color-red-60: "#f3676c"
+  ha-color-red-70: "#fd8f90"
+  ha-color-red-80: "#ffb8b6"
+  ha-color-red-90: "#ffdedc"
+  ha-color-red-95: "#fff0ef"
+  ha-color-shadow-scrollable-fade: "#00000014"
+  ha-color-white: "#fff"
+  ha-dialog-scrim-backdrop-filter: "brightness(68%)"
+  ha-font-family-body: "Roboto, Noto, sans-serif"
+  ha-font-family-code: "monospace"
+  ha-font-family-longform: "ui-sans-serif, system-ui, sans-serif"
+  ha-font-size-scale: "1"
+  ha-font-smoothing: "antialiased"
+  ha-font-weight-bold: "700"
+  ha-font-weight-light: "300"
+  ha-font-weight-medium: "500"
+  ha-font-weight-normal: "400"
+  ha-line-height-condensed: "1.2"
+  ha-line-height-expanded: "2"
+  ha-line-height-normal: "1.6"
+  ha-moz-osx-font-smoothing: "grayscale"
+  ha-space-1: "4px"
+  ha-space-10: "40px"
+  ha-space-11: "44px"
+  ha-space-12: "48px"
+  ha-space-13: "52px"
+  ha-space-14: "56px"
+  ha-space-15: "60px"
+  ha-space-16: "64px"
+  ha-space-17: "68px"
+  ha-space-18: "72px"
+  ha-space-19: "76px"
+  ha-space-2: "8px"
+  ha-space-20: "80px"
+  ha-space-3: "12px"
+  ha-space-4: "16px"
+  ha-space-5: "20px"
+  ha-space-6: "24px"
+  ha-space-7: "28px"
+  ha-space-8: "32px"
+  ha-space-9: "36px"
+  header-height: "56px"
+  history-unavailable-color: "transparent"
+  indigo-color: "#3f51b5"
+  info-color: "#039be5"
+  label-badge-grey: "#9e9e9e"
+  light-blue-color: "#03a9f4"
+  light-disabled-opacity: ".3"
+  light-divider-opacity: ".12"
+  light-green-color: "#8bc34a"
+  light-grey-color: "#bdbdbd"
+  light-primary-color: "#b3e5fc"
+  light-primary-opacity: "1"
+  light-secondary-opacity: ".7"
+  lime-color: "#cddc39"
+  margin-title-ltr: "0 0 0 24px"
+  margin-title-rtl: "0 24px 0 0"
+  orange-color: "#ff9800"
+  pink-color: "#e91e63"
+  purple-color: "#926bc7"
+  red-color: "#f44336"
+  state-icon-color: "#44739e"
+  state-weather-snowy-color: "#c0e0ff"
+  success-color: "#43a047"
+  teal-color: "#009688"
+  text-light-primary-color: "#212121"
+  text-primary-color: "#fff"
+  uix-badge: |-
+    /* HATS:glas-badges:START */
+    :host,
+    .badge {
+      backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
+    }
+    /* HATS:glas-badges:ENDE */
+  uix-card: |-
+    /* HATS:glas-karten:START */
+    /* Nur die Karte selbst, nicht ihr Wirt.
+
+       Auf einem Dashboard haengt eine Karte unter hui-card, und UIX patcht dann
+       das KARTEN-Element - :host ist dieses Element, ha-card die Karte darin. Ein
+       Selektor ":host, ha-card" bemalt deshalb beide: Fuellung, Glanz und
+       Weichzeichnung liegen doppelt uebereinander und wirken ausgewaschen.
+
+       Und ein backdrop-filter auf dem Wirt macht ihn zum Bezugsrahmen fuer
+       position: fixed. Bubble-Pop-ups sind fixed und fallen dann auf die Groesse
+       des Wirts zusammen - gemessen: Hoehe 0 statt 742. */
+    :host(ha-card),
+    ha-card {
+      background-color: var(--ha-card-background, var(--card-background-color)) !important;
+      background-image: none !important;
+      backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+      /* Ohne eigenen Radius zeichnet der Rand ein eckiges Rechteck um die runde Karte. */
+      border-radius: var(--ha-card-border-radius, 22px) !important;
+      /* Der Rand liegt als innerer Ring IM Schatten. Ein echtes border verschiebt
+         das Layout um seine Breite - bei eigenen Panels rutscht damit der ganze
+         Inhalt nach unten. */
+      box-shadow: var(--ha-card-box-shadow) !important;
+      border: 0 !important;
+    }
+
+    /* Bubble-Karten haben im Shadow Root ebenfalls eine ha-card. Die zeichnet die
+       Bubble-Vorlage schon - ohne Ausnahme laege darunter ein zweites Glas.
+       Ueberschriften und reine Textkarten brauchen gar keine Flaeche. */
+    :host(.type-custom-bubble-card) ha-card,
+    :host(hui-heading-card) ha-card,
+    :host(mushroom-title-card) ha-card,
+    :host(mushroom-chips-card) ha-card,
+    :host(.text-only),
+    ha-card.text-only {
+      background: none !important;
+      background-image: none !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* Auswahlfelder und Menues bleiben deckend - durchscheinend sind sie
+       unlesbar, weil der Text der Karte darunter durchschlaegt. */
+    ha-dropdown,
+    ha-combo-box,
+    ha-select,
+    vaadin-combo-box-overlay,
+    .menu-surface,
+    .mdc-menu-surface,
+    mwc-menu-surface {
+      --ha-card-background: var(--card-background-color) !important;
+      background-color: var(--card-background-color) !important;
+      background-image: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* Bubble legt ein unsichtbares ha-select als Klickflaeche ueber runde
+       Auswahl-Sub-Buttons. Mit deckender Farbe wird daraus ein eckiges dunkles
+       Quadrat mitten auf dem Knopf. */
+    ha-select.bubble-dropdown-select {
+      background-color: transparent !important;
+    }
+    /* HATS:glas-karten:ENDE */
+    /* HATS:glas-lichtkante:START */
+    /* Der Saum liegt als ::before UEBER der Flaeche und unter dem Inhalt.
+       Zwei Dinge zusammen machen den Glaseindruck aus: ein heller Ring, der oben
+       kraeftiger ist als unten (so faellt Licht), und ein schraeger Verlauf, der
+       quer ueber die Flaeche laeuft.
+
+       Zwei Dinge sind hier Absicht:
+
+       pointer-events: none - ohne das schluckt die Schicht jeden Klick auf die
+       Karte, und nichts laesst sich mehr schalten.
+
+       KEIN overflow: hidden. Die Schicht deckt die Flaeche ohnehin genau ab
+       (inset: 0 plus border-radius: inherit), und overflow wuerde alles
+       abschneiden, was aus der Karte herausragen soll - Badges auf
+       Ueberschriften etwa. */
+    :host(ha-card),
+    ha-card {
+      position: relative;
+    }
+    :host(ha-card)::before,
+    ha-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      /* Bewusst 0 und nicht -1. Ein Reflex liegt auch in echt UEBER dem, was
+         hinter dem Glas ist - und -1 waere unzuverlaessig: Es haengt davon ab, ob
+         die Karte gerade einen Stacking-Context bildet (ein backdrop-filter tut
+         das, eine Karte ohne Weichzeichnung nicht). Mal laege der Schimmer dann
+         vor dem Inhalt, mal hinter der Flaeche und damit unsichtbar. Dass er
+         sichtbar bleibt, kostet hier nichts: 22 % Weiss am oberen Rand, nach
+         55 % der Flaeche ist er ganz weg. */
+      z-index: 0;
+      /* Der Ring. Drei Dinge, nicht eins:
+
+         Oben ein kraeftiger heller Saum - das ist die Kante, an der das Licht
+         bricht. Unten ein DUNKLER, denn eine Glasscheibe wirft an ihrer Unterkante
+         Schatten in sich selbst. Und an den Seiten ein schwacher heller.
+
+         Der dunkle Saum unten ist der Unterschied zwischen "durchsichtig" und
+         "dick". Ohne ihn liegt die Flaeche flach auf dem Hintergrund; mit ihm hat
+         sie eine Staerke. Auf hellem Grund ist er ausserdem das Einzige, was man
+         ueberhaupt sieht - ein heller Saum auf hellem Grund ist unsichtbar. */
+      box-shadow:
+        inset 0 1.5px 0 0 rgba(255, 255, 255, .72),
+        inset 0 -1.5px 0 0 rgba(10, 20, 45, .1),
+        inset 1px 0 0 0 rgba(255, 255, 255, .3),
+        inset -1px 0 0 0 rgba(255, 255, 255, .22),
+        inset 0 14px 22px -16px rgba(255, 255, 255, .5);
+      /* Der Schimmer: ein helles Band schraeg ueber die obere Haelfte, und ein
+         zweites, schwaecheres von unten rechts - so als laege eine zweite
+         Lichtquelle dort. Mit nur einem wirkt die Flaeche wie gekippt. */
+      background:
+        linear-gradient(135deg,
+          rgba(255, 255, 255, .34) 0%,
+          rgba(255, 255, 255, .1) 26%,
+          rgba(255, 255, 255, 0) 52%),
+        linear-gradient(315deg,
+          rgba(255, 255, 255, .14) 0%,
+          rgba(255, 255, 255, 0) 38%);
+    }
+
+    /* Karten ohne Flaeche bekommen auch keinen Saum - sonst schwebt ein heller
+       Rahmen um eine Ueberschrift. */
+    :host(.type-custom-bubble-card) ha-card::before,
+    :host(hui-heading-card) ha-card::before,
+    :host(mushroom-title-card) ha-card::before,
+    :host(mushroom-chips-card) ha-card::before,
+    :host(.text-only)::before,
+    ha-card.text-only::before {
+      display: none;
+    }
+    /* HATS:glas-lichtkante:ENDE */
+    /* HATS:glas-symbolkachel:START */
+    /* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
+       Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
+       Kacheln, Mushroom, Zeilen und Glance auf einmal.
+
+       Bei Mushroom muss es --mush-icon-border-radius sein, nicht
+       --icon-border-radius: Mushroom setzt letzteres selbst weiter unten im Baum
+       (--icon-border-radius: var(--mush-icon-border-radius, 50%)), ein Wert von
+       aussen traegt dort nicht.
+
+       UND BEI BUBBLE REICHT DER ALLGEMEINE NAME NICHT. Am 13.10.2026 an der
+       laufenden Instanz gemessen: Von fuenf Bubble-Icons wurden genau zwei eckig,
+       drei blieben rund - obwohl --bubble-icon-border-radius an jedem von ihnen
+       nachweislich auf 28 % stand. Der Grund steht in Bubbles eigener Kette:
+
+           border-radius: var(--bubble-card-type-icon-border-radius,
+                              var(--bubble-icon-border-radius,
+                                  var(--bubble-border-radius, 50%)))
+
+       Die erste Stufe ist TYPSPEZIFISCH - Bubble setzt sie je Kartentyp selbst
+       (bei einem Separator etwa aus --bubble-separator-icon-border-radius). Wo sie
+       gesetzt ist, kommt die allgemeine nie zum Zug. Wer eine Form durchsetzen
+       will, muss deshalb die erste Stufe setzen.
+
+       Dasselbe Muster gilt fuer die Kartenflaeche:
+       var(--bubble-card-type-border-radius, var(--bubble-border-radius, ...)). */
+    :host,
+    ha-card {
+      --ha-tile-icon-border-radius: 28%;
+      --state-badge-border-radius: 28%;
+      --mush-icon-border-radius: 28%;
+      /* Beide Stufen. Die erste gewinnt, die zweite faengt die Faelle, in denen
+         Bubble die erste nicht setzt. */
+      --bubble-card-type-icon-border-radius: 28%;
+      --bubble-icon-border-radius: 28%;
+      --bubble-button-icon-border-radius: 28%;
+    }
+    /* HATS:glas-symbolkachel:ENDE */
+    /* HATS:glas-knoepfe:START */
+    /* ::part(base) ist das innere .button von ha-button, das ha-icon-button als
+       CSS-Teil nach aussen gibt - ein Teil reicht durch die Shadow-Grenze.
+
+       Die FUELLUNG braucht !important: ha-button steht auf appearance="plain",
+       und :host([appearance~="plain"]) .button setzt ein hartes
+       background-color: rgba(0,0,0,0) ohne Variable davor. Rundung, Schatten und
+       Filter kommen dagegen ohne durch.
+
+       Die Deckkraft von ::after bleibt in Ruhe: Sie traegt die Rueckmeldung beim
+       Zeigen und Druecken (0 -> 0.1). Ein !important darauf legt sie still. */
+    ha-icon-button::part(base),
+    ha-icon-button ha-button::part(base) {
+      background-color: rgba(255, 255, 255, .14) !important;
+      border-radius: var(--ha-button-border-radius, 14px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35);
+    }
+    /* Der Schimmer beim Zeigen bekommt die Form des Knopfes statt eines Kreises. */
+    ha-icon-button ha-button::after {
+      border-radius: var(--ha-button-border-radius, 14px) !important;
+    }
+    /* HATS:glas-knoepfe:ENDE */
+  uix-dialog: |-
+    /* HATS:glas-dialoge:START */
+    /* KEIN backdrop-filter auf der Dialogflaeche.
+
+       Ein Filter macht den Dialog zum Bezugsrahmen fuer position: fixed. Die
+       Auswahllisten darin sind fixed: Sie landen neben dem sichtbaren Bereich,
+       und die Liste bleibt leer. An der Versionsauswahl von HACS und am
+       Info-Dialog von HA gemessen. Ein Filter auf einem ::before hilft nicht. */
+    .mdc-dialog__surface,
+    wa-dialog::part(dialog),
+    wa-drawer::part(dialog) {
+      border-radius: var(--ha-dialog-border-radius, 26px) !important;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, .28),
+        inset 0 1px 0 rgba(255, 255, 255, .5) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    /* HATS:glas-dialoge:ENDE */
+  uix-more-info: |-
+    /* HATS:glas-more-info:START */
+    /* :host ist hier ha-more-info-dialog. Auch hier keine Weichzeichnung auf
+       der Flaeche - aus demselben Grund wie bei den uebrigen Dialogen. */
+    wa-dialog::part(dialog),
+    wa-drawer::part(dialog),
+    .mdc-dialog__surface {
+      border-radius: var(--ha-dialog-border-radius, 26px) !important;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, .3),
+        inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+    }
+    /* HATS:glas-more-info:ENDE */
+  uix-sidebar: |-
+    /* HATS:glas-seitenleiste:START */
+    /* Die Flaechenfarbe kommt aus dem Theme-Feld sidebar-background-color.
+       Die Weichzeichnung bietet HA als Feld nicht an, sie steht deshalb als
+       fester Wert hier - mit var() davor, falls es das Feld doch einmal gibt. */
+    :host {
+      backdrop-filter: var(--sidebar-backdrop-filter, blur(24px) saturate(170%));
+      -webkit-backdrop-filter: var(--sidebar-backdrop-filter, blur(24px) saturate(170%));
+    }
+
+    /* Der aktive Eintrag als Pille. Nur ein INNERER Schatten - ein Aussenschatten
+       wird von der Liste abgeschnitten und steht dann als dunkles Rechteck um die
+       runde Pille. */
+    .iron-selected,
+    a[role="option"][aria-selected="true"],
+    ha-md-list-item[selected] {
+      border-radius: 999px !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+    }
+    /* HATS:glas-seitenleiste:ENDE */
+  uix-toast: |-
+    /* HATS:glas-toast:START */
+    :host,
+    .toast,
+    ha-toast {
+      backdrop-filter: blur(20px) saturate(170%);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      border-radius: 18px;
+      box-shadow:
+        0 12px 36px rgba(0, 0, 0, .22),
+        inset 0 1px 0 rgba(255, 255, 255, .4);
+    }
+    /* HATS:glas-toast:ENDE */
+  uix-top-app-bar-fixed: |-
+    /* HATS:glas-kopfleiste:START */
+    /* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
+       .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
+       nimmt aelteren Instanzen die Vorlage weg.
+
+       Dieselbe Vorlage war in HATG eine Weile tot, ohne dass es auffiel: Der
+       UIX-Knoten kam an, der Selektor traf nichts, und die Leiste SAH trotzdem
+       richtig aus - weil die Farbe aus --app-header-background-color kommt, das
+       die Leiste selbst liest. Nur verschwommen war nichts. */
+    .mdc-top-app-bar,
+    .top-app-bar,
+    header.top-app-bar {
+      backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+      -webkit-backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+      box-shadow: none !important;
+      border-bottom: 1px solid rgba(255, 255, 255, .16);
+    }
+    /* HATS:glas-kopfleiste:ENDE */
+  wa-border-style: "solid"
+  wa-focus-ring-offset: "2px"
+  wa-focus-ring-style: "solid"
+  wa-focus-ring-width: "2px"
+  wa-form-control-height: "40px"
+  wa-form-control-padding-block: ".75em"
+  wa-panel-border-style: "solid"
+  wa-panel-border-width: "1px"
+  wa-transition-easing: "ease"
+  warning-color: "#ffa600"
+  white-color: "#fff"
+  yellow-color: "#ffeb3b"
+
+  modes:
+    light:
+      accent-color: "#6f5cf0"
+      app-header-background-color: "rgba(255, 255, 255, 0.3)"
+      card-background-color: "#ffffff"
+      clear-background-color: "#fff"
+      disabled-color: "#bdbdbd"
+      disabled-text-color: "#bdbdbd"
+      divider-color: "rgba(23, 32, 58, 0.1)"
+      energy-grid-return-color: "#8353d1"
+      ha-box-shadow-l: "0 6px 12px -3px #0000001f, 0 16px 32px -6px #0003"
+      ha-box-shadow-m: "0 3px 6px -1px #0000001a, 0 8px 16px -2px #00000026"
+      ha-box-shadow-s: "0 1px 2px 0 #00000014, 0 1px 3px 0 #0000001f"
+      ha-card-background: "rgba(255, 255, 255, 0.32)"
+      ha-card-box-shadow: "0 18px 46px rgba(22, 40, 78, .16), 0 2px 6px rgba(22, 40, 78, .08)"
+      ha-dialog-surface-background: "rgba(255, 255, 255, 0.86)"
+      input-disabled-fill-color: "#fafafa"
+      input-disabled-ink-color: "#0000005e"
+      input-disabled-line-color: "#0000000f"
+      input-dropdown-icon-color: "#0000008a"
+      input-fill-color: "#f5f5f5"
+      input-hover-line-color: "#000000de"
+      input-idle-line-color: "#0000006b"
+      input-ink-color: "#000000de"
+      input-label-ink-color: "#0009"
+      input-outlined-disabled-border-color: "#0000000f"
+      input-outlined-hover-border-color: "#000000de"
+      input-outlined-idle-border-color: "#00000061"
+      lovelace-background: "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)"
+      mdc-dialog-scrim-color: "rgba(16, 24, 44, 0.32)"
+      outline-color: "#0000001f"
+      outline-hover-color: "#0000003d"
+      primary-background-color: "#fafafa"
+      primary-color: "#4a7df0"
+      primary-text-color: "#17203a"
+      scrollbar-thumb-color: "#c2c2c2"
+      secondary-background-color: "#e5e5e5"
+      secondary-text-color: "#5a6480"
+      shadow-color: "#00000029"
+      sidebar-background-color: "rgba(255, 255, 255, 0.4)"
+
+    dark:
+      accent-color: "#8f7dff"
+      app-header-background-color: "rgba(20, 25, 40, 0.34)"
+      bar-box-shadow: "0 2px 12px var(--shadow-color)"
+      card-background-color: "#1c2234"
+      clear-background-color: "#111111"
+      codemirror-atom: "#f78c6c"
+      codemirror-attribute: "#c792ea"
+      codemirror-builtin: "#ffcb6b"
+      codemirror-comment: "#545454"
+      codemirror-def: "#82aaff"
+      codemirror-keyword: "#c792ea"
+      codemirror-meta: "#ffcb6b"
+      codemirror-number: "#ff5370"
+      codemirror-operator: "#89ddff"
+      codemirror-property: "#c792ea"
+      codemirror-qualifier: "#decb6b"
+      codemirror-string: "#c3e88d"
+      codemirror-string-2: "#f07178"
+      codemirror-tag: "#ff5370"
+      codemirror-type: "#decb6b"
+      codemirror-variable: "#f07178"
+      codemirror-variable-2: "#eeffff"
+      codemirror-variable-3: "#decb6b"
+      disabled-color: "#464646"
+      disabled-text-color: "#6f6f6f"
+      divider-color: "rgba(255, 255, 255, 0.12)"
+      energy-grid-return-color: "#a280db"
+      ha-box-shadow-l: "0 6px 12px -3px rgba(0, 0, 0, 0.4), 0 16px 32px -6px rgba(0, 0, 0, 0.55)"
+      ha-box-shadow-m: "0 3px 6px -1px rgba(0, 0, 0, 0.35), 0 8px 16px -2px rgba(0, 0, 0, 0.45)"
+      ha-box-shadow-s: "0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.5)"
+      ha-button-neutral-color: "#d9dae0"
+      ha-button-neutral-light-color: "#6a7081"
+      ha-button-primary-light-color: "#4082a040"
+      ha-button-warning-light-color: "#917b54c1"
+      ha-card-background: "rgba(22, 28, 46, 0.38)"
+      ha-card-box-shadow: "0 20px 52px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3)"
+      ha-color-border-danger-loud: "var(--ha-color-red-50)"
+      ha-color-border-danger-normal: "var(--ha-color-red-50)"
+      ha-color-border-neutral-loud: "var(--ha-color-neutral-70)"
+      ha-color-border-neutral-normal: "var(--ha-color-neutral-50)"
+      ha-color-border-neutral-quiet: "var(--ha-color-neutral-40)"
+      ha-color-border-normal: "var(--ha-color-primary-50)"
+      ha-color-border-warning-loud: "var(--ha-color-orange-50)"
+      ha-color-border-warning-normal: "var(--ha-color-orange-50)"
+      ha-color-fill-danger-loud-active: "var(--ha-color-red-40)"
+      ha-color-fill-danger-loud-hover: "var(--ha-color-red-30)"
+      ha-color-fill-danger-loud-resting: "var(--ha-color-red-40)"
+      ha-color-fill-danger-normal-active: "var(--ha-color-red-10)"
+      ha-color-fill-danger-normal-hover: "var(--ha-color-red-20)"
+      ha-color-fill-danger-normal-resting: "var(--ha-color-red-10)"
+      ha-color-fill-danger-quiet-active: "var(--ha-color-red-05)"
+      ha-color-fill-danger-quiet-hover: "var(--ha-color-red-10)"
+      ha-color-fill-danger-quiet-resting: "var(--ha-color-red-05)"
+      ha-color-fill-disabled-loud-hover: "var(--ha-color-neutral-40)"
+      ha-color-fill-disabled-loud-resting: "var(--ha-color-neutral-30)"
+      ha-color-fill-disabled-normal-hover: "var(--ha-color-neutral-30)"
+      ha-color-fill-disabled-normal-resting: "var(--ha-color-neutral-20)"
+      ha-color-fill-disabled-quiet-hover: "var(--ha-color-neutral-20)"
+      ha-color-fill-disabled-quiet-resting: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-loud-active: "var(--ha-color-neutral-60)"
+      ha-color-fill-neutral-loud-hover: "var(--ha-color-neutral-70)"
+      ha-color-fill-neutral-loud-resting: "var(--ha-color-neutral-60)"
+      ha-color-fill-neutral-normal-active: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-normal-hover: "var(--ha-color-neutral-20)"
+      ha-color-fill-neutral-normal-resting: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-quiet-active: "var(--ha-color-neutral-05)"
+      ha-color-fill-neutral-quiet-hover: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-quiet-resting: "var(--ha-color-neutral-05)"
+      ha-color-fill-primary-normal-active: "var(--ha-color-primary-10)"
+      ha-color-fill-primary-normal-hover: "var(--ha-color-primary-20)"
+      ha-color-fill-primary-normal-resting: "var(--ha-color-primary-10)"
+      ha-color-fill-primary-quiet-active: "var(--ha-color-primary-05)"
+      ha-color-fill-primary-quiet-hover: "var(--ha-color-primary-10)"
+      ha-color-fill-primary-quiet-resting: "var(--ha-color-primary-05)"
+      ha-color-fill-success-loud-active: "var(--ha-color-green-40)"
+      ha-color-fill-success-loud-hover: "var(--ha-color-green-30)"
+      ha-color-fill-success-loud-resting: "var(--ha-color-green-40)"
+      ha-color-fill-success-normal-active: "var(--ha-color-green-10)"
+      ha-color-fill-success-normal-hover: "var(--ha-color-green-20)"
+      ha-color-fill-success-normal-resting: "var(--ha-color-green-10)"
+      ha-color-fill-success-quiet-active: "var(--ha-color-green-05)"
+      ha-color-fill-success-quiet-hover: "var(--ha-color-green-10)"
+      ha-color-fill-success-quiet-resting: "var(--ha-color-green-05)"
+      ha-color-fill-warning-loud-active: "var(--ha-color-orange-40)"
+      ha-color-fill-warning-loud-hover: "var(--ha-color-orange-30)"
+      ha-color-fill-warning-loud-resting: "var(--ha-color-orange-40)"
+      ha-color-fill-warning-normal-active: "var(--ha-color-orange-10)"
+      ha-color-fill-warning-normal-hover: "var(--ha-color-orange-20)"
+      ha-color-fill-warning-normal-resting: "var(--ha-color-orange-10)"
+      ha-color-fill-warning-quiet-active: "var(--ha-color-orange-05)"
+      ha-color-fill-warning-quiet-hover: "var(--ha-color-orange-10)"
+      ha-color-fill-warning-quiet-resting: "var(--ha-color-orange-05)"
+      ha-color-form-background: "var(--ha-color-neutral-20)"
+      ha-color-form-background-disabled: "var(--ha-color-neutral-20)"
+      ha-color-form-background-hover: "var(--ha-color-neutral-30)"
+      ha-color-on-danger-loud: "var(--white-color)"
+      ha-color-on-danger-normal: "var(--ha-color-red-60)"
+      ha-color-on-danger-quiet: "var(--ha-color-red-70)"
+      ha-color-on-disabled-loud: "var(--ha-color-neutral-50)"
+      ha-color-on-disabled-normal: "var(--ha-color-neutral-50)"
+      ha-color-on-disabled-quiet: "var(--ha-color-neutral-40)"
+      ha-color-on-neutral-loud: "var(--white-color)"
+      ha-color-on-neutral-normal: "var(--ha-color-neutral-60)"
+      ha-color-on-neutral-quiet: "var(--ha-color-neutral-70)"
+      ha-color-on-primary-normal: "var(--ha-color-primary-60)"
+      ha-color-on-primary-quiet: "var(--ha-color-primary-70)"
+      ha-color-on-success-loud: "var(--white-color)"
+      ha-color-on-success-normal: "var(--ha-color-green-60)"
+      ha-color-on-success-quiet: "var(--ha-color-green-70)"
+      ha-color-on-surface-default: "var(--ha-color-neutral-95)"
+      ha-color-on-warning-loud: "var(--white-color)"
+      ha-color-on-warning-normal: "var(--ha-color-orange-60)"
+      ha-color-on-warning-quiet: "var(--ha-color-orange-70)"
+      ha-color-surface-default: "var(--ha-color-neutral-10)"
+      ha-color-surface-default-inverted: "var(--ha-color-white)"
+      ha-color-surface-low: "var(--ha-color-neutral-05)"
+      ha-color-surface-low-inverted: "var(--ha-color-neutral-95)"
+      ha-color-surface-lower: "var(--ha-color-black)"
+      ha-color-surface-lower-inverted: "var(--ha-color-neutral-90)"
+      ha-color-text-link: "var(--ha-color-primary-60)"
+      ha-color-text-primary: "var(--white-color)"
+      ha-color-text-primary-inverted: "var(--ha-color-black)"
+      ha-color-text-secondary: "var(--ha-color-neutral-80)"
+      ha-color-text-secondary-inverted: "var(--ha-color-neutral-40)"
+      ha-dialog-surface-background: "rgba(26, 31, 48, 0.9)"
+      input-disabled-fill-color: "rgba(255, 255, 255, 0.02)"
+      input-disabled-ink-color: "rgba(255, 255, 255, 0.37)"
+      input-disabled-line-color: "rgba(255, 255, 255, 0.06)"
+      input-dropdown-icon-color: "rgba(255, 255, 255, 0.54)"
+      input-fill-color: "rgba(255, 255, 255, 0.05)"
+      input-hover-line-color: "rgba(255, 255, 255, 0.87)"
+      input-idle-line-color: "rgba(255, 255, 255, 0.42)"
+      input-ink-color: "rgba(255, 255, 255, 0.87)"
+      input-label-ink-color: "rgba(255, 255, 255, 0.6)"
+      input-outlined-disabled-border-color: "rgba(255, 255, 255, 0.06)"
+      input-outlined-hover-border-color: "rgba(255, 255, 255, 0.87)"
+      input-outlined-idle-border-color: "rgba(255, 255, 255, 0.38)"
+      lovelace-background: "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%)"
+      map-filter: "invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3)"
+      mdc-dialog-scrim-color: "rgba(0, 0, 0, 0.52)"
+      mdc-linear-progress-buffer-color: "rgba(255, 255, 255, 0.1)"
+      mdc-ripple-color: "#aaaaaa"
+      outline-color: "rgba(225, 225, 225, 0.12)"
+      outline-hover-color: "rgba(225, 225, 225, 0.24)"
+      primary-background-color: "#111111"
+      primary-color: "#6e9bff"
+      primary-text-color: "#eef1f8"
+      scrollbar-thumb-color: "rgb(110, 110, 110)"
+      secondary-background-color: "#282828"
+      secondary-text-color: "#a8b2c8"
+      shadow-color: "rgba(0, 0, 0, 0.48)"
+      sidebar-background-color: "rgba(20, 25, 40, 0.42)"

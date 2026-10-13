@@ -228,7 +228,28 @@ const STUFEN = [
         { t: "Kartenflaeche", art: "farbe", v: "--ha-card-background", ebene: "getrennt",
           sync: { bubble: "--bubble-main-background-color" } },
         { t: "Weichzeichnung", art: "text", v: "--ha-card-backdrop-filter", ebene: "beide",
-          platzhalter: "blur(14px) saturate(1.4)" } ] },
+          platzhalter: "blur(14px) saturate(1.4)" },
+        // Die vier folgenden sind am 13.10.2026 an der laufenden Instanz aus
+        // ha-card.elementStyles gelesen, nicht aus der Dokumentation:
+        //
+        //   border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg))
+        //   box-shadow:    var(--ha-card-box-shadow, none)
+        //   border-width:  var(--ha-card-border-width, 1px)
+        //   border-color:  var(--ha-card-border-color, var(--divider-color, #e0e0e0))
+        //
+        // ALLE VIER BLEIBEN LEER. Bei box-shadow ist das zwingend: HA liest
+        // es zweimal mit verschiedenen Ausweichwerten - im Normalfall `none`,
+        // unter :host([raised]) einen dreifachen Materialschatten. Ein Wert in
+        // der Vorgabe nagelte beide Faelle auf denselben fest. Bei den drei
+        // uebrigen gibt es zwar nur einen Ausweichwert, aber HA loest ihn
+        // selbst besser auf, als eine Kopie in jeder Theme es koennte.
+        { t: "Rundung", art: "text", v: "--ha-card-border-radius", ebene: "beide",
+          platzhalter: "22px" },
+        { t: "Schatten", art: "text", v: "--ha-card-box-shadow", ebene: "getrennt",
+          platzhalter: "0 10px 30px rgba(20,30,50,.16)" },
+        { t: "Randbreite", art: "text", v: "--ha-card-border-width", ebene: "beide",
+          platzhalter: "0" },
+        { t: "Randfarbe", art: "farbe", v: "--ha-card-border-color", ebene: "getrennt" } ] },
       { name: "Dialoge", felder: [
         { t: "Dialogflaeche", art: "farbe", v: "--ha-dialog-surface-background", ebene: "getrennt",
           sync: { bubble: "--bubble-pop-up-main-background-color" } },

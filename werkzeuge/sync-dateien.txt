@@ -9,3 +9,5 @@ const.py
 config_flow.py
 manifest.json
 www/vorlagen.js
+werkzeuge/themes/liquid_glass.yaml|/config/themes/liquid_glass.yaml
+werkzeuge/vorschau.js|/config/www/hats-vorschau.js
