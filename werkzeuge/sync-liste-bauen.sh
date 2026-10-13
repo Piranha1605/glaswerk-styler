@@ -26,6 +26,18 @@ cd "$(dirname "$0")/.."
     [ -e "$t" ] || continue
     echo "$t|/config/themes/$(basename "$t")"
   done
+  echo
+  # Die Grundlage fuer jede neue Theme. Sie liegt NICHT unter werkzeuge/themes,
+  # und sie heisst auf der Instanz anders - mit Unterstrich, weil HATS sie
+  # ueber hats/load_theme_file unter diesem Namen sucht. Am 13.10.2026 hat
+  # dieses Skript den Eintrag einmal weggeworfen, weil er von Hand dazukam:
+  # Danach meldete das Panel nur "Grundlage nicht geladen", und jede neue Theme
+  # blieb leer. Deshalb steht er jetzt hier und nicht in der Datei.
+  echo "# Die Grundlage fuer jede neue Theme. HATS laedt sie ueber"
+  echo "# hats/load_theme_file aus dem Themes-Ordner und erwartet den Namen MIT"
+  echo "# Unterstrich - lokal heisst sie mit Bindestrich. Fehlt sie, meldet das"
+  echo "# Panel nur \"Grundlage nicht geladen\" und jede neue Theme bleibt leer."
+  echo "docs/beispiele/ha-blanko.yaml|/mnt/data/supervisor/homeassistant/themes/ha_blanko.yaml"
 } > werkzeuge/sync-dateien.txt
 
 echo "$(grep -cv '^#\|^$' werkzeuge/sync-dateien.txt) Eintraege"
