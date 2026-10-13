@@ -1,8 +1,9 @@
-// Die Add-on-Spalte rechts: Bubble, Mushroom, UIX.
+// UIX: eine eigene Seite hinter dem Symbol oben.
 //
-// "oben HA, rechts die Add-ons" - auf Ansage vom 13.10.2026. Die beiden
-// Kartensammlungen fuehren in ihre Stufe; UIX bekommt eine eigene Liste, weil
-// es kein Feld je Eigenschaft ist, sondern ein Block CSS je Stilziel.
+// Erst stand UIX in einer Spalte rechts, neben Bubble und Mushroom. Auf Ansage
+// vom 13.10.2026 ist die Spalte weg - "UIX kann auch hoch ins Menue da bubble
+// und Mushroom da auch schon in Fremdkarten liegen. so haben wir rechts frei."
+// Bubble und Mushroom sind ueber Stufe 6 erreichbar, UIX ueber den Dialog.
 
 import assert from "node:assert";
 import { readFileSync } from "node:fs";
@@ -43,12 +44,20 @@ pruefe("Nur die einfache Form, kein -yaml", () => {
   assert.doesNotMatch(panel, /"uix-" \+ el\.dataset\.uix \+ "-yaml"/);
 });
 
-pruefe("Die Spalte zeigt alle drei Add-ons", () => {
-  const b = panel.slice(panel.indexOf("addonSpalte(T) {"), panel.indexOf("  // Der Bericht nach dem Einlesen."));
-  assert.ok(b.length > 600, "addonSpalte nicht gefunden");
-  assert.match(b, /Bubble Card/);
-  assert.match(b, /Mushroom/);
+pruefe("UIX steht oben in der Leiste, nicht mehr rechts", () => {
+  const leiste = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
+  assert.match(leiste, /id: "uix"/, "der UIX-Knopf fehlt in der Leiste");
+  // Die Spalte darf nicht zurueckkommen - sonst stuende UIX an zwei Stellen.
+  assert.doesNotMatch(panel, /addonSpalte/, "die Add-on-Spalte ist zurueck");
+  assert.doesNotMatch(panel, /class="addons"/, "die Add-on-Spalte ist zurueck");
+});
+
+pruefe("Die Seite zeigt alle 28 Ziele und haengt am Schalter", () => {
+  const b = panel.slice(panel.indexOf("zeichneUix() {"), panel.indexOf("bindeUix(wurzel) {"));
+  assert.ok(b.length > 600, "zeichneUix nicht gefunden");
   assert.match(b, /UIX_ZIELE\.map/);
+  assert.match(b, /data-uix="\$\{z\.id\}"/, "die Schalter tragen keine Kennung");
+  assert.match(panel, /uix: \(\) => this\.oeffneUix\(\)/, "der Knopf ruft die Seite nicht auf");
 });
 
 pruefe("Abschalten parkt das CSS, es wirft nichts weg", () => {
@@ -56,6 +65,7 @@ pruefe("Abschalten parkt das CSS, es wirft nichts weg", () => {
   // nach ZUSTAND.uixAus und kommt beim Wiedereinschalten zurueck.
   const b = panel.slice(panel.indexOf('querySelectorAll("[data-uix]")'),
                         panel.indexOf('querySelectorAll("[data-uix-css]")'));
+  assert.ok(b.length > 200, "die Draehte des UIX-Dialogs wurden nicht gefunden");
   assert.match(b, /ZUSTAND\.uixAus\[name\] = ZUSTAND\.modell\.flach\[name\]/,
     "abgeschaltetes CSS wird nicht geparkt");
   assert.match(b, /setze\(ZUSTAND\.modell, name, ZUSTAND\.uixAus\[name\] \?\? ""/,
@@ -63,10 +73,13 @@ pruefe("Abschalten parkt das CSS, es wirft nichts weg", () => {
   assert.match(b, /entferne\(ZUSTAND\.modell, name\)/);
 });
 
-pruefe("Die Texte der Spalte stehen IM en-Block", () => {
+pruefe("Die Texte der UIX-Seite stehen IM en-Block", () => {
+  // Ein Eintrag NEBEN dem en-Block ist stumm unerreichbar - in HATG standen so
+  // einmal 21 Stueck, und der Test war gruen, weil er im Quelltext suchte
+  // statt im Objekt.
   const tab = panel.slice(panel.indexOf("const TEXTE = {"));
   const en = tab.slice(tab.indexOf("en: {"), tab.indexOf("\n  },"));
-  for (const x of ["Add-ons", "Felder angebunden", "Stilzielen an"])
+  for (const x of ["Stilzielen an", "erst eine Theme oeffnen"])
     assert.ok(en.includes(JSON.stringify(x)), `${x} fehlt im en-Block`);
 });
 
@@ -133,4 +146,4 @@ pruefe("Die Texte der Galerie stehen IM en-Block", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 13) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 14) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

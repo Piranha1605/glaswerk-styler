@@ -812,6 +812,9 @@ const TEXTE = {
     "Add-ons": "Add-ons",
     "Felder angebunden": "fields wired up",
     "von": "of", "Stilzielen an": "style targets on",
+    "erst eine Theme oeffnen": "open a theme first",
+    "UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Ein Stilziel einschalten legt das Feld im Theme an; ausschalten nimmt es wieder heraus, ohne dein CSS zu vernichten.":
+      "UI eXtension puts your CSS where Home Assistant otherwise won't let it go - into the shadow root of the component itself. Switching a style target on creates the field in the theme; switching it off removes the field again without destroying your CSS.",
     "Herkunft": "Source",
     "Hintergrundbild": "Background image",
     "Pop-up-Hintergrund": "Pop-up background",
@@ -1075,54 +1078,95 @@ class HatsPanel extends HTMLElement {
     this.zeichne();
   }
 
-  // Die Add-on-Spalte rechts: Bubble, Mushroom, UIX.
+  // ---- UIX: eine eigene Seite, erreichbar ueber das Symbol oben ----
   //
-  // Oben HA, rechts die Add-ons - auf Ansage vom 13.10.2026. Die beiden
-  // Kartensammlungen fuehren in ihre Stufe; UIX bekommt hier seine eigene
-  // Liste, weil es kein Feld je Eigenschaft ist, sondern ein Block CSS je
-  // Stilziel.
-  addonSpalte(T) {
+  // Stand 13.10.2026 auf Ansage: "UIX kann auch hoch ins Menue da bubble und
+  // Mushroom da auch schon in Fremdkarten liegen. so haben wir rechts frei."
+  // Die Spalte rechts ist damit weg - Bubble und Mushroom sind ueber Stufe 6
+  // erreichbar, UIX ueber diesen Dialog. Der Inhalt braucht die Breite:
+  // 28 Stilziele, jedes mit einem Block CSS.
+  oeffneUix() {
+    this._offen = "uix";
+    this.zeichneUix();
+    const o = this.shadowRoot.querySelector(".overlay");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+    document.addEventListener("keydown", this._esc);
+  }
+
+  zeichneUix() {
+    const T = (x) => t(x, this.spr);
     const m = ZUSTAND.modell;
-    const zahl = (vor) => Object.keys(ZUORDNUNG).filter((k) => k.startsWith(vor)).length;
-    const anUix = m ? UIX_ZIELE.filter((z) => m.flach["uix-" + z.id] !== undefined).length : 0;
+    const an = m ? UIX_ZIELE.filter((z) => m.flach["uix-" + z.id] !== undefined).length : 0;
+    const d = this.shadowRoot.querySelector(".dialog");
 
-    return `
-      <aside class="addons">
-        <div class="addonkopf">${T("Add-ons")}</div>
-
-        <button class="addonblock" data-addon-stufe="6">
-          <div class="addontitel"><ha-icon icon="mdi:card-multiple-outline"></ha-icon>Bubble Card</div>
-          <div class="addontext">${zahl("bubble-")} ${T("Felder angebunden")}</div>
-        </button>
-
-        <button class="addonblock" data-addon-stufe="6">
-          <div class="addontitel"><ha-icon icon="mdi:mushroom-outline"></ha-icon>Mushroom</div>
-          <div class="addontext">${zahl("mush-")} ${T("Felder angebunden")}</div>
-        </button>
-
-        <div class="addonblock offen">
-          <div class="addontitel"><ha-icon icon="mdi:auto-fix"></ha-icon>UIX</div>
-          <div class="addontext">${anUix} ${T("von")} ${UIX_ZIELE.length} ${T("Stilzielen an")}</div>
-          <div class="uixliste">
-            ${UIX_ZIELE.map((z) => {
-              const name = "uix-" + z.id;
-              const an = m ? m.flach[name] !== undefined : false;
-              const wert = m ? (m.flach[name] ?? ZUSTAND.uixAus[name] ?? "") : "";
-              return `
-                <div class="uixziel ${an ? "an" : ""}">
-                  <label class="uixkopf">
-                    <input type="checkbox" data-uix="${z.id}" ${an ? "checked" : ""}
-                           ${m ? "" : "disabled"}>
-                    <span>${this.spr === "en" ? z.en : z.de}</span>
-                    <code>${name}</code>
-                  </label>
-                  ${an ? `<textarea class="uixcss" data-uix-css="${z.id}" spellcheck="false"
-                            placeholder="ha-card { ... }">${String(wert).replace(/</g, "&lt;")}</textarea>` : ""}
-                </div>`;
-            }).join("")}
-          </div>
+    d.innerHTML = `
+      <header class="dkopf">
+        <div>
+          <h2>UIX</h2>
+          <p>${an} ${T("von")} ${UIX_ZIELE.length} ${T("Stilzielen an")}${m ? "" : " · " + T("erst eine Theme oeffnen")}</p>
         </div>
-      </aside>`;
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+      <div class="uixseite">
+        <p class="noch">${T("UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Ein Stilziel einschalten legt das Feld im Theme an; ausschalten nimmt es wieder heraus, ohne dein CSS zu vernichten.")}</p>
+        <div class="uixraster">
+          ${UIX_ZIELE.map((z) => {
+            const name = "uix-" + z.id;
+            const offen = m ? m.flach[name] !== undefined : false;
+            const wert = m ? (m.flach[name] ?? ZUSTAND.uixAus[name] ?? "") : "";
+            return `
+              <div class="uixziel ${offen ? "an" : ""}">
+                <label class="uixkopf">
+                  <input type="checkbox" data-uix="${z.id}" ${offen ? "checked" : ""}
+                         ${m ? "" : "disabled"}>
+                  <span>${this.spr === "en" ? z.en : z.de}</span>
+                  <code>${name}</code>
+                </label>
+                ${offen ? `<textarea class="uixcss" data-uix-css="${z.id}" spellcheck="false"
+                          placeholder="ha-card { ... }">${String(wert).replace(/</g, "&lt;")}</textarea>` : ""}
+              </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+
+    d.querySelector(".zu").addEventListener("click", () => this.schliesse());
+    this.bindeUix(d);
+  }
+
+  // Die beiden Draehte des UIX-Dialogs. Eigene Funktion, weil der Dialog sich
+  // nach jedem Schalten neu zeichnet - und die Draehte dann mit.
+  bindeUix(wurzel) {
+    // Ausschalten darf nichts vernichten: Das CSS wandert nach ZUSTAND.uixAus
+    // und kommt beim Einschalten zurueck. Sonst waere ein Fehlklick der
+    // Verlust einer Stunde Arbeit.
+    wurzel.querySelectorAll("[data-uix]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const name = "uix-" + el.dataset.uix;
+        if (el.checked) {
+          setze(ZUSTAND.modell, name, ZUSTAND.uixAus[name] ?? "", "beide");
+          delete ZUSTAND.uixAus[name];
+        } else {
+          ZUSTAND.uixAus[name] = ZUSTAND.modell.flach[name] ?? "";
+          // entferne() raeumt flach, light UND dark - ein delete auf flach
+          // allein liesse das Feld unter modes stehen, und es waere weiter
+          // in der Datei, waehrend der Schalter aus aussieht.
+          entferne(ZUSTAND.modell, name);
+        }
+        ZUSTAND.geaendert.add(name);
+        this.zeichneUix();
+        this.zeichneZaehler();
+      })
+    );
+    wurzel.querySelectorAll("[data-uix-css]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        setze(ZUSTAND.modell, "uix-" + el.dataset.uixCss, el.value, "beide");
+        ZUSTAND.geaendert.add("uix-" + el.dataset.uixCss);
+        this.zeichneZaehler();
+      })
+    );
   }
 
   // Der Bericht nach dem Einlesen. Er sagt, was bedienbar ist, was
@@ -1537,6 +1581,7 @@ class HatsPanel extends HTMLElement {
             <div class="ml-trenner"></div>
             <div class="ml-aktionen">
               ${[
+                { id: "uix",     icon: "mdi:auto-fix",             t: "UIX", aus: ZUSTAND.start },
                 { id: "neu",      icon: "mdi:file-plus-outline",    t: T("Neue Theme") },
                 { id: "lesen",    icon: "mdi:file-import-outline",  t: T("Datei oder Text") },
                 { id: "oeffnen",  icon: "mdi:folder-open-outline",  t: T("Vorhandene oeffnen") },
@@ -1581,7 +1626,6 @@ class HatsPanel extends HTMLElement {
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
             </div>`}
             </section>
-            ${this.addonSpalte(T)}
           </div>
         </div>
       </div>
@@ -1630,39 +1674,11 @@ class HatsPanel extends HTMLElement {
     this.shadowRoot.querySelectorAll("[data-galerie]").forEach((b) =>
       b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
-    this.shadowRoot.querySelectorAll("[data-addon-stufe]").forEach((b) =>
-      b.addEventListener("click", () => this.oeffne(Number(b.dataset.addonStufe)))
-    );
-    // Ein Stilziel an- oder abschalten. Abschalten wirft das CSS NICHT weg,
-    // sondern parkt es in ZUSTAND.uixAus - ein Schalter, der Arbeit
-    // vernichtet, ist kein Schalter.
-    this.shadowRoot.querySelectorAll("[data-uix]").forEach((el) =>
-      el.addEventListener("change", () => {
-        if (!ZUSTAND.modell) return;
-        const name = "uix-" + el.dataset.uix;
-        if (el.checked) {
-          setze(ZUSTAND.modell, name, ZUSTAND.uixAus[name] ?? "", "beide");
-          delete ZUSTAND.uixAus[name];
-        } else {
-          ZUSTAND.uixAus[name] = ZUSTAND.modell.flach[name] ?? "";
-          entferne(ZUSTAND.modell, name);
-        }
-        ZUSTAND.geaendert.add(name);
-        this.zeichne();
-      })
-    );
-    this.shadowRoot.querySelectorAll("[data-uix-css]").forEach((el) =>
-      el.addEventListener("change", () => {
-        if (!ZUSTAND.modell) return;
-        setze(ZUSTAND.modell, "uix-" + el.dataset.uixCss, el.value, "beide");
-        ZUSTAND.geaendert.add("uix-" + el.dataset.uixCss);
-        this.zeichneZaehler();
-      })
-    );
     this.shadowRoot.querySelectorAll("[data-rail]").forEach((b) =>
       b.addEventListener("click", () => this.oeffne(Number(b.dataset.rail)))
     );
     const schalter = {
+      uix: () => this.oeffneUix(),
       neu: () => this.neuBeginnen(),
       lesen: () => this.zeigeImport(),
       oeffnen: () => this.zeigeDateien(),
@@ -2375,44 +2391,31 @@ class HatsPanel extends HTMLElement {
       .ml-knopf[disabled] { cursor: default; }
       .ml-knopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
 
-      /* ---- Rumpf: Inhalt links, Add-ons rechts ---- */
+      /* ---- Rumpf ---- */
+      /* Seit dem 13.10.2026 eine Spalte: Die Add-on-Leiste rechts ist weg,
+         Bubble und Mushroom stehen in Stufe 6, UIX hinter dem Symbol oben. */
       .rumpf { display: flex; align-items: flex-start; min-width: 0; }
       .inhalt { flex: 1; min-width: 0; padding: 26px 30px 30px; }
-      .addons { width: 290px; flex: none; align-self: stretch;
-                padding: 20px 18px; border-left: 1px solid var(--s-linie);
-                max-height: calc(100vh - 150px); overflow: auto; }
-      .addonkopf { font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
-                   color: var(--s-tinte-leise); margin-bottom: 12px; }
-      .addonblock { display: block; width: 100%; text-align: left; border: 0;
-                    background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
-                    border-radius: var(--s-r); padding: 12px 14px; margin-bottom: 10px;
-                    font: inherit; color: var(--s-tinte); cursor: pointer;
-                    transition: background .15s ease; }
-      .addonblock.offen { cursor: default; }
-      .addonblock:not(.offen):hover { background: #fff; }
-      .addontitel { display: flex; align-items: center; gap: 8px;
-                    font-size: 14px; font-weight: 600; }
-      .addontitel ha-icon { --mdc-icon-size: 18px; color: var(--s-tinte-leise); }
-      .addontext { font-size: 12px; color: var(--s-tinte-leise); margin-top: 3px; }
-      .uixliste { margin-top: 10px; display: flex; flex-direction: column; gap: 2px; }
-      .uixziel { border-radius: 9px; padding: 5px 7px; }
-      .uixziel.an { background: rgba(255,255,255,.6); }
-      .uixkopf { display: grid; grid-template-columns: auto 1fr; gap: 7px;
-                 align-items: center; font-size: 12.5px; cursor: pointer; }
-      .uixkopf code { grid-column: 2; font-size: 10.5px; color: var(--s-tinte-leise);
+
+      /* ---- UIX-Seite im grossen Dialog ---- */
+      .uixseite { padding: 20px 26px 26px; overflow: auto; }
+      .uixraster { display: grid; gap: 10px; margin-top: 14px;
+                   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+      .uixziel { background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
+                 border-radius: var(--s-r); padding: 11px 13px; }
+      /* Ein eingeschaltetes Ziel traegt ein Textfeld und bekommt deshalb die
+         ganze Zeile - sonst waere das CSS in einer 260px-Spalte unlesbar. */
+      .uixziel.an { grid-column: 1 / -1; background: #fff; }
+      .uixkopf { display: grid; grid-template-columns: auto 1fr; gap: 8px;
+                 align-items: center; font-size: 13px; cursor: pointer; }
+      .uixkopf code { grid-column: 2; font-size: 11px; color: var(--s-tinte-leise);
                       font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      .uixcss { width: 100%; box-sizing: border-box; margin-top: 6px; min-height: 70px;
-                resize: vertical; border: 0; border-radius: 8px; padding: 8px 10px;
+      .uixcss { width: 100%; box-sizing: border-box; margin-top: 8px; min-height: 110px;
+                resize: vertical; border: 0; border-radius: 9px; padding: 10px 12px;
                 background: rgba(27,36,48,.05); color: var(--s-tinte);
-                font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 12px; line-height: 1.5; }
       .uixcss:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 1px rgba(27,36,48,.18); }
-      /* Schmal wird die Spalte zur Zeile unter dem Inhalt - nebeneinander
-         bliebe fuer beide zu wenig. */
-      @media (max-width: 980px) {
-        .rumpf { flex-direction: column; }
-        .addons { width: auto; border-left: 0; border-top: 1px solid var(--s-linie);
-                  max-height: none; align-self: auto; }
-      }
 
       .kopf { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
       .kopf h1 { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; }

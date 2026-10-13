@@ -34,11 +34,25 @@ der Dateien kommt aus `werkzeuge/sync-dateien.txt` und wird **jede Runde neu
 geholt** - eine neue Datei dort eingetragen wirkt sofort, ohne Neustart der
 Schleife.
 
-**Und der Reload entfaellt beim Entwickeln.** `/hats_static` ist mit
-`cache_headers=False` registriert; die Antwort traegt kein `Cache-Control`, nur
-ETag und Last-Modified. Ein normales Neuladen der Seite holt damit die neue
-Datei. Der Reload des Konfigurationseintrags ist nur noetig, wenn die
-**Pruefsumme in der Adresse** stimmen soll - und fuer jede Aenderung an Python.
+**Der Reload des Konfigurationseintrags bleibt noetig** - am 13.10.2026
+nachgemessen, nachdem ich das Gegenteil angenommen hatte. `/hats_static` ist
+zwar mit `cache_headers=False` registriert und die Antwort traegt kein
+`Cache-Control`, nur ETag und Last-Modified. Ohne `Cache-Control` darf ein
+Browser aber **heuristisch** cachen, und Chrome tut das: Die Datei lag
+byteweise neu auf der Instanz, `fetch(..., {cache:'reload'})` holte sie auch
+frisch - und die Seite zeigte nach zwei vollen Reloads weiter den alten Stand.
+Erst als die **Pruefsumme in der Adresse** sich aenderte, kam der neue Stand an.
+
+```js
+const hass = document.querySelector('home-assistant').hass;
+await hass.callService('homeassistant', 'reload_config_entry',
+  { entry_id: '01M4R20W5WM5A4985E4ZW8P9NT' });
+// danach: location.reload()
+```
+
+Die entry_id holt man sich mit
+`await hass.connection.sendMessagePromise({type:'config_entries/get', domain:'hats'})`.
+Fuer jede Aenderung an Python reicht das nicht - dann `homeassistant.restart`.
 
 Pruefen, ob die Schleife laeuft (vom Mac aus, ohne Terminal):
 
