@@ -199,5 +199,49 @@ pruefe("Ohne Zielliste bleibt es beim alten, strengen Verhalten", () => {
   assert.deepStrictEqual(b.stilziele, ["uix-card"]);
 });
 
+
+// ---------------------------------------------------------------------------
+// Der Schalter, ohne den keine einzige Vorlage ankommt.
+
+import { uixSchalterSetzen } from "../custom_components/hats/www/theme.js";
+
+pruefe("Eine Theme mit Vorlagen weist sich als UIX-Theme aus", () => {
+  // UIX wendet seine Felder nur an, wenn uix-theme auf Theme-Ebene steht.
+  // Fehlt der Schalter, bleibt JEDE Vorlage wirkungslos - und zwar lautlos:
+  // Am 13.10.2026 gemessen, 39 von 39 uix-node-Knoten leer, keine Meldung in
+  // der Konsole, die Felder korrekt am html. Nach dem Ergaenzen 31 von 39.
+  const m = leeresModell("meine_theme");
+  vorlageAn(m, V);
+  const text = schreibeTheme(m);
+  assert.match(text, /uix-theme: "meine_theme"/, "der Schalter fehlt in der Ausgabe");
+});
+
+pruefe("Ohne Vorlagen steht der Schalter nicht in der Datei", () => {
+  // Gegenprobe: Eine Theme ohne Stilziel braucht ihn nicht, und ein Feld, das
+  // nichts schaltet, ist Ballast.
+  const m = leeresModell("schlicht");
+  setze(m, "primary-text-color", "#111", "beide");
+  assert.doesNotMatch(schreibeTheme(m), /uix-theme/);
+});
+
+pruefe("Der Schalter verschwindet wieder, wenn die letzte Vorlage ausgeht", () => {
+  const m = leeresModell("meine_theme");
+  vorlageAn(m, V);
+  schreibeTheme(m);
+  assert.strictEqual(m.flach["uix-theme"], "meine_theme");
+  vorlageAus(m, V);
+  assert.doesNotMatch(schreibeTheme(m), /uix-theme/, "der Schalter blieb ohne Vorlage stehen");
+});
+
+pruefe("Der Schalter folgt einer Umbenennung", () => {
+  // Ein uix-theme, das auf den alten Namen zeigt, schaltet nichts - UIX
+  // vergleicht mit dem Namen der aktiven Theme.
+  const m = leeresModell("alt");
+  vorlageAn(m, V);
+  schreibeTheme(m);
+  m.name = "neu";
+  assert.match(schreibeTheme(m), /uix-theme: "neu"/, "der Schalter zeigt auf den alten Namen");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 19) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

@@ -559,6 +559,58 @@ Theme schreibt, bekommt sie beim nächsten Speichern nicht wieder heraus.
 **Der Bericht ist die Prüfung dafür** — er zählt beim Einlesen jedes Feld, das
 HATS nicht kennt, und nennt es beim Namen. Wer eine Theme baut, liest ihn.
 
+## `uix-theme` ist der Schalter — ohne ihn kommt keine Vorlage an
+
+**Das Wichtigste über UIX-Vorlagen, und es stand nirgends.** UIX wendet seine
+Felder nur an, wenn die Theme sich auf Theme-Ebene mit ihrem eigenen Namen
+ausweist:
+
+```yaml
+liquid_glass:
+  uix-theme: "liquid_glass"     # ← ohne das ist jede Vorlage wirkungslos
+  uix-card: |
+    …
+```
+
+**Der Ausfall ist vollständig und lautlos.** Am 13.10.2026 gemessen, nachdem
+der Maintainer meldete, Bubble laufe nicht richtig:
+
+- 39 von 39 `uix-node`-Knoten leer — auch `drawer`, `sidebar` und `root`, die
+  sonst sofort stehen
+- die Felder lagen korrekt als `--uix-card` usw. am `html`-Element
+- UIX war geladen und meldete in der Konsole nichts
+- auch eine triviale Regel (`ha-card { outline: 3px solid lime }`) kam nicht an
+  — es lag also nicht am CSS
+- nach dem Ergänzen von `uix-theme`: **31 von 39 gefüllt**
+
+**Und es sieht fast richtig aus.** Die *Felder* wirken ja — Glasflächen,
+Rundungen, Farben, alles da. Nur die Vorlagen fehlen, und man sucht den Fehler
+im CSS.
+
+`uixSchalterSetzen()` in `theme.js` setzt ihn bei jeder Ausgabe, sobald ein
+Stilziel im Theme steht, und nimmt ihn wieder heraus, wenn die letzte Vorlage
+ausgeht. Vier Prüfungen halten es fest, Umbenennung eingeschlossen — ein
+`uix-theme`, das auf den alten Namen zeigt, schaltet nämlich auch nichts.
+
+### Was daraus für die Arbeit an HATS folgt
+
+**Wenn HATS etwas nachbaut, was HATG schon kann, gehört HATGs AUSGABE daneben,
+nicht nur seine Dokumentation.** Der Schalter stand seit jeher in HATGs Code
+(`HATG_UIX_THEME_KEY`), und in HATGs CLAUDE.md wird `uix-theme` beiläufig
+erwähnt — aber nirgends steht, dass ohne ihn nichts funktioniert. Ein Blick in
+eine von HATG erzeugte Theme hätte die Zeile sofort gezeigt. Stattdessen habe
+ich das Vorlagensystem aus der Beschreibung nachgebaut und den Tag damit
+verloren.
+
+Der billigste Abgleich dafür, in jeder Sitzung zu haben:
+
+```js
+// Was haben die Themes, die auf dieser Instanz funktionieren, und meine nicht?
+const t = document.querySelector('home-assistant').hass.themes.themes;
+Object.fromEntries(Object.entries(t).map(([n, v]) =>
+  [n, Object.keys(v).filter(k => k.startsWith('uix-'))]));
+```
+
 ## Vorlagen für UIX
 
 Seit dem 13.10.2026 bringt HATS zehn fertige CSS-Blöcke mit, Gruppe **Liquid

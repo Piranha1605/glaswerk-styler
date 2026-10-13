@@ -121,7 +121,35 @@ function entquote(roh) {
 // Ein Feld mit leerem Wert wird NICHT geschrieben. Das ist kein Sonderfall,
 // sondern der Normalfall fuer alles, was Home Assistant je nach Zusammenhang
 // anders belegt: ein Wert dort nagelt jeden Zusammenhang darauf fest.
+// UIX wendet seine Felder NUR an, wenn die Theme sich mit ihrem Namen als
+// UIX-Theme ausweist - uix-theme auf Theme-Ebene ist der Schalter.
+//
+// Am 13.10.2026 an der laufenden Instanz gemessen, nachdem der Maintainer
+// meldete, Bubble laufe nicht richtig: Von 39 uix-node-Knoten waren 39 leer,
+// auch die von drawer, sidebar und root, die sonst sofort stehen. Die Felder
+// lagen korrekt am html-Element, UIX war geladen, die Konsole meldete nichts.
+// Auch eine triviale Regel (ha-card { outline: 3px solid lime }) kam nicht an
+// - es lag also nicht am CSS.
+//
+// Der Unterschied zu den sieben Themes auf derselben Instanz, die
+// funktionieren: Jede von ihnen trug uix-theme, HATS' Theme als einzige nicht.
+// Nach dem Ergaenzen: 31 von 39 Knoten gefuellt.
+//
+// Ohne diesen Schalter ist jede Vorlage wirkungslos, und zwar lautlos - die
+// Datei sieht vollstaendig aus, die Oberflaeche sieht fast richtig aus (die
+// FELDER wirken ja), und nur die Vorlagen fehlen.
+export function uixSchalterSetzen(modell) {
+  const hatVorlagen = Object.keys(modell.flach || {}).some((k) => /^uix-/.test(k) && k !== "uix-theme");
+  if (hatVorlagen && modell.name) modell.flach["uix-theme"] = modell.name;
+  // Kein Stilziel mehr im Theme? Dann hat der Schalter nichts mehr zu schalten.
+  else if (!hatVorlagen) delete modell.flach["uix-theme"];
+  return modell;
+}
+
 export function schreibeTheme(modell) {
+  // Der Schalter gehoert in JEDE Ausgabe, nicht nur in den Speicherweg - sonst
+  // fehlt er in der heruntergeladenen Datei und in der Zwischenablage.
+  uixSchalterSetzen(modell);
   const sort = (o) => Object.keys(o).filter((k) => o[k] !== "" && o[k] !== undefined && o[k] !== null).sort();
   let aus = modell.kopf.map((z) => "# " + z).join("\n");
   if (aus) aus += "\n\n";

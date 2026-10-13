@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 16:02:51
+# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 16:23:53
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -570,6 +570,7 @@ liquid_glass:
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45) !important;
     }
     /* HATS:glas-seitenleiste:ENDE */
+  uix-theme: "liquid_glass"
   uix-toast: |-
     /* HATS:glas-toast:START */
     :host,
