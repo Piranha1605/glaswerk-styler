@@ -198,32 +198,39 @@ ha-card.text-only::before {
    (--icon-border-radius: var(--mush-icon-border-radius, 50%)), ein Wert von
    aussen traegt dort nicht.
 
-   UND BEI BUBBLE REICHT DER ALLGEMEINE NAME NICHT. Am 13.10.2026 an der
-   laufenden Instanz gemessen: Von fuenf Bubble-Icons wurden genau zwei eckig,
-   drei blieben rund - obwohl --bubble-icon-border-radius an jedem von ihnen
-   nachweislich auf 28 % stand. Der Grund steht in Bubbles eigener Kette:
+   UND BEI BUBBLE: nur die allgemeine Stufe, nicht die typspezifische.
 
-       border-radius: var(--bubble-card-type-icon-border-radius,
-                          var(--bubble-icon-border-radius,
-                              var(--bubble-border-radius, 50%)))
+   Bubble loest den Radius ueber eine dreistufige Kette auf:
 
-   Die erste Stufe ist TYPSPEZIFISCH - Bubble setzt sie je Kartentyp selbst
-   (bei einem Separator etwa aus --bubble-separator-icon-border-radius). Wo sie
-   gesetzt ist, kommt die allgemeine nie zum Zug. Wer eine Form durchsetzen
-   will, muss deshalb die erste Stufe setzen.
+       var(--bubble-card-type-icon-border-radius,
+           var(--bubble-icon-border-radius,
+               var(--bubble-border-radius, 50%)))
 
-   Dasselbe Muster gilt fuer die Kartenflaeche:
-   var(--bubble-card-type-border-radius, var(--bubble-border-radius, ...)). */
+   Am 13.10.2026 an fuenf Bubble-Karten durchprobiert, je Variable einzeln
+   gesetzt und der berechnete Radius gemessen:
+
+       --bubble-card-type-icon-border-radius   0 von 5   wirkungslos
+       --bubble-icon-border-radius             5 von 5
+       --bubble-button-icon-border-radius      3 von 5   nur card_type: button
+       --bubble-border-radius                  5 von 5   faerbt aber auch Flaechen
+
+   Die ERSTE Stufe setzt Bubble selbst, je Kartentyp - ein Wert von aussen
+   kommt dort nie an. Die typspezifischen Namen wie
+   --bubble-button-icon-border-radius treffen genau ihren Kartentyp; climate
+   und media-player bleiben davon unberuehrt. Deshalb steht hier die
+   ALLGEMEINE Stufe, und nur sie: Sie erreicht alle fuenf und laesst Bubbles
+   eigene Typlogik in Ruhe.
+
+   (Eine frühere Fassung setzte zusaetzlich die card-type-Stufe. Das war aus
+   einer Messung geschlossen, bei der die aktive Theme des Nutzers genau diese
+   Stufe belegt hatte - gemessen wurde also deren Wirkung, nicht die eigene.
+   Wer bei Bubble misst, legt die laufende Theme vorher stumm.) */
 :host,
 ha-card {
   --ha-tile-icon-border-radius: 28%;
   --state-badge-border-radius: 28%;
   --mush-icon-border-radius: 28%;
-  /* Beide Stufen. Die erste gewinnt, die zweite faengt die Faelle, in denen
-     Bubble die erste nicht setzt. */
-  --bubble-card-type-icon-border-radius: 28%;
   --bubble-icon-border-radius: 28%;
-  --bubble-button-icon-border-radius: 28%;
 }`,
   },
 

@@ -612,9 +612,22 @@ border-radius: var(--bubble-card-type-icon-border-radius,
                        var(--bubble-border-radius, 50%)));
 ```
 
-Die erste Stufe setzt Bubble selbst, je Kartentyp. Wo sie steht, kommt die
-allgemeine nie zum Zug. Wer etwas durchsetzen will, setzt sie mit. Dasselbe
-Muster trägt die Kartenfläche (`--bubble-card-type-border-radius`).
+Die erste Stufe setzt Bubble selbst, je Kartentyp — ein Wert von außen kommt
+dort **nie** an. Je Variable einzeln gesetzt und gemessen:
+
+    --bubble-card-type-icon-border-radius   0 von 5   wirkungslos
+    --bubble-icon-border-radius             5 von 5
+    --bubble-button-icon-border-radius      3 von 5   nur card_type: button
+
+**Richtig ist die allgemeine Stufe, und nur sie.** Sie erreicht alle
+Kartentypen und lässt Bubbles Typlogik in Ruhe. Die typspezifischen Namen
+treffen genau ihren Typ — nützlich, wenn man einen Typ anders haben will.
+
+**Die Falle beim Messen:** Ein erster Lauf ergab „2 von 5" und führte zu dem
+Schluss, man müsse die card-type-Stufe mitsetzen. Gemessen wurde dabei die
+Wirkung der laufenden Theme, die genau diese Stufe belegt hatte — nicht die der
+eigenen Vorlage. Deshalb legt `werkzeuge/vorschau.js` die `uix-node`-Knoten der
+aktiven Theme still, bevor es misst.
 
 ### Eine Theme lässt sich von außen nicht aktivieren
 
