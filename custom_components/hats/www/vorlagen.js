@@ -99,6 +99,100 @@ ha-select.bubble-dropdown-select {
 
   // -------------------------------------------------------------------------
   {
+    id: "glas-bubble",
+    gruppe: "glas",
+    ziel: "card",
+    de: "Bubble Card in Glas",
+    en: "Bubble Card in glass",
+    zweckDe: "Gibt Bubble-Karten dieselbe Glasflaeche, Rundung, Lichtkante und denselben Schatten wie den HA-Karten. Ohne sie bleiben Bubble-Karten flach - \"Karten in Glas\" nimmt sie ausdruecklich aus.",
+    zweckEn: "Gives Bubble cards the same glass surface, radius, light edge and shadow as the HA cards. Without it Bubble cards stay flat - \"Cards in glass\" deliberately excludes them.",
+    css: `/* Bubble braucht BEIDES: Variablen und eine Regel.
+
+   Flaeche, Rand und Schatten liest Bubble aus eigenen --bubble-*-Werten.
+   CSS-Regeln kommen nicht ueber Shadow-Grenzen, Variablen schon.
+
+   Die Weichzeichnung dagegen geht NUR ueber eine Regel. Am 13.10.2026 in
+   bubble-card.js 3.4.1 nachgesehen: Es gibt genau drei Namen mit "backdrop",
+   und alle drei gehoeren zum Abdunkel-Schleier HINTER einem Pop-up
+   (.bubble-backdrop, position: fixed) - nicht zur Kartenflaeche.
+   .bubble-container traegt ueberhaupt kein backdrop-filter. Eine Variable
+   dafuer gibt es also nicht.
+
+   Die Regel steht auf .bubble-container und ausdruecklich NICHT auf :host.
+   Ein backdrop-filter auf dem Wirt macht ihn zum Bezugsrahmen fuer
+   position: fixed - und Bubble-Pop-ups sind fixed. Sie fielen dann auf die
+   Groesse des Wirts zusammen; in HATG gemessen: Hoehe 0 statt 742, nur die
+   Kopfzeile schwebte ueber dem Dashboard.
+
+   WELCHE Variablenstufe, das ist die zweite Frage. Jede Eigenschaft loest
+   Bubble ueber eine dreistufige Kette auf:
+
+       var(--bubble-card-type-X, var(--bubble-X, <vorgabe>))
+
+   Am 13.10.2026 an acht Karten durchprobiert, je Variable einzeln gesetzt,
+   abgelesen am .bubble-container:
+
+       --bubble-card-type-border-radius       0 von 8   wirkungslos
+       --bubble-border-radius                 8 von 8
+       --bubble-button-border-radius          3 von 8   genau die button-Karten
+       --bubble-separator-border-radius       3 von 8   genau die Separatoren
+       --bubble-climate-border-radius         1 von 8   genau die Klimakarte
+       --bubble-media-player-border-radius    1 von 8   genau der Player
+
+   Die card-type-Stufe setzt Bubble selbst - ein Wert von aussen kommt dort
+   nie an. Deshalb hier die ALLGEMEINE Stufe: Sie erreicht jeden Kartentyp und
+   laesst Bubbles Typlogik in Ruhe. */
+:host,
+ha-card {
+  /* Flaeche aus demselben Feld wie die HA-Karten - damit zieht Bubble mit,
+     wenn der Regler bewegt wird. */
+  --bubble-main-background-color: var(--ha-card-background, var(--card-background-color));
+  --bubble-secondary-background-color: var(--ha-card-background, var(--card-background-color));
+
+  /* Die Lichtkante steckt IM Schatten, nicht in --bubble-border.
+     --bubble-border ist ein echtes border und verschiebt das Layout um seine
+     Breite - bei einer 56px hohen Bubble-Zeile sieht man das sofort. Ein
+     inset-Schatten liegt dagegen in der Flaeche. */
+  --bubble-border: none;
+  --bubble-box-shadow:
+    inset 0 1.5px 0 0 rgba(255, 255, 255, .6),
+    inset 0 -1.5px 0 0 rgba(10, 20, 45, .08),
+    var(--ha-card-box-shadow, 0 10px 30px rgba(22, 40, 78, .14));
+}
+
+/* Die Weichzeichnung auf den Container, nicht auf den Wirt. */
+.bubble-container {
+  backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+  -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+}
+
+/* Ein Separator ist eine Ueberschriftenzeile, keine Kachel. Bubble laesst ihn
+   schon ohne Flaeche; ohne diese Ausnahme laegen trotzdem Weichzeichnung und
+   Lichtkante darauf - ein verschwommener Balken mit heller Oberkante hinter
+   jedem Gruppentitel.
+
+   Die Klassen am Container, am 13.10.2026 an acht Karten abgelesen - jeder
+   Kartentyp traegt neben .bubble-container noch einen eigenen Namen:
+
+       separator      bubble-container bubble-separator separator-container
+       button         bubble-button-container bubble-container …
+       climate        bubble-climate-container bubble-container
+       media-player   bubble-media-player-container bubble-container
+
+   Damit laesst sich jeder Typ einzeln ansprechen, ohne die Variablenkette zu
+   bemuehen. Ein erster Versuch zielte auf .bubble-separator-container - den
+   Namen gibt es nicht, und die Ausnahme traf nichts. */
+.bubble-separator,
+.separator-container {
+  background: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}`,
+  },
+
+  // -------------------------------------------------------------------------
+  {
     id: "glas-lichtkante",
     gruppe: "glas",
     ziel: "card",

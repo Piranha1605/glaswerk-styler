@@ -36,12 +36,33 @@ pruefe("Kein Filter auf blankem :host", () => {
   // ein Element zum Bezugsrahmen fuer position: fixed. Bubble-Pop-ups sind
   // fixed und fallen dann auf die Groesse des Wirts zusammen - gemessen:
   // Hoehe 0 statt 742, nur die Kopfzeile schwebte ueber dem Dashboard.
+  // Geprueft wird der Block OHNE Kommentare, und nur auf echte Eigenschaften.
+  // Zwei Dinge sind ausdruecklich erlaubt:
+  //   - :host(ha-card) - das greift nur, wenn der Wirt wirklich eine ha-card
+  //     ist, also nie bei einer bubble-card. Nur blankes :host ist gefaehrlich.
+  //   - eine Variable --irgendwas-filter: Die wird woanders angewendet; wo,
+  //     entscheidet das Bauteil, das sie liest.
+  const gefaehrlich = /(^|[\s;{])(backdrop-filter|filter|transform|will-change|contain)\s*:/;
   for (const v of VORLAGEN.filter((x) => x.ziel === "card")) {
-    const bloecke = v.css.split("}").filter((b) => /(^|,)\s*:host\s*(,|\{)/m.test(b.replace(/\/\*[\s\S]*?\*\//g, "")));
-    for (const b of bloecke)
-      assert.doesNotMatch(b, /backdrop-filter|(^|\s)filter:|transform:|will-change/,
+    const ohneKommentar = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const b of ohneKommentar.split("}")) {
+      if (!/(^|,)\s*:host\s*(,|\{)/m.test(b)) continue;
+      // Variablendeklarationen aus dem Block nehmen - die sind harmlos.
+      const nurEigenschaften = b.replace(/--[a-z0-9-]+\s*:[^;]*;?/gi, "");
+      assert.doesNotMatch(nurEigenschaften, gefaehrlich,
         `${v.id}: Filter auf blankem :host - das laesst Bubble-Pop-ups zusammenfallen`);
+    }
   }
+});
+
+pruefe("Gegenprobe: ein echter Filter auf blankem :host faellt auf", () => {
+  // Ohne das koennte die Pruefung oben auch deshalb gruen sein, weil sie seit
+  // der Lockerung gar nichts mehr trifft.
+  const gefaehrlich = /(^|[\s;{])(backdrop-filter|filter|transform|will-change|contain)\s*:/;
+  const boese = ":host,\nha-card {\n  backdrop-filter: blur(4px);\n";
+  const harmlos = ":host,\nha-card {\n  --bubble-backdrop-filter: blur(4px);\n";
+  assert.match(boese.replace(/--[a-z0-9-]+\s*:[^;]*;?/gi, ""), gefaehrlich, "der echte Fall wird nicht gefangen");
+  assert.doesNotMatch(harmlos.replace(/--[a-z0-9-]+\s*:[^;]*;?/gi, ""), gefaehrlich, "eine Variable gilt faelschlich als Filter");
 });
 
 pruefe("Keine Weichzeichnung auf einer Dialogflaeche", () => {
@@ -182,4 +203,4 @@ pruefe("Gegenprobe: ein verschachteltes ::part wuerde auffallen", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 13) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 14) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
