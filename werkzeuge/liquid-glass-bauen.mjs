@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/hats/www/theme.js";
 import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
-import { HINTERGRUENDE, bewegung, PUNKTE_VORGABE } from "../custom_components/hats/www/hintergrund.js";
+import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergrund.js";
 
 // Der Hintergrund kommt aus dem Baukasten, nicht aus dieser Datei.
 //
@@ -191,19 +191,36 @@ for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
 // --- Die Farbpunkte bewegen sich -------------------------------------------
 //
 // Ansage des Maintainers vom 13.10.2026: "als erstes sollen die farbpunkte
-// sich leicht bewegen und die farben aendern." PUNKTE_VORGABE ist genau das,
-// was ein Neuling beim Klick auf eine der zehn Kacheln bekommt - ein Umlauf in
-// 80 Sekunden, der Farbton pendelt in 150 Sekunden um 40 Grad. Die Flaeche
-// selbst bleibt stehen: Treiben und Punkte zugleich zoege die Punkte aus ihren
-// Ecken.
+// sich leicht bewegen und die farben aendern." Zuerst stand hier
+// PUNKTE_VORGABE - also das, was ein Neuling beim Klick auf eine der zehn
+// Kacheln bekommt: ein Umlauf in 80 Sekunden, der Farbton in 150.
 //
-// Am 14.10.2026 zuerst im Panel mit den Reglern gesetzt und gespeichert, dann
-// hier nachgezogen - und beide Dateien byteweise verglichen. Die Theme ist der
-// Nachweis, dass das Panel es kann; sie darf ihm deshalb nicht voraus sein.
+// Am 14.10.2026 an der laufenden Instanz nachgemessen, und das war zu wenig:
+//
+//   background-position   3,6 px in 3 Sekunden   also 1,2 px/s
+//   filter                11,38 Grad -> 12,74 Grad
+//
+// Wer zwei Sekunden hinsieht, sieht nichts. Auf Ansage ("geb dem mal speed")
+// jetzt Stufe 10 und 8 - ein Umlauf in 24 Sekunden, der Farbton schwingt in
+// 38 Sekunden um 40 Grad. Zehn ist beim Umlauf das Ende der Fahnenstange.
+//
+// Das kostet nichts: Die Punkte laufen in Schritten, und deren Takt haengt an
+// der Zahl der Punkte, nicht an der Dauer - gemalt wird also genauso oft wie
+// bei Stufe 3.
+//
+// Die VORGABE fuer einen neuen Nutzer bleibt bei 3 und 2. Sie gehoert der
+// Hintergrund-Abteilung; was diese eine Theme tut, ist eine andere Frage.
+//
+// Die Flaeche selbst bleibt stehen: Treiben und Punkte zugleich zoege die
+// Punkte aus ihren Ecken.
+//
+// Der Weg ist absichtlich herum - erst im Panel mit den Reglern gesetzt und
+// gespeichert, dann hier nachgezogen und beide Dateien verglichen. Die Theme
+// ist der Nachweis, dass das Panel es kann; sie darf ihm nicht voraus sein.
 //
 // Der Block gehoert NACH die Vorlagen: vorlageAn haengt an, und die
 // Reihenfolge im Stilziel entscheidet ueber die Kaskade.
-vorlageAn(m, bewegung(PUNKTE_VORGABE, { punkte: true }));
+vorlageAn(m, bewegung({ drift: 0, punkte: 10, farbe: 8, weite: 40 }, { punkte: true }));
 
 // --- Der Kopf -------------------------------------------------------------
 //

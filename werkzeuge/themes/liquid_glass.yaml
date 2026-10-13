@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 22:56:18
+# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 23:04:55
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -739,7 +739,7 @@ liquid_glass:
     /* Treiben und Farbwechsel bewegen die Flaeche selbst, mit transform und
        filter - beides rechnet die Grafikkarte, ohne dass neu gemalt wird. */
     hui-view-background {
-      animation: hats-hintergrund-farbe 150s ease-in-out infinite alternate, hats-hintergrund-punkte 80s steps(200) infinite;
+      animation: hats-hintergrund-farbe 38s ease-in-out infinite alternate, hats-hintergrund-punkte 24s steps(60) infinite;
       will-change: filter;
     }
     /* Die Farbpunkte, jeder auf seinem eigenen Weg - in Schritten, zehnmal je
