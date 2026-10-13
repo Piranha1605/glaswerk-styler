@@ -244,9 +244,24 @@ ha-card {
   -webkit-backdrop-filter: var(--sidebar-backdrop-filter, blur(24px) saturate(170%));
 }
 
-/* Der aktive Eintrag als Pille. Nur ein INNERER Schatten - ein Aussenschatten
-   wird von der Liste abgeschnitten und steht dann als dunkles Rechteck um die
-   runde Pille. */
+/* Der aktive Eintrag als Pille.
+
+   Am 13.10.2026 an der laufenden Instanz nachgesehen, welcher Selektor ihn
+   wirklich trifft - die drei naheliegenden trafen NULL Elemente:
+
+       .iron-selected                            0   (Polymer, lange her)
+       a[role="option"][aria-selected="true"]    0
+       ha-md-list-item[selected]                 0
+       .selected                                 1   <- dieser
+
+   Der aktive Eintrag ist ein ha-list-item-button.selected in einer
+   ha-list-nav. Die drei alten bleiben als zusaetzliche Selektoren stehen: Wer
+   eine aeltere HA faehrt, braucht sie, und eine tote Zeile kostet nichts.
+
+   Nur ein INNERER Schatten. Ein Aussenschatten wird von der Liste
+   abgeschnitten und steht dann als dunkles Rechteck um die runde Pille. */
+ha-list-item-button.selected,
+.selected,
 .iron-selected,
 a[role="option"][aria-selected="true"],
 ha-md-list-item[selected] {
@@ -259,19 +274,52 @@ ha-md-list-item[selected] {
   {
     id: "glas-kopfleiste",
     gruppe: "glas",
-    ziel: "top-app-bar-fixed",
-    de: "Kopfleiste in Glas",
-    en: "Top bar in glass",
-    zweckDe: "Weichzeichnung unter der Kopfleiste des Dashboards. Die Farbe kommt aus app-header-background-color.",
-    zweckEn: "Blur under the dashboard top bar. The colour comes from app-header-background-color.",
-    css: `/* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
-   .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
-   nimmt aelteren Instanzen die Vorlage weg.
+    ziel: "root",
+    de: "Kopfleiste in Glas (Dashboard)",
+    en: "Top bar in glass (dashboard)",
+    zweckDe: "Weichzeichnung unter der Kopfleiste eines Dashboards. Die Farbe kommt aus app-header-background-color.",
+    zweckEn: "Blur under a dashboard's top bar. The colour comes from app-header-background-color.",
+    css: `/* Das Ziel ist uix-root, NICHT uix-top-app-bar-fixed.
+
+   Am 13.10.2026 an einem Dashboard gemessen: ha-top-app-bar-fixed existiert
+   dort ueberhaupt nicht - null Elemente. Die Kopfleiste eines Dashboards sind
+   zwei divs im Shadow Root von hui-root:
+
+       div.header    56px hoch
+       div.toolbar   56px hoch
+
+   ha-top-app-bar-fixed traegt die Leiste auf den EINSTELLUNGSSEITEN; dafuer
+   gibt es die Vorlage daneben.
 
    Dieselbe Vorlage war in HATG eine Weile tot, ohne dass es auffiel: Der
    UIX-Knoten kam an, der Selektor traf nichts, und die Leiste SAH trotzdem
    richtig aus - weil die Farbe aus --app-header-background-color kommt, das
-   die Leiste selbst liest. Nur verschwommen war nichts. */
+   die Leiste selbst liest. Nur verschwommen war nichts. Das ist der Grund,
+   warum hier jeder Selektor nachgemessen ist. */
+.header,
+.toolbar {
+  backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+  -webkit-backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+  box-shadow: none !important;
+}
+.header {
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
+}`,
+  },
+
+  // -------------------------------------------------------------------------
+  {
+    id: "glas-kopfleiste-einstellungen",
+    gruppe: "glas",
+    ziel: "top-app-bar-fixed",
+    de: "Kopfleiste in Glas (Einstellungen)",
+    en: "Top bar in glass (settings)",
+    zweckDe: "Dasselbe fuer die Leiste der Einstellungsseiten - die ist ein anderes Bauteil als die des Dashboards.",
+    zweckEn: "The same for the settings pages' bar - a different component from the dashboard one.",
+    css: `/* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
+   .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
+   nimmt aelteren Instanzen die Vorlage weg. In 629 Elementen einer
+   Einstellungsseite kommt unter HA 2026 keine einzige mdc-Klasse mehr vor. */
 .mdc-top-app-bar,
 .top-app-bar,
 header.top-app-bar {

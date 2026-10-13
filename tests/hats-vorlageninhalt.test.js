@@ -88,15 +88,40 @@ pruefe("Kein --card-background-color in einer Vorlage ueberschrieben", () => {
   }
 });
 
-pruefe("Die alte und die neue Klasse der Kopfleiste, nicht nur eine", () => {
-  // Unter HA 2026 heisst sie .top-app-bar, bis HA 2025 .mdc-top-app-bar. Wer
-  // nur die neue schreibt, nimmt aelteren Instanzen die Vorlage weg; wer nur
-  // die alte schreibt, hat eine tote Vorlage - und merkt es nicht, weil die
-  // FARBE aus einem Theme-Feld kommt und richtig aussieht.
-  const v = VORLAGEN.find((x) => x.id === "glas-kopfleiste");
-  assert.ok(v, "glas-kopfleiste fehlt");
-  assert.match(v.css, /\.mdc-top-app-bar/);
-  assert.match(v.css, /(^|[^-])\.top-app-bar/m);
+pruefe("Zwei Kopfleisten, weil es zwei Bauteile sind", () => {
+  // Am 13.10.2026 an einem Dashboard gemessen: ha-top-app-bar-fixed existiert
+  // dort NICHT - null Elemente. Die Kopfleiste eines Dashboards sind zwei divs
+  // im Shadow Root von hui-root (.header und .toolbar). ha-top-app-bar-fixed
+  // traegt die Leiste auf den Einstellungsseiten.
+  //
+  // Eine Vorlage auf dem falschen Ziel faellt nicht auf: Der UIX-Knoten kommt
+  // an, der Selektor trifft nichts, und die Leiste SIEHT richtig aus, weil
+  // ihre Farbe aus --app-header-background-color kommt. Nur verschwommen ist
+  // nichts.
+  const dash = VORLAGEN.find((x) => x.id === "glas-kopfleiste");
+  assert.ok(dash, "glas-kopfleiste fehlt");
+  assert.strictEqual(dash.ziel, "root", "die Dashboard-Leiste haengt an uix-root");
+  assert.match(dash.css, /\.header/);
+  assert.match(dash.css, /\.toolbar/);
+
+  const conf = VORLAGEN.find((x) => x.id === "glas-kopfleiste-einstellungen");
+  assert.ok(conf, "glas-kopfleiste-einstellungen fehlt");
+  assert.strictEqual(conf.ziel, "top-app-bar-fixed");
+  // Beide Schreibweisen: Unter HA 2026 .top-app-bar, bis HA 2025
+  // .mdc-top-app-bar. Wer die alte streicht, nimmt aelteren Instanzen die
+  // Vorlage weg.
+  assert.match(conf.css, /\.mdc-top-app-bar/);
+  assert.match(conf.css, /(^|[^-])\.top-app-bar/m);
+});
+
+pruefe("Die Seitenleiste trifft den Eintrag, den es wirklich gibt", () => {
+  // Am 13.10.2026 gemessen: Von den drei naheliegenden Selektoren traf KEINER
+  // ein Element. Der aktive Eintrag ist ein ha-list-item-button.selected.
+  const v = VORLAGEN.find((x) => x.id === "glas-seitenleiste");
+  assert.ok(v, "glas-seitenleiste fehlt");
+  assert.match(v.css, /\.selected/, "der Selektor, der wirklich trifft, fehlt");
+  // Die alten bleiben als zusaetzliche stehen, fuer aeltere Instanzen.
+  assert.match(v.css, /\.iron-selected/);
 });
 
 pruefe("Eine Schicht ueber der Karte schluckt keine Klicks", () => {
@@ -133,4 +158,4 @@ pruefe("Gegenprobe: die Fallenpruefungen wuerden anschlagen", () => {
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 10) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 11) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
