@@ -825,6 +825,13 @@ Ressource stünde in der Konfiguration des Nutzers und bliebe liegen, wenn HATS
 geht. Der Name `hats-control-card` steht in jedem Dashboard, das die Karte
 benutzt — wie die Domain ist er **bis zum ersten Release** frei, danach nicht.
 
+**Im Kartenwähler steht sie nur unter „Nach Karte".** Gemeldet am 13.10.2026:
+*„kannst du die karte hier einbauen ich find sie nicht"*. Der Dialog „Zum
+Dashboard hinzufügen" öffnet in 2026.10 auf dem Reiter „Nach Entität", und der
+schlägt nur Karten zu einer Entität vor — eine Karte ohne Entität kommt dort
+nie vor. Unter „Nach Karte" findet die Suche „hats" sie sofort, mit Vorschau.
+Ändern lässt sich das an der Karte nicht; es gehört in die Anleitung.
+
 ### Die Regel: alles, was sie benutzt, stellt Home Assistant
 
 Auf Ansage vom 13.10.2026: *„bedenke das alles was benutzt wird von ha gestellt
