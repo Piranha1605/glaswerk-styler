@@ -280,3 +280,95 @@ export const BAUKASTEN = {
   karten: { de: "Karten", en: "Cards", teile: KARTENSTILE },
   hintergrund: { de: "Hintergrund", en: "Background", teile: HINTERGRUENDE },
 };
+
+// ---------------------------------------------------------------------------
+// Ein Teil anwenden
+//
+// Die Funktion schreibt NICHT selbst ins Modell. Sie bekommt ein schreibe()
+// vom Aufrufer und meldet zurueck, was sie gesetzt hat. Zwei Gruende: Der
+// Baukasten bleibt dadurch frei von theme.js und laesst sich einzeln testen -
+// und das Panel behaelt seine Buchfuehrung (ZUSTAND.geaendert), die es ohnehin
+// fuehren muss.
+//
+//     schreibe(name, wert, ebene)    name MIT zwei Bindestrichen vorn,
+//                                    ebene "beide" | "light" | "dark"
+
+import { rampe, begleiter } from "./palette.js";
+
+export function teilAnwenden(sorte, teil, schreibe) {
+  if (!teil || typeof schreibe !== "function") return { gesetzt: 0, felder: [] };
+  const felder = [];
+  const setz = (name, wert, ebene) => {
+    schreibe(name.startsWith("--") ? name : "--" + name, wert, ebene);
+    felder.push(name);
+  };
+
+  if (sorte === "palette") {
+    // Je Rolle ELF Stufen, nicht eine. Home Assistant nimmt die kraeftige
+    // Flaeche aus Stufe 40, die Ueberfahr-Stufe aus 30, die leise aus 95 - wer
+    // nur einen Wert setzt, laesst die halbe Oberflaeche auf der alten Farbe
+    // stehen.
+    //
+    // Und FLACH, nicht je Modus: Nur dort leitet Home Assistant in BEIDEN Modi
+    // die RGB-Tripel ab, aus denen Mushroom seine Zustandsfarben baut. Eine
+    // halb aufgeteilte Rampe waere in einem Modus unvollstaendig.
+    for (const [rolle, hex] of Object.entries(teil.farben || {})) {
+      const r = rampe(hex, rolle);
+      if (r) for (const [k, v] of Object.entries(r)) setz(k, v, "beide");
+    }
+    // Die klassischen Begleiter haengen an der Primaerfarbe. --primary-color
+    // selbst steht NICHT dabei: HA deklariert es als var(--ha-color-primary-40)
+    // und folgt der Rampe von allein. Wer es schreibt, friert es ein.
+    if (teil.farben?.primary) {
+      const b = begleiter(teil.farben.primary);
+      if (b) for (const [k, v] of Object.entries(b)) setz(k, v, "beide");
+    }
+    // Der Akzent ist die EINZIGE Farbe der Palette, die je Modus verschieden
+    // ist - im Dunkeln eine Stufe heller, weil Blau und Violett die geringste
+    // Wahrnehmungshelligkeit aller Farbtoene haben und derselbe Ton auf
+    // dunklem Grund kaum noch zu sehen waere.
+    if (teil.akzent) {
+      setz("accent-color", teil.akzent.light, "light");
+      setz("accent-color", teil.akzent.dark, "dark");
+    }
+    return { gesetzt: felder.length, felder };
+  }
+
+  // Alle uebrigen Sorten sind reine Feldlisten, je Ebene.
+  for (const [k, v] of Object.entries(teil.felder || {})) setz(k, v, "beide");
+  for (const [k, v] of Object.entries(teil.flach || {})) setz(k, v, "beide");
+  for (const [k, v] of Object.entries(teil.light || {})) setz(k, v, "light");
+  for (const [k, v] of Object.entries(teil.dark || {})) setz(k, v, "dark");
+  return { gesetzt: felder.length, felder };
+}
+
+// Welches Teil einer Sorte sitzt gerade im Modell?
+//
+// Nicht ueber einen gemerkten Namen, sondern ueber die WERTE - eine Theme, die
+// jemand von Hand bearbeitet oder aus einer Datei geladen hat, traegt keinen
+// Merker. Verglichen wird nur das, was das Teil wirklich setzt.
+export function erkenneTeil(sorte, lies) {
+  const teile = BAUKASTEN[sorte]?.teile || [];
+  for (const teil of teile) {
+    let passt = true;
+    const pruefe = (name, soll, ebene) => {
+      if (!passt) return;
+      const ist = lies(name.startsWith("--") ? name : "--" + name, ebene);
+      // Ein leerer Sollwert heisst "Feld nicht gesetzt" - beides zaehlt gleich.
+      if ((ist ?? "") !== (soll ?? "")) passt = false;
+    };
+    if (sorte === "palette") {
+      // Die Rampe hat 55 Stufen; der Akzent allein genuegt als Kennzeichen und
+      // ist der einzige Wert, den zwei Paletten nicht teilen.
+      pruefe("accent-color", teil.akzent?.light, "light");
+      pruefe("accent-color", teil.akzent?.dark, "dark");
+    } else {
+      for (const [k, v] of Object.entries(teil.felder || {})) pruefe(k, v, "beide");
+      for (const [k, v] of Object.entries(teil.flach || {})) pruefe(k, v, "beide");
+      for (const [k, v] of Object.entries(teil.light || {})) pruefe(k, v, "light");
+      for (const [k, v] of Object.entries(teil.dark || {})) pruefe(k, v, "dark");
+    }
+    if (passt) return teil.id;
+  }
+  return null;
+}
