@@ -174,5 +174,46 @@ pruefe("Gegenprobe: ohne Blockskalar waere es kaputt", () => {
   assert.notStrictEqual(gelesen.flach.a, CSS, "der naive Weg funktioniert doch - schreibeWert waere unnoetig");
 });
 
+
+// ---------------------------------------------------------------------------
+// Die Schalterreihe oben links.
+
+pruefe("Fuenf runde Schalter, immer im Markup", () => {
+  // "Immer sichtbar" heisst: auch auf dem Startbild. Was dort nicht greift,
+  // ist gedaempft statt weg - ein Knopf, der mal da ist und mal nicht, laesst
+  // einen suchen.
+  const block = panel.slice(panel.indexOf('<div class="schalter">'), panel.indexOf('<header class="kopf">'));
+  const ids = [...block.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(ids, ["oeffnen", "verwerfen", "speichern2", "laden2", "kopie2"]);
+  assert.match(block, /ha-icon icon="\$\{k\.icon\}"/, "die Schalter tragen keine Symbole");
+  assert.doesNotMatch(block, /ZUSTAND\.start \? "" :/, "die Reihe verschwindet auf dem Startbild");
+});
+
+pruefe("Rund, nicht eckig", () => {
+  const css = panel.slice(panel.indexOf(".schalterknopf {"), panel.indexOf(".schalterknopf {") + 400);
+  assert.match(css, /border-radius: 50%/);
+});
+
+pruefe("Verwerfen geht auf den Stand beim Oeffnen zurueck", () => {
+  // _grundlage haelt die Datei, wie sie hereinkam - nicht die leere Vorlage.
+  // Mit der falschen Quelle waere "verwerfen" ein Datenverlust.
+  const b = panel.slice(panel.indexOf("  verwerfen() {"), panel.indexOf("  async neuBeginnen("));
+  assert.match(b, /ZUSTAND\.modell = JSON\.parse\(JSON\.stringify\(this\._grundlage\)\)/);
+  assert.match(b, /ZUSTAND\.geaendert\.clear\(\)/);
+});
+
+pruefe("Oeffnen fragt bei Ungespeichertem nach", () => {
+  const b = panel.slice(panel.indexOf("  zumStart() {"), panel.indexOf("  verwerfen() {"));
+  assert.match(b, /ZUSTAND\.geaendert\.size && !this\._startBestaetigt/,
+    "zumStart wirft Ungespeichertes ohne Rueckfrage weg");
+});
+
+pruefe("Die Texte der Schalter stehen IM en-Block", () => {
+  const tab = panel.slice(panel.indexOf("const TEXTE = {"));
+  const en = tab.slice(tab.indexOf("en: {"), tab.indexOf("\n  },"));
+  for (const x of ["Oeffnen", "Aenderungen verwerfen", "Aenderungen verworfen"])
+    assert.ok(en.includes(JSON.stringify(x)), `${x} fehlt im en-Block`);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 17) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 22) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

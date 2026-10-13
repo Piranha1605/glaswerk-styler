@@ -796,6 +796,10 @@ const BEKANNT = new Set([
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Oeffnen": "Open",
+    "Aenderungen verwerfen": "Discard changes",
+    "Aenderungen verworfen": "changes discarded",
+    "Ungespeicherte Aenderungen - nochmal druecken zum Verlassen": "Unsaved changes - press again to leave",
     "Datei oder Text": "File or text",
     "Eine Theme von anderswo einlesen": "Read a theme from somewhere else",
     "Mit einem anderen Werkzeug gebaut. Lesen geht - was HATS nicht kennt, bleibt unveraendert in der Datei:": "Built with another tool. Reading works - whatever HATS does not know stays untouched in the file:",
@@ -1190,6 +1194,36 @@ class HatsPanel extends HTMLElement {
     this.zeichne();
   }
 
+  // Zurueck zum Startbild. Wer Ungespeichertes hat, wird gefragt - und zwar
+  // einmal, nicht bei jedem Klick.
+  zumStart() {
+    if (ZUSTAND.geaendert.size && !this._startBestaetigt) {
+      this._startBestaetigt = true;
+      ZUSTAND.meldung = { text: t("Ungespeicherte Aenderungen - nochmal druecken zum Verlassen", this.spr), art: "fehler" };
+      this.zeichne();
+      setTimeout(() => { this._startBestaetigt = false; }, 6000);
+      return;
+    }
+    this._startBestaetigt = false;
+    ZUSTAND.start = true;
+    ZUSTAND.bericht = null;
+    ZUSTAND.meldung = null;
+    ZUSTAND.dateien = null;
+    this.zeichne();
+    this.ladeListe();
+  }
+
+  // Zurueck auf den Stand beim Oeffnen. _grundlage ist genau dafuer da: Sie
+  // haelt die Datei, wie sie hereinkam - nicht die leere Vorlage.
+  verwerfen() {
+    if (!this._grundlage) return;
+    ZUSTAND.modell = JSON.parse(JSON.stringify(this._grundlage));
+    const n = ZUSTAND.geaendert.size;
+    ZUSTAND.geaendert.clear();
+    ZUSTAND.meldung = { text: `${n} ${t("Aenderungen verworfen", this.spr)}`, art: "gut" };
+    this.zeichne();
+  }
+
   async neuBeginnen() {
     await this.ladeGrundlage();
     ZUSTAND.name = "";
@@ -1229,6 +1263,24 @@ class HatsPanel extends HTMLElement {
             <div class="railfuss"></div>
           </nav>
           <section class="inhalt">
+            <!-- Die Schalter stehen oben links und IMMER da - auch auf dem
+                 Startbild. Was dort nicht greift, ist gedaempft statt weg:
+                 Ein Knopf, der mal da ist und mal nicht, laesst einen suchen.
+                 Dieselbe Entscheidung wie bei der Leiste. -->
+            <div class="schalter">
+              ${[
+                { id: "oeffnen",  icon: "mdi:folder-open-outline",   t: T("Oeffnen"),      aus: ZUSTAND.start },
+                { id: "verwerfen", icon: "mdi:undo-variant",         t: T("Aenderungen verwerfen"), aus: ZUSTAND.start || !ZUSTAND.geaendert.size },
+                { id: "speichern2", icon: "mdi:content-save-outline", t: T("Speichern"),   aus: ZUSTAND.start },
+                { id: "laden2",    icon: "mdi:download-outline",     t: T("Als Datei herunterladen"), aus: ZUSTAND.start },
+                { id: "kopie2",    icon: "mdi:content-copy",         t: T("In die Zwischenablage"),   aus: ZUSTAND.start },
+              ].map((k) => `
+                <button class="schalterknopf" data-schalter="${k.id}"
+                        title="${k.t}" aria-label="${k.t}" ${k.aus ? "disabled" : ""}>
+                  <ha-icon icon="${k.icon}"></ha-icon>
+                </button>`).join("")}
+            </div>
+
             <header class="kopf">
               <div>
                 <h1>${ZUSTAND.start ? T("Womit faengst du an?") : T("Guten Tag")}</h1>
@@ -1239,8 +1291,6 @@ class HatsPanel extends HTMLElement {
                 <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
                        placeholder="${T("Name der Theme")}" spellcheck="false">
                 <span class="zaehlerbox"><b class="zaehler">${ZUSTAND.geaendert.size}</b> ${T("Aenderungen")}</span>
-                <button class="ausgang laden" title="${T("Als Datei herunterladen")}" aria-label="${T("Als Datei herunterladen")}">↓</button>
-                <button class="ausgang kopie" title="${T("In die Zwischenablage")}" aria-label="${T("In die Zwischenablage")}">⧉</button>
                 <button class="speichern">${T("Speichern")}</button>
               </div>`}
             </header>
@@ -1294,10 +1344,16 @@ class HatsPanel extends HTMLElement {
     this.shadowRoot.querySelectorAll("[data-rail]").forEach((b) =>
       b.addEventListener("click", () => this.oeffne(Number(b.dataset.rail)))
     );
-    const ld = this.shadowRoot.querySelector(".ausgang.laden");
-    if (ld) ld.addEventListener("click", () => this.herunterladen());
-    const kp = this.shadowRoot.querySelector(".ausgang.kopie");
-    if (kp) kp.addEventListener("click", () => this.kopieren());
+    const schalter = {
+      oeffnen: () => this.zumStart(),
+      verwerfen: () => this.verwerfen(),
+      speichern2: () => this.speichern(),
+      laden2: () => this.herunterladen(),
+      kopie2: () => this.kopieren(),
+    };
+    this.shadowRoot.querySelectorAll("[data-schalter]").forEach((b) =>
+      b.addEventListener("click", () => schalter[b.dataset.schalter]?.())
+    );
 
     this.shadowRoot.querySelectorAll(".punkte").forEach((b) =>
       b.addEventListener("click", (e) => { e.stopPropagation(); this.oeffne(Number(b.dataset.stufe)); })
@@ -2072,13 +2128,20 @@ class HatsPanel extends HTMLElement {
       @media (max-width: 860px) { .startwege.drei { grid-template-columns: 1fr 1fr; } }
       @media (max-width: 620px) { .startwege, .startwege.drei { grid-template-columns: 1fr; } }
 
-      /* ---- Ausgang: herunterladen und kopieren ---- */
-      .ausgang { width: 34px; height: 34px; flex: none; border: 0; border-radius: 999px;
-                 background: rgba(255,255,255,.75); color: var(--s-tinte);
-                 font-size: 15px; line-height: 1; cursor: pointer;
-                 box-shadow: inset 0 0 0 1px rgba(27,36,48,.08);
-                 transition: background .15s ease, box-shadow .15s ease; }
-      .ausgang:hover { background: #fff; box-shadow: var(--s-schatten-klein); }
+      /* ---- Die Schalterreihe oben links ---- */
+      .schalter { display: flex; gap: 8px; margin-bottom: 16px; }
+      .schalterknopf { width: 38px; height: 38px; flex: none; border: 0; border-radius: 50%;
+                       display: flex; align-items: center; justify-content: center;
+                       background: var(--s-glas-innen); color: var(--s-tinte); cursor: pointer;
+                       box-shadow: inset 0 1px 0 var(--s-kante);
+                       transition: background .15s ease, box-shadow .15s ease, transform .15s ease; }
+      .schalterknopf ha-icon { --mdc-icon-size: 19px; color: var(--s-tinte); }
+      .schalterknopf:hover:not([disabled]) { background: #fff; box-shadow: var(--s-schatten-klein);
+                                             transform: translateY(-1px); }
+      /* Gedaempft statt weg: Ein Knopf, der mal da ist und mal nicht, laesst
+         einen suchen. */
+      .schalterknopf[disabled] { cursor: default; opacity: .35; }
+      .schalterknopf[disabled] ha-icon { color: var(--s-tinte-leise); }
 
       /* ---- Bericht nach dem Einlesen ---- */
       .berichtzahlen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
