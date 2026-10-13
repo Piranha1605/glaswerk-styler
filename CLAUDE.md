@@ -555,6 +555,49 @@ den man vergisst; dann sucht man den Fehler im Code, und er liegt im Cache.
 REST-API will einen Token. Lesen geht über Port 80. Würde SSH oder Samba
 eingerichtet, fiele der Terminal-Umweg weg.
 
+## Der Cache-Buster schuetzt nur die Einstiegsdatei
+
+Am 13.10.2026 gemeldet: *„ich habe immer noch den alten stand."* Gemessen,
+woran es lag — und es trifft nicht nur beim Entwickeln.
+
+`/hats_static` ist mit `cache_headers=False` registriert. Home Assistant setzt
+dann **gar kein** `Cache-Control`, nur `ETag` und `Last-Modified`:
+
+    Etag: "18de2d01990f997e-6cff"   Last-Modified: Tue, 13 Oct 2026 19:19:47 GMT
+
+Ohne `Cache-Control` darf ein Browser **heuristisch** cachen, und Chrome tut
+es. `__init__.py` haengt deshalb eine Pruefsumme an die Panel-Adresse
+(`?v=0.2.0b3.36cec128`) — aber **nur an `hats-panel.js` und die Karte.** Das
+Panel importiert seine sechs Module statisch:
+
+    import { VORLAGEN } from "./vorlagen.js";
+
+Ohne Parameter. Die Einstiegsdatei kommt also frisch, die Module kommen aus
+dem Cache. **Neuer Einstieg, alte Teile.**
+
+**Das ist kein reines Entwicklungsproblem.** Nach einem Update ueber HACS
+aendert sich die Version und damit die Panel-Adresse — die Module behalten ihre
+und bleiben im Cache. Ein Nutzer sieht dann ein Panel, dessen Haelfte alt ist.
+Am 13.10.2026 gab es 18 Modul-Commits an einem Tag, 13 davon an `vorlagen.js`
+und `baukasten.js`; das sind genau die, die der Nutzer im Baukasten sieht.
+
+**Woran man es erkennt:** Die Datei liegt byteweise neu auf der Instanz
+(`einspielen-test.sh` meldet „angekommen"), die Pruefsumme in der Adresse ist
+neu, und das Panel verhaelt sich trotzdem wie vorher. Ein Blick in die
+Netzwerkansicht zeigt die Module ohne Parameter.
+
+**Sofort hilft** ein hartes Neuladen, und beim Messen
+`await import("./modul.js?" + Date.now())`.
+
+**Die Dauerloesung ist noch nicht gebaut.** Zwei Wege, beide nicht umsonst:
+
+| | |
+|---|---|
+| dynamische Importe | `const V = new URL(import.meta.url).search` und `await import("./vorlagen.js" + V)`. Traegt die Pruefsumme weiter, baut aber sechs Importzeilen von `hats-panel.js` zu top-level `await` um — in der Datei, an der mehrere Sitzungen arbeiten. |
+| eigene View | `Cache-Control: no-cache` statt `StaticPathConfig`. Der Browser revalidiert dann per ETag und bekommt meist ein 304. Kostet eine eigene View in `__init__.py`, also auch eine geteilte Datei. |
+
+Wer das angeht, stimmt es vorher ab — siehe `/Users/enricofischer/Projekte/TEAM.md`.
+
 ## Nie ein Feld schreiben, das HATS nicht anbietet
 
 Am 13.10.2026 beim Bau der Liquid-Glass-Theme aufgefallen: Das Build-Skript
