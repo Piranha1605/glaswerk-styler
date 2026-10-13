@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b3 am 13.10.2026, 20:40:02
+# Erzeugt mit HATS 0.2.0b4 am 13.10.2026, 22:14:46
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -876,7 +876,7 @@ liquid_glass:
       input-outlined-disabled-border-color: "#0000000f"
       input-outlined-hover-border-color: "#000000de"
       input-outlined-idle-border-color: "#00000061"
-      lovelace-background: "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)"
+      lovelace-background: "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%) fixed"
       mdc-dialog-scrim-color: "rgba(16, 24, 44, 0.32)"
       outline-color: "#0000001f"
       outline-hover-color: "#0000003d"
@@ -1026,7 +1026,7 @@ liquid_glass:
       input-outlined-disabled-border-color: "rgba(255, 255, 255, 0.06)"
       input-outlined-hover-border-color: "rgba(255, 255, 255, 0.87)"
       input-outlined-idle-border-color: "rgba(255, 255, 255, 0.38)"
-      lovelace-background: "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%)"
+      lovelace-background: "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%) fixed"
       map-filter: "invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3)"
       mdc-dialog-scrim-color: "rgba(0, 0, 0, 0.52)"
       mdc-linear-progress-buffer-color: "rgba(255, 255, 255, 0.1)"

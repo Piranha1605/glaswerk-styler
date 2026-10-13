@@ -44,16 +44,34 @@ const W = {
     // Hintergrund sich ueber die Flaeche einer Karte veraendert, desto
     // deutlicher ist der Effekt - deshalb mehrere Farbinseln statt eines
     // durchgehenden Verlaufs.
+    //
+    // Und am Ende steht " fixed". Das eine Wort entscheidet, wo die Flaeche
+    // haengt - Home Assistant liest es selbst:
+    //
+    //   _isFixedBackground(e) { return "string" == typeof e
+    //     ? e.split(" ").includes("fixed") : ... }
+    //
+    // Am 13.10.2026 an der Testmaschine gemessen, jeweils ueber HAs eigenen
+    // Weg (_applyTheme() am Bauteil), nicht ueber einen gesetzten Inline-Stil:
+    //
+    //   ohne   hui-view-background  position: absolute   658 x 2557  ab x=256
+    //   mit    hui-view-background  position: fixed      914 x  863  ab x=0
+    //
+    // Ohne das Wort beginnt die Flaeche erst rechts von der Seitenleiste, und
+    // die Seitenleiste (rgba(20,25,40,.42) hinter blur(24px)) zeigt dann HAs
+    // flaches #111111 statt der Theme. Mit dem Wort laeuft der Hintergrund
+    // unter ihr durch. Zweitens: zwei der vier Farbinseln sassen vorher unter
+    // dem ersten Bildschirm, weil die Flaeche so hoch war wie der Inhalt.
     "radial-gradient(900px 620px at 8% 4%, #7db5ff 0%, rgba(125,181,255,0) 55%), " +
     "radial-gradient(820px 560px at 92% 12%, #ff9ec7 0%, rgba(255,158,199,0) 52%), " +
     "radial-gradient(760px 700px at 72% 86%, #5ee0d0 0%, rgba(94,224,208,0) 54%), " +
     "radial-gradient(700px 520px at 22% 78%, #c08cff 0%, rgba(192,140,255,0) 52%), " +
-    "linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%)",
+    "linear-gradient(155deg, #e6eeff 0%, #f3ecff 50%, #e3fbf6 100%) fixed",
     "radial-gradient(900px 620px at 8% 4%, #1f4d9e 0%, rgba(31,77,158,0) 55%), " +
     "radial-gradient(820px 560px at 92% 12%, #7a2a5c 0%, rgba(122,42,92,0) 52%), " +
     "radial-gradient(760px 700px at 72% 86%, #0d6b63 0%, rgba(13,107,99,0) 54%), " +
     "radial-gradient(700px 520px at 22% 78%, #4b2a86 0%, rgba(75,42,134,0) 52%), " +
-    "linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%)",
+    "linear-gradient(155deg, #0b1020 0%, #140d26 50%, #07201f 100%) fixed",
   ],
 
   // --- Karten ---
