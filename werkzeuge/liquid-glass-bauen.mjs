@@ -86,7 +86,16 @@ const W = {
   // Blau und Violett haben die geringste Wahrnehmungshelligkeit aller
   // Farbtoene, und derselbe Ton waere auf dunklem Grund kaum noch zu sehen.
   "--accent-color": ["#6f5cf0", "#8f7dff"],
-  "--primary-color": ["#4a7df0", "#6e9bff"],
+  // --primary-color steht hier bewusst NICHT.
+  //
+  // HATS fuehrt es nicht als Feld - es gehoert zur alten Farbebene, und HATS
+  // setzt auf --ha-color-*. Ein Feld in die Datei zu schreiben, das das Panel
+  // nicht anbietet, ist die schlimmere Sorte Fehler: Es wirkt, aber niemand
+  // bekommt es je wieder heraus oder kann es aendern. Der Bericht nannte es
+  // zu Recht "kennt HATS nicht".
+  //
+  // Wenn sich zeigt, dass Karten es brauchen, gehoert es in die Feldliste -
+  // nicht hierher.
   "--primary-text-color": ["#17203a", "#eef1f8"],
   "--secondary-text-color": ["#5a6480", "#a8b2c8"],
   "--divider-color": ["rgba(23, 32, 58, 0.1)", "rgba(255, 255, 255, 0.12)"],
@@ -107,6 +116,31 @@ for (const [name, wert] of Object.entries(W)) {
 
 // --- Alle Vorlagen an ------------------------------------------------------
 for (const v of VORLAGEN) vorlageAn(m, v);
+
+// --- Der Kopf -------------------------------------------------------------
+//
+// Ohne ihn gilt die Datei dem Panel als "fremd": ws_list_themes meldet
+// hats: false, und die Datei landet in der Liste der Themes, die man nur
+// LESEN kann. Gemessen am 13.10.2026 - die erste Fassung hatte den Kopf von
+// ha-blanko geerbt und war in HATS nicht als eigene Theme zu oeffnen.
+//
+// Die Versionsnummer kommt aus const.py, nicht aus einer Kopie hier. Sie steht
+// an vier Stellen und muss ueberall gleich sein; eine fuenfte waere eine zu
+// viel.
+const version = /VERSION = "([^"]+)"/.exec(
+  readFileSync("custom_components/hats/const.py", "utf8"))?.[1] ?? "0.0.0";
+const heute = new Date().toLocaleString("de-DE");
+m.kopf = [
+  `Erzeugt mit HATS ${version} am ${heute}`,
+  "Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)",
+  "",
+  "Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'",
+  "eigenen Funktionen - was hier herauskommt, kann das Panel auch.",
+  "",
+  "Ohne Hintergrund kein Glas: Eine durchscheinende Flaeche vor einer",
+  "einfarbigen Wand sieht aus wie eine etwas hellere einfarbige Wand. Der",
+  "lovelace-background traegt deshalb vier Farbinseln, nicht einen Verlauf.",
+];
 
 // --- Schreiben -------------------------------------------------------------
 mkdirSync("werkzeuge/themes", { recursive: true });

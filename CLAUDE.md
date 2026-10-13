@@ -541,6 +541,24 @@ den man vergisst; dann sucht man den Fehler im Code, und er liegt im Cache.
 REST-API will einen Token. Lesen geht über Port 80. Würde SSH oder Samba
 eingerichtet, fiele der Terminal-Umweg weg.
 
+## Nie ein Feld schreiben, das HATS nicht anbietet
+
+Am 13.10.2026 beim Bau der Liquid-Glass-Theme aufgefallen: Das Build-Skript
+setzte `--primary-color`, und der Bericht meldete es zu Recht als „kennt HATS
+nicht". Das Feld wäre in der Datei gelandet, hätte gewirkt — und niemand hätte
+es je wieder ändern oder entfernen können, weil es im Panel nicht vorkommt.
+
+**Die Regel gilt in beide Richtungen.** Entweder das Feld ist nötig, dann
+gehört es in die Feldliste. Oder es ist es nicht, dann gehört es aus der Datei.
+Ein Mittelweg ist kein Mittelweg, sondern eine Sackgasse für den Nutzer.
+
+Dieselbe Falle hat HATG erlebt: `--ha-color-fill-primary-loud-*` und
+`--ha-color-border-primary-loud` sind keine HATG-Felder; wer sie von Hand ins
+Theme schreibt, bekommt sie beim nächsten Speichern nicht wieder heraus.
+
+**Der Bericht ist die Prüfung dafür** — er zählt beim Einlesen jedes Feld, das
+HATS nicht kennt, und nennt es beim Namen. Wer eine Theme baut, liest ihn.
+
 ## Vorlagen für UIX
 
 Seit dem 13.10.2026 bringt HATS zehn fertige CSS-Blöcke mit, Gruppe **Liquid

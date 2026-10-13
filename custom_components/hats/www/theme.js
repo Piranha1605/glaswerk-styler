@@ -167,14 +167,20 @@ export function setze(modell, name, wert, ebene = "beide") {
 //
 // bekannt ist die Menge der Feldnamen OHNE "--", so wie sie in der Datei
 // stehen.
-export function berichtUeberTheme(modell, bekannt) {
+// stilziele: die Kennungen aus UIX_ZIELE (ohne Vorsilbe). Ohne sie kann der
+// Bericht nicht unterscheiden, ob ein uix-Feld HATS gehoert oder einem anderen
+// Werkzeug - und meldete dann die eigenen als fremd.
+export function berichtUeberTheme(modell, bekannt, stilziele = null) {
   const zaehl = { bedienbar: [], mitgenommen: [] };
   const gesehen = new Set();
+  const eigenesZiel = (k) =>
+    stilziele instanceof Set && /^uix-/.test(k) && !/-yaml$/.test(k) && stilziele.has(k.slice(4));
   for (const ebene of ["flach", "light", "dark"]) {
     for (const k of Object.keys(modell[ebene] || {})) {
       if (gesehen.has(k)) continue;
       gesehen.add(k);
-      (bekannt.has(k) ? zaehl.bedienbar : zaehl.mitgenommen).push(k);
+      // Ein eigenes Stilziel ist bedienbar - es steht auf der UIX-Seite.
+      (bekannt.has(k) || eigenesZiel(k) ? zaehl.bedienbar : zaehl.mitgenommen).push(k);
     }
   }
   zaehl.bedienbar.sort();
@@ -191,9 +197,25 @@ export function berichtUeberTheme(modell, bekannt) {
     // mehr in der Datei - als einziges geht hier etwas verloren, und deshalb
     // wird es beim Namen genannt.
     unklar: modell.unklar || [],
-    // Marken fremder Werkzeuge: Ein Theme mit UIX-Vorlagen gehoert HATG,
-    // nicht HATS. Wer es hier bearbeitet, verliert die Vorlagenpflege.
-    stilziele: [...gesehen].filter((k) => /^(uix|card-mod)-/.test(k)),
+    // Marken FREMDER Werkzeuge - und nur die.
+    //
+    // Bis zum 13.10.2026 galt hier jedes uix-Feld als fremd. Seit HATS eigene
+    // Vorlagen hat, war das schlicht falsch: Eine Theme aus HATS' eigenem
+    // Generator meldete "7 Stilziele von HATG oder card-mod. Die pflegt HATS
+    // nicht" - ueber ihre eigenen sieben. Eine Warnung, die bei der eigenen
+    // Arbeit anschlaegt, lernt man weg; dann greift sie auch dann nicht mehr,
+    // wenn sie recht hat.
+    //
+    // Fremd ist, was HATS nicht schreiben kann:
+    //   card-mod-*        das alte Format, das HATG anbietet
+    //   uix-*-yaml        Shadow-DOM-Pfade; HATS kennt nur die einfache Form
+    //   uix-<unbekannt>   ein Stilziel, das nicht in UIX_ZIELE steht
+    stilziele: [...gesehen].filter((k) => {
+      if (/^card-mod-/.test(k)) return true;
+      if (!/^uix-/.test(k)) return false;
+      if (/-yaml$/.test(k)) return true;
+      return !(stilziele instanceof Set) || !stilziele.has(k.slice(4));
+    }),
   };
 }
 

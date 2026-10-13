@@ -821,6 +821,12 @@ const BEKANNT = new Set([
   ...Object.keys(ZUORDNUNG),
 ]);
 
+// Die Kennungen der Stilziele, fuer den Bericht. Damit unterscheidet er ein
+// uix-Feld, das HATS selbst schreibt, von einem fremden - vorher galt jedes
+// als fremd, und eine Theme aus HATS' eigenem Generator meldete sieben
+// "Stilziele von HATG oder card-mod".
+const EIGENE_ZIELE = new Set(UIX_ZIELE.map((z) => z.id));
+
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
@@ -1519,7 +1525,7 @@ class HatsPanel extends HTMLElement {
       ZUSTAND.geaendert.clear();
       ZUSTAND.start = false;
       ZUSTAND.meldung = { text: `Geoeffnet: ${name}`, art: "gut" };
-      ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT);
+      ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT, EIGENE_ZIELE);
     } catch (e) {
       ZUSTAND.meldung = { text: "Nicht geoeffnet: " + (e.message || e.code || e), art: "fehler" };
     }
@@ -1544,7 +1550,7 @@ class HatsPanel extends HTMLElement {
     ZUSTAND.geaendert.clear();
     ZUSTAND.start = false;
     ZUSTAND.meldung = { text: `Gelesen aus ${quelle}`, art: "gut" };
-    ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT);
+    ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT, EIGENE_ZIELE);
     this.zeichne();
     this.zeigeBericht();
   }

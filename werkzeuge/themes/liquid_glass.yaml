@@ -1,25 +1,12 @@
-# ha_blanko - Home Assistant 2026.10 ohne Altlasten
+# Erzeugt mit HATS 0.2.0b2 am 13.10.2026, 15:22:04
+# Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
-# Erzeugt aus einer laufenden Instanz (HA 2026.10.1), nicht aus Dokumentation.
-# Enthaelt nur Blaetter: Felder mit festem Wert. Was Home Assistant selbst aus
-# anderen Feldern ableitet (375 var()-Verweise), steht absichtlich nicht drin -
-# es soll weiter abgeleitet werden.
+# Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
+# eigenen Funktionen - was hier herauskommt, kann das Panel auch.
 # 
-# Drei Ebenen, und die Aufteilung ist nicht kosmetisch:
-# 
-#   flach (243)   Werte, die in beiden Modi gleich sind. Home Assistant
-#                 ueberschreibt sie im Dunkelmodus nicht - nachgewiesen daran,
-#                 dass keiner dieser Namen in HAs 143 Dunkelwerten vorkommt.
-#   light (27)    nur was sich zwischen hell und dunkel unterscheidet.
-#   dark (143)    genau die Werte, die HA im Dunkelmodus selbst anwendet
-#                 ({...darkSemanticVariables, ...darkColorVariables}).
-# 
-# Warum flach und nicht alles unter light: modes.light gilt NUR im Hellmodus.
-# Ein Feld, das nur dort steht, fehlt im Dunkeln - und mit ihm das Tripel, das
-# HA daraus ableitet (--rgb-<name>, nur fuer Werte die mit # beginnen). Mushroom
-# baut seine Farben aus genau diesen Tripeln; stehen die Palettenfarben unter
-# light, sind Mushroom-Karten im Dunkelmodus farblos. Ohne Fehlermeldung.
-# Siehe docs/zuordnung-neue-ebene.md.
+# Ohne Hintergrund kein Glas: Eine durchscheinende Flaeche vor einer
+# einfarbigen Wand sieht aus wie eine etwas hellere einfarbige Wand. Der
+# lovelace-background traegt deshalb vier Farbinseln, nicht einen Verlauf.
 
 liquid_glass:
   amber-color: "#ffc107"
@@ -589,7 +576,6 @@ liquid_glass:
       outline-color: "#0000001f"
       outline-hover-color: "#0000003d"
       primary-background-color: "#fafafa"
-      primary-color: "#4a7df0"
       primary-text-color: "#17203a"
       scrollbar-thumb-color: "#c2c2c2"
       secondary-background-color: "#e5e5e5"
@@ -743,7 +729,6 @@ liquid_glass:
       outline-color: "rgba(225, 225, 225, 0.12)"
       outline-hover-color: "rgba(225, 225, 225, 0.24)"
       primary-background-color: "#111111"
-      primary-color: "#6e9bff"
       primary-text-color: "#eef1f8"
       scrollbar-thumb-color: "rgb(110, 110, 110)"
       secondary-background-color: "#282828"

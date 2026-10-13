@@ -155,5 +155,49 @@ pruefe("Gegenprobe: ohne Marker meldet nichts an", () => {
     "der blosse CSS-Inhalt gilt faelschlich als Vorlage");
 });
 
+// ---------------------------------------------------------------------------
+// Der Bericht nach dem Einlesen: eigene Stilziele sind nicht fremd.
+
+import { berichtUeberTheme } from "../custom_components/hats/www/theme.js";
+
+pruefe("Eigene Stilziele gelten als bedienbar, nicht als fremd", () => {
+  // Bis zum 13.10.2026 galt JEDES uix-Feld als fremd. Eine Theme aus HATS'
+  // eigenem Generator meldete damit "7 Stilziele von HATG oder card-mod. Die
+  // pflegt HATS nicht" - ueber ihre eigenen sieben. Eine Warnung, die bei der
+  // eigenen Arbeit anschlaegt, lernt man weg; dann greift sie auch dann nicht
+  // mehr, wenn sie recht hat.
+  const m = leeresModell("t");
+  vorlageAn(m, V);                                   // uix-card
+  setze(m, "uix-sidebar", "x", "beide");
+  const b = berichtUeberTheme(m, new Set(), new Set(["card", "sidebar"]));
+  assert.deepStrictEqual(b.stilziele, [], "eigene Stilziele gelten als fremd");
+  assert.ok(b.bedienbar.includes("uix-card"), "uix-card ist nicht bedienbar");
+  assert.ok(b.bedienbar.includes("uix-sidebar"));
+  assert.deepStrictEqual(b.mitgenommen, [], "ein eigenes Ziel wurde nur mitgenommen");
+});
+
+pruefe("Fremde Stilziele werden weiter gemeldet", () => {
+  // Die Gegenprobe. Ohne sie koennte die Pruefung oben auch deshalb gruen
+  // sein, weil gar nichts mehr gemeldet wird.
+  const m = leeresModell("t");
+  setze(m, "uix-card-yaml", "x", "beide");       // Pfadform - die kann HATS nicht
+  setze(m, "card-mod-theme", "y", "beide");      // das alte Format
+  setze(m, "uix-gibtesnicht", "z", "beide");     // kein Stilziel von UIX
+  const b = berichtUeberTheme(m, new Set(), new Set(["card", "sidebar"]));
+  assert.deepStrictEqual(b.stilziele.sort(),
+    ["card-mod-theme", "uix-card-yaml", "uix-gibtesnicht"],
+    "ein fremdes Stilziel wird nicht mehr gemeldet");
+});
+
+pruefe("Ohne Zielliste bleibt es beim alten, strengen Verhalten", () => {
+  // Wer berichtUeberTheme ohne dritten Parameter ruft, bekommt weiter jedes
+  // uix-Feld gemeldet. Sonst wuerde ein vergessener Parameter die Warnung
+  // stumm abschalten.
+  const m = leeresModell("t");
+  setze(m, "uix-card", "x", "beide");
+  const b = berichtUeberTheme(m, new Set());
+  assert.deepStrictEqual(b.stilziele, ["uix-card"]);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 12) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
