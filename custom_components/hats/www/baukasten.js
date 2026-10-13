@@ -37,19 +37,38 @@ export const PALETTEN = [
     de: "Home Assistant", en: "Home Assistant",
     zweckDe: "HAs eigene Toene, unveraendert. Der Ausgangspunkt, wenn nichts auffallen soll.",
     zweckEn: "Home Assistant's own tones, unchanged. The starting point when nothing should stand out.",
-    // Aus docs/beispiele/ha-blanko.yaml, also HAs Werte selbst.
-    farben: { primary: "#37c8fd", neutral: "#989898", red: "#f3676c", green: "#00ac49", orange: "#f36d00" },
+    // KEINE farben - und das ist der Punkt.
+    //
+    // Die Grundlage ha_blanko bringt HAs 55 Palettenstufen schon mit, Wert
+    // fuer Wert aus einer laufenden Instanz. Wer sie hier nachrechnen liesse,
+    // bekaeme eine ANNAEHERUNG: palette.js leitet aus einem Basiston ab, und
+    // HAs Rampen sind von Hand auf die Wahrnehmung abgestimmt. Am 13.10.2026
+    // gemessen - 15 von 60 Stufen trafen, der Rest lag um ein bis acht
+    // Einheiten daneben (#0092c7 statt #009ac7).
+    //
+    // Fuer eine Theme, die HAs Toene behalten soll, ist jede Abweichung eine
+    // zu viel. Dieses Teil ruehrt die Palette deshalb nicht an.
+    farben: null,
     akzent: { light: "#009ac7", dark: "#37c8fd" },
   },
   {
     id: "liquid",
     de: "Liquid Glass", en: "Liquid Glass",
-    zweckDe: "Violetter Akzent auf kuehlem Neutral. Der Ton der Projektwerkbank.",
-    zweckEn: "Violet accent on cool neutral. The tone of the project workbench.",
-    // Am 13.10.2026 an der gerenderten Karte gemessen, nicht gerechnet:
-    // #6350e4 kommt auf der hellen Glasflaeche auf 4.6:1 und erfuellt damit
-    // WCAG AA. Das naheliegende #6f5cf0 verfehlt es mit 4.23:1.
-    farben: { primary: "#8f7dff", neutral: "#989898", red: "#f3676c", green: "#00ac49", orange: "#f36d00" },
+    zweckDe: "HAs Palette, violetter Akzent. Der Ton der Projektwerkbank.",
+    zweckEn: "Home Assistant's palette, violet accent. The tone of the project workbench.",
+    // Ebenfalls OHNE farben, und zwar gemessen: Die laufende liquid_glass
+    // aendert an ha_blanko kein einziges Feld - 232 unveraendert, 0 geaendert,
+    // vier neu dazu. Violett ist dort allein der AKZENT, nicht die Palette.
+    //
+    // Eine fruehere Fassung dieses Teils faerbte die ganze Primaerrampe
+    // violett. Das sah nach "Liquid Glass" aus und war es nicht: Jeder
+    // gefuellte Knopf, jeder Fortschrittsbalken und jede Verlinkung in Home
+    // Assistant haengt an dieser Rampe.
+    //
+    // Der Akzent ist an der gerenderten Karte gemessen: #6350e4 kommt auf der
+    // hellen Glasflaeche auf 4.6:1 und erfuellt WCAG AA. Das naheliegende
+    // #6f5cf0 verfehlt es mit 4.23:1.
+    farben: null,
     akzent: { light: "#6350e4", dark: "#8f7dff" },
   },
   {

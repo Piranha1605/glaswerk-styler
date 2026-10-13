@@ -68,11 +68,11 @@ pruefe("Die Flaeche steht je Modus, die Form flach", () => {
   }
 });
 
-pruefe("Eine Palette setzt elf Stufen je Rolle, und zwar FLACH", () => {
+pruefe("Eine rechnende Palette setzt elf Stufen je Rolle, und zwar FLACH", () => {
   // Flach, weil Home Assistant nur dort in BEIDEN Modi die RGB-Tripel
   // ableitet, aus denen Mushroom seine Zustandsfarben baut.
   const m = leer();
-  teilAnwenden("palette", PALETTEN.find((p) => p.id === "liquid"), schreiberFuer(m));
+  teilAnwenden("palette", PALETTEN.find((p) => p.id === "warm"), schreiberFuer(m));
   for (const rolle of ["primary", "neutral", "red", "green", "orange"]) {
     const stufen = Object.keys(m.beide).filter((k) => k.startsWith(`--ha-color-${rolle}-`));
     assert.strictEqual(stufen.length, 11, `${rolle}: ${stufen.length} Stufen statt 11`);
@@ -89,12 +89,30 @@ pruefe("Der Akzent ist das Einzige je Modus - und er unterscheidet sich", () => 
   }
 });
 
+pruefe("Home Assistant und Liquid Glass ruehren die Palette NICHT an", () => {
+  // Die Grundlage ha_blanko bringt HAs 55 Stufen Wert fuer Wert aus einer
+  // laufenden Instanz mit. Wer sie nachrechnen liesse, bekaeme eine
+  // Annaeherung - am 13.10.2026 gemessen: 15 von 60 Stufen trafen, der Rest
+  // lag um bis zu acht Einheiten daneben.
+  //
+  // Und die laufende liquid_glass aendert an ha_blanko KEIN einziges Feld:
+  // 232 unveraendert, 0 geaendert. Violett ist dort allein der Akzent.
+  for (const id of ["ha", "liquid"]) {
+    const m = leer();
+    teilAnwenden("palette", PALETTEN.find((p) => p.id === id), schreiberFuer(m));
+    const stufen = Object.keys(m.beide).filter((k) => k.startsWith("--ha-color-"));
+    assert.deepStrictEqual(stufen, [], `${id}: faerbt die Palette um (${stufen.length} Stufen)`);
+    // Der Akzent muss trotzdem gesetzt werden - er ist der ganze Unterschied.
+    assert.ok(m.light["--accent-color"] && m.dark["--accent-color"], `${id}: setzt keinen Akzent`);
+  }
+});
+
 pruefe("primary-color wird NICHT geschrieben", () => {
   // Home Assistant deklariert es selbst als var(--ha-color-primary-40) und
   // folgt der Rampe von allein. Wer es schreibt, friert es ein - dieselbe
   // Falle, an der bei HATG gefuellte Knoepfe trotz grauem Akzent blau blieben.
   const m = leer();
-  teilAnwenden("palette", PALETTEN[1], schreiberFuer(m));
+  teilAnwenden("palette", PALETTEN.find((p) => p.id === "warm"), schreiberFuer(m));
   const alle = [...Object.keys(m.beide), ...Object.keys(m.light), ...Object.keys(m.dark)];
   assert.ok(!alle.includes("--primary-color"), "--primary-color darf nicht gesetzt werden");
   // rgb-primary-color dagegen MUSS dabei sein: HA rechnet Tripel nur aus
