@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 23:04:55
+# Erzeugt mit HATS 0.2.0b5 am 13.10.2026, 23:10:37
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -752,8 +752,8 @@ liquid_glass:
       75% { background-position: left -427px top -284px, right -324px top -217px, right -153px bottom -250px, left -119px bottom -131px, 0 0; }
     }
     @keyframes hats-hintergrund-farbe {
-      from { filter: hue-rotate(-20deg); }
-      to { filter: hue-rotate(20deg); }
+      from { filter: hue-rotate(-45deg); }
+      to { filter: hue-rotate(45deg); }
     }
     /* Wer am Geraet "Bewegung reduzieren" eingestellt hat, bekommt keine. */
     @media (prefers-reduced-motion: reduce) {

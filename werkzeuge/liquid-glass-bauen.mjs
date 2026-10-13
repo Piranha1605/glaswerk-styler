@@ -202,7 +202,13 @@ for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
 //
 // Wer zwei Sekunden hinsieht, sieht nichts. Auf Ansage ("geb dem mal speed")
 // jetzt Stufe 10 und 8 - ein Umlauf in 24 Sekunden, der Farbton schwingt in
-// 38 Sekunden um 40 Grad. Zehn ist beim Umlauf das Ende der Fahnenstange.
+// 38 Sekunden. Zehn ist beim Umlauf das Ende der Fahnenstange.
+//
+// Der Ausschlag steht auf 90 statt 40 Grad, und das ist von allen dreien der
+// groesste Hebel: Nicht die Dauer entscheidet, wie sehr man es sieht, sondern
+// die Strecke. 40 Grad sind ein Neuntel des Farbkreises, 90 ein Viertel. Die
+// Dauer bleibt dieselbe, der Weg wird laenger - also wandert der Farbton auch
+// mehr als doppelt so schnell.
 //
 // Das kostet nichts: Die Punkte laufen in Schritten, und deren Takt haengt an
 // der Zahl der Punkte, nicht an der Dauer - gemalt wird also genauso oft wie
@@ -220,7 +226,7 @@ for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
 //
 // Der Block gehoert NACH die Vorlagen: vorlageAn haengt an, und die
 // Reihenfolge im Stilziel entscheidet ueber die Kaskade.
-vorlageAn(m, bewegung({ drift: 0, punkte: 10, farbe: 8, weite: 40 }, { punkte: true }));
+vorlageAn(m, bewegung({ drift: 0, punkte: 10, farbe: 8, weite: 90 }, { punkte: true }));
 
 // --- Der Kopf -------------------------------------------------------------
 //
