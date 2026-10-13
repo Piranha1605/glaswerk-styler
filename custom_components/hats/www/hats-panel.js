@@ -29,7 +29,8 @@ import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
 import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
-import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten } from "./hintergrund-seite.js";
+import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
+         hintergrundGewaehlt } from "./hintergrund-seite.js";
 
 const HATS_VERSION = "0.2.0b4";
 
@@ -1178,6 +1179,10 @@ class HatsPanel extends HTMLElement {
     // immer leuchtet, liest niemand mehr.
     const glasOhneGrund = sitzt.karten === "glas" && sitzt.hintergrund === "keiner";
 
+    // Der Modus des Nutzers, nicht der der Theme: Die Kachel zeigt, was er
+    // zu sehen bekaeme, wenn er das Teil jetzt waehlt.
+    const dunkel = !!this._hass?.themes?.darkMode;
+
     const sorteHtml = (schluessel) => {
       const s = BAUKASTEN[schluessel];
       const name = this.spr === "en" ? s.en : s.de;
@@ -1209,9 +1214,15 @@ class HatsPanel extends HTMLElement {
           <div class="bk-teile">
             ${s.teile.map((teil) => {
               const an = sitzt[schluessel] === teil.id;
+              // Zehn Hintergruende mit Namen allein sind nicht zu
+              // unterscheiden. Der Streifen zeigt die vier Farben des Teils -
+              // im Modus, in dem der Nutzer gerade sitzt, sonst waere er eine
+              // Auskunft ueber den anderen.
+              const v = teil.vorschau && teil.vorschau[dunkel ? "dark" : "light"];
               return `
               <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}>
+                ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
                 <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
                 <span class="bk-zweck">${this.spr === "en" ? teil.zweckEn : teil.zweckDe}</span>
                 ${an ? `<span class="bk-haken"><ha-icon icon="mdi:check"></ha-icon></span>` : ""}
@@ -1412,6 +1423,13 @@ class HatsPanel extends HTMLElement {
           else setze(ZUSTAND.modell, k, wert, ebene);
           ZUSTAND.geaendert.add(k);
         });
+
+        // Der Hintergrund hat eine Bewegung, die zum Bild passen muss - und
+        // eine Vorgabe, wenn noch keine eingestellt ist. Beides steht in
+        // hintergrund-seite.js; hier bleibt die Buchfuehrung.
+        if (sorte === "hintergrund") {
+          for (const f of hintergrundGewaehlt(ZUSTAND.modell).felder) ZUSTAND.geaendert.add(f);
+        }
 
         ZUSTAND.meldung = { art: "gut",
           text: `${this.spr === "en" ? teil.en : teil.de} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
@@ -3155,6 +3173,11 @@ class HatsPanel extends HTMLElement {
          Flaeche: Eine gefuellte Kachel wuerde den Zwecktext darauf erschlagen,
          und genau der ist die Entscheidungshilfe. */
       .bk-teil.an { border-color: var(--s-akzent); box-shadow: inset 0 0 0 1px var(--s-akzent); }
+      /* Der Farbstreifen eines Hintergrunds. Er sitzt UEBER dem Namen, nicht
+         als Flaeche hinter ihm: Vier Farben hinter Text machen beides
+         unlesbar. Der Haken steht rechts daneben, deshalb endet er bei 70 %. */
+      .bk-streifen { display: block; height: 10px; width: 70%; border-radius: 999px;
+                     margin-bottom: 4px; border: 1px solid rgba(27,36,48,.10); }
       .bk-name { font-size: 14px; font-weight: 500; }
       .bk-zweck { font-size: 12px; line-height: 1.45; color: var(--s-tinte-leise); }
       .bk-haken { position: absolute; top: 10px; right: 10px; color: var(--s-akzent);

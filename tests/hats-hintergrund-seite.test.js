@@ -14,11 +14,12 @@ import path from "node:path";
 import { leeresModell, setze, schreibeTheme, leseTheme, vorlageAn } from "../custom_components/hats/www/theme.js";
 import {
   HINTERGRUENDE, ohneFest, stelleFest, bewegung, himmel, leseBewegung, leseHimmel,
+  istPunkteBild, PUNKTE_VORGABE, punkteDauer,
   BEWEGUNG_ID, HIMMEL_ID, HIMMEL_VORGABE,
 } from "../custom_components/hats/www/hintergrund.js";
 import {
   hintergrundStand, hintergrundAendern, hintergrundSeiteHtml, bindeHintergrundSeite,
-  wetterEntitaeten, anzeige, AUSSCHLAEGE,
+  hintergrundGewaehlt, wetterEntitaeten, anzeige, AUSSCHLAEGE,
 } from "../custom_components/hats/www/hintergrund-seite.js";
 import { BAUKASTEN, HINTERGRUENDE as AUS_BAUKASTEN, teilAnwenden, erkenneTeil } from "../custom_components/hats/www/baukasten.js";
 
@@ -251,8 +252,8 @@ pruefe("Die Seite sperrt, was nichts tun wuerde, und sagt, was stoert", () => {
   assert.match(leer, /data-hg="staerke"[^>]*disabled/);
   // Ohne offene Theme ist alles gesperrt, nicht versteckt.
   const ohne = hintergrundSeiteHtml({ modell: null, spr: "de", wetter: WETTER });
-  assert.strictEqual((ohne.match(/data-hg="/g) || []).length, 6);
-  assert.strictEqual((ohne.match(/data-hg="[a-z]+"[^>]*disabled/g) || []).length, 6);
+  assert.strictEqual((ohne.match(/data-hg="/g) || []).length, 7);
+  assert.strictEqual((ohne.match(/data-hg="[a-z]+"[^>]*disabled/g) || []).length, 7);
   // Die Stoerung steht mit Zeile und Text da.
   const m = leeresModell("t");
   setze(m, "uix-root", ".a { color: red; }\n@media (max-width: 870px) {#view { padding: 0; }}", "beide");
@@ -375,6 +376,124 @@ pruefe("Die Seite steht in der Einspielliste", () => {
   const liste = readFileSync(path.join(hier, "../werkzeuge/sync-dateien.txt"), "utf8").split("\n");
   for (const f of ["www/hintergrund.js", "www/hintergrund-seite.js"]) assert.ok(liste.includes(f), `${f} fehlt in sync-dateien.txt`);
   assert.ok(!liste.includes("www/gibt-es-nicht.js"));
+});
+
+// --------------------------------------------------------------------------
+// Die Farbpunkte - Regler, Sperre und was beim Wechsel des Bildes geschieht
+
+const PUNKTEBILD = HINTERGRUENDE.find((h) => h.id === "inseln");
+const FOTO = "url(/local/hats/wand.jpg) center / cover no-repeat fixed";
+
+pruefe("Der Punkte-Regler steht da und ist nur auf einem Punktebild zu ziehen", () => {
+  const m = leeresModell("t");
+  wende(m, "hintergrund", PUNKTEBILD);
+  const auf = hintergrundSeiteHtml({ modell: m, spr: "de", wetter: [] });
+  assert.match(auf, /data-hg="punkte" min="0" max="10"/);
+  assert.ok(!/data-hg="punkte"[^>]*disabled/.test(auf), "auf einem Punktebild gesperrt");
+
+  // Gegenprobe: auf einem Foto gesperrt, mit Begruendung statt stumm.
+  const f = leeresModell("t");
+  setze(f, FELD, FOTO, "beide");
+  const zu = hintergrundSeiteHtml({ modell: f, spr: "de", wetter: [] });
+  assert.match(zu, /data-hg="punkte"[^>]*disabled/);
+  assert.match(zu, /nur auf einem Hintergrund aus Farbpunkten/);
+  // Und ohne jeden Hintergrund steht die Begruendung NICHT da - gesperrt ist
+  // dann ohnehin alles, und zwei Hinweise uebereinander liest niemand.
+  assert.ok(!/nur auf einem Hintergrund aus Farbpunkten/.test(
+    hintergrundSeiteHtml({ modell: leeresModell("t"), spr: "de", wetter: [] })));
+});
+
+pruefe("Der Punkte-Regler schreibt seine Stufe, und die Anzeige nennt die Dauer", () => {
+  const m = leeresModell("t");
+  wende(m, "hintergrund", PUNKTEBILD);
+  hintergrundAendern(m, "punkte", 5);
+  assert.strictEqual(leseBewegung(m.flach["uix-root"]).punkte, 5);
+  assert.strictEqual(anzeige("punkte", 5, "de"), punkteDauer(5) + " s");
+  assert.strictEqual(anzeige("punkte", 0, "de"), "aus");
+  // Auf 0 zurueck, und ohne andere Bewegung ist der Block weg.
+  hintergrundAendern(m, "punkte", 0);
+  assert.strictEqual(leseBewegung(m.flach["uix-root"]), null);
+});
+
+pruefe("Eine andere Groesse nimmt die Punkte nicht mit, wenn das Bild sie nicht traegt", () => {
+  // Das ist die Falle: leseBewegung() reicht die Punkte durch, und ohne die
+  // Angabe schriebe ein Zug am Treiben sie auf einem Foto wieder hinein.
+  const m = leeresModell("t");
+  wende(m, "hintergrund", PUNKTEBILD);
+  hintergrundAendern(m, "punkte", 4);
+  assert.strictEqual(leseBewegung(m.flach["uix-root"]).punkte, 4);
+  // Jetzt ein Foto - der Block bleibt zunaechst stehen, wie er ist.
+  for (const e of ["flach", "light", "dark"]) delete m[e][FELD];
+  setze(m, FELD, FOTO, "beide");
+  hintergrundAendern(m, "drift", 3);
+  const b = leseBewegung(m.flach["uix-root"]);
+  assert.strictEqual(b.drift, 3);
+  assert.strictEqual(b.punkte, 0, "die Punkte sind auf dem Foto mitgewandert");
+  // Gegenprobe: auf dem Punktebild ueberlebt die Stufe denselben Zug.
+  const g = leeresModell("t");
+  wende(g, "hintergrund", PUNKTEBILD);
+  hintergrundAendern(g, "punkte", 4);
+  hintergrundAendern(g, "drift", 3);
+  assert.strictEqual(leseBewegung(g.flach["uix-root"]).punkte, 4);
+});
+
+pruefe("Nach der Wahl eines Hintergrunds passt die Bewegung zum Bild", () => {
+  // 1. Noch keine Bewegung, und das neue Bild traegt Punkte -> Vorgabe an.
+  const m = leeresModell("t");
+  wende(m, "hintergrund", PUNKTEBILD);
+  assert.strictEqual(leseBewegung(m.flach["uix-root"]), null);
+  const r1 = hintergrundGewaehlt(m);
+  assert.deepStrictEqual(r1.felder, ["uix-root"]);
+  assert.strictEqual(leseBewegung(m.flach["uix-root"]).punkte, PUNKTE_VORGABE.punkte);
+
+  // 2. Zweiter Aufruf aendert nichts mehr - sonst waere jedes Zeichnen eine
+  //    Aenderung, und der Zaehler im Kopf liefe immer weiter.
+  assert.deepStrictEqual(hintergrundGewaehlt(m).felder, []);
+
+  // 3. Wechsel auf ein Foto -> die Punkte fallen weg, der Rest bleibt.
+  hintergrundAendern(m, "drift", 2);
+  for (const e of ["flach", "light", "dark"]) delete m[e][FELD];
+  setze(m, FELD, FOTO, "beide");
+  assert.deepStrictEqual(hintergrundGewaehlt(m).felder, ["uix-root"]);
+  const b = leseBewegung(m.flach["uix-root"]);
+  assert.strictEqual(b.punkte, 0);
+  assert.strictEqual(b.drift, 2, "das Treiben ist mit weggefallen");
+
+  // 4. Gegenprobe: wer schon eine Bewegung hat, bekommt die Vorgabe NICHT.
+  const g = leeresModell("t");
+  wende(g, "hintergrund", PUNKTEBILD);
+  hintergrundAendern(g, "drift", 7);
+  hintergrundGewaehlt(g);
+  const gb = leseBewegung(g.flach["uix-root"]);
+  assert.strictEqual(gb.drift, 7);
+  assert.strictEqual(gb.punkte, 0, "die Vorgabe hat eine Einstellung ueberschrieben");
+
+  // 5. Gegenprobe: "Keiner" setzt kein Feld - dann auch keine Bewegung.
+  const k = leeresModell("t");
+  wende(k, "hintergrund", HINTERGRUENDE.find((h) => h.id === "keiner"));
+  assert.deepStrictEqual(hintergrundGewaehlt(k).felder, []);
+  assert.strictEqual(leseBewegung(k.flach["uix-root"] || ""), null);
+});
+
+pruefe("Das Panel zieht die Bewegung nach und zeigt die Farben auf der Kachel", () => {
+  const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
+  const klick = panel.slice(panel.indexOf('wurzel.querySelectorAll("[data-bk-teil]")'),
+                            panel.indexOf("oeffneUix() {"));
+  assert.ok(klick.length > 400, "der Klick auf ein Teil nicht gefunden");
+  assert.match(klick, /sorte === "hintergrund"[\s\S]{0,200}hintergrundGewaehlt\(ZUSTAND\.modell\)/,
+    "nach teilAnwenden wird die Bewegung nicht nachgezogen");
+  assert.match(klick, /ZUSTAND\.geaendert\.add\(f\)/, "die Felder kommen nicht in die Buchfuehrung");
+  // Gegenprobe: nicht fuer jede Sorte.
+  assert.doesNotMatch(klick, /sorte === "karten"[\s\S]{0,120}hintergrundGewaehlt/);
+  // Der Streifen: die zehn Verlaeufe tragen eine Vorschau, und das Panel malt sie.
+  assert.match(panel, /class="bk-streifen"/);
+  assert.match(panel, /teil\.vorschau && teil\.vorschau\[dunkel \? "dark" : "light"\]/);
+  const mitVorschau = HINTERGRUENDE.filter((h) => h.vorschau && h.vorschau.light && h.vorschau.dark);
+  assert.strictEqual(mitVorschau.length, 10, "nicht zehn Verlaeufe mit Vorschau");
+  for (const h of mitVorschau) assert.match(h.vorschau.dark, /^linear-gradient\(90deg,/);
+  // Gegenprobe: "Keiner" und der ruhige Verlauf haben keine - sie sind keine
+  // Farbpunkte, und ein Streifen aus vier Farben waere dort gelogen.
+  assert.ok(!HINTERGRUENDE.find((h) => h.id === "keiner").vorschau);
 });
 
 console.log(`\n${n} Pruefungen bestanden`);

@@ -18,7 +18,8 @@
 import { vorlageAn, vorlageAus } from "./theme.js";
 import {
   istFest, festUnerkannt, stelleFest,
-  bewegung, leseBewegung, driftDauer, farbDauer,
+  bewegung, leseBewegung, bewegungNachBild, driftDauer, farbDauer, punkteDauer,
+  istPunkteBild, PUNKTE_VORGABE,
   BEWEGUNG_ID, BEWEGUNG_STUFEN, BEWEGUNG_VORGABE,
   himmel, leseHimmel, istWetterEntitaet, HIMMEL_ID, HIMMEL_STUFEN, HIMMEL_VORGABE,
   vertraegtVorlage, HINTERGRUND_ZIEL,
@@ -50,6 +51,11 @@ export function hintergrundStand(modell) {
     // Hell fest und dunkel nicht - das kann nur von Hand entstanden sein.
     teilsFest: gesetzt.some(istFest) && !gesetzt.every(istFest),
     unerkannt: gesetzt.some(festUnerkannt),
+    // Die Punkte einzeln zu bewegen geht nur auf einem Bild aus Farbpunkten.
+    // Auf einem Foto oder einem einfachen Verlauf verschoebe derselbe Block
+    // dessen erste Ebene - der Regler gehoert dort gesperrt, nicht versteckt:
+    // Ein fehlender Regler sieht aus wie eine fehlende Funktion.
+    punkteMoeglich: gesetzt.length > 0 && gesetzt.every(istPunkteBild),
     bewegung: leseBewegung(text),
     himmel: leseHimmel(text),
     stoerungen: vertraegtVorlage(text),
@@ -73,7 +79,7 @@ export function wetterEntitaeten(hass) {
 // geaendert haben - das Panel fuehrt darueber Buch, und ein Regler, der auf
 // seinem Wert losgelassen wird, soll keine Aenderung melden.
 //
-//   was      "fest" | "drift" | "farbe" | "weite" | "wetter" | "staerke"
+//   was      "fest" | "drift" | "punkte" | "farbe" | "weite" | "wetter" | "staerke"
 //   zurueck  { felder: [...], abgelehnt: null | "stoerung" | "entitaet" }
 
 export function hintergrundAendern(modell, was, wert) {
@@ -96,9 +102,13 @@ export function hintergrundAendern(modell, was, wert) {
 
   const vorher = stilText(modell);
 
-  if (was === "drift" || was === "farbe" || was === "weite") {
-    const alt = leseBewegung(vorher) || { drift: 0, farbe: 0, weite: BEWEGUNG_VORGABE.weite };
-    const v = bewegung({ ...alt, [was]: Number(wert) });
+  if (was === "drift" || was === "punkte" || was === "farbe" || was === "weite") {
+    const alt = leseBewegung(vorher) || { drift: 0, punkte: 0, farbe: 0, weite: BEWEGUNG_VORGABE.weite };
+    // bild.punkte muss bei JEDER Groesse mit, nicht nur beim Punkte-Regler:
+    // Sonst schriebe ein Zug am Treiben die Punktbewegung wieder mit hinein,
+    // die leseBewegung() aus dem alten Block durchgereicht hat - auf einem
+    // Hintergrund, der sie nicht vertraegt.
+    const v = bewegung({ ...alt, [was]: Number(wert) }, { punkte: hintergrundStand(modell).punkteMoeglich });
     if (v) vorlageAn(modell, v);
     else vorlageAus(modell, { id: BEWEGUNG_ID, ziel: HINTERGRUND_ZIEL });
   } else if (was === "wetter" || was === "staerke") {
@@ -127,6 +137,35 @@ export function hintergrundAendern(modell, was, wert) {
   return aus;
 }
 
+// Nach JEDEM Wechsel des Hintergrunds aufzurufen - vom Panel, direkt hinter
+// teilAnwenden(). Zwei Dinge, die sonst still schiefgehen:
+//
+// 1. Wer von den Farbpunkten zu einem Foto wechselt, waehrend die Punkte
+//    laufen, verschiebt von da an die erste Ebene des Fotos. Das sieht nach
+//    einem kaputten Bild aus, nicht nach einer Bewegung.
+// 2. "Die Farbpunkte sollen sich leicht bewegen" - Ansage des Maintainers vom
+//    13.10.2026. Wer einen der Farbverlaeufe waehlt und noch gar keine
+//    Bewegung eingestellt hat, bekommt sie deshalb. Wer schon eine hat, behaelt
+//    seine: Eine Vorgabe, die eine Einstellung ueberschreibt, ist keine
+//    Vorgabe, sondern ein Verlust.
+//
+// zurueck: die Felder, die sich geaendert haben - dieselbe Form wie oben.
+export function hintergrundGewaehlt(modell) {
+  const aus = { felder: [], abgelehnt: null };
+  if (!modell) return aus;
+  modell.flach = modell.flach || {};
+  const vorher = stilText(modell);
+  const s = hintergrundStand(modell);
+
+  const r = bewegungNachBild(vorher, EBENEN.map((e) => modell?.[e]?.[FELD]));
+  if (r === null) vorlageAus(modell, { id: BEWEGUNG_ID, ziel: HINTERGRUND_ZIEL });
+  else if (r) vorlageAn(modell, r);
+  else if (!s.bewegung && s.punkteMoeglich) vorlageAn(modell, bewegung(PUNKTE_VORGABE, { punkte: true }));
+
+  if (stilText(modell) !== vorher) aus.felder = [STILZIEL];
+  return aus;
+}
+
 // ---------------------------------------------------------------------------
 // Zeichnen
 
@@ -143,6 +182,9 @@ const TEXTE = {
   bewegung: ["Bewegung", "Motion"],
   brauchtUix: ["braucht UI eXtension", "needs UI eXtension"],
   drift: ["Treiben", "Drift"],
+  punkte: ["Farbpunkte", "Colour spots"],
+  punkteNur: ["Die Farbpunkte lassen sich nur auf einem Hintergrund aus Farbpunkten einzeln bewegen. Auf einem Foto oder einem einfachen Verlauf wuerde derselbe Regler das Bild verschieben.",
+    "Colour spots can only be moved individually on a background made of colour spots. On a photo or a plain gradient the same slider would shift the image."],
   farbe: ["Farbwechsel", "Colour shift"],
   weite: ["Ausschlag", "Range"],
   bewegungZweck: ["Der Hintergrund treibt langsam und kann dabei seinen Farbton wechseln. Wer am Geraet \"Bewegung reduzieren\" eingestellt hat, bekommt keine. Fuer das Treiben wird die Flaeche fest gestellt.",
@@ -171,6 +213,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 export function anzeige(was, wert, spr) {
   const z = Number(wert);
   if (was === "drift") return z ? driftDauer(z) + " s" : T("aus", spr);
+  if (was === "punkte") return z ? punkteDauer(z) + " s" : T("aus", spr);
   if (was === "farbe") return z ? farbDauer(z) + " s" : T("aus", spr);
   if (was === "weite") { const g = AUSSCHLAEGE[z] ?? AUSSCHLAEGE[1]; return g === 360 ? T("kreis", spr) : g + "°"; }
   return String(wert);
@@ -185,7 +228,7 @@ const weiteStelle = (grad) => {
 export function hintergrundSeiteHtml({ modell, spr = "de", wetter = [] } = {}) {
   const s = hintergrundStand(modell);
   const zu = modell ? "" : "disabled";
-  const b = s.bewegung || { drift: 0, farbe: 0, weite: BEWEGUNG_VORGABE.weite };
+  const b = s.bewegung || { drift: 0, punkte: 0, farbe: 0, weite: BEWEGUNG_VORGABE.weite };
   const h = s.himmel || { wetter: "", staerke: HIMMEL_VORGABE.staerke };
   const regel = (was, min, max, wert, sperre = "") => `
             <label class="bk-regel">
@@ -222,9 +265,10 @@ export function hintergrundSeiteHtml({ modell, spr = "de", wetter = [] } = {}) {
 
         <section class="bk-sorte">
           <h3>${T("bewegung", spr)} <span class="bk-zahl">${T("brauchtUix", spr)}</span></h3>
-          <div class="bk-regler">${regel("drift", 0, BEWEGUNG_STUFEN, b.drift)}${regel("farbe", 0, BEWEGUNG_STUFEN, b.farbe)}${regel("weite", 0, AUSSCHLAEGE.length - 1, weiteStelle(b.weite), b.farbe ? "" : "disabled")}
+          <div class="bk-regler">${regel("drift", 0, BEWEGUNG_STUFEN, b.drift)}${regel("punkte", 0, BEWEGUNG_STUFEN, b.punkte, s.punkteMoeglich ? "" : "disabled")}${regel("farbe", 0, BEWEGUNG_STUFEN, b.farbe)}${regel("weite", 0, AUSSCHLAEGE.length - 1, weiteStelle(b.weite), b.farbe ? "" : "disabled")}
           </div>
           <p class="bk-zweck">${T("bewegungZweck", spr)}</p>
+          ${s.hatHintergrund && !s.punkteMoeglich ? `<p class="bk-hinweis">${T("punkteNur", spr)}</p>` : ""}
         </section>
 
         <section class="bk-sorte">
