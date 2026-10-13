@@ -29,12 +29,19 @@ const faelle = {
   "leerzeichen-aussen": "  gepolstert  ",
   "prozent": "90%",
   "eckig": "[nicht] {gemeint}",
+  // Mehrzeilig. Das ist der Fall, bei dem ein Fehler nicht ein Feld kostet,
+  // sondern die ganze Datei: Ein falsch geschriebener Blockskalar schickt
+  // Home Assistant beim naechsten Start in den Wiederherstellungsmodus.
+  "mehrzeilig": ":host(ha-card) {\n  border: 0;\n  /* Kommentar */\n}\nha-card { color: red }",
+  "mehrzeilig-mit-umbruch": "eins\nzwei\n",
+  "mehrzeilig-leerzeile": "eins\n\ndrei",
+  "mehrzeilig-mit-anfuehrung": 'a::before { content: "x" }\nb { color: #fff }',
 };
 
 const m = leeresModell("gegenprobe");
 m.flach = { ...faelle };
-m.light = { nur_hell: "#ffffff" };
-m.dark = { nur_dunkel: "#000000" };
+m.light = { nur_hell: "#ffffff", hell_mehrzeilig: "a {\n  b: 1\n}" };
+m.dark = { nur_dunkel: "#000000", dunkel_mehrzeilig: "a {\n  b: 2\n}" };
 
 const ordner = mkdtempSync(path.join(tmpdir(), "hats-"));
 const datei = path.join(ordner, "probe.yaml");

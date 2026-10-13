@@ -22,7 +22,7 @@
 
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
-import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe } from "./theme.js";
+import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 
 const HATS_VERSION = "0.2.0b1";
@@ -35,7 +35,7 @@ const HATS_VERSION = "0.2.0b1";
 // angezeigt wird) oder `w` (ein fester Text). Was hier steht, ist die
 // Gliederung; das Schreiben in die Theme kommt im naechsten Schritt.
 const STUFEN = [
-  { n: 1, titel: "Grundlagen", kurz: "Name, Palette, Akzent, Textfarben, Schrift",
+  { n: 1, titel: "Grundlagen", symbol: "mdi:palette-outline", kurz: "Name, Palette, Akzent, Textfarben, Schrift",
     marke: "#7bd14a", stand: "offen", gruppen: [
       { name: "Start", felder: [
         // Der Name ist kein Theme-Feld, sondern der Schluessel der Datei.
@@ -196,7 +196,7 @@ const STUFEN = [
       ] },
     ] },
 
-  { n: 2, titel: "Flaechen", kurz: "Hintergrund, Karten, Dialoge, Kanten, Eingaben",
+  { n: 2, titel: "Flaechen", symbol: "mdi:layers-outline", kurz: "Hintergrund, Karten, Dialoge, Kanten, Eingaben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Alles hier wechselt mit dem Modus - im Hellen hell, im Dunkeln dunkel.
       // Deshalb durchweg getrennt, nicht flach.
@@ -281,7 +281,7 @@ const STUFEN = [
       ] },
     ] },
 
-  { n: 3, titel: "Form", kurz: "Rundung, Rahmen, Abstaende, Schatten, Knoepfe",
+  { n: 3, titel: "Form", symbol: "mdi:border-radius", kurz: "Rundung, Rahmen, Abstaende, Schatten, Knoepfe",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Masse sind in beiden Modi gleich - HA setzt sie einmal in
       // core.globals.ts. Nur die Schatten unterscheiden sich.
@@ -356,7 +356,7 @@ const STUFEN = [
       
     ] },
 
-  { n: 4, titel: "Zustaende", kurz: "Lautstaerken, Ueberfahren, Druecken, Deckkraft, Fokus",
+  { n: 4, titel: "Zustaende", symbol: "mdi:gesture-tap-button", kurz: "Lautstaerken, Ueberfahren, Druecken, Deckkraft, Fokus",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Diese Felder leitet Home Assistant selbst aus der Palette ab. Wer sie
       // setzt, friert sie ein und nimmt der Primaerfarbe ihre Wirkung - das
@@ -474,7 +474,7 @@ const STUFEN = [
       ] },
     ] },
 
-  { n: 5, titel: "Symbole", kurz: "Form, Groesse, Zustandsfarben",
+  { n: 5, titel: "Symbole", symbol: "mdi:shape-outline", kurz: "Form, Groesse, Zustandsfarben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Rundung erbt durch jede Shadow-Grenze: ein Wert erreicht Kacheln,
       // Mushroom, Zeilen und Glance zugleich, ohne einen einzigen Pfad.
@@ -514,7 +514,7 @@ const STUFEN = [
       ] },
     ] },
 
-  { n: 6, titel: "Fremde Karten", kurz: "Bubble Card und Mushroom anbinden",
+  { n: 6, titel: "Fremde Karten", symbol: "mdi:puzzle-outline", kurz: "Bubble Card und Mushroom anbinden",
     marke: "#c2c8d2", stand: "wartet",
     aktion: { name: "Alle anbinden", tut: "zuordnung" },
     gruppen: [
@@ -542,7 +542,7 @@ const STUFEN = [
         { t: "Abstand", art: "mass", v: "--mush-spacing", ebene: "beide", min: 0, max: 32 } ] },
     ] },
 
-  { n: 7, titel: "Feinschliff", kurz: "Karte, Diagramme, Energie, Code-Editor, Glas",
+  { n: 7, titel: "Feinschliff", symbol: "mdi:auto-fix", kurz: "Karte, Diagramme, Energie, Code-Editor, Glas",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Die Kartentokens haben alle eine LEERE Vorgabe: ein Wert dort nagelt
       // jede Theme auf eine Kartenfarbe fest. Leer heisst, HA behaelt seine
@@ -666,7 +666,7 @@ const STUFEN = [
       ] },
     ] },
 
-  { n: 8, titel: "Ausgabe", kurz: "Pruefen, Bericht, Textrichtung, Theme schreiben",
+  { n: 8, titel: "Ausgabe", symbol: "mdi:content-save-outline", kurz: "Pruefen, Bericht, Textrichtung, Theme schreiben",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       { name: "Pruefen", felder: [
         { t: "YAML gueltig", art: "bericht", bericht: "yaml" },
@@ -784,9 +784,35 @@ const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 const felderZahl = (st) => st.gruppen.reduce((n, g) => n + g.felder.length, 0);
 const felderGesamt = STUFEN.reduce((n, st) => n + felderZahl(st), 0);
 
+// Welche Feldnamen die Oberflaeche bedienen kann. Dagegen wird beim Import
+// gemessen - alles andere wird mitgenommen, aber nicht angeboten. Die
+// Zuordnung zaehlt dazu: Ihre Felder schreibt HATS selbst, auch ohne Kachel.
+const BEKANNT = new Set([
+  ...STUFEN.flatMap((s) => s.gruppen.flatMap((g) => g.felder))
+    .filter((f) => f.v).map((f) => f.v.replace(/^--/, "")),
+  ...Object.keys(ZUORDNUNG),
+]);
+
 const TEXTE = {
   en: {
     "Guten Tag": "Good afternoon",
+    "Datei oder Text": "File or text",
+    "Eine Theme von anderswo einlesen": "Read a theme from somewhere else",
+    "Mit einem anderen Werkzeug gebaut. Lesen geht - was HATS nicht kennt, bleibt unveraendert in der Datei:": "Built with another tool. Reading works - whatever HATS does not know stays untouched in the file:",
+    "lesen": "read",
+    "Gelesen": "Read",
+    "ohne Namen": "no name",
+    "flach": "flat", "hell": "light", "dunkel": "dark",
+    "Felder kannst du hier einstellen": "fields you can set here",
+    "Felder kennt HATS nicht. Sie bleiben unveraendert in der Datei, lassen sich hier aber nicht aendern.": "fields HATS does not know. They stay untouched in the file but cannot be changed here.",
+    "Stilziele von HATG oder card-mod. Die pflegt HATS nicht - bearbeite so eine Theme besser dort.": "style targets from HATG or card-mod. HATS does not maintain those - better edit such a theme there.",
+    "Zeilen konnte ich nicht einordnen. Die sind nach dem Speichern WEG:": "lines could not be placed. They are GONE once you save:",
+    "Datei waehlen...": "Choose a file...",
+    "oder hier das YAML einfuegen": "or paste the YAML here",
+    "Einlesen": "Read it",
+    "Nichts zum Einlesen": "Nothing to read",
+    "Als Datei herunterladen": "Download as a file",
+    "In die Zwischenablage": "Copy to the clipboard",
     "Eine Rolle setzt elf Palettenstufen und bleibt deshalb in beiden Modi gleich": "A role sets eleven palette steps and therefore stays the same in both modes",
     "Womit faengst du an?": "Where do you want to start?",
     "Eine neue Theme oder eine vorhandene weiterbauen": "A new theme, or carry on with an existing one",
@@ -866,6 +892,7 @@ const ZUSTAND = {
   // danach eine Datei oeffnet, haette die Vorlage schon drunterliegen.
   start: true,
   dateien: null,     // null = noch nicht geholt, [] = geholt und leer
+  bericht: null,     // was beim letzten Einlesen herauskam
   modell: null,
   name: "",
   geaendert: new Set(),
@@ -916,6 +943,105 @@ class HatsPanel extends HTMLElement {
     this.zeichne();
   }
 
+  // Der Bericht nach dem Einlesen. Er sagt, was bedienbar ist, was
+  // mitgenommen wird und was dabei verloren geht - letzteres beim Namen.
+  zeigeBericht() {
+    const T = (x) => t(x, this.spr);
+    const b = ZUSTAND.bericht;
+    if (!b) return;
+    const d = this.shadowRoot.querySelector(".overlay.zwei .dialog");
+    const liste = (arr, max = 12) => arr.slice(0, max).map((x) => `<code>${x}</code>`).join(" ")
+      + (arr.length > max ? ` <em>+${arr.length - max}</em>` : "");
+
+    d.innerHTML = `
+      <header class="dkopf">
+        <div><h2>${T("Gelesen")}</h2><p>${b.name || T("ohne Namen")}</p></div>
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+      <div class="feldseite">
+        <div class="berichtzahlen">
+          <div><b>${b.felder}</b><span>${T("Felder")}</span></div>
+          <div><b>${b.flach}</b><span>${T("flach")}</span></div>
+          <div><b>${b.hell}</b><span>${T("hell")}</span></div>
+          <div><b>${b.dunkel}</b><span>${T("dunkel")}</span></div>
+        </div>
+
+        <div class="berichtzeile gut">
+          <b>${b.bedienbar.length}</b> ${T("Felder kannst du hier einstellen")}
+        </div>
+
+        ${b.mitgenommen.length ? `
+        <div class="berichtzeile">
+          <b>${b.mitgenommen.length}</b> ${T("Felder kennt HATS nicht. Sie bleiben unveraendert in der Datei, lassen sich hier aber nicht aendern.")}
+          <div class="berichtnamen">${liste(b.mitgenommen)}</div>
+        </div>` : ""}
+
+        ${b.stilziele.length ? `
+        <div class="berichtzeile warnung">
+          <b>${b.stilziele.length}</b> ${T("Stilziele von HATG oder card-mod. Die pflegt HATS nicht - bearbeite so eine Theme besser dort.")}
+          <div class="berichtnamen">${liste(b.stilziele, 6)}</div>
+        </div>` : ""}
+
+        ${b.unklar.length ? `
+        <div class="berichtzeile fehler">
+          <b>${b.unklar.length}</b> ${T("Zeilen konnte ich nicht einordnen. Die sind nach dem Speichern WEG:")}
+          <div class="berichtnamen">${b.unklar.slice(0, 8).map((x) => `<code>${String(x).replace(/</g, "&lt;")}</code>`).join(" ")}</div>
+        </div>` : ""}
+
+        <p class="noch">${T("Geaendert wird im Fenster, geschrieben noch nicht.")}</p>
+      </div>`;
+
+    d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+  }
+
+  // Datei waehlen oder Text einfuegen.
+  zeigeImport() {
+    const T = (x) => t(x, this.spr);
+    const d = this.shadowRoot.querySelector(".overlay.zwei .dialog");
+    d.innerHTML = `
+      <header class="dkopf">
+        <div><h2>${T("Datei oder Text")}</h2><p>${T("Eine Theme von anderswo einlesen")}</p></div>
+        <button class="zu" aria-label="${T("Schließen")}">✕</button>
+      </header>
+      <div class="feldseite">
+        <input type="file" accept=".yaml,.yml,text/yaml,text/plain" class="dateiwahl" hidden>
+        <div class="importwege">
+          <button class="modalknopf dateiknopf">${T("Datei waehlen...")}</button>
+          <span class="dateiname"></span>
+        </div>
+        <textarea class="importtext" spellcheck="false"
+                  placeholder="${T("oder hier das YAML einfuegen")}"></textarea>
+        <div class="importfuss">
+          <button class="modalknopf einlesen">${T("Einlesen")}</button>
+        </div>
+      </div>`;
+
+    const feld = d.querySelector(".dateiwahl");
+    const text = d.querySelector(".importtext");
+    d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    d.querySelector(".dateiknopf").addEventListener("click", () => feld.click());
+    feld.addEventListener("change", async () => {
+      const f = feld.files && feld.files[0];
+      if (!f) return;
+      d.querySelector(".dateiname").textContent = f.name;
+      text.value = await f.text();
+    });
+    d.querySelector(".einlesen").addEventListener("click", () => {
+      const roh = text.value.trim();
+      if (!roh) { ZUSTAND.meldung = { text: T("Nichts zum Einlesen"), art: "fehler" }; this.zeichne(); return; }
+      this.schliesseFeld();
+      const quelle = d.querySelector(".dateiname").textContent || T("eingefuegtem Text");
+      this.importiereText(roh, quelle);
+    });
+
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+  }
+
   // Das Startbild: zwei Wege, und darunter die vorhandenen Dateien.
   startbild(T) {
     const d = ZUSTAND.dateien;
@@ -926,10 +1052,14 @@ class HatsPanel extends HTMLElement {
     const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
 
     return `
-      <div class="startwege">
+      <div class="startwege drei">
         <button class="weg neu">
           <span class="wegtitel">${T("Neue Theme")}</span>
           <span class="wegtext">${T("Leere Grundlage auf HA 2026.10, ohne Altlasten")}</span>
+        </button>
+        <button class="weg importieren">
+          <span class="wegtitel">${T("Datei oder Text")}</span>
+          <span class="wegtext">${T("Eine Theme von anderswo einlesen")}</span>
         </button>
         <div class="weg ${meine.length ? "" : "aus"}">
           <span class="wegtitel">${T("Vorhandene oeffnen")}</span>
@@ -952,11 +1082,12 @@ class HatsPanel extends HTMLElement {
       </div>` : ""}
 
       ${fremde.length ? `<div class="liste schmal fremd">
-        <p class="leer">${T("Mit einem anderen Werkzeug gebaut - der Import dafuer kommt spaeter:")}</p>
+        <p class="leer">${T("Mit einem anderen Werkzeug gebaut. Lesen geht - was HATS nicht kennt, bleibt unveraendert in der Datei:")}</p>
         ${fremde.map((x) => `
-          <div class="zeile datei gesperrt" title="${T("Kein HATS-Kopf in der Datei")}">
+          <div class="zeile datei" data-datei="${x.name}">
             <span class="punkt"></span>
             <div class="zeilentext"><b>${x.name.replace(/\.yaml$/, "")}</b><small>${kb(x.bytes)}</small></div>
+            <span class="stempel">${T("lesen")}</span>
           </div>`).join("")}
       </div>` : ""}
     `;
@@ -977,10 +1108,12 @@ class HatsPanel extends HTMLElement {
     this.zeichne();
   }
 
-  // Eine vorhandene Theme oeffnen. Nur solche, die HATS selbst gebaut hat:
-  // Eine fremde Datei kann Felder und Stilziele tragen, die dieses Werkzeug
-  // nicht kennt, und beim naechsten Speichern waeren sie weg. Der Import
-  // fremder Dateien kommt spaeter und braucht einen Bericht, was passiert.
+  // Eine vorhandene Theme oeffnen - auch eine fremde.
+  //
+  // Lange war das gesperrt, aus Sorge, fremde Felder gingen verloren. Gemessen
+  // stimmt das nicht: leseTheme legt JEDES Feld ins Modell, und schreibeTheme
+  // gibt es wieder aus, ob die Oberflaeche es kennt oder nicht. Was fehlte,
+  // war nicht die Faehigkeit, sondern die Auskunft - deshalb der Bericht.
   async oeffneDatei(name) {
     try {
       const r = await this._hass.connection.sendMessagePromise({
@@ -996,8 +1129,63 @@ class HatsPanel extends HTMLElement {
       ZUSTAND.geaendert.clear();
       ZUSTAND.start = false;
       ZUSTAND.meldung = { text: `Geoeffnet: ${name}`, art: "gut" };
+      ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT);
     } catch (e) {
       ZUSTAND.meldung = { text: "Nicht geoeffnet: " + (e.message || e.code || e), art: "fehler" };
+    }
+    this.zeichne();
+    if (ZUSTAND.bericht) this.zeigeBericht();
+  }
+
+  // Dieselbe Strecke fuer eingefuegten Text oder eine gewaehlte Datei. Der
+  // Name kommt aus dem Theme selbst, nicht aus dem Dateinamen - in der Datei
+  // steht er als Wurzelschluessel, und der ist massgeblich.
+  importiereText(text, quelle) {
+    const m = leseTheme(text || "");
+    if (m.fehler) {
+      ZUSTAND.meldung = { text: "Nicht gelesen: " + m.fehler, art: "fehler" };
+      this.zeichne();
+      return;
+    }
+    ZUSTAND.modell = m;
+    ZUSTAND.name = m.name || "";
+    ZUSTAND.meta.Grundlage = quelle;
+    this._grundlage = JSON.parse(JSON.stringify(m));
+    ZUSTAND.geaendert.clear();
+    ZUSTAND.start = false;
+    ZUSTAND.meldung = { text: `Gelesen aus ${quelle}`, art: "gut" };
+    ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT);
+    this.zeichne();
+    this.zeigeBericht();
+  }
+
+  // Die Theme als Datei herunterladen - ohne Umweg ueber config/themes.
+  // Dateiname ist der Theme-Name, nicht "download.yaml": Beim Zurueckspielen
+  // ist der Name der Schluessel, und ein falscher legt eine zweite Theme an.
+  herunterladen() {
+    if (!ZUSTAND.modell) return;
+    const name = (ZUSTAND.name || ZUSTAND.modell.name || "theme").trim();
+    ZUSTAND.modell.name = name;
+    const blob = new Blob([schreibeTheme(ZUSTAND.modell)], { type: "text/yaml" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name}.yaml`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    ZUSTAND.meldung = { text: `Heruntergeladen: ${name}.yaml`, art: "gut" };
+    this.zeichne();
+  }
+
+  async kopieren() {
+    if (!ZUSTAND.modell) return;
+    const text = schreibeTheme(ZUSTAND.modell);
+    try {
+      await navigator.clipboard.writeText(text);
+      ZUSTAND.meldung = { text: "In die Zwischenablage kopiert", art: "gut" };
+    } catch (e) {
+      // Ohne sicheren Kontext gibt es keine Zwischenablage. Dann nicht
+      // schweigen, sondern den Weg nennen, der bleibt.
+      ZUSTAND.meldung = { text: "Zwischenablage nicht erreichbar - nimm Herunterladen", art: "fehler" };
     }
     this.zeichne();
   }
@@ -1026,11 +1214,18 @@ class HatsPanel extends HTMLElement {
       <div class="buehne">
         <div class="wolke a"></div><div class="wolke b"></div>
         <div class="fenster">
+          <!-- Die Leiste traegt jetzt echte Symbole, eins je Stufe - wie in
+               HATG. ha-icon ist ein globales Bauteil von Home Assistant und
+               funktioniert auch in diesem Shadow Root. -->
           <nav class="rail">
             <div class="marke"></div>
-            <button class="railknopf an" title="1"></button>
-            <button class="railknopf" title="2"></button>
-            <button class="railknopf" title="3"></button>
+            ${STUFEN.map((st) => `
+              <button class="railknopf ${this._offen === st.n ? "an" : ""}"
+                      data-rail="${st.n}" title="${st.n}. ${T(st.titel)}"
+                      aria-label="${st.n}. ${T(st.titel)}"
+                      ${ZUSTAND.start ? "disabled" : ""}>
+                <ha-icon icon="${st.symbol}"></ha-icon>
+              </button>`).join("")}
             <div class="railfuss"></div>
           </nav>
           <section class="inhalt">
@@ -1044,6 +1239,8 @@ class HatsPanel extends HTMLElement {
                 <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
                        placeholder="${T("Name der Theme")}" spellcheck="false">
                 <span class="zaehlerbox"><b class="zaehler">${ZUSTAND.geaendert.size}</b> ${T("Aenderungen")}</span>
+                <button class="ausgang laden" title="${T("Als Datei herunterladen")}" aria-label="${T("Als Datei herunterladen")}">↓</button>
+                <button class="ausgang kopie" title="${T("In die Zwischenablage")}" aria-label="${T("In die Zwischenablage")}">⧉</button>
                 <button class="speichern">${T("Speichern")}</button>
               </div>`}
             </header>
@@ -1089,9 +1286,18 @@ class HatsPanel extends HTMLElement {
 
     const neuKnopf = this.shadowRoot.querySelector(".weg.neu");
     if (neuKnopf) neuKnopf.addEventListener("click", () => this.neuBeginnen());
+    const impKnopf = this.shadowRoot.querySelector(".weg.importieren");
+    if (impKnopf) impKnopf.addEventListener("click", () => this.zeigeImport());
     this.shadowRoot.querySelectorAll(".zeile.datei:not(.gesperrt)").forEach((z) =>
       z.addEventListener("click", () => this.oeffneDatei(z.dataset.datei))
     );
+    this.shadowRoot.querySelectorAll("[data-rail]").forEach((b) =>
+      b.addEventListener("click", () => this.oeffne(Number(b.dataset.rail)))
+    );
+    const ld = this.shadowRoot.querySelector(".ausgang.laden");
+    if (ld) ld.addEventListener("click", () => this.herunterladen());
+    const kp = this.shadowRoot.querySelector(".ausgang.kopie");
+    if (kp) kp.addEventListener("click", () => this.kopieren());
 
     this.shadowRoot.querySelectorAll(".punkte").forEach((b) =>
       b.addEventListener("click", (e) => { e.stopPropagation(); this.oeffne(Number(b.dataset.stufe)); })
@@ -1771,8 +1977,17 @@ class HatsPanel extends HTMLElement {
       .marke { width: 44px; height: 44px; border-radius: 13px; margin-bottom: 10px;
                background: linear-gradient(145deg, #c6f24d, #8fd92a); box-shadow: var(--s-schatten-klein); }
       .railknopf { width: 38px; height: 38px; border: 0; border-radius: 12px; cursor: pointer;
-                   background: rgba(255,255,255,.35); }
+                   background: rgba(255,255,255,.35); display: flex; align-items: center;
+                   justify-content: center; color: var(--s-tinte);
+                   transition: background .15s ease, box-shadow .15s ease; }
+      .railknopf ha-icon { --mdc-icon-size: 20px; color: var(--s-tinte-leise); }
+      .railknopf:hover:not([disabled]) { background: rgba(255,255,255,.65); }
       .railknopf.an { background: rgba(255,255,255,.85); box-shadow: var(--s-schatten-klein); }
+      .railknopf.an ha-icon { color: var(--s-tinte); }
+      /* Auf dem Startbild gibt es noch keine Stufe zum Oeffnen. Die Knoepfe
+         dann anzuzeigen, aber tot zu lassen, waere schlimmer als sie zu
+         daempfen - so sieht man, dass es sie gibt und wann sie greifen. */
+      .railknopf[disabled] { cursor: default; opacity: .4; }
       .railfuss { margin-top: auto; width: 30px; height: 30px; border-radius: 50%; background: rgba(27,36,48,.55); }
 
       .inhalt { flex: 1; min-width: 0; padding: 26px 30px 30px; }
@@ -1853,7 +2068,49 @@ class HatsPanel extends HTMLElement {
          schlimmer: wer seine Datei nicht findet, sucht den Fehler bei sich. */
       .zeile.gesperrt { cursor: not-allowed; opacity: .5; }
       .zeile.gesperrt:hover { background: none; box-shadow: none; }
-      @media (max-width: 620px) { .startwege { grid-template-columns: 1fr; } }
+      .startwege.drei { grid-template-columns: repeat(3, 1fr); }
+      @media (max-width: 860px) { .startwege.drei { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 620px) { .startwege, .startwege.drei { grid-template-columns: 1fr; } }
+
+      /* ---- Ausgang: herunterladen und kopieren ---- */
+      .ausgang { width: 34px; height: 34px; flex: none; border: 0; border-radius: 999px;
+                 background: rgba(255,255,255,.75); color: var(--s-tinte);
+                 font-size: 15px; line-height: 1; cursor: pointer;
+                 box-shadow: inset 0 0 0 1px rgba(27,36,48,.08);
+                 transition: background .15s ease, box-shadow .15s ease; }
+      .ausgang:hover { background: #fff; box-shadow: var(--s-schatten-klein); }
+
+      /* ---- Bericht nach dem Einlesen ---- */
+      .berichtzahlen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+                       margin-bottom: 14px; }
+      .berichtzahlen div { background: rgba(27,36,48,.05); border-radius: var(--s-r);
+                           padding: 10px 12px; text-align: center; }
+      .berichtzahlen b { display: block; font-size: 19px; font-weight: 600; }
+      .berichtzahlen span { font-size: 11px; color: var(--s-tinte-leise); }
+      .berichtzeile { padding: 12px 14px; border-radius: var(--s-r); margin-bottom: 8px;
+                      background: rgba(27,36,48,.04); font-size: 13px; line-height: 1.5; }
+      .berichtzeile b { font-size: 15px; }
+      .berichtzeile.gut     { background: rgba(110,190,90,.14); }
+      .berichtzeile.warnung { background: rgba(230,160,40,.16); }
+      /* Rot nur dort, wo wirklich etwas verloren geht - sonst stumpft es ab. */
+      .berichtzeile.fehler  { background: rgba(215,73,65,.14); }
+      .berichtnamen { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+      .berichtnamen code { font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                           background: rgba(255,255,255,.7); padding: 2px 6px; border-radius: 6px; }
+      .berichtnamen em { font-size: 11px; color: var(--s-tinte-leise); align-self: center; }
+
+      /* ---- Datei oder Text ---- */
+      .importwege { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+      .dateiname { font-size: 12px; color: var(--s-tinte-leise); }
+      .modalknopf { border: 0; border-radius: 999px; padding: 9px 18px; font: inherit;
+                    font-size: 13px; cursor: pointer; background: var(--s-tinte); color: #fff; }
+      .modalknopf.dateiknopf { background: rgba(27,36,48,.08); color: var(--s-tinte); }
+      .importtext { width: 100%; min-height: 200px; box-sizing: border-box; resize: vertical;
+                    border: 0; border-radius: var(--s-r); padding: 12px 14px;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+                    background: rgba(27,36,48,.05); color: var(--s-tinte); }
+      .importtext:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 1px rgba(27,36,48,.18); }
+      .importfuss { display: flex; justify-content: flex-end; margin-top: 12px; }
       .spur { position: relative; width: 14px; flex: none; align-self: stretch; display: flex;
               align-items: center; justify-content: center; }
       .punkt { width: 9px; height: 9px; border-radius: 50%; background: #fff;

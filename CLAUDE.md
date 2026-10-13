@@ -369,6 +369,39 @@ aufgeteilte Rampe wäre in einem Modus unvollständig. Der Knopf steht dort
 allein und trägt die Begründung als `title`; ohne sie sähe es nach einem
 Versehen aus.
 
+### Ein- und Ausgabe: der Bericht ist der eigentliche Teil
+
+Lesen konnte HATS fremde Themes immer — `leseTheme` legt jedes Feld ins
+Modell, `schreibeTheme` gibt es wieder aus, ob die Oberfläche es kennt oder
+nicht. Was fehlte, war nicht die Fähigkeit, sondern die **Auskunft**: Ohne
+Bericht glaubt man, ein Feld sei weg, nur weil keine Kachel dafür da ist.
+
+`berichtUeberTheme()` trennt deshalb vier Dinge, und nur eines davon ist rot:
+
+    bedienbar      hat eine Kachel
+    mitgenommen    bleibt unveraendert in der Datei, ist hier nicht aenderbar
+    stilziele      uix-* oder card-mod-* - die Theme gehoert HATG
+    unklar         Zeilen, die der Leser nicht einordnen konnte - DIE sind weg
+
+**Mehrzeilige Werte brauchen einen Blockskalar.** Beim ersten Import einer
+HATG-Theme am 13.10.2026 meldete der Bericht **155 unlesbare Zeilen** — es war
+der Rumpf der `uix-`Blöcke. Zwei Fehler an derselben Stelle:
+
+- `leseTheme` war zeilenweise und kannte `|` nicht. Der Schlüssel kam an, der
+  Rumpf fiel weg.
+- `quote()` hätte beim Zurückschreiben die Umbrüche mitten in einen gequoteten
+  Skalar gelegt. **YAML faltet die zu Leerzeichen** — aus einem CSS-Block wird
+  eine Zeile, und ein `/* … */` frisst alles dahinter.
+
+Geschrieben wird jetzt `|-`, und `|` nur, wenn der Wert auf einen Umbruch
+endet: Ohne das Minus hängt YAML beim Lesen einen an, und der Rundlauf stimmt
+nicht mehr. Die PyYAML-Gegenprobe deckt die mehrzeiligen Fälle mit ab — das ist
+die Prüfung, die zählt, denn ein falscher Blockskalar kostet nicht ein Feld,
+sondern die ganze Datei.
+
+Nach der Korrektur: dieselbe Datei, **null unlesbare Zeilen**, 287 bedienbar,
+400 mitgenommen, 13 Stilziele.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter

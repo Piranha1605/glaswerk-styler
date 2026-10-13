@@ -78,7 +78,6 @@ pruefe("Rollenfarben stehen flach, Textfarben je Modus", () => {
 });
 
 assert.ok(n >= 6, `nur ${n} Pruefungen gelaufen - der Test prueft nichts`);
-console.log(`\n${n} Pruefungen`);
 
 pruefe("Jedes Mass-Feld hat eine Einheit oder nimmt die Vorgabe px", () => {
   // "border-radius: 18" ist ungueltiges CSS und wird stillschweigend
@@ -125,3 +124,21 @@ pruefe("Gegenprobe: ein fehlendes Feld wird gefunden", () => {
   assert.ok(!inUi.has("gibt-es-nicht-xyz"), "die Menge ist nicht das, was sie sein soll");
   assert.ok(inUi.size > 350, `nur ${inUi.size} Felder in der Oberflaeche`);
 });
+
+pruefe("Jede Stufe hat ein Symbol fuer die Leiste", () => {
+  // Die Leiste trug bis zum 13.10.2026 drei leere Platzhalter. Jetzt ein
+  // Symbol je Stufe, wie in HATG - und es steht in den Daten, nicht im
+  // Markup, damit Leiste und Stufenliste nicht auseinanderlaufen koennen.
+  const symbole = [...block.matchAll(/symbol: "(mdi:[a-z0-9-]+)"/g)].map((m) => m[1]);
+  assert.strictEqual(symbole.length, 8, `${symbole.length} Symbole statt 8`);
+  assert.strictEqual(new Set(symbole).size, 8, `Symbole doppelt vergeben: ${symbole}`);
+});
+
+pruefe("Die Leiste wird aus STUFEN erzeugt, nicht getippt", () => {
+  // Gegenprobe gegen eine handgeschriebene Knopfreihe: Die waere beim
+  // naechsten Umbau still veraltet.
+  assert.match(quelle, /STUFEN\.map\(\(st\) => `\s*\n\s*<button class="railknopf/);
+  assert.doesNotMatch(quelle, /<button class="railknopf an" title="1">/, "Platzhalter sind zurueck");
+});
+
+console.log(`\n${n} Pruefungen`);

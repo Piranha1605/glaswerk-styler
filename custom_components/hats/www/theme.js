@@ -24,6 +24,25 @@ export function quote(wert) {
   return '"' + String(wert).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
 }
 
+// Ein mehrzeiliger Wert gehoert in einen Blockskalar, nicht in
+// Anfuehrungszeichen.
+//
+// quote() wuerde die Zeilenumbrueche mitten in einen doppelt gequoteten
+// Skalar legen. YAML faltet die dann zu Leerzeichen - aus einem CSS-Block
+// wird eine einzige Zeile, und Kommentare wie "/* ... */" fressen alles
+// dahinter. Am 13.10.2026 beim ersten Import einer HATG-Theme aufgefallen.
+//
+// "|-" statt "|": Ohne das Minus haengt YAML beim Lesen einen
+// Zeilenumbruch an, und der Rundlauf stimmt nicht mehr.
+function schreibeWert(k, wert, einzug) {
+  const w = String(wert);
+  if (!w.includes("\n")) return `${einzug}${k}: ${quote(w)}\n`;
+  const endetMitUmbruch = w.endsWith("\n");
+  const koerper = (endetMitUmbruch ? w.slice(0, -1) : w)
+    .split("\n").map((z) => (z.length ? einzug + "  " + z : "")).join("\n");
+  return `${einzug}${k}: ${endetMitUmbruch ? "|" : "|-"}\n${koerper}\n`;
+}
+
 export function leeresModell(name) {
   return { name, flach: {}, light: {}, dark: {}, kopf: [] };
 }
@@ -52,8 +71,37 @@ export function leseTheme(text) {
     if (/^ {4}light:\s*$/.test(z)) { ebene = "light"; continue; }
     if (/^ {4}dark:\s*$/.test(z)) { ebene = "dark"; continue; }
 
-    const feld = /^ +([a-zA-Z0-9][a-zA-Z0-9_-]*):\s*(.*)$/.exec(z);
-    if (feld && ebene) { m[ebene][feld[1]] = entquote(feld[2]); continue; }
+    const feld = /^( +)([a-zA-Z0-9][a-zA-Z0-9_-]*):\s*(.*)$/.exec(z);
+    if (feld && ebene) {
+      const [, einzug, schluessel, rest] = feld;
+      // Ein Blockskalar: der Wert steht in den eingerueckten Zeilen darunter.
+      // Ohne das verschluckt der Leser jeden mehrzeiligen Wert - bei einer
+      // HATG-Theme waren das am 13.10.2026 155 Zeilen CSS, spurlos.
+      const block = /^([|>])([-+]?)\d*$/.exec(rest.trim());
+      if (block) {
+        const [, art, chomp] = block;
+        const koerper = [];
+        let j = i + 1;
+        for (; j < zeilen.length; j++) {
+          const n = zeilen[j];
+          if (/^\s*$/.test(n)) { koerper.push(""); continue; }
+          const tiefer = /^(\s*)/.exec(n)[1].length > einzug.length;
+          if (!tiefer) break;
+          koerper.push(n);
+        }
+        // Nachlaufende Leerzeilen gehoeren zum naechsten Block, nicht zu diesem.
+        while (koerper.length && koerper[koerper.length - 1] === "") koerper.pop();
+        const tiefen = koerper.filter((x) => x).map((x) => /^(\s*)/.exec(x)[1].length);
+        const weg = tiefen.length ? Math.min(...tiefen) : 0;
+        let wert = koerper.map((x) => x.slice(weg)).join(art === ">" ? " " : "\n");
+        if (chomp !== "-") wert += "\n";
+        m[ebene][schluessel] = wert;
+        i = j - 1;
+        continue;
+      }
+      m[ebene][schluessel] = entquote(rest);
+      continue;
+    }
     unklar.push(`Zeile ${i + 1}: ${z.trim().slice(0, 60)}`);
   }
 
@@ -78,12 +126,12 @@ export function schreibeTheme(modell) {
   let aus = modell.kopf.map((z) => "# " + z).join("\n");
   if (aus) aus += "\n\n";
   aus += modell.name + ":\n";
-  for (const k of sort(modell.flach)) aus += `  ${k}: ${quote(modell.flach[k])}\n`;
+  for (const k of sort(modell.flach)) aus += schreibeWert(k, modell.flach[k], "  ");
   const h = sort(modell.light), d = sort(modell.dark);
   if (h.length || d.length) {
     aus += "\n  modes:\n";
-    if (h.length) { aus += "    light:\n"; for (const k of h) aus += `      ${k}: ${quote(modell.light[k])}\n`; }
-    if (d.length) { aus += (h.length ? "\n" : "") + "    dark:\n"; for (const k of d) aus += `      ${k}: ${quote(modell.dark[k])}\n`; }
+    if (h.length) { aus += "    light:\n"; for (const k of h) aus += schreibeWert(k, modell.light[k], "      "); }
+    if (d.length) { aus += (h.length ? "\n" : "") + "    dark:\n"; for (const k of d) aus += schreibeWert(k, modell.dark[k], "      "); }
   }
   return aus;
 }
@@ -107,6 +155,46 @@ export function setze(modell, name, wert, ebene = "beide") {
     modell[ebene][name] = wert;
   }
   return modell;
+}
+
+// Was beim Import mit einer fremden Datei passiert - als Bericht, nicht als
+// Gefuehl.
+//
+// HATS wirft beim Lesen nichts weg: Jedes Feld landet im Modell und wird beim
+// Speichern wieder mitgeschrieben, auch wenn die Oberflaeche es nicht kennt.
+// Genau das muss man aber SEHEN, bevor man auf Speichern drueckt - sonst
+// glaubt man, ein Feld sei weg, nur weil keine Kachel dafuer da ist.
+//
+// bekannt ist die Menge der Feldnamen OHNE "--", so wie sie in der Datei
+// stehen.
+export function berichtUeberTheme(modell, bekannt) {
+  const zaehl = { bedienbar: [], mitgenommen: [] };
+  const gesehen = new Set();
+  for (const ebene of ["flach", "light", "dark"]) {
+    for (const k of Object.keys(modell[ebene] || {})) {
+      if (gesehen.has(k)) continue;
+      gesehen.add(k);
+      (bekannt.has(k) ? zaehl.bedienbar : zaehl.mitgenommen).push(k);
+    }
+  }
+  zaehl.bedienbar.sort();
+  zaehl.mitgenommen.sort();
+  return {
+    name: modell.name,
+    felder: gesehen.size,
+    flach: Object.keys(modell.flach || {}).length,
+    hell: Object.keys(modell.light || {}).length,
+    dunkel: Object.keys(modell.dark || {}).length,
+    bedienbar: zaehl.bedienbar,
+    mitgenommen: zaehl.mitgenommen,
+    // Zeilen, die der Leser nicht einordnen konnte. Die stehen danach NICHT
+    // mehr in der Datei - als einziges geht hier etwas verloren, und deshalb
+    // wird es beim Namen genannt.
+    unklar: modell.unklar || [],
+    // Marken fremder Werkzeuge: Ein Theme mit UIX-Vorlagen gehoert HATG,
+    // nicht HATS. Wer es hier bearbeitet, verliert die Vorlagenpflege.
+    stilziele: [...gesehen].filter((k) => /^(uix|card-mod)-/.test(k)),
+  };
 }
 
 // Einen var()-Verweis bis zur Farbe verfolgen.
