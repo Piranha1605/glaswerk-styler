@@ -166,6 +166,29 @@ ha-card {
   -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
 }
 
+/* Eine eingeschaltete Karte legt ihre Zustandsfarbe als Schicht ueber die
+   ganze Flaeche - und deckt damit das Glas zu.
+
+   Am 13.10.2026 an fuenf Karten gemessen: Nur die trifft es, die wirklich eine
+   Farbe traegt. Bubble setzt die Deckkraft INLINE, deshalb braucht es hier
+   !important:
+
+       Keller, Licht an    rgb(209, 209, 195)   opacity 0.7   <- deckt zu
+       Buero, Slider       transparent          opacity 0.5
+       Buero, Climate      transparent          opacity 1
+       Garage, aus         transparent          opacity 0.5
+
+   55 % ist die Wahl des Nutzers, zwischen zwei Nachteilen: Deckend sieht man
+   den Zustand klar und das Glas nicht; zu schwach getoent bleibt das Glas, und
+   bei einer blassen Lichtfarbe (warmweiss, beige) sieht man kaum noch, dass
+   etwas an ist.
+
+   Der AUS-Zustand bleibt unberuehrt. Dort ist die Schicht ohnehin farblos -
+   den Unterschied macht die Farbe, nicht die Deckkraft. */
+ha-card.is-on .bubble-background {
+  opacity: .55 !important;
+}
+
 /* Ein Separator ist eine Ueberschriftenzeile, keine Kachel. Bubble laesst ihn
    schon ohne Flaeche; ohne diese Ausnahme laegen trotzdem Weichzeichnung und
    Lichtkante darauf - ein verschwommener Balken mit heller Oberkante hinter
