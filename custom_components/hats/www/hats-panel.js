@@ -22,9 +22,11 @@
 
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
-import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme } from "./theme.js";
+import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme,
+         vorlageAn, vorlageAus, vorlageIstAn, vereinheitlicheVorlagen, vorlagenImTheme } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
+import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
 
 const HATS_VERSION = "0.2.0b2";
 
@@ -812,9 +814,13 @@ const TEXTE = {
     "Add-ons": "Add-ons",
     "Felder angebunden": "fields wired up",
     "von": "of", "Stilzielen an": "style targets on",
+    "Vorlagen an": "templates on",
+    "Stilziele fuer eigenes CSS": "Style targets for your own CSS",
+    "noch kein Bild": "no preview yet",
+    "an": "on",
     "erst eine Theme oeffnen": "open a theme first",
-    "UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Ein Stilziel einschalten legt das Feld im Theme an; ausschalten nimmt es wieder heraus, ohne dein CSS zu vernichten.":
-      "UI eXtension puts your CSS where Home Assistant otherwise won't let it go - into the shadow root of the component itself. Switching a style target on creates the field in the theme; switching it off removes the field again without destroying your CSS.",
+    "UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Eine Vorlage legt einen fertigen Block an; ein Stilziel gibt dir ein leeres Feld fuer eigenes CSS.":
+      "UI eXtension puts your CSS where Home Assistant otherwise won't let it go - into the shadow root of the component itself. A template drops in a ready-made block; a style target gives you an empty field for your own CSS.",
     "Herkunft": "Source",
     "Hintergrundbild": "Background image",
     "Pop-up-Hintergrund": "Pop-up background",
@@ -1098,18 +1104,37 @@ class HatsPanel extends HTMLElement {
     const T = (x) => t(x, this.spr);
     const m = ZUSTAND.modell;
     const an = m ? UIX_ZIELE.filter((z) => m.flach["uix-" + z.id] !== undefined).length : 0;
+    const vAn = m ? VORLAGEN.filter((v) => vorlageIstAn(m, v)).length : 0;
     const d = this.shadowRoot.querySelector(".dialog");
+    const zeigeZiele = this._uixZiele === true;
 
     d.innerHTML = `
       <header class="dkopf">
         <div>
           <h2>UIX</h2>
-          <p>${an} ${T("von")} ${UIX_ZIELE.length} ${T("Stilzielen an")}${m ? "" : " · " + T("erst eine Theme oeffnen")}</p>
+          <p>${vAn} ${T("von")} ${VORLAGEN.length} ${T("Vorlagen an")} · ${an} ${T("von")} ${UIX_ZIELE.length} ${T("Stilzielen an")}${m ? "" : " · " + T("erst eine Theme oeffnen")}</p>
         </div>
         <button class="zu" aria-label="${T("Schließen")}">✕</button>
       </header>
       <div class="uixseite">
-        <p class="noch">${T("UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Ein Stilziel einschalten legt das Feld im Theme an; ausschalten nimmt es wieder heraus, ohne dein CSS zu vernichten.")}</p>
+        <p class="noch">${T("UI eXtension schreibt dein CSS dorthin, wo Home Assistant es sonst nicht hinlaesst - in den Shadow Root des jeweiligen Bauteils. Eine Vorlage legt einen fertigen Block an; ein Stilziel gibt dir ein leeres Feld fuer eigenes CSS.")}</p>
+
+        ${VORLAGEN_GRUPPEN.map((g) => {
+          const drin = VORLAGEN.filter((v) => v.gruppe === g.id);
+          if (!drin.length) return "";
+          return `
+            <h3 class="uixtitel">${this.spr === "en" ? g.en : g.de}</h3>
+            <div class="vorlagenraster">
+              ${drin.map((v) => this.vorlagenKarte(v, m, T)).join("")}
+            </div>`;
+        }).join("")}
+
+        <button class="uixtitel auftun ${zeigeZiele ? "offen" : ""}" data-uix-ziele>
+          <ha-icon icon="${zeigeZiele ? "mdi:chevron-down" : "mdi:chevron-right"}"></ha-icon>
+          ${T("Stilziele fuer eigenes CSS")}
+          <span>${an}/${UIX_ZIELE.length}</span>
+        </button>
+        ${zeigeZiele ? `
         <div class="uixraster">
           ${UIX_ZIELE.map((z) => {
             const name = "uix-" + z.id;
@@ -1127,16 +1152,62 @@ class HatsPanel extends HTMLElement {
                           placeholder="ha-card { ... }">${String(wert).replace(/</g, "&lt;")}</textarea>` : ""}
               </div>`;
           }).join("")}
-        </div>
+        </div>` : ""}
       </div>`;
 
     d.querySelector(".zu").addEventListener("click", () => this.schliesse());
     this.bindeUix(d);
   }
 
+  // Eine Vorlage als Karte: Vorher/Nachher-Bild, Name, Zweck, Schalter.
+  //
+  // Das Bild ist der Punkt. Ein Vorlagenname sagt niemandem, was er bekommt -
+  // "Lichtkante auf Karten" kann alles heissen. Fehlt das Bild, steht da ein
+  // Platzhalter statt eines kaputten Rahmens.
+  vorlagenKarte(v, m, T) {
+    const offen = m ? vorlageIstAn(m, v) : false;
+    const ziel = UIX_ZIELE.find((z) => z.id === v.ziel);
+    return `
+      <div class="vorlage ${offen ? "an" : ""}">
+        <div class="vbild" data-vorlage-bild="${v.id}">
+          <img src="/hats_static/vorschau/${v.id}.png" alt="" loading="lazy"
+               onerror="this.closest('.vbild').classList.add('ohne')">
+          <span class="vleer">${T("noch kein Bild")}</span>
+        </div>
+        <div class="vtext">
+          <b>${this.spr === "en" ? v.en : v.de}</b>
+          <p>${this.spr === "en" ? v.zweckEn : v.zweckDe}</p>
+          <code>uix-${v.ziel}${ziel ? " · " + (this.spr === "en" ? ziel.en : ziel.de) : ""}</code>
+        </div>
+        <label class="vschalter">
+          <input type="checkbox" data-vorlage="${v.id}" ${offen ? "checked" : ""} ${m ? "" : "disabled"}>
+          <span>${T("an")}</span>
+        </label>
+      </div>`;
+  }
+
   // Die beiden Draehte des UIX-Dialogs. Eigene Funktion, weil der Dialog sich
   // nach jedem Schalten neu zeichnet - und die Draehte dann mit.
   bindeUix(wurzel) {
+    // Vorlagen an und aus. vorlageAn haengt an, statt zu ersetzen - eigenes
+    // CSS im selben Feld bleibt stehen.
+    wurzel.querySelectorAll("[data-vorlage]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const v = VORLAGEN.find((x) => x.id === el.dataset.vorlage);
+        if (!v) return;
+        if (el.checked) vorlageAn(ZUSTAND.modell, v); else vorlageAus(ZUSTAND.modell, v);
+        ZUSTAND.geaendert.add("uix-" + v.ziel);
+        this.zeichneUix();
+        this.zeichneZaehler();
+      })
+    );
+    const auftun = wurzel.querySelector("[data-uix-ziele]");
+    if (auftun) auftun.addEventListener("click", () => {
+      this._uixZiele = !this._uixZiele;
+      this.zeichneUix();
+    });
+
     // Ausschalten darf nichts vernichten: Das CSS wandert nach ZUSTAND.uixAus
     // und kommt beim Einschalten zurueck. Sonst waere ein Fehlklick der
     // Verlust einer Stunde Arbeit.
@@ -2399,6 +2470,43 @@ class HatsPanel extends HTMLElement {
 
       /* ---- UIX-Seite im grossen Dialog ---- */
       .uixseite { padding: 20px 26px 26px; overflow: auto; }
+      .uixtitel { font-size: 13px; font-weight: 600; letter-spacing: .02em;
+                  margin: 22px 0 10px; color: var(--s-tinte); }
+      /* Die Stilziele sind der seltenere Weg - sie liegen deshalb hinter einem
+         Aufklapper, damit die Vorlagen oben die Seite tragen. */
+      .uixtitel.auftun { display: flex; align-items: center; gap: 7px; width: 100%;
+                         border: 0; background: none; font: inherit; font-weight: 600;
+                         font-size: 13px; cursor: pointer; padding: 8px 0;
+                         border-top: 1px solid var(--s-linie); margin-top: 26px; }
+      .uixtitel.auftun ha-icon { --mdc-icon-size: 18px; color: var(--s-tinte-leise); }
+      .uixtitel.auftun span { margin-left: auto; font-weight: 400; font-size: 12px;
+                              color: var(--s-tinte-leise); }
+
+      .vorlagenraster { display: grid; gap: 12px;
+                        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+      .vorlage { display: flex; flex-direction: column;
+                 background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
+                 border-radius: var(--s-r); overflow: hidden;
+                 transition: box-shadow .15s ease, background .15s ease; }
+      .vorlage.an { background: #fff;
+                    box-shadow: inset 0 1px 0 var(--s-kante), 0 0 0 2px var(--s-akzent, #3b82f6); }
+      /* 16:10 feste Hoehe, damit die Karten in einer Reihe gleich hoch sind -
+         ein Raster mit unterschiedlich hohen Bildern sieht zerfallen aus. */
+      .vbild { position: relative; aspect-ratio: 16 / 10; background: rgba(27,36,48,.06); }
+      .vbild img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .vbild .vleer { display: none; position: absolute; inset: 0;
+                      align-items: center; justify-content: center;
+                      font-size: 12px; color: var(--s-tinte-leise); }
+      .vbild.ohne img { display: none; }
+      .vbild.ohne .vleer { display: flex; }
+      .vtext { padding: 11px 13px 4px; flex: 1; }
+      .vtext b { font-size: 13.5px; display: block; }
+      .vtext p { font-size: 12px; color: var(--s-tinte-leise); margin: 4px 0 7px; line-height: 1.45; }
+      .vtext code { font-size: 10.5px; color: var(--s-tinte-leise);
+                    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .vschalter { display: flex; align-items: center; gap: 7px; cursor: pointer;
+                   padding: 9px 13px 12px; font-size: 12.5px; }
+
       .uixraster { display: grid; gap: 10px; margin-top: 14px;
                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
       .uixziel { background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);

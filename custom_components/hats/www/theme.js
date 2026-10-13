@@ -258,3 +258,101 @@ export function entferne(modell, name) {
 export function gibtTripel(wert) {
   return typeof wert === "string" && wert.trim().startsWith("#");
 }
+
+// ---------------------------------------------------------------------------
+// Vorlagen: ein Block CSS in einem Stilziel, an- und abschaltbar
+//
+// Eine Vorlage schreibt ihr CSS zwischen zwei Marker in das Feld ihres
+// Stilziels. Daran erkennt HATS sie spaeter wieder - auch in einer Theme, die
+// jemand von Hand bearbeitet hat.
+//
+//     /* HATS:glas-karten:START */
+//     ha-card { ... }
+//     /* HATS:glas-karten:ENDE */
+//
+// Drei Dinge sind aus HATG uebernommen, jedes davon dort teuer gelernt:
+//
+// 1. Beim Einschalten wird ANGEHAENGT, nicht ersetzt. Eigenes CSS daneben
+//    bleibt stehen - sonst waere ein Klick der Verlust einer Stunde Arbeit.
+// 2. Von doppelten Bloecken derselben Vorlage bleibt nur der LETZTE. In HATG
+//    lagen so einmal 23 Glas-Vorlagen doppelt in einer Theme.
+// 3. Fremde Vorsilben werden mitgelesen. Eine umbenannte Kopie traegt
+//    /* HORIZON:... */ statt /* HATS:... */ - wer nur auf die eigene Vorsilbe
+//    schaut, haengt die Vorlage ein zweites Mal an.
+const MARKE_VOR = "[A-Z][A-Z0-9]{2,15}";
+
+export function vorlagenMarke(id, ende = false) {
+  return `/* HATS:${id}:${ende ? "ENDE" : "START"} */`;
+}
+
+function markenRegex(id) {
+  const si = String(id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(
+    `[ \\t]*/\\* ${MARKE_VOR}:${si}:START \\*/[\\s\\S]*?/\\* ${MARKE_VOR}:${si}:ENDE \\*/[ \\t]*\\n?`,
+    "g"
+  );
+}
+
+// Steht die Vorlage im Theme? Gefragt wird nach dem Marker, nicht nach dem
+// CSS - der Inhalt darf sich zwischen zwei HATS-Fassungen aendern.
+export function vorlageIstAn(modell, vorlage) {
+  const wert = modell.flach["uix-" + vorlage.ziel];
+  if (typeof wert !== "string") return false;
+  return markenRegex(vorlage.id).test(wert);
+}
+
+// Einschalten heisst: alten Block (auch unter fremder Vorsilbe) herausnehmen,
+// dann den aktuellen anhaengen. Damit ist Einschalten zugleich Auffrischen -
+// eine Vorlage, die HATS inzwischen anders schreibt, wird beim naechsten Mal
+// richtig.
+export function vorlageAn(modell, vorlage) {
+  const feld = "uix-" + vorlage.ziel;
+  const alt = typeof modell.flach[feld] === "string" ? modell.flach[feld] : "";
+  const ohne = alt.replace(markenRegex(vorlage.id), "").replace(/\n{3,}/g, "\n\n").trim();
+  const block = `${vorlagenMarke(vorlage.id)}\n${vorlage.css.trim()}\n${vorlagenMarke(vorlage.id, true)}`;
+  setze(modell, feld, ohne ? `${ohne}\n${block}` : block, "beide");
+  return modell;
+}
+
+// Abschalten nimmt nur den eigenen Block heraus. Bleibt danach nichts uebrig,
+// faellt das ganze Feld weg - ein leeres uix-Feld in der Datei waere Ballast,
+// und UIX legt dafuer trotzdem einen Knoten an.
+export function vorlageAus(modell, vorlage) {
+  const feld = "uix-" + vorlage.ziel;
+  const alt = typeof modell.flach[feld] === "string" ? modell.flach[feld] : "";
+  const rest = alt.replace(markenRegex(vorlage.id), "").replace(/\n{3,}/g, "\n\n").trim();
+  if (rest) setze(modell, feld, rest, "beide");
+  else entferne(modell, feld);
+  return modell;
+}
+
+// Doppelte Bloecke derselben Vorlage zusammenfassen und fremde Vorsilben auf
+// HATS zuruecksetzen. Laeuft nach jedem Import ueber jedes Stilziel.
+export function vereinheitlicheVorlagen(modell, vorlagen) {
+  const bericht = { vereinheitlicht: [], entdoppelt: [] };
+  for (const v of vorlagen) {
+    const feld = "uix-" + v.ziel;
+    const wert = modell.flach[feld];
+    if (typeof wert !== "string") continue;
+    const treffer = wert.match(markenRegex(v.id));
+    if (!treffer || !treffer.length) continue;
+    if (treffer.some((b) => !b.includes(`/* HATS:${v.id}:`))) bericht.vereinheitlicht.push(v.id);
+    if (treffer.length > 1) bericht.entdoppelt.push(v.id);
+    if (treffer.length === 1 && !bericht.vereinheitlicht.includes(v.id)) continue;
+    // Nur den letzten behalten, mit eigener Vorsilbe neu geschrieben.
+    const letzter = treffer[treffer.length - 1];
+    const innen = letzter
+      .replace(new RegExp(`^[ \\t]*/\\* ${MARKE_VOR}:${v.id}:START \\*/\\n?`), "")
+      .replace(new RegExp(`/\\* ${MARKE_VOR}:${v.id}:ENDE \\*/[ \\t]*\\n?$`), "")
+      .trim();
+    const ohne = wert.replace(markenRegex(v.id), "").replace(/\n{3,}/g, "\n\n").trim();
+    const block = `${vorlagenMarke(v.id)}\n${innen}\n${vorlagenMarke(v.id, true)}`;
+    setze(modell, feld, ohne ? `${ohne}\n${block}` : block, "beide");
+  }
+  return bericht;
+}
+
+// Welche Vorlagen stecken in dieser Theme? Fuer den Bericht nach dem Import.
+export function vorlagenImTheme(modell, vorlagen) {
+  return vorlagen.filter((v) => vorlageIstAn(modell, v)).map((v) => v.id);
+}

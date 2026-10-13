@@ -1,0 +1,159 @@
+// Vorlagen: ein Block CSS zwischen zwei Markern, an- und abschaltbar.
+//
+// Jede Pruefung hier steht fuer einen Fehler, den HATG schon gemacht hat.
+// Die teuersten drei: eine Vorlage lag 23-mal in derselben Theme, weil eine
+// umbenannte Kopie unter fremder Vorsilbe nicht erkannt wurde; ein Schalter
+// warf das CSS daneben mit weg; und ein Block wuchs bei jedem Durchlauf.
+
+import assert from "node:assert";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import {
+  leeresModell, setze, schreibeTheme, leseTheme,
+  vorlageAn, vorlageAus, vorlageIstAn, vereinheitlicheVorlagen, vorlagenImTheme, vorlagenMarke,
+} from "../custom_components/hats/www/theme.js";
+
+const hier = path.dirname(fileURLToPath(import.meta.url));
+
+let n = 0;
+function pruefe(was, fn) { fn(); n++; console.log("ok", was); }
+
+const V = { id: "glas-karten", ziel: "card", css: "ha-card { border-radius: 28px; }" };
+const W = { id: "glas-leiste", ziel: "card", css: "ha-card { opacity: .9; }" };
+
+pruefe("Einschalten legt den Block an, Abschalten raeumt das Feld", () => {
+  const m = leeresModell("t");
+  assert.strictEqual(vorlageIstAn(m, V), false);
+  vorlageAn(m, V);
+  assert.strictEqual(vorlageIstAn(m, V), true);
+  assert.match(m.flach["uix-card"], /\/\* HATS:glas-karten:START \*\//);
+  assert.match(m.flach["uix-card"], /border-radius: 28px/);
+  vorlageAus(m, V);
+  assert.strictEqual(vorlageIstAn(m, V), false);
+  // Ein leeres uix-Feld waere Ballast - UIX legt dafuer trotzdem einen Knoten an.
+  assert.ok(!("uix-card" in m.flach), "das leere Feld blieb stehen");
+});
+
+pruefe("Abschalten laesst fremdes CSS im selben Feld stehen", () => {
+  // Der Fehler, der eine Stunde Arbeit kostet: Der Schalter raeumt zu viel.
+  const m = leeresModell("t");
+  setze(m, "uix-card", "ha-card { color: red; }", "beide");
+  vorlageAn(m, V);
+  vorlageAus(m, V);
+  assert.strictEqual(m.flach["uix-card"], "ha-card { color: red; }");
+});
+
+pruefe("Zwei Vorlagen im selben Feld stoeren einander nicht", () => {
+  const m = leeresModell("t");
+  vorlageAn(m, V);
+  vorlageAn(m, W);
+  assert.ok(vorlageIstAn(m, V) && vorlageIstAn(m, W));
+  vorlageAus(m, V);
+  assert.strictEqual(vorlageIstAn(m, V), false);
+  assert.strictEqual(vorlageIstAn(m, W), true, "die zweite Vorlage ist mitgeflogen");
+  assert.match(m.flach["uix-card"], /opacity: \.9/);
+});
+
+pruefe("Zweimal einschalten laesst den Block nicht wachsen", () => {
+  // In HATG wuchs ein Block um 1027 Zeichen pro Durchlauf, und die einzige
+  // Spur war eine Berichtszeile, die nach Normalbetrieb klang.
+  const m = leeresModell("t");
+  vorlageAn(m, V);
+  const a = m.flach["uix-card"];
+  vorlageAn(m, V);
+  const b = m.flach["uix-card"];
+  vorlageAn(m, V);
+  assert.strictEqual(a, b);
+  assert.strictEqual(b, m.flach["uix-card"]);
+  assert.strictEqual((m.flach["uix-card"].match(/START/g) || []).length, 1);
+});
+
+pruefe("Einschalten frischt einen alten Block auf", () => {
+  // Einschalten ist zugleich Auffrischen: Wer eine aeltere Fassung im Theme
+  // hat, bekommt beim naechsten Mal die aktuelle.
+  const m = leeresModell("t");
+  vorlageAn(m, { ...V, css: "ha-card { outline: 1px solid lime; }" });
+  vorlageAn(m, V);
+  assert.doesNotMatch(m.flach["uix-card"], /lime/, "die alte Fassung steht noch da");
+  assert.match(m.flach["uix-card"], /28px/);
+});
+
+pruefe("Eine fremde Vorsilbe wird erkannt, nicht ein zweites Mal angehaengt", () => {
+  // Eine umbenannte Kopie traegt /* HORIZON:... */. HATG hat das nicht
+  // erkannt und die Vorlage ein zweites Mal angehaengt - 23-mal in einer
+  // einzigen Theme.
+  const m = leeresModell("t");
+  setze(m, "uix-card",
+    "/* HORIZON:glas-karten:START */\nha-card { border-radius: 4px; }\n/* HORIZON:glas-karten:ENDE */",
+    "beide");
+  assert.strictEqual(vorlageIstAn(m, V), true, "die fremde Vorsilbe wurde nicht erkannt");
+  vorlageAn(m, V);
+  assert.strictEqual((m.flach["uix-card"].match(/:START/g) || []).length, 1,
+    "die Vorlage liegt doppelt im Feld");
+  assert.doesNotMatch(m.flach["uix-card"], /HORIZON/);
+});
+
+pruefe("Doppelte Bloecke werden auf den letzten eingedampft", () => {
+  const m = leeresModell("t");
+  setze(m, "uix-card",
+    "/* HATS:glas-karten:START */\nalt\n/* HATS:glas-karten:ENDE */\n" +
+    "/* HATS:glas-karten:START */\nneu\n/* HATS:glas-karten:ENDE */", "beide");
+  const b = vereinheitlicheVorlagen(m, [V]);
+  assert.deepStrictEqual(b.entdoppelt, ["glas-karten"]);
+  assert.strictEqual((m.flach["uix-card"].match(/:START/g) || []).length, 1);
+  assert.match(m.flach["uix-card"], /neu/);
+  assert.doesNotMatch(m.flach["uix-card"], /\balt\b/, "der aeltere Block hat ueberlebt");
+});
+
+pruefe("vereinheitlichen meldet die fremde Vorsilbe und schreibt sie um", () => {
+  const m = leeresModell("t");
+  setze(m, "uix-card",
+    "/* HORIZON:glas-karten:START */\nx\n/* HORIZON:glas-karten:ENDE */", "beide");
+  const b = vereinheitlicheVorlagen(m, [V]);
+  assert.deepStrictEqual(b.vereinheitlicht, ["glas-karten"]);
+  assert.match(m.flach["uix-card"], /HATS:glas-karten:START/);
+  assert.doesNotMatch(m.flach["uix-card"], /HORIZON/);
+});
+
+pruefe("Ein Durchlauf durch Datei und zurueck haelt die Vorlage", () => {
+  // Der mehrzeilige Block muss als YAML-Blockskalar geschrieben werden.
+  // Ein gequoteter Skalar faltet die Zeilenumbrueche zu Leerzeichen und
+  // macht aus dem CSS eine einzige unbrauchbare Zeile.
+  const m = leeresModell("t");
+  vorlageAn(m, V);
+  vorlageAn(m, W);
+  const text = schreibeTheme(m);
+  assert.match(text, /uix-card: \|/, "der Block steht nicht als Blockskalar in der Datei");
+  const zurueck = leseTheme(text);
+  assert.strictEqual(vorlageIstAn(zurueck.modell ?? zurueck, V), true);
+  assert.strictEqual(vorlageIstAn(zurueck.modell ?? zurueck, W), true);
+});
+
+pruefe("Idempotent: zweimal durch Datei und zurueck aendert nichts mehr", () => {
+  const m = leeresModell("t");
+  vorlageAn(m, V);
+  const eins = schreibeTheme(m);
+  const m2 = leseTheme(eins);
+  const zwei = schreibeTheme(m2.modell ?? m2);
+  const m3 = leseTheme(zwei);
+  const drei = schreibeTheme(m3.modell ?? m3);
+  assert.strictEqual(zwei, drei, "der zweite Durchlauf hat etwas veraendert");
+});
+
+pruefe("vorlagenImTheme nennt genau die eingeschalteten", () => {
+  const m = leeresModell("t");
+  vorlageAn(m, W);
+  assert.deepStrictEqual(vorlagenImTheme(m, [V, W]), ["glas-leiste"]);
+});
+
+pruefe("Gegenprobe: ohne Marker meldet nichts an", () => {
+  // Haelt fest, dass die Pruefungen oben etwas pruefen WUERDEN.
+  const m = leeresModell("t");
+  setze(m, "uix-card", "ha-card { border-radius: 28px; }", "beide");
+  assert.strictEqual(vorlageIstAn(m, V), false,
+    "der blosse CSS-Inhalt gilt faelschlich als Vorlage");
+});
+
+console.log(`\n${n} Pruefungen`);
+if (n < 12) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

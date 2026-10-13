@@ -8,3 +8,4 @@ __init__.py
 const.py
 config_flow.py
 manifest.json
+www/vorlagen.js
