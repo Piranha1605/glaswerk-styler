@@ -142,7 +142,29 @@ for (const [name, wert] of Object.entries(W)) {
 }
 
 // --- Alle Vorlagen an ------------------------------------------------------
-for (const v of VORLAGEN) vorlageAn(m, v);
+// Nicht jede Vorlage gehoert in diese Theme.
+//
+// glas-lichtkante legt einen zweiten Saum als ::before UEBER die Flaeche, mit
+// festen Werten - oben rgba(255,255,255,.72), dazu zwei helle Verlaufsbaender.
+// Im Hellen ist das der Glaseindruck; im Dunkeln ist es ein greller Rahmen.
+//
+// Der Haken ist nicht die Vorlage, sondern dass ein uix-Feld fuer Hell UND
+// Dunkel zugleich gilt. Modusabhaengige Werte muessen ueber ein Theme-Feld
+// laufen, und fuer einen Glas-Saum gibt es bei Home Assistant keinen Namen -
+// ein eigener waere ein Feld, das HATS nicht anbietet, und damit genau die
+// Sorte Fehler, die oben beschrieben steht.
+//
+// Am 13.10.2026 gemeldet: "schau mal bei licht aus. bubble passt aber die
+// anderen beiden haben noch die weise kante" - und auf Nachfrage: "nein das
+// von bubble ist die richtige, die anderen sehen falsch aus". Bubble war
+// ausgenommen (:host(.type-custom-bubble-card) ha-card::before) und sah
+// deshalb als Einziges richtig aus.
+//
+// Die Kanten aus --ha-card-box-shadow leisten dasselbe und sind je Modus
+// gesetzt. Die Vorlage bleibt im Panel waehlbar, nur nicht mehr in dieser
+// Theme.
+const NICHT_AN = ["glas-lichtkante"];
+for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
 
 // --- Der Kopf -------------------------------------------------------------
 //

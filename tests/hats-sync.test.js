@@ -110,5 +110,60 @@ pruefe("Gegenprobe: die Pruefungen wuerden anschlagen", () => {
   assert.doesNotMatch(gefaelscht, /hui-card-features\s*\{[^}]*--feature-color/);
 });
 
+// ---------------------------------------------------------------------------
+// Feste helle Werte in Vorlagen: die Fehlerklasse, die am 13.10.2026 zweimal
+// zugeschlagen hat.
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+const hier = path.dirname(fileURLToPath(import.meta.url));
+const bauen = readFileSync(path.join(hier, "../werkzeuge/liquid-glass-bauen.mjs"), "utf8");
+
+pruefe("Die Kanten der Karten stehen im Theme-Feld, nicht in einer Vorlage", () => {
+  // Ein uix-Feld gilt fuer Hell UND Dunkel zugleich. Eine Kante in
+  // rgba(255,255,255,.72) ist im Hellen richtig und im Dunkeln ein greller
+  // Strich. Gemeldet: "kannst du den karten im dunkelmodus die selbe farbe
+  // rahmen schatten und alles was dazu gehoert von der werkbank geben".
+  const karten = VORLAGEN.find((v) => v.id === "glas-karten");
+  const bubble = VORLAGEN.find((v) => v.id === "glas-bubble");
+  for (const v of [karten, bubble]) {
+    const code = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
+    assert.match(code, /var\(--ha-card-box-shadow/,
+      `${v.id}: liest den Schatten nicht aus dem Theme-Feld`);
+    assert.doesNotMatch(code, /inset[^;]*rgba\(255,\s*255,\s*255/,
+      `${v.id}: traegt eine feste helle Kante - die ist im Dunkelmodus falsch`);
+  }
+});
+
+pruefe("--ha-card-box-shadow traegt die Kanten, je Modus verschieden", () => {
+  // Vier Teile: zwei innere Kanten, zwei aeussere. Und hell != dunkel, sonst
+  // waere die Trennung sinnlos.
+  const block = bauen.slice(bauen.indexOf('"--ha-card-box-shadow"'),
+                            bauen.indexOf("],", bauen.indexOf('"--ha-card-box-shadow"')));
+  assert.ok(block.length > 100, "das Feld wurde nicht gefunden");
+  const hell = block.slice(0, block.indexOf('"inset', block.indexOf('"inset') + 10));
+  assert.match(hell, /inset 0 1\.5px/, "keine obere Kante im Hellmodus");
+  assert.match(block, /rgba\(255, 255, 255, \.72\)/, "Hell-Kante fehlt");
+  assert.match(block, /rgba\(255, 255, 255, \.16\)/, "Dunkel-Kante fehlt");
+  assert.match(block, /rgba\(0, 0, 0, \.35\)/, "dunkle Abschlusskante fehlt");
+});
+
+pruefe("glas-lichtkante steht NICHT in der mitgelieferten Theme", () => {
+  // Sie legt einen zweiten Saum als ::before ueber die Flaeche, mit festen
+  // hellen Werten - und nimmt Bubble davon aus. Im Dunkeln sah deshalb nur
+  // Bubble richtig aus: "nein das von bubble ist die richtige, die anderen
+  // sehen falsch aus". Die Vorlage bleibt waehlbar, nur nicht als Vorgabe.
+  assert.match(bauen, /const NICHT_AN = \[[^\]]*"glas-lichtkante"/,
+    "glas-lichtkante gehoert auf die Ausnahmeliste");
+  assert.ok(VORLAGEN.some((v) => v.id === "glas-lichtkante"),
+    "die Vorlage selbst soll es weiter geben");
+});
+
+pruefe("Gegenprobe: die Kantenpruefung wuerde anschlagen", () => {
+  const gefaelscht = "ha-card { box-shadow: inset 0 1.5px 0 0 rgba(255, 255, 255, .72); }";
+  assert.match(gefaelscht, /inset[^;]*rgba\(255,\s*255,\s*255/);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 10) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 14) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

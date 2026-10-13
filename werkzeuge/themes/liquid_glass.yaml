@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b3 am 13.10.2026, 19:57:52
+# Erzeugt mit HATS 0.2.0b3 am 13.10.2026, 20:03:02
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'
@@ -424,80 +424,6 @@ liquid_glass:
       -webkit-backdrop-filter: none !important;
     }
     /* HATS:glas-bubble:ENDE */
-    /* HATS:glas-lichtkante:START */
-    /* Der Saum liegt als ::before UEBER der Flaeche und unter dem Inhalt.
-       Zwei Dinge zusammen machen den Glaseindruck aus: ein heller Ring, der oben
-       kraeftiger ist als unten (so faellt Licht), und ein schraeger Verlauf, der
-       quer ueber die Flaeche laeuft.
-
-       Zwei Dinge sind hier Absicht:
-
-       pointer-events: none - ohne das schluckt die Schicht jeden Klick auf die
-       Karte, und nichts laesst sich mehr schalten.
-
-       KEIN overflow: hidden. Die Schicht deckt die Flaeche ohnehin genau ab
-       (inset: 0 plus border-radius: inherit), und overflow wuerde alles
-       abschneiden, was aus der Karte herausragen soll - Badges auf
-       Ueberschriften etwa. */
-    :host(ha-card),
-    ha-card {
-      position: relative;
-    }
-    :host(ha-card)::before,
-    ha-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      pointer-events: none;
-      /* Bewusst 0 und nicht -1. Ein Reflex liegt auch in echt UEBER dem, was
-         hinter dem Glas ist - und -1 waere unzuverlaessig: Es haengt davon ab, ob
-         die Karte gerade einen Stacking-Context bildet (ein backdrop-filter tut
-         das, eine Karte ohne Weichzeichnung nicht). Mal laege der Schimmer dann
-         vor dem Inhalt, mal hinter der Flaeche und damit unsichtbar. Dass er
-         sichtbar bleibt, kostet hier nichts: 22 % Weiss am oberen Rand, nach
-         55 % der Flaeche ist er ganz weg. */
-      z-index: 0;
-      /* Der Ring. Drei Dinge, nicht eins:
-
-         Oben ein kraeftiger heller Saum - das ist die Kante, an der das Licht
-         bricht. Unten ein DUNKLER, denn eine Glasscheibe wirft an ihrer Unterkante
-         Schatten in sich selbst. Und an den Seiten ein schwacher heller.
-
-         Der dunkle Saum unten ist der Unterschied zwischen "durchsichtig" und
-         "dick". Ohne ihn liegt die Flaeche flach auf dem Hintergrund; mit ihm hat
-         sie eine Staerke. Auf hellem Grund ist er ausserdem das Einzige, was man
-         ueberhaupt sieht - ein heller Saum auf hellem Grund ist unsichtbar. */
-      box-shadow:
-        inset 0 1.5px 0 0 rgba(255, 255, 255, .72),
-        inset 0 -1.5px 0 0 rgba(10, 20, 45, .1),
-        inset 1px 0 0 0 rgba(255, 255, 255, .3),
-        inset -1px 0 0 0 rgba(255, 255, 255, .22),
-        inset 0 14px 22px -16px rgba(255, 255, 255, .5);
-      /* Der Schimmer: ein helles Band schraeg ueber die obere Haelfte, und ein
-         zweites, schwaecheres von unten rechts - so als laege eine zweite
-         Lichtquelle dort. Mit nur einem wirkt die Flaeche wie gekippt. */
-      background:
-        linear-gradient(135deg,
-          rgba(255, 255, 255, .34) 0%,
-          rgba(255, 255, 255, .1) 26%,
-          rgba(255, 255, 255, 0) 52%),
-        linear-gradient(315deg,
-          rgba(255, 255, 255, .14) 0%,
-          rgba(255, 255, 255, 0) 38%);
-    }
-
-    /* Karten ohne Flaeche bekommen auch keinen Saum - sonst schwebt ein heller
-       Rahmen um eine Ueberschrift. */
-    :host(.type-custom-bubble-card) ha-card::before,
-    :host(hui-heading-card) ha-card::before,
-    :host(mushroom-title-card) ha-card::before,
-    :host(mushroom-chips-card) ha-card::before,
-    :host(.text-only)::before,
-    ha-card.text-only::before {
-      display: none;
-    }
-    /* HATS:glas-lichtkante:ENDE */
     /* HATS:glas-symbolkachel:START */
     /* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
        Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
