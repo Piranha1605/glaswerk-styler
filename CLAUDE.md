@@ -794,6 +794,83 @@ dabei nötig, sonst lügt die Messung:
 - **Die `uix-node`-Knoten der aktiven Theme stilllegen** (auf der Instanz des
   Nutzers 39 Stück). Sonst misst man einen Kampf statt eine Vorlage.
 
+## Zustand im DOM: drei Familien, drei Marken
+
+Am 13.10.2026 an der Instanz gemessen, mit echtem CSS im UIX-Einhängepunkt
+gegengeprüft (29 Karten, kein Fehlschlag). Das ist die Grundlage für jede
+zustandsabhängige Vorlage — Icon-Animationen, Glühen, Drehen.
+
+| Familie | aktiv | inaktiv | Domäne |
+|---|---|---|---|
+| HA-Kachel | `ha-tile-icon:not([data-state="off"])` | `[data-state="off"]` | `[data-domain="fan"]` |
+| Bubble | `ha-card.is-on` | `ha-card:not(.is-on)` | `.is-light` (nur `card_type: button`) |
+| Mushroom | `mushroom-shape-icon[style*="--icon-color"]` | `:not([style*="--icon-color"])` | Tagname: `:host(mushroom-fan-card)` |
+
+Alle drei sind von `uix-card` aus erreichbar, ohne Shadow-Grenze: UIX hängt
+seinen Knoten in den Shadow Root des **Karten-Elements** (`mushroom-light-card`,
+`bubble-card`, `hui-tile-card`), und die Icons liegen darin. `ha-state-icon`
+sitzt im **Licht-DOM** von `ha-tile-icon` und von `mushroom-shape-icon` — ein
+Nachfahrenselektor trifft es.
+
+**Die Mushroom-Falle: `[style]` trifft beide Zustände.** Bei „aus" ist das
+Attribut nicht weg, sondern **leer**:
+
+    an:   style="--icon-color:rgb(129,173,255);--shape-color:rgba(…, 0.25);"
+    aus:  style=""
+
+`hasAttribute("style")` ist in beiden Fällen `true`, nur `getAttribute` liefert
+einmal `""`. Wer `[style]` als Hook nimmt, markiert jede Karte als aktiv.
+`[style*="--icon-color"]` trennt sauber. Die aussagekräftigere Marke
+`div.shape.disabled` liegt eine Shadow-Grenze tiefer und ist von außen nicht
+erreichbar.
+
+**Was der Mushroom-Hook wirklich sagt, ist „hat eine Farbe", nicht
+„eingeschaltet".** Eine Sensorkarte fällt damit in den Aktiv-Zweig, weil
+Mushroom ihr eine Farbe gibt. Für Animationen taugt das; für eine Aussage über
+den Schaltzustand nicht.
+
+**Bei HA reicht `[data-state="on"]` nicht.** Eine Heizung steht auf `auto`,
+`heat` oder `cool` — gemessen: `data-state="auto"` fiel damit in den Aus-Zweig,
+obwohl die Heizung läuft. `:not([data-state="off"]):not([data-state="unavailable"])`
+ist die richtige Form.
+
+**Bei Bubble trägt nur `card_type: button` die Domäne.** `climate` und
+`media-player` bekommen bloß `is-on`/`is-off`. Wer die Domäne braucht, nimmt
+`div.bubble-main-icon-container[data-entity^="fan."]` — der Container trägt die
+volle Entitäts-ID als `data-entity`.
+
+## Bubbles Slider: `--bubble-slider-color` gibt es nicht
+
+Am 13.10.2026 im Stylesheet der laufenden Karte gezählt: **null** Vorkommen von
+`--bubble-slider-color`, zwei von `--bubble-slider-fill-color`. Bubble 3.2.0
+liest für die Füllung:
+
+```css
+background-color: var(--bubble-slider-fill-color,
+                      var(--bubble-light-color, rgb(225, 225, 210))) !important;
+```
+
+und setzt `--bubble-slider-fill-color` **inline am Element**, aus der Lichtfarbe
+selbst umgerechnet. Gemessen an derselben Lampe: HA und Mushroom standen beide
+auf `#81adff`, Bubble auf `rgb(119, 160, 237)` — dieselbe Farbe, von Bubble
+abgedunkelt. **Die drei laufen also schon im Auslieferungszustand auseinander.**
+
+Was dagegen hilft, gemessen mit drei Gegenproben an derselben Karte:
+
+| Versuch | Ergebnis |
+|---|---|
+| `background-color: X` | verliert — Bubbles eigene Regel trägt `!important` |
+| `background-color: X !important` | **gewinnt** |
+| `--bubble-slider-fill-color: X !important` | **gewinnt** |
+
+Der zweite Weg ist der sauberere: Er lässt Bubbles Regel stehen und tauscht nur
+die Farbe. Ohne `!important` kommt nichts an — **zweimal** nicht, denn inline
+schlägt jede Regel und Bubbles Regel trägt selbst `!important`.
+
+**Praktische Folge:** Ein `styles:`-Block in einer Kartenkonfiguration, der
+`var(--bubble-slider-color, var(--accent-color))` schreibt, trifft nie die
+Lichtfarbe — der erste Name ist tot, also greift immer der Ausweichwert.
+
 ## Die Instanz
 
 `http://192.168.178.31/` — **Port 80, nicht 8123.** Ein Dashboard liegt unter
