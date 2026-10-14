@@ -3219,8 +3219,14 @@ class HatsPanel extends HTMLElement {
       .schleier { position: absolute; inset: 0; background: rgba(16,28,45,.26); opacity: 0;
                   transition: opacity .18s ease; }
       .overlay.da .schleier { opacity: 1; }
+      /* .84, nicht --s-glas-innen (.72): Bei .72 las man in den Luecken
+         ZWISCHEN den Karten den Text der Seite dahinter mit - auf einer
+         Stufenseite steht dort die Stufenliste, und die geisterte durch die
+         Gruppen. Die Variable bleibt bei .72, weil sie an der Menueleiste und
+         an den Stilzielen richtig ist; ein Dialog deckt mehr, weil man darin
+         liest statt nur hinzusehen. */
       .dialog { position: relative; width: min(1180px, 100%); max-height: 100%; overflow: auto;
-                border-radius: var(--s-r-gross); background: var(--s-glas-innen);
+                border-radius: var(--s-r-gross); background: rgba(255,255,255,.84);
                 -webkit-backdrop-filter: blur(30px) saturate(1.6);
                 backdrop-filter: blur(30px) saturate(1.6);
                 box-shadow: 0 40px 90px rgba(10,22,40,.34), inset 0 1px 0 var(--s-kante);
@@ -3234,7 +3240,7 @@ class HatsPanel extends HTMLElement {
          der weichgezeichneten Flaeche des Dialogs, zweimal 30 waere Milch. */
       .dkopf { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; flex-wrap: wrap;
                gap: 12px 16px; padding: 22px 26px 16px;
-               background: rgba(255,255,255,.62);
+               background: rgba(255,255,255,.74);
                -webkit-backdrop-filter: blur(14px) saturate(1.4);
                backdrop-filter: blur(14px) saturate(1.4);
                border-bottom: 1px solid var(--s-linie); }
