@@ -3258,26 +3258,49 @@ class HatsPanel extends HTMLElement {
          Bei kleinen Kacheln sieht man alle auf einmal, und dann trennt die
          Zwischenueberschrift mehr, als sie ordnet. */
       .bk-teile.mini { grid-template-columns: repeat(auto-fill, minmax(144px, 1fr)); gap: 8px; }
-      .bk-teile.mini .bk-teil { gap: 7px; padding: 11px 12px 12px; }
-      .bk-teile.mini .bk-name { font-size: 13.5px; }
+      /* Der Name OBEN, die Farben als Fussleiste darunter - auf Ansage vom
+         14.10.2026. Die Reihenfolge macht CSS, nicht ein zweiter Zweig im
+         Markup: order plus margin-top auto, und die min-height sorgt dafuer,
+         dass die Leiste bei allen fuenfzehn auf derselben Linie sitzt, auch
+         wenn ein Name umbricht. */
+      .bk-teile.mini .bk-teil { gap: 7px; padding: 12px 12px 11px; min-height: 86px;
+                                background: linear-gradient(180deg, #ffffff 0%, #f4f7fc 100%); }
+      .bk-teile.mini .bk-name { order: 1; font-size: 13.5px; }
+      .bk-teile.mini .bk-tupfer { order: 2; margin: auto 0 0; gap: 0;
+                                  justify-content: space-between; }
+      .bk-teile.mini .bk-tupfer i, .bk-teile.mini .bk-tupfer i:first-child {
+        width: 18px; height: 18px; }
       .bk-teile.mini .bk-haken { top: 7px; right: 8px; --mdc-icon-size: 15px; }
       /* Dieselbe Karte wie auf dem Startbild (.startweg): weiche Flaeche,
          Haarlinie, kleiner Schatten, und beim Ueberfahren hebt sie sich einen
          Pixel. Vorher fehlten Schatten und Bewegung - die Kacheln lagen flach
          auf der Flaeche, waehrend jede andere Karte im Panel schwebt. */
+      /* Drei Schatten statt einem: ein heller Saum oben innen (das Licht auf
+         der Kante), ein kurzer harter darunter (die Kante selbst) und ein
+         weiter weicher (der Wurf auf die Flaeche). Ein einzelner Schatten
+         sieht aus wie ein Aufkleber, drei wie ein Stueck. */
       .bk-teil { position: relative; text-align: left; cursor: pointer; font: inherit;
                  display: flex; flex-direction: column; gap: 4px;
                  background: var(--s-karte); color: var(--s-tinte);
                  border: 1px solid rgba(27,36,48,.08); border-radius: var(--s-r);
-                 padding: 13px 15px; box-shadow: var(--s-schatten-klein);
+                 padding: 13px 15px;
+                 box-shadow: inset 0 1px 0 rgba(255,255,255,.9),
+                             0 1px 2px rgba(26,44,74,.10),
+                             0 6px 14px rgba(26,44,74,.10);
                  transition: border-color .15s, box-shadow .15s, transform .15s; }
-      .bk-teil:hover:not([disabled]) { border-color: var(--s-akzent); transform: translateY(-1px); }
+      .bk-teil:hover:not([disabled]) { border-color: var(--s-akzent); transform: translateY(-2px);
+                 box-shadow: inset 0 1px 0 rgba(255,255,255,.9),
+                             0 2px 4px rgba(26,44,74,.12),
+                             0 12px 24px rgba(26,44,74,.16); }
       .bk-teil[disabled] { opacity: .45; cursor: default; }
       /* Das gewaehlte Teil traegt die Akzentfarbe als Rahmen, nicht als
          Flaeche: Eine gefuellte Kachel wuerde den Zwecktext darauf erschlagen,
          und genau der ist die Entscheidungshilfe. */
       .bk-teil.an { border-color: var(--s-akzent);
-                    box-shadow: inset 0 0 0 1px var(--s-akzent), var(--s-schatten-klein); }
+                    box-shadow: inset 0 0 0 1px var(--s-akzent),
+                                inset 0 1px 0 rgba(255,255,255,.9),
+                                0 1px 2px rgba(26,44,74,.10),
+                                0 6px 14px rgba(26,44,74,.12); }
       /* Der Farbstreifen eines Hintergrunds. Er sitzt UEBER dem Namen, nicht
          als Flaeche hinter ihm: Vier Farben hinter Text machen beides
          unlesbar. Der Haken steht rechts daneben, deshalb endet er bei 70 %. */
@@ -3285,10 +3308,22 @@ class HatsPanel extends HTMLElement {
                      margin-bottom: 4px; border: 1px solid rgba(27,36,48,.10); }
       /* Die Farbtupfer einer Palette. Der erste ist der Akzent - die einzige
          Farbe, die je Modus verschieden ist, und die, die man am haeufigsten
-         sieht. Deshalb steht er vorn und ist etwas groesser. */
+         sieht. Deshalb steht er vorn.
+         Die Kugelform kommt aus einem ::before, nicht aus dem Hintergrund:
+         Der traegt die FARBE als inline-Stil, und zwei Hintergruende an einer
+         Stelle gingen nicht zusammen. So bleibt die Plastik dieselbe, egal
+         welcher Ton darunter liegt - Licht links oben, Schatten unten, dazu
+         ein kleiner Wurf auf die Flaeche. */
       .bk-tupfer { display: flex; gap: 5px; align-items: center; margin-bottom: 7px; }
-      .bk-tupfer i { display: block; width: 14px; height: 14px; border-radius: 50%;
-                     box-shadow: inset 0 0 0 1px rgba(27,36,48,.14); }
+      .bk-tupfer i { position: relative; display: block; width: 14px; height: 14px;
+                     border-radius: 50%;
+                     box-shadow: inset 0 0 0 1px rgba(27,36,48,.10),
+                                 0 1px 2px rgba(26,44,74,.30),
+                                 0 2px 4px rgba(26,44,74,.14); }
+      .bk-tupfer i::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
+                             background: radial-gradient(circle at 34% 27%,
+                               rgba(255,255,255,.78) 0%, rgba(255,255,255,.14) 44%,
+                               rgba(0,0,0,.10) 72%, rgba(0,0,0,.26) 100%); }
       .bk-tupfer i:first-child { width: 20px; height: 20px; }
       .bk-name { font-size: 14px; font-weight: 500; }
       .bk-zweck { font-size: 12px; line-height: 1.45; color: var(--s-tinte-leise); }
