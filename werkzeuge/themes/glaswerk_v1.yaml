@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 19:57:54
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 20:27:50
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # FASSUNG 1 - eingefroren, damit man sie gegen die naechste stellen kann.
@@ -799,6 +799,28 @@ glaswerk_v1:
       /* Fuer ALLE Ebenen, nicht nur die letzte: Der Wert aus dem Feld traegt
          "fixed" am Ende, das gilt dort aber nur fuer die unterste. */
       background-attachment: fixed;
+
+      /* Und hier wird das Feld fuer ALLES DARUNTER durchsichtig gestellt.
+         Gemeldet am 14.10.2026 mit einem Bild der Integrationsseite: "hier fehlt
+         der hintergrund". Die Ursache ist eine Zeile in hass-tabs-subpage:
+
+             :host { background-color: var(--primary-background-color) }
+
+         Jede Unterseite der Einstellungen malt den Grund also deckend ueber die
+         Schicht hier. Erreichbar ist sie nicht - ihr Wirt
+         (ha-config-integrations-dashboard) bekommt keinen uix-Knoten, und UIX
+         haengt hier nur an ha-drawer, ha-sidebar und home-assistant-main ein.
+
+         Die Variable erbt dagegen durch jede Grenze. Auf .layout gesetzt gilt sie
+         fuer den ganzen Inhalt und NICHT fuer html und body - die liegen darueber
+         und behalten ihre Farbe. Ohne das waere der Grund weg, sobald jemand
+         diese Vorlage abschaltet.
+
+         Dass es so wenig trifft, ist gemessen: Auf der Integrationsseite folgten
+         dem Feld genau ZWEI Elemente von 1587 - hass-tabs-subpage und die Leiste
+         mit dem Suchfeld. Dashboard, Einstellungen und Profil danach
+         gegengesehen. */
+      --primary-background-color: transparent;
     }
     /* HATS:grund-ueberall:ENDE */
   uix-grid-section: |-
