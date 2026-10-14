@@ -160,4 +160,93 @@ pruefe("Die Stufen stehen NUR in der Liste, nicht noch einmal in der Leiste", ()
   assert.match(quelle, /\.ml-aktionen \{[^}]*margin-left: auto/);
 });
 
+// --- Die Beschriftungen, 14.10.2026 ------------------------------------
+// Beim Durchgehen der acht Stufen gefunden: Ein grosser Teil der Felder trug
+// als Beschriftung den Variablennamen mit Leerzeichen statt Bindestrichen -
+// "Weight bold", "Bar box shadow", "Ha moz osx font smoothing". Das stammt
+// aus der Massenableitung aus ha-blanko.yaml vom 12.10.2026, bei der Art und
+// Ebene gerechnet wurden und die Beschriftung gleich mit.
+//
+// Zwei Fehler kamen dabei heraus, die nicht nur haesslich sind:
+//   - "Weight hell" fuer --ha-font-weight-light. Das ist eine falsche
+//     Uebersetzung, nicht eine rohe: light heisst hier LEICHT, nicht hell.
+//   - "Border style" zweimal in derselben Gruppe Rahmen, fuer --wa-border-style
+//     und --wa-panel-border-style. Zwei Kacheln, eine Beschriftung.
+
+function gruppen() {
+  // Die Gruppen aus dem Quelltext, mit ihren Feldern. Die Stufenliste reicht
+  // dafuer nicht: Doppelte Beschriftungen sind ueber Gruppen hinweg normal
+  // ("Klein", "Ruhend"), innerhalb einer Gruppe nicht.
+  const aus = [];
+  let g = null;
+  for (const z of quelle.split("\n")) {
+    let m = z.match(/^      \{ name: "([^"]+)", felder:/);
+    if (m) { g = { name: m[1], felder: [] }; aus.push(g); continue; }
+    // Nicht jedes Feld hat eine Variable: "Name der Theme" ist eine Angabe,
+    // und die Gruppen der Stufe 8 sind Knoepfe. Beschriftungen haben sie alle.
+    m = z.match(/\{ t: "([^"]*)"/);
+    if (m && g) g.felder.push({ t: m[1], v: (/v: "([^"]+)"/.exec(z) || [])[1] || null });
+  }
+  return aus;
+}
+
+pruefe("Keine Gruppe hat zwei Felder mit derselben Beschriftung", () => {
+  const doppelt = [];
+  for (const g of gruppen()) {
+    const t = g.felder.map((f) => f.t);
+    for (const x of new Set(t.filter((x, i) => t.indexOf(x) !== i)))
+      doppelt.push(`${g.name}: "${x}"`);
+  }
+  assert.deepStrictEqual(doppelt, [], `nicht unterscheidbar: ${doppelt.join(", ")}`);
+  // Gegenprobe: Die Gruppen sind wirklich gelesen worden, und sie tragen
+  // Felder - sonst waere die Pruefung ueber einer leeren Liste gelaufen.
+  assert.ok(gruppen().length >= 40, `nur ${gruppen().length} Gruppen gelesen`);
+  assert.ok(gruppen().every((g) => g.felder.length > 0), "eine Gruppe ohne Felder");
+});
+
+pruefe("Keine Beschriftung traegt ein englisches Eigenschaftswort", () => {
+  // Die Liste sind EIGENSCHAFTEN, keine Bauteilnamen: "Chip", "Badge",
+  // "Panel" und "Pop-up" heissen auf deutsch genauso und bleiben.
+  const engl = /\b(color|background|width|height|size|style|radius|shadow|opacity|padding|margin|border|weight|family|smoothing|float|direction|fill|line|ink|outlined|idle|dropdown|divider|secondary|default|inverted|low|lower|condensed|expanded|instant|slow|none|easing|box|header|scrollable|fade|thumb|title|ltr|rtl)\b/i;
+  const schlecht = [];
+  for (const g of gruppen())
+    for (const f of g.felder)
+      if (engl.test(f.t)) schlecht.push(`${g.name}: "${f.t}" (${f.v})`);
+  assert.deepStrictEqual(schlecht, [], `roh geblieben:\n  ${schlecht.join("\n  ")}`);
+  // Gegenprobe: Der Ausdruck trifft ueberhaupt etwas - sonst waere die
+  // Pruefung ein gruener Haken ohne Inhalt.
+  assert.ok(engl.test("Bar box shadow") && engl.test("Weight bold"),
+    "der Ausdruck findet nicht einmal die alten Beschriftungen");
+  assert.ok(!engl.test("Stil Panel") && !engl.test("Kreis"),
+    "der Ausdruck trifft auch das Richtige");
+});
+
+pruefe("Die Leitern stehen in ihrer eigenen Reihenfolge, nicht alphabetisch", () => {
+  // Auch das beim Durchgehen gefunden: Die Kacheln stehen in der Reihenfolge
+  // der Quelle, und die stand in Zeichenfolge - "1, 10, 11 ... 20, 3, 5, 7".
+  // Dazwischen die drei von Hand benannten Stufen (Eng=2, Normal=4, Weit=6)
+  // ganz am Ende. Die Gruppe verspricht "von klein bis Karte" und hielt es
+  // nicht.
+  const RUNDUNG = ["-sm", "-md", "-lg", "-xl", "-2xl", "-3xl", "-4xl", "-5xl",
+                   "-6xl", "-circle", "-pill", "-square"];
+  const leitern = {
+    Abstaende: (v) => Number(/-(\d+)$/.exec(v)[1]),
+    Diagrammfarben: (v) => Number(/-(\d+)$/.exec(v)[1]),
+    Rundung: (v) => RUNDUNG.findIndex((e) => v.endsWith(e)),
+  };
+  let gesehen = 0;
+  for (const g of gruppen()) {
+    const schl = leitern[g.name];
+    if (!schl) continue;
+    gesehen++;
+    const w = g.felder.map((f) => schl(f.v));
+    assert.ok(w.every((x) => x >= 0), `${g.name}: eine Stufe ist unbekannt`);
+    assert.deepStrictEqual(w, [...w].sort((a, b) => a - b),
+      `${g.name} steht nicht in seiner Reihenfolge: ${g.felder.map((f) => f.t).join(", ")}`);
+  }
+  // Gegenprobe: Die drei Gruppen gibt es wirklich - ein Tippfehler im Namen
+  // haette hier sonst drei stille Nullpruefungen hinterlassen.
+  assert.strictEqual(gesehen, 3, `nur ${gesehen} der drei Leitern gefunden`);
+});
+
 console.log(`\n${n} Pruefungen`);

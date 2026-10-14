@@ -378,5 +378,39 @@ pruefe("Die Kennzahl auf der Startseite zaehlt die Theme, nicht das Panel", () =
   assert.match(panel, /"bietet das Panel an": "[^"]+"/);
 });
 
+pruefe("Stufe 8 und der Bericht zaehlen dieselben Felder", () => {
+  // Dieselbe Sorte Fehler wie bei der Kennzahl darueber, eine Kachel weiter:
+  // "Felder insgesamt" summierte die drei Ebenen. Ein Feld mit eigenem Wert
+  // fuer hell und dunkel zaehlte damit zweimal. Bei macos: 434 auf der
+  // Kachel, 398 im Bericht - ueber dieselbe Datei, im selben Panel.
+  const ausdruck = /case "gesamt": return m\s*\?\s*(String\([\s\S]*?\))\s*\n?\s*: "-";/.exec(panel);
+  assert.ok(ausdruck, "die Kachel 'Felder insgesamt' sieht anders aus als erwartet");
+  const rechne = new Function("m", "return " + ausdruck[1]);
+
+  const THEME = [
+    "zwei:",
+    '  primary-color: "#111111"',
+    "  modes:",
+    "    light:",
+    '      card-background-color: "#ffffff"',
+    '      primary-text-color: "#000000"',
+    "    dark:",
+    '      card-background-color: "#222222"',
+    '      primary-text-color: "#eeeeee"',
+  ].join("\n");
+  const m = leseTheme(THEME);
+  const b = berichtUeberTheme(m, new Set());
+  // Drei Namen, aber fuenf Eintraege - genau der Fall, der auseinanderlief.
+  assert.strictEqual(b.felder, 3);
+  assert.strictEqual(b.flach + b.hell + b.dunkel, 5);
+  assert.strictEqual(rechne(m), String(b.felder),
+    `Stufe 8 sagt ${rechne(m)}, der Bericht ${b.felder}`);
+  // Gegenprobe: Die alte Rechnung faellt hier wirklich durch - sonst waere
+  // die Pruefung blind fuer genau den Fehler, den sie festhalten soll.
+  const alt = (o) => Object.values(o || {}).filter((v) => v !== "" && v !== undefined).length;
+  assert.strictEqual(alt(m.flach) + alt(m.light) + alt(m.dark), 5);
+  assert.notStrictEqual(String(alt(m.flach) + alt(m.light) + alt(m.dark)), String(b.felder));
+});
+
 console.log(`\n${n} Pruefungen`);
 if (n < 31) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

@@ -123,8 +123,8 @@ const STUFEN = [
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       { name: "Palette", felder: [
-        { t: "Dunkel Primaer Farbe", art: "farbe", v: "--dark-primary-color", ebene: "beide" },
-        { t: "Darker Primaer Farbe", art: "farbe", v: "--darker-primary-color", ebene: "beide" },
+        { t: "Primaer dunkel", art: "farbe", v: "--dark-primary-color", ebene: "beide" },
+        { t: "Primaer dunkler", art: "farbe", v: "--darker-primary-color", ebene: "beide" },
         { t: "Black", art: "farbe", v: "--ha-color-black", ebene: "beide" },
         { t: "Green 05", art: "farbe", v: "--ha-color-green-05", ebene: "beide" },
         { t: "Green 10", art: "farbe", v: "--ha-color-green-10", ebene: "beide" },
@@ -180,26 +180,26 @@ const STUFEN = [
         { t: "Hell Primaer Farbe", art: "farbe", v: "--light-primary-color", ebene: "beide" },
       ] },
       { name: "Klassische Textfarben", felder: [
-        { t: "Deaktiviert Farbe", art: "farbe", v: "--disabled-color", ebene: "getrennt" },
-        { t: "Deaktiviert text Farbe", art: "farbe", v: "--disabled-text-color", ebene: "getrennt" },
-        { t: "Error Farbe", art: "farbe", v: "--error-color", ebene: "beide" },
-        { t: "Info Farbe", art: "farbe", v: "--info-color", ebene: "beide" },
-        { t: "Primaer text Farbe", art: "farbe", v: "--primary-text-color", ebene: "getrennt" },
-        { t: "Secondary text Farbe", art: "farbe", v: "--secondary-text-color", ebene: "getrennt" },
-        { t: "Erfolg Farbe", art: "farbe", v: "--success-color", ebene: "beide" },
-        { t: "Text hell Primaer Farbe", art: "farbe", v: "--text-light-primary-color", ebene: "beide" },
-        { t: "Text Primaer Farbe", art: "farbe", v: "--text-primary-color", ebene: "beide" },
-        { t: "Warnung Farbe", art: "farbe", v: "--warning-color", ebene: "beide" },
+        { t: "Deaktiviert", art: "farbe", v: "--disabled-color", ebene: "getrennt" },
+        { t: "Deaktivierte Schrift", art: "farbe", v: "--disabled-text-color", ebene: "getrennt" },
+        { t: "Fehler", art: "farbe", v: "--error-color", ebene: "beide" },
+        { t: "Hinweis", art: "farbe", v: "--info-color", ebene: "beide" },
+        { t: "Primaere Schrift", art: "farbe", v: "--primary-text-color", ebene: "getrennt" },
+        { t: "Sekundaere Schrift", art: "farbe", v: "--secondary-text-color", ebene: "getrennt" },
+        { t: "Erfolg", art: "farbe", v: "--success-color", ebene: "beide" },
+        { t: "Schrift auf hell", art: "farbe", v: "--text-light-primary-color", ebene: "beide" },
+        { t: "Schrift auf Akzent", art: "farbe", v: "--text-primary-color", ebene: "beide" },
+        { t: "Warnung", art: "farbe", v: "--warning-color", ebene: "beide" },
       ] },
       { name: "Schriftgroessen", felder: [
-        { t: "Family longform", art: "text", v: "--ha-font-family-longform", ebene: "beide" },
-        { t: "Smoothing", art: "text", v: "--ha-font-smoothing", ebene: "beide" },
-        { t: "Weight bold", art: "zahl", v: "--ha-font-weight-bold", ebene: "beide", min: 0, max: 2100, schritt: 0.05 },
-        { t: "Weight hell", art: "zahl", v: "--ha-font-weight-light", ebene: "beide", min: 0, max: 900, schritt: 0.05 },
-        { t: "Weight medium", art: "zahl", v: "--ha-font-weight-medium", ebene: "beide", min: 0, max: 1500, schritt: 0.05 },
-        { t: "Weight normal", art: "zahl", v: "--ha-font-weight-normal", ebene: "beide", min: 0, max: 1200, schritt: 0.05 },
-        { t: "Condensed", art: "zahl", v: "--ha-line-height-condensed", ebene: "beide", min: 0, max: 4, schritt: 0.05 },
-        { t: "Expanded", art: "zahl", v: "--ha-line-height-expanded", ebene: "beide", min: 0, max: 6, schritt: 0.05 },
+        { t: "Schriftart Fliesstext", art: "text", v: "--ha-font-family-longform", ebene: "beide" },
+        { t: "Kantenglaettung", art: "text", v: "--ha-font-smoothing", ebene: "beide" },
+        { t: "Fett", art: "zahl", v: "--ha-font-weight-bold", ebene: "beide", min: 0, max: 2100, schritt: 0.05 },
+        { t: "Leicht", art: "zahl", v: "--ha-font-weight-light", ebene: "beide", min: 0, max: 900, schritt: 0.05 },
+        { t: "Halbfett", art: "zahl", v: "--ha-font-weight-medium", ebene: "beide", min: 0, max: 1500, schritt: 0.05 },
+        { t: "Normal", art: "zahl", v: "--ha-font-weight-normal", ebene: "beide", min: 0, max: 1200, schritt: 0.05 },
+        { t: "Zeilenhoehe eng", art: "zahl", v: "--ha-line-height-condensed", ebene: "beide", min: 0, max: 4, schritt: 0.05 },
+        { t: "Zeilenhoehe weit", art: "zahl", v: "--ha-line-height-expanded", ebene: "beide", min: 0, max: 6, schritt: 0.05 },
       ] },
     ] },
 
@@ -209,13 +209,13 @@ const STUFEN = [
       // Deshalb durchweg getrennt, nicht flach.
       { name: "Grundflaechen", felder: [
 
-        { t: "Card Flaeche Farbe", art: "farbe", v: "--card-background-color", ebene: "getrennt" },
-        { t: "Clear Flaeche Farbe", art: "farbe", v: "--clear-background-color", ebene: "getrennt" },
-        { t: "Default invertiert", art: "farbe", v: "--ha-color-surface-default-inverted", ebene: "getrennt" },
-        { t: "Low invertiert", art: "farbe", v: "--ha-color-surface-low-inverted", ebene: "getrennt" },
-        { t: "Lower invertiert", art: "farbe", v: "--ha-color-surface-lower-inverted", ebene: "getrennt" },
-        { t: "Primaer Flaeche Farbe", art: "farbe", v: "--primary-background-color", ebene: "getrennt" },
-        { t: "Secondary Flaeche Farbe", art: "farbe", v: "--secondary-background-color", ebene: "getrennt" },
+        { t: "Kartenflaeche", art: "farbe", v: "--card-background-color", ebene: "getrennt" },
+        { t: "Klare Flaeche", art: "farbe", v: "--clear-background-color", ebene: "getrennt" },
+        { t: "Oberflaeche invertiert", art: "farbe", v: "--ha-color-surface-default-inverted", ebene: "getrennt" },
+        { t: "Eine Stufe tiefer invertiert", art: "farbe", v: "--ha-color-surface-low-inverted", ebene: "getrennt" },
+        { t: "Zwei Stufen tiefer invertiert", art: "farbe", v: "--ha-color-surface-lower-inverted", ebene: "getrennt" },
+        { t: "Grundflaeche", art: "farbe", v: "--primary-background-color", ebene: "getrennt" },
+        { t: "Zweite Flaeche", art: "farbe", v: "--secondary-background-color", ebene: "getrennt" },
         { t: "Oberflaeche", art: "farbe", v: "--ha-color-surface-default", ebene: "getrennt" },
         { t: "Eine Stufe tiefer", art: "farbe", v: "--ha-color-surface-low", ebene: "getrennt" },
         { t: "Zwei Stufen tiefer", art: "farbe", v: "--ha-color-surface-lower", ebene: "getrennt" },
@@ -274,15 +274,15 @@ const STUFEN = [
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       { name: "Schatten und Leisten", felder: [
-        { t: "Bar box shadow", art: "text", v: "--bar-box-shadow", ebene: "getrennt" },
-        { t: "Shadow scrollable fade", art: "farbe", v: "--ha-color-shadow-scrollable-fade", ebene: "beide" },
-        { t: "Header height", art: "mass", v: "--header-height", ebene: "beide", min: 0, max: 168 },
-        { t: "Scrollbar thumb Farbe", art: "farbe", v: "--scrollbar-thumb-color", ebene: "getrennt" },
-        { t: "Shadow Farbe", art: "farbe", v: "--shadow-color", ebene: "getrennt" },
+        { t: "Leiste Schatten", art: "text", v: "--bar-box-shadow", ebene: "getrennt" },
+        { t: "Rollschatten", art: "farbe", v: "--ha-color-shadow-scrollable-fade", ebene: "beide" },
+        { t: "Kopfzeilenhoehe", art: "mass", v: "--header-height", ebene: "beide", min: 0, max: 168 },
+        { t: "Rollbalken", art: "farbe", v: "--scrollbar-thumb-color", ebene: "getrennt" },
+        { t: "Schattenfarbe", art: "farbe", v: "--shadow-color", ebene: "getrennt" },
       ] },
       
       { name: "Kanten", felder: [
-        { t: "Divider Farbe", art: "farbe", v: "--divider-color", ebene: "getrennt" },
+        { t: "Trennlinie", art: "farbe", v: "--divider-color", ebene: "getrennt" },
         { t: "Fehler laut", art: "farbe", v: "--ha-color-border-danger-loud", ebene: "getrennt" },
         { t: "Fehler normal", art: "farbe", v: "--ha-color-border-danger-normal", ebene: "getrennt" },
         { t: "Neutral laut", art: "farbe", v: "--ha-color-border-neutral-loud", ebene: "getrennt" },
@@ -294,22 +294,22 @@ const STUFEN = [
         { t: "Flaeche", art: "farbe", v: "--ha-color-form-background", ebene: "getrennt" },
         { t: "Flaeche Deaktiviert", art: "farbe", v: "--ha-color-form-background-disabled", ebene: "getrennt" },
         { t: "Flaeche ueberfahren", art: "farbe", v: "--ha-color-form-background-hover", ebene: "getrennt" },
-        { t: "Deaktiviert fill Farbe", art: "farbe", v: "--input-disabled-fill-color", ebene: "getrennt" },
-        { t: "Deaktiviert ink Farbe", art: "farbe", v: "--input-disabled-ink-color", ebene: "getrennt" },
-        { t: "Deaktiviert line Farbe", art: "farbe", v: "--input-disabled-line-color", ebene: "getrennt" },
-        { t: "Dropdown icon Farbe", art: "farbe", v: "--input-dropdown-icon-color", ebene: "getrennt" },
-        { t: "Fill Farbe", art: "farbe", v: "--input-fill-color", ebene: "getrennt" },
-        { t: "Ueberfahren line Farbe", art: "farbe", v: "--input-hover-line-color", ebene: "getrennt" },
-        { t: "Idle line Farbe", art: "farbe", v: "--input-idle-line-color", ebene: "getrennt" },
-        { t: "Ink Farbe", art: "farbe", v: "--input-ink-color", ebene: "getrennt" },
-        { t: "Label ink Farbe", art: "farbe", v: "--input-label-ink-color", ebene: "getrennt" },
-        { t: "Outlined Deaktiviert border Farbe", art: "farbe", v: "--input-outlined-disabled-border-color", ebene: "getrennt" },
-        { t: "Outlined ueberfahren border Farbe", art: "farbe", v: "--input-outlined-hover-border-color", ebene: "getrennt" },
-        { t: "Outlined idle border Farbe", art: "farbe", v: "--input-outlined-idle-border-color", ebene: "getrennt" },
+        { t: "Fuellung deaktiviert", art: "farbe", v: "--input-disabled-fill-color", ebene: "getrennt" },
+        { t: "Schrift deaktiviert", art: "farbe", v: "--input-disabled-ink-color", ebene: "getrennt" },
+        { t: "Linie deaktiviert", art: "farbe", v: "--input-disabled-line-color", ebene: "getrennt" },
+        { t: "Auswahlpfeil", art: "farbe", v: "--input-dropdown-icon-color", ebene: "getrennt" },
+        { t: "Fuellung", art: "farbe", v: "--input-fill-color", ebene: "getrennt" },
+        { t: "Linie ueberfahren", art: "farbe", v: "--input-hover-line-color", ebene: "getrennt" },
+        { t: "Linie ruhend", art: "farbe", v: "--input-idle-line-color", ebene: "getrennt" },
+        { t: "Schrift", art: "farbe", v: "--input-ink-color", ebene: "getrennt" },
+        { t: "Beschriftung", art: "farbe", v: "--input-label-ink-color", ebene: "getrennt" },
+        { t: "Rahmen deaktiviert", art: "farbe", v: "--input-outlined-disabled-border-color", ebene: "getrennt" },
+        { t: "Rahmen ueberfahren", art: "farbe", v: "--input-outlined-hover-border-color", ebene: "getrennt" },
+        { t: "Rahmen ruhend", art: "farbe", v: "--input-outlined-idle-border-color", ebene: "getrennt" },
       ] },
       { name: "Schrift invertiert", felder: [
         { t: "Primaer invertiert", art: "farbe", v: "--ha-color-text-primary-inverted", ebene: "getrennt" },
-        { t: "Secondary invertiert", art: "farbe", v: "--ha-color-text-secondary-inverted", ebene: "getrennt" },
+        { t: "Sekundaer invertiert", art: "farbe", v: "--ha-color-text-secondary-inverted", ebene: "getrennt" },
       ] },
     ] },
 
@@ -319,31 +319,39 @@ const STUFEN = [
       // core.globals.ts. Nur die Schatten unterscheiden sich.
       { name: "Rundung", felder: [
 
+        { t: "Klein", art: "mass", v: "--ha-border-radius-sm", ebene: "beide", min: 0, max: 16 },
+        { t: "Mittel", art: "mass", v: "--ha-border-radius-md", ebene: "beide", min: 0, max: 24 },
+        { t: "Gross", art: "mass", v: "--ha-border-radius-lg", ebene: "beide", min: 0, max: 32 },
+        { t: "Karten", art: "mass", v: "--ha-border-radius-xl", ebene: "beide", min: 0, max: 48 },
         { t: "2xl", art: "mass", v: "--ha-border-radius-2xl", ebene: "beide", min: 0, max: 60 },
         { t: "3xl", art: "mass", v: "--ha-border-radius-3xl", ebene: "beide", min: 0, max: 72 },
         { t: "4xl", art: "mass", v: "--ha-border-radius-4xl", ebene: "beide", min: 0, max: 84 },
         { t: "5xl", art: "mass", v: "--ha-border-radius-5xl", ebene: "beide", min: 0, max: 96 },
         { t: "6xl", art: "mass", v: "--ha-border-radius-6xl", ebene: "beide", min: 0, max: 108 },
-        { t: "Circle", art: "mass", v: "--ha-border-radius-circle", ebene: "beide", einheit: "%", min: 0, max: 150 },
-        { t: "Pill", art: "mass", v: "--ha-border-radius-pill", ebene: "beide", min: 0, max: 29997 },
-        { t: "Square", art: "zahl", v: "--ha-border-radius-square", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Klein", art: "mass", v: "--ha-border-radius-sm", ebene: "beide", min: 0, max: 16 },
-        { t: "Mittel", art: "mass", v: "--ha-border-radius-md", ebene: "beide", min: 0, max: 24 },
-        { t: "Gross", art: "mass", v: "--ha-border-radius-lg", ebene: "beide", min: 0, max: 32 },
-        { t: "Karten", art: "mass", v: "--ha-border-radius-xl", ebene: "beide", min: 0, max: 48 } ] },
+        { t: "Kreis", art: "mass", v: "--ha-border-radius-circle", ebene: "beide", einheit: "%", min: 0, max: 150 },
+        { t: "Pille", art: "mass", v: "--ha-border-radius-pill", ebene: "beide", min: 0, max: 29997 },
+        { t: "Eckig", art: "zahl", v: "--ha-border-radius-square", ebene: "beide", min: 0, max: 1, schritt: 0.05 } ] },
       { name: "Rahmen", felder: [
 
-        { t: "Lg", art: "mass", v: "--ha-border-width-lg", ebene: "beide", min: 0, max: 48 },
-        { t: "Md", art: "mass", v: "--ha-border-width-md", ebene: "beide", min: 0, max: 48 },
-        { t: "Border style", art: "text", v: "--wa-border-style", ebene: "beide" },
-        { t: "Border style", art: "text", v: "--wa-panel-border-style", ebene: "beide" },
-        { t: "Border width", art: "mass", v: "--wa-panel-border-width", ebene: "beide", min: 0, max: 48 },
-        { t: "Breite", art: "mass", v: "--ha-border-width-sm", ebene: "beide", min: 0, max: 4 },
+        { t: "Dick", art: "mass", v: "--ha-border-width-lg", ebene: "beide", min: 0, max: 48 },
+        { t: "Mittel", art: "mass", v: "--ha-border-width-md", ebene: "beide", min: 0, max: 48 },
+        { t: "Stil", art: "text", v: "--wa-border-style", ebene: "beide" },
+        { t: "Stil Panel", art: "text", v: "--wa-panel-border-style", ebene: "beide" },
+        { t: "Breite Panel", art: "mass", v: "--wa-panel-border-width", ebene: "beide", min: 0, max: 48 },
+        { t: "Duenn", art: "mass", v: "--ha-border-width-sm", ebene: "beide", min: 0, max: 4 },
         { t: "Ruhig", art: "farbe", v: "--ha-color-border-neutral-quiet", ebene: "getrennt" },
         { t: "Deutlich", art: "farbe", v: "--ha-color-border-neutral-normal", ebene: "getrennt" } ] },
       { name: "Abstaende", felder: [
 
         { t: "1", art: "mass", v: "--ha-space-1", ebene: "beide", min: 0, max: 48 },
+        { t: "Eng", art: "mass", v: "--ha-space-2", ebene: "beide", min: 0, max: 24 },
+        { t: "3", art: "mass", v: "--ha-space-3", ebene: "beide", min: 0, max: 48 },
+        { t: "Normal", art: "mass", v: "--ha-space-4", ebene: "beide", min: 0, max: 40 },
+        { t: "5", art: "mass", v: "--ha-space-5", ebene: "beide", min: 0, max: 60 },
+        { t: "Weit", art: "mass", v: "--ha-space-6", ebene: "beide", min: 0, max: 64 },
+        { t: "7", art: "mass", v: "--ha-space-7", ebene: "beide", min: 0, max: 84 },
+        { t: "8", art: "mass", v: "--ha-space-8", ebene: "beide", min: 0, max: 96 },
+        { t: "9", art: "mass", v: "--ha-space-9", ebene: "beide", min: 0, max: 108 },
         { t: "10", art: "mass", v: "--ha-space-10", ebene: "beide", min: 0, max: 120 },
         { t: "11", art: "mass", v: "--ha-space-11", ebene: "beide", min: 0, max: 132 },
         { t: "12", art: "mass", v: "--ha-space-12", ebene: "beide", min: 0, max: 144 },
@@ -354,15 +362,7 @@ const STUFEN = [
         { t: "17", art: "mass", v: "--ha-space-17", ebene: "beide", min: 0, max: 204 },
         { t: "18", art: "mass", v: "--ha-space-18", ebene: "beide", min: 0, max: 216 },
         { t: "19", art: "mass", v: "--ha-space-19", ebene: "beide", min: 0, max: 228 },
-        { t: "20", art: "mass", v: "--ha-space-20", ebene: "beide", min: 0, max: 240 },
-        { t: "3", art: "mass", v: "--ha-space-3", ebene: "beide", min: 0, max: 48 },
-        { t: "5", art: "mass", v: "--ha-space-5", ebene: "beide", min: 0, max: 60 },
-        { t: "7", art: "mass", v: "--ha-space-7", ebene: "beide", min: 0, max: 84 },
-        { t: "8", art: "mass", v: "--ha-space-8", ebene: "beide", min: 0, max: 96 },
-        { t: "9", art: "mass", v: "--ha-space-9", ebene: "beide", min: 0, max: 108 },
-        { t: "Eng", art: "mass", v: "--ha-space-2", ebene: "beide", min: 0, max: 24 },
-        { t: "Normal", art: "mass", v: "--ha-space-4", ebene: "beide", min: 0, max: 40 },
-        { t: "Weit", art: "mass", v: "--ha-space-6", ebene: "beide", min: 0, max: 64 } ] },
+        { t: "20", art: "mass", v: "--ha-space-20", ebene: "beide", min: 0, max: 240 } ] },
       // Schatten stehen in semantic.globals.ts zweimal, je Modus verschieden.
       { name: "Schatten", felder: [
         { t: "Klein", art: "text", v: "--ha-box-shadow-s", ebene: "getrennt" },
@@ -382,8 +382,8 @@ const STUFEN = [
         { t: "Neutral hell Farbe", art: "farbe", v: "--ha-button-neutral-light-color", ebene: "getrennt" },
         { t: "Primaer hell Farbe", art: "farbe", v: "--ha-button-primary-light-color", ebene: "getrennt" },
         { t: "Warnung hell Farbe", art: "farbe", v: "--ha-button-warning-light-color", ebene: "getrennt" },
-        { t: "Height", art: "mass", v: "--wa-form-control-height", ebene: "beide", min: 0, max: 120 },
-        { t: "Padding block", art: "mass", v: "--wa-form-control-padding-block", ebene: "beide", einheit: "em", min: 0, max: 48 },
+        { t: "Hoehe", art: "mass", v: "--wa-form-control-height", ebene: "beide", min: 0, max: 120 },
+        { t: "Polster oben und unten", art: "mass", v: "--wa-form-control-padding-block", ebene: "beide", einheit: "em", min: 0, max: 48 },
       ] },
       
     ] },
@@ -416,21 +416,21 @@ const STUFEN = [
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       { name: "Deckkraft", felder: [
-        { t: "Dunkel Deaktiviert Deckkraft", art: "zahl", v: "--dark-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Dunkel divider Deckkraft", art: "zahl", v: "--dark-divider-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Dunkel Primaer Deckkraft", art: "zahl", v: "--dark-primary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Dunkel secondary Deckkraft", art: "zahl", v: "--dark-secondary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Hell Deaktiviert Deckkraft", art: "zahl", v: "--light-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Hell divider Deckkraft", art: "zahl", v: "--light-divider-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Hell Primaer Deckkraft", art: "zahl", v: "--light-primary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
-        { t: "Hell secondary Deckkraft", art: "zahl", v: "--light-secondary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel Deaktiviert", art: "zahl", v: "--dark-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel Trennlinie", art: "zahl", v: "--dark-divider-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel Primaer", art: "zahl", v: "--dark-primary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Dunkel Sekundaer", art: "zahl", v: "--dark-secondary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell Deaktiviert", art: "zahl", v: "--light-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell Trennlinie", art: "zahl", v: "--light-divider-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell Primaer", art: "zahl", v: "--light-primary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
+        { t: "Hell Sekundaer", art: "zahl", v: "--light-secondary-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 },
       ] },
       { name: "Bewegung", felder: [
-        { t: "Instant", art: "mass", v: "--ha-animation-duration-instant", ebene: "beide", einheit: "ms", min: 0, max: 225 },
-        { t: "None", art: "mass", v: "--ha-animation-duration-none", ebene: "beide", einheit: "ms", min: 0, max: 48 },
+        { t: "Sofort", art: "mass", v: "--ha-animation-duration-instant", ebene: "beide", einheit: "ms", min: 0, max: 225 },
+        { t: "Keine", art: "mass", v: "--ha-animation-duration-none", ebene: "beide", einheit: "ms", min: 0, max: 48 },
         { t: "Normal", art: "mass", v: "--ha-animation-duration-normal", ebene: "beide", einheit: "s", min: 0, max: 48 },
-        { t: "Slow", art: "mass", v: "--ha-animation-duration-slow", ebene: "beide", einheit: "s", min: 0, max: 48 },
-        { t: "Transition easing", art: "text", v: "--wa-transition-easing", ebene: "beide" },
+        { t: "Langsam", art: "mass", v: "--ha-animation-duration-slow", ebene: "beide", einheit: "s", min: 0, max: 48 },
+        { t: "Verlaufskurve", art: "text", v: "--wa-transition-easing", ebene: "beide" },
       ] },
       { name: "Flaechen je Lautstaerke", felder: [
         { t: "Fehler laut gedrueckt", art: "farbe", v: "--ha-color-fill-danger-loud-active", ebene: "getrennt" },
@@ -492,17 +492,17 @@ const STUFEN = [
         { t: "Erfolg laut", art: "farbe", v: "--ha-color-on-success-loud", ebene: "getrennt" },
         { t: "Erfolg normal", art: "farbe", v: "--ha-color-on-success-normal", ebene: "getrennt" },
         { t: "Erfolg leise", art: "farbe", v: "--ha-color-on-success-quiet", ebene: "getrennt" },
-        { t: "Surface default", art: "farbe", v: "--ha-color-on-surface-default", ebene: "getrennt" },
+        { t: "Auf Oberflaeche", art: "farbe", v: "--ha-color-on-surface-default", ebene: "getrennt" },
         { t: "Warnung laut", art: "farbe", v: "--ha-color-on-warning-loud", ebene: "getrennt" },
         { t: "Warnung normal", art: "farbe", v: "--ha-color-on-warning-normal", ebene: "getrennt" },
         { t: "Warnung leise", art: "farbe", v: "--ha-color-on-warning-quiet", ebene: "getrennt" },
       ] },
       { name: "Fokus", felder: [
-        { t: "Outline Farbe", art: "farbe", v: "--outline-color", ebene: "getrennt" },
-        { t: "Outline ueberfahren Farbe", art: "farbe", v: "--outline-hover-color", ebene: "getrennt" },
-        { t: "Offset", art: "mass", v: "--wa-focus-ring-offset", ebene: "beide", min: 0, max: 48 },
-        { t: "Style", art: "text", v: "--wa-focus-ring-style", ebene: "beide" },
-        { t: "Width", art: "mass", v: "--wa-focus-ring-width", ebene: "beide", min: 0, max: 48 },
+        { t: "Rahmen", art: "farbe", v: "--outline-color", ebene: "getrennt" },
+        { t: "Rahmen ueberfahren", art: "farbe", v: "--outline-hover-color", ebene: "getrennt" },
+        { t: "Abstand", art: "mass", v: "--wa-focus-ring-offset", ebene: "beide", min: 0, max: 48 },
+        { t: "Stil", art: "text", v: "--wa-focus-ring-style", ebene: "beide" },
+        { t: "Breite", art: "mass", v: "--wa-focus-ring-width", ebene: "beide", min: 0, max: 48 },
       ] },
     ] },
 
@@ -539,7 +539,7 @@ const STUFEN = [
         { t: "Black Farbe", art: "farbe", v: "--black-color", ebene: "beide" },
         { t: "Dunkel grey Farbe", art: "farbe", v: "--dark-grey-color", ebene: "beide" },
         { t: "History unavailable Farbe", art: "text", v: "--history-unavailable-color", ebene: "beide" },
-        { t: "Label badge grey", art: "farbe", v: "--label-badge-grey", ebene: "beide" },
+        { t: "Badge grau", art: "farbe", v: "--label-badge-grey", ebene: "beide" },
         { t: "Hell grey Farbe", art: "farbe", v: "--light-grey-color", ebene: "beide" },
         { t: "State weather snowy Farbe", art: "farbe", v: "--state-weather-snowy-color", ebene: "beide" },
         { t: "White Farbe", art: "farbe", v: "--white-color", ebene: "beide" },
@@ -629,6 +629,12 @@ const STUFEN = [
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       
       { name: "Diagrammfarben", felder: [
+        { t: "4", art: "farbe", v: "--color-4", ebene: "beide" },
+        { t: "5", art: "farbe", v: "--color-5", ebene: "beide" },
+        { t: "6", art: "farbe", v: "--color-6", ebene: "beide" },
+        { t: "7", art: "farbe", v: "--color-7", ebene: "beide" },
+        { t: "8", art: "farbe", v: "--color-8", ebene: "beide" },
+        { t: "9", art: "farbe", v: "--color-9", ebene: "beide" },
         { t: "10", art: "farbe", v: "--color-10", ebene: "beide" },
         { t: "11", art: "farbe", v: "--color-11", ebene: "beide" },
         { t: "12", art: "farbe", v: "--color-12", ebene: "beide" },
@@ -659,7 +665,6 @@ const STUFEN = [
         { t: "37", art: "farbe", v: "--color-37", ebene: "beide" },
         { t: "38", art: "farbe", v: "--color-38", ebene: "beide" },
         { t: "39", art: "farbe", v: "--color-39", ebene: "beide" },
-        { t: "4", art: "farbe", v: "--color-4", ebene: "beide" },
         { t: "40", art: "farbe", v: "--color-40", ebene: "beide" },
         { t: "41", art: "farbe", v: "--color-41", ebene: "beide" },
         { t: "42", art: "farbe", v: "--color-42", ebene: "beide" },
@@ -670,16 +675,11 @@ const STUFEN = [
         { t: "47", art: "farbe", v: "--color-47", ebene: "beide" },
         { t: "48", art: "farbe", v: "--color-48", ebene: "beide" },
         { t: "49", art: "farbe", v: "--color-49", ebene: "beide" },
-        { t: "5", art: "farbe", v: "--color-5", ebene: "beide" },
         { t: "50", art: "farbe", v: "--color-50", ebene: "beide" },
         { t: "51", art: "farbe", v: "--color-51", ebene: "beide" },
         { t: "52", art: "farbe", v: "--color-52", ebene: "beide" },
         { t: "53", art: "farbe", v: "--color-53", ebene: "beide" },
         { t: "54", art: "farbe", v: "--color-54", ebene: "beide" },
-        { t: "6", art: "farbe", v: "--color-6", ebene: "beide" },
-        { t: "7", art: "farbe", v: "--color-7", ebene: "beide" },
-        { t: "8", art: "farbe", v: "--color-8", ebene: "beide" },
-        { t: "9", art: "farbe", v: "--color-9", ebene: "beide" },
       ] },
       { name: "Energie", felder: [
         { t: "Battery in Farbe", art: "farbe", v: "--energy-battery-in-color", ebene: "beide" },
@@ -692,7 +692,7 @@ const STUFEN = [
         { t: "Water Farbe", art: "farbe", v: "--energy-water-color", ebene: "beide" },
       ] },
       { name: "Karte und Reste", felder: [
-        { t: "Map filter", art: "text", v: "--map-filter", ebene: "getrennt" },
+        { t: "Kartenfilter", art: "text", v: "--map-filter", ebene: "getrennt" },
         { t: "Linear progress buffer Farbe", art: "farbe", v: "--mdc-linear-progress-buffer-color", ebene: "getrennt" },
         { t: "Ripple Farbe", art: "farbe", v: "--mdc-ripple-color", ebene: "getrennt" },
       ] },
@@ -720,12 +720,12 @@ const STUFEN = [
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       { name: "Textrichtung", felder: [
-        { t: "Direction", art: "text", v: "--direction", ebene: "beide" },
-        { t: "Float end", art: "text", v: "--float-end", ebene: "beide" },
-        { t: "Float start", art: "text", v: "--float-start", ebene: "beide" },
-        { t: "Ha moz osx font smoothing", art: "text", v: "--ha-moz-osx-font-smoothing", ebene: "beide" },
-        { t: "Margin title ltr", art: "text", v: "--margin-title-ltr", ebene: "beide" },
-        { t: "Margin title rtl", art: "text", v: "--margin-title-rtl", ebene: "beide" },
+        { t: "Leserichtung", art: "text", v: "--direction", ebene: "beide" },
+        { t: "Ausrichtung Ende", art: "text", v: "--float-end", ebene: "beide" },
+        { t: "Ausrichtung Anfang", art: "text", v: "--float-start", ebene: "beide" },
+        { t: "Kantenglaettung macOS", art: "text", v: "--ha-moz-osx-font-smoothing", ebene: "beide" },
+        { t: "Titelabstand links nach rechts", art: "text", v: "--margin-title-ltr", ebene: "beide" },
+        { t: "Titelabstand rechts nach links", art: "text", v: "--margin-title-rtl", ebene: "beide" },
       ] },
     ] },
 ];
@@ -2715,7 +2715,15 @@ class HatsPanel extends HTMLElement {
     const zahl = (o) => Object.values(o || {}).filter((v) => v !== "" && v !== undefined).length;
     switch (f.bericht) {
       case "geaendert": return String(ZUSTAND.geaendert.size);
-      case "gesamt": return m ? String(zahl(m.flach) + zahl(m.light) + zahl(m.dark)) : "-";
+      // Gezaehlt werden NAMEN, nicht Eintraege. Ein Feld, das hell und dunkel
+      // einen eigenen Wert hat, ist EIN Feld - die Summe der drei Ebenen
+      // zaehlte es zweimal. Bei macos standen so 434 auf der Kachel und 398
+      // im Bericht ueber dieselbe Datei; am 14.10.2026 beim Durchgehen der
+      // Stufen aufgefallen. Zwei Zahlen fuer dasselbe Wort sind schlimmer als
+      // eine falsche: Man sucht den Fehler in der Theme.
+      case "gesamt": return m
+        ? String(new Set(["flach", "light", "dark"].flatMap((e) => Object.keys(m[e] || {}))).size)
+        : "-";
       case "gefuellt": return m ? `${zahl(m.flach)} flach, ${zahl(m.light)} hell, ${zahl(m.dark)} dunkel` : "-";
       case "dateiname": return ZUSTAND.name ? ZUSTAND.name + ".yaml" : "noch offen";
       case "ziel": return "config/themes";
@@ -2761,7 +2769,7 @@ class HatsPanel extends HTMLElement {
       <div class="feld" data-feld="${f.v || f.t}" tabindex="0" role="button">
         <div class="feldtext">
           <b>${T(f.t)}</b>
-          <span>${f.v ? f.v : T("Angabe")}</span>
+          <span${f.v ? ` title="${f.v}"` : ""}>${f.v ? f.v : T("Angabe")}</span>
         </div>
         ${this.syncIcons(f)}
         ${w.farbe ? `<span class="probe" style="background:${w.farbe}"></span>` : ""}
@@ -2772,7 +2780,7 @@ class HatsPanel extends HTMLElement {
   feldKachel(f, T) {
     const w = this.wert(f);
     return `
-      <article class="karte" data-feld="${f.v || f.t}" tabindex="0" role="button">
+      <article class="karte" data-feld="${f.v || f.t}" tabindex="0" role="button"${f.v ? ` title="${f.v}"` : ""}>
         <b>${T(f.t)}</b>
         <p>${f.v ? f.v : T("Angabe")}</p>
         <div class="kfuss">
