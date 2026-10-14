@@ -188,11 +188,24 @@ dieselbe Weise und mit denselben Bedingungen:
 Geschrieben wird nur der Wert, an dem gezogen wurde.
 
 **Alles in einem Fenster** gibt es mit `function: settings`: ein Knopf am Rand
-der Leiste, dahinter Modus und Vollbild, Transparenz und Schrift und die
-Bewegung des Hintergrunds. Ein Knopf statt vier. Wechselt der Modus im
-Fenster, zeigt die Transparenz gleich den Wert des anderen Modus.
+der Leiste, dahinter ein Einstellungsfenster nach dem Vorbild der
+Systemeinstellungen am Mac — links die Bereiche, rechts die Auswahl:
 
-![Das Fenster hinter dem Einstellungsknopf](docs/bilder/steuerleiste-einstellungen.jpg)
+| Bereich | darin |
+|---|---|
+| Erscheinungsbild | Modus, Kartenstil, Farbpalette, Transparenz und Weichzeichnung der Karten |
+| Hintergrund | die Farbverläufe des Baukastens und eigene Bilder aus `config/www/hats` |
+| Schrift und Größe | Größe, Schriftart, Rundung, Dichte |
+| Bewegung | Treiben, Farbpunkte, Farbwechsel, Ausschlag |
+| Anzeige | Vollbild, Dashboard bearbeiten, Wahl der Theme, frühere Fassungen |
+
+![Das Einstellungsfenster](docs/bilder/steuerkarte-einstellungsfenster.jpg)
+
+Kartenstile, Paletten, Schriften und Hintergründe sind die Teile des
+Baukastens aus dem Panel — dieselben Werte, dieselbe Art zu schreiben. Das
+Fenster zeigt an, welches Teil gerade sitzt. Ein Klick schreibt in die Datei
+der wirksamen Theme; die Fassung davor liegt danach unter „Frühere Fassungen"
+und ist mit einem Klick zurück. Am Telefon füllt das Fenster den Bildschirm.
 
 Die einzelnen Funktionen bleiben, für eine Leiste, die sie lieber einzeln
 zeigt.

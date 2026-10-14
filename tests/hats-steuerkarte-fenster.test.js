@@ -12,13 +12,18 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import * as theme from "../custom_components/hats/www/theme.js";
 import * as hintergrund from "../custom_components/hats/www/hintergrund.js";
+import * as baukasten from "../custom_components/hats/www/baukasten.js";
+import * as hintergrundSeite from "../custom_components/hats/www/hintergrund-seite.js";
+import { execFileSync } from "node:child_process";
 import {
-  leseReglerAusDatei, schreibeReglerInDatei, leseBewegungAusDatei, leseDarstellungAusDatei,
+  leseReglerAusDatei, schreibeReglerInDatei, leseBewegungAusDatei, leseDarstellungAusDatei, schreibeDarstellungInDatei,
   aktuellerModus, knopfZeile, badgeKurzform, FUNKTIONEN, TEXTE, BEWEGUNG_REGLER, DARSTELLUNG_REGLER,
+  leseFensterAusDatei, schreibeTeilInDatei, schreibeBildInDatei, leseUnschaerfe, mitUnschaerfe, FENSTER_SORTEN,
+  BILD_ADRESSE,
 } from "../custom_components/hats/www/hats-control-card.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
-const w = { ...theme, ...hintergrund };
+const w = { ...theme, ...hintergrund, ...baukasten, ...hintergrundSeite };
 const DATEI = readFileSync(path.join(hier, "../werkzeuge/themes/glaswerk.yaml"), "utf8");
 const NAME = "glaswerk";
 const HELL = '      ha-card-background: "rgba(255, 255, 255, 0.42)"';
@@ -122,5 +127,116 @@ pruefe("Der Modus kommt aus hass.themes.darkMode", () => {
   assert.strictEqual(aktuellerModus(undefined), "light");
 });
 
+// ---- Das grosse Fenster: Teile des Baukastens, Bilder, Weichzeichnung ----------
+
+pruefe("Das Fenster erkennt die sechs Teile, aus denen glaswerk gebaut ist", () => {
+  // Die Erwartung steht im Kopf der Datei selbst: "Farben glaswerk, Schrift
+  // system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk."
+  assert.ok(/Farben glaswerk, Schrift\s*#?\s*system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk/
+    .test(DATEI.replace(/\n# /g, " ")), "der Kopf von glaswerk nennt andere Teile");
+  for (const modus of ["light", "dark"]) {
+    const stand = leseFensterAusDatei(DATEI, NAME, modus, w);
+    assert.strictEqual(stand.grund, undefined);
+    assert.deepStrictEqual(stand.sitzt, { palette: "glaswerk", karten: "glas", schrift: "system",
+      rundung: "rund", dichte: "weit", hintergrund: "glaswerk" }, modus);
+    assert.ok(stand.bild.startsWith("linear-gradient"), modus);
+  }
+  assert.deepStrictEqual(FENSTER_SORTEN.slice().sort(), ["dichte", "hintergrund", "karten", "palette", "rundung", "schrift"]);
+});
+
+const sitzt = (yaml) => leseFensterAusDatei(yaml, NAME, "light", w).sitzt;
+
+pruefe("Ein anderes Teil waehlen: dieses sitzt danach, die anderen fuenf bleiben", () => {
+  const { yaml, grund } = schreibeTeilInDatei(DATEI, NAME, "karten", "kontur", w);
+  assert.strictEqual(grund, undefined);
+  const neu = sitzt(yaml);
+  assert.strictEqual(neu.karten, "kontur");
+  for (const s of ["palette", "schrift", "rundung", "dichte", "hintergrund"]) {
+    assert.strictEqual(neu[s], sitzt(DATEI)[s], s);
+  }
+  // Und zurueck: Glas sitzt wieder. (Byte-gleich wird es nicht - kontur
+  // setzt Felder, die glas leer laesst, und das Panel raeumt sie genauso.)
+  assert.strictEqual(sitzt(schreibeTeilInDatei(yaml, NAME, "karten", "glas", w).yaml).karten, "glas");
+});
+
+pruefe("\"Keiner\" nimmt den Hintergrund heraus, statt ein leeres Feld zu schreiben", () => {
+  // Ein geschriebenes leeres Feld stuende in der Datei und ueberschriebe HAs
+  // eigene Vorgabe mit nichts - dieselbe Regel wie im Panel.
+  const { yaml } = schreibeTeilInDatei(DATEI, NAME, "hintergrund", "keiner", w);
+  const m = theme.leseTheme(yaml);
+  for (const ebene of ["flach", "light", "dark"]) assert.strictEqual(m[ebene]["lovelace-background"], undefined, ebene);
+  assert.ok(!/lovelace-background:\s*""/.test(yaml));
+  assert.strictEqual(sitzt(yaml).hintergrund, "keiner");
+});
+
+pruefe("Eine Palette tauschen setzt den Akzent beider Modi", () => {
+  const { yaml } = schreibeTeilInDatei(DATEI, NAME, "palette", "nord", w);
+  const m = theme.leseTheme(yaml);
+  const nord = baukasten.PALETTEN.find((p) => p.id === "nord");
+  assert.strictEqual(m.light["accent-color"], nord.akzent.light);
+  assert.strictEqual(m.dark["accent-color"], nord.akzent.dark);
+  assert.strictEqual(sitzt(yaml).palette, "nord");
+});
+
+pruefe("Unbekannte Sorte oder unbekanntes Teil: nichts geschrieben", () => {
+  assert.strictEqual(schreibeTeilInDatei(DATEI, NAME, "karten", "gibtsnicht", w).grund, "teil");
+  assert.strictEqual(schreibeTeilInDatei(DATEI, NAME, "oberflaeche", "glas", w).grund, "teil");
+  assert.strictEqual(schreibeTeilInDatei(DATEI, NAME, "__proto__", "x", w).grund, "teil");
+  // Und eine fremde Datei sperrt wie ueberall.
+  const fremd = DATEI.replace(/^# Erzeugt mit HATS .*\n/m, "# von Hand\n");
+  assert.strictEqual(schreibeTeilInDatei(fremd, NAME, "karten", "kontur", w).grund, "fremd");
+});
+
+pruefe("Ein eigenes Bild: fuer hell und dunkel, fest am Fenster, nur aus /local/hats", () => {
+  const { yaml, grund } = schreibeBildInDatei(DATEI, NAME, "/local/hats/strand.jpg", w);
+  assert.strictEqual(grund, undefined);
+  const m = theme.leseTheme(yaml);
+  for (const modus of ["light", "dark"]) {
+    assert.strictEqual(m[modus]["lovelace-background"], "url(/local/hats/strand.jpg) center / cover no-repeat fixed", modus);
+  }
+  // Ein Bild ist kein Punktebild: Die Punktbewegung faellt weg, wie im Panel.
+  assert.ok(!/hats-hintergrund-punkte\s+\d/.test(m.flach["uix-root"] ?? ""));
+  for (const boese of ["https://example.com/x.jpg", "/local/hats/../../secrets.yaml", "/local/hats/a b.jpg",
+    "/local/hats/x.jpg) ; color: red", "/local/anderswo/x.jpg"]) {
+    assert.strictEqual(schreibeBildInDatei(DATEI, NAME, boese, w).grund, "bild", boese);
+    assert.ok(!BILD_ADRESSE.test(boese), boese);
+  }
+});
+
+pruefe("Weichzeichnung: nur die Zahl im blur(), der Rest der Kette bleibt", () => {
+  assert.strictEqual(leseUnschaerfe("blur(26px) saturate(180%)"), 26);
+  assert.strictEqual(leseUnschaerfe("none"), 0);
+  assert.strictEqual(leseUnschaerfe(undefined), 0);
+  assert.strictEqual(leseUnschaerfe("saturate(150%)"), 0);
+  assert.strictEqual(leseUnschaerfe("var(--meins)"), null);
+  assert.strictEqual(mitUnschaerfe("blur(26px) saturate(180%)", 10), "blur(10px) saturate(180%)");
+  assert.strictEqual(mitUnschaerfe("none", 8), "blur(8px)");
+  assert.strictEqual(mitUnschaerfe("saturate(150%)", 8), "blur(8px) saturate(150%)");
+  assert.strictEqual(mitUnschaerfe("", 0), "none");
+  // In der Datei: genau die eine Zeile.
+  const WEICH = '  ha-card-backdrop-filter: "blur(26px) saturate(180%)"';
+  const { yaml } = schreibeDarstellungInDatei(DATEI, NAME, "light", { unschaerfe: 12 }, w);
+  assert.strictEqual(yaml, DATEI.split(WEICH).join('  ha-card-backdrop-filter: "blur(12px) saturate(180%)"'));
+});
+
+pruefe("Gegenprobe mit PyYAML: Teil, Bild und Weichzeichnung liest Home Assistant", () => {
+  let yaml = schreibeTeilInDatei(DATEI, NAME, "palette", "catppuccin", w).yaml;
+  yaml = schreibeBildInDatei(yaml, NAME, "/local/hats/strand.jpg", w).yaml;
+  yaml = schreibeDarstellungInDatei(yaml, NAME, "dark", { unschaerfe: 4 }, w).yaml;
+  let aus;
+  try {
+    aus = execFileSync("python3", ["-c",
+      "import sys, yaml, json\nd = yaml.safe_load(sys.stdin.read())\nt = d['glaswerk']\n"
+      + "print(json.dumps([t['modes']['dark']['lovelace-background'], t.get('ha-card-backdrop-filter'), t['modes']['light'].get('accent-color')]))"],
+      { input: yaml, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+  } catch (e) {
+    assert.fail("PyYAML liest die Datei nicht: " + String(e.stderr || e.message).trim().split("\n").slice(-3).join(" | "));
+  }
+  const [bild, weich, akzent] = JSON.parse(aus);
+  assert.strictEqual(bild, "url(/local/hats/strand.jpg) center / cover no-repeat fixed");
+  assert.strictEqual(weich, "blur(4px) saturate(180%)");
+  assert.strictEqual(akzent, baukasten.PALETTEN.find((p) => p.id === "catppuccin").akzent.light);
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 9) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 17) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

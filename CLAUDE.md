@@ -1064,9 +1064,10 @@ this.addEventListener("settheme", (e) => {
   wenn beide denselben Nutzer haben. Das ist Home Assistants Verhalten, nicht
   das der Karte — aber es gehört gesagt, bevor es jemand als Fehler meldet.
 
-Gemessen ist das Umschalten des **Modus**. Dass derselbe Weg auch den
-Theme-Namen trägt, steht im selben Code, ist aber nicht nachgemessen: Auf der
-Testinstanz gibt es nur eine Theme.
+Gemessen ist das Umschalten des **Modus**, und seit dem 14.10.2026 auch das
+der **Theme**: Das Einstellungsfenster schickt `{theme: "macos"}`, Home
+Assistant wechselt sofort, der Modus bleibt stehen (das Detail wird gemischt),
+und `{theme: "glaswerk"}` stellt die Nutzerdaten Byte für Byte wieder her.
 
 **Das Verbot von `settheme` gilt weiter für das Messen.** Die Karte löst es
 aus, wenn der Nutzer drückt — genau wie die Zeile im Profil. Ich löse es nicht
@@ -1594,6 +1595,71 @@ die Kopfzeile um, muss `KOPF_REGELN` nachziehen.
 
 `tests/hats-steuerkarte-kopfzeile.test.js`: neun Prüfungen, darunter die
 Kapsel mit dem Knopf davor, mit Mutation gegengeprüft.
+
+### Das Einstellungsfenster
+
+Auf Ansage vom 14.10.2026, mit einem Bild der macOS-Systemeinstellungen:
+*„eigendlich könnten wir die einstellungsseite 1 zu eins übernehmen.
+wallpaper schriftgöße und den rest den wir brauchen. dann geht ein ganzes
+fenster auf für die settings"*. Das kleine Aufklappfeld hinter `settings` ist
+seitdem weg; das Zahnrad öffnet das Fenster.
+
+![Das Einstellungsfenster](docs/bilder/steuerkarte-einstellungsfenster.jpg)
+
+**Ein `<dialog>` mit `showModal`.** Er liegt in der obersten Ebene des
+Browsers, über HAs Kopfzeile und Seitenleiste; Escape schließt ihn, der Fokus
+bleibt darin. Er steht **neben** dem Inhalt der Karte (`.inhalt`), nicht
+darin: Die Karte baut ihren Inhalt bei jeder neuen Breite neu, und ein
+offenes Fenster ging dabei mit — ein Element, das aus dem Dokument fällt,
+verlässt auch die oberste Ebene.
+
+**Der Inhalt kommt aus dem Baukasten des Panels.** `ladeWerkzeug` lädt
+`baukasten.js` und `hintergrund-seite.js` mit nach; das Fenster ruft
+`erkenneTeil` (was sitzt), `teilAnwenden` (setzen, leere Werte nehmen das Feld
+heraus) und `hintergrundGewaehlt` (die Bewegung folgt dem Bild) — dieselbe
+Strecke wie das Panel. Ein Klick auf das Teil, das schon sitzt, schreibt
+nichts, wie dort.
+
+**In der Kartendatei, nicht in einem eigenen Modul.** Ein zweites Modul hätte
+die Karte über `./hats-control-card.js` ein zweites Mal geladen — HA lädt sie
+mit `?v=…`, der relative Import ohne, also zwei Adressen, zwei Auswertungen,
+und die Lauscher fürs Vollbild doppelt.
+
+**Neu dabei:** die Weichzeichnung als Regler (nur die Zahl im `blur()`, der
+Rest der Filterkette bleibt), eigene Bilder aus `/local/hats` (geprüft gegen
+`BILD_ADRESSE`, für hell und dunkel zugleich, fest am Fenster), die Wahl der
+Theme, und frühere Fassungen aus `hats/list_backups` — zurückgeholt wird über
+`save_theme`, das dabei die geltende Fassung sichert.
+
+**Gemessen, alles an der Testmaschine:**
+
+    Fenster öffnen          glaswerk: alle sechs Teile erkannt
+    Karten: Kontur          eine Sicherung, Kontur sitzt, die fünf anderen bleiben,
+                            HA zeigt --ha-card-border-width 2px
+    Zurückholen             Datei Byte für Byte die von vorher, Glas sitzt wieder,
+                            und die Kontur-Fassung liegt jetzt selbst als Sicherung
+    Theme macos und zurück  macos.yaml gelesen, sechs macOS-Teile erkannt, Modus blieb
+    Telefon 375 px          Fenster füllt den Bildschirm, Bereiche als Reiter oben
+
+**Drei Dinge dabei gefunden:**
+
+- **`--wa-color-overlay-modal` steht nicht auf `html`.** Oben stand, HA lese es
+  als Schleier unter `--mdc-dialog-scrim-color` — das stimmt im Dialog, auf
+  `html` ist es leer. Ein Rückfall darauf lief ins Leere; ohne Schleier in der
+  Theme wäre der Hintergrund hinter dem Fenster durchsichtig geblieben. Jetzt
+  fällt es auf HAs Wert zurück, Schwarz bei 25 Prozent über `--black-color`.
+- **Auf der Maschine lag ein älteres `hintergrund.js`** (Commit `baab74a` vom
+  13.10.) ohne den Hintergrund „Glaswerk" — das Fenster erkannte ihn deshalb
+  nicht, obwohl die aktive Theme ihn trägt. Mit dem committeten Stand
+  eingespielt; `vorlagen.js` weicht dort ebenfalls ab und blieb unberührt.
+- **Die Prüfung „keine Farbe außer HAs Weiß" liest auch Kommentare.** Ein
+  Hexwert in einem Kommentar des Stilblatts zählte als Farbe.
+
+`tests/hats-steuerkarte-fenster.test.js`: 17 Prüfungen, darunter die sechs
+Teile von glaswerk — die Erwartung steht im Kopf der Datei selbst —, Teil,
+Bild und Weichzeichnung durch PyYAML. Vier Mutationen gegengeprüft; eine
+fünfte (leerer Wert geschrieben statt entfernt) ist gleichwertig, weil
+`schreibeTheme` leere Werte ohnehin weglässt.
 
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 

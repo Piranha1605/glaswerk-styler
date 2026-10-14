@@ -62,8 +62,9 @@ pruefe("glaswerk laesst sich lesen: 58 % hell, 54 % dunkel, Schrift 100 %", () =
   const hell = leseDarstellungAusDatei(DATEI, NAME, "light", w);
   const dunkel = leseDarstellungAusDatei(DATEI, NAME, "dark", w);
   assert.strictEqual(hell.grund, undefined, "abgewiesen: " + hell.grund);
-  assert.deepStrictEqual(hell.werte, { transparenz: 58, schrift: 100 });
-  assert.deepStrictEqual(dunkel.werte, { transparenz: 54, schrift: 100 });
+  // Die Weichzeichnung steht flach als "blur(26px) saturate(180%)".
+  assert.deepStrictEqual(hell.werte, { transparenz: 58, schrift: 100, unschaerfe: 26 });
+  assert.deepStrictEqual(dunkel.werte, { transparenz: 54, schrift: 100, unschaerfe: 26 });
   assert.strictEqual(hell.karte.ebene, "light");
   assert.strictEqual(dunkel.karte.ebene, "dark");
   assert.strictEqual(hell.karte.weich, true, "glaswerk zeichnet weich");

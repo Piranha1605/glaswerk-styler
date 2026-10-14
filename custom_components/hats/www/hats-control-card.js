@@ -136,6 +136,21 @@ export const TEXTE = {
     seitenleiste: "Seitenleiste",
     assist: "Assist",
     bearbeiten: "Dashboard bearbeiten",
+    unschaerfe: "Weichzeichnung",
+    fenster: {
+      titel: "Einstellungen", zu: "Schließen",
+      seiten: { aussehen: "Erscheinungsbild", hintergrund: "Hintergrund", schrift: "Schrift und Größe",
+                bewegung: "Bewegung", anzeige: "Anzeige" },
+      modus: "Modus", karten: "Karten", farbe: "Farbe", flaeche: "Kartenfläche",
+      verlaeufe: "Farbverläufe", bilder: "Eigene Bilder",
+      keineBilder: "Eigene Bilder lädst du im Panel hoch. Sie liegen dann in config/www/hats.",
+      schriftart: "Schriftart", groesse: "Größe", rundung: "Rundung", dichte: "Dichte",
+      vollbild: "Vollbild", theme: "Theme", themeHilfe: "Gilt für jedes Gerät, an dem du angemeldet bist.",
+      sicherungen: "Frühere Fassungen", keineSicherungen: "Noch keine. HATS sichert vor jedem Überschreiben.",
+      zurueck: "Zurückholen", zurueckGeholt: (zeit) => `Die Fassung von ${zeit} gilt wieder.`,
+      eigene: "Keine der Vorgaben - im Panel angepasst.",
+      zeit: (k) => `${k.slice(6, 8)}.${k.slice(4, 6)}. ${k.slice(9, 11)}:${k.slice(11, 13)}`,
+    },
     transparenz: "Transparenz",
     schrift: "Schrift",
     deckend: "deckend",
@@ -163,6 +178,9 @@ export const TEXTE = {
       form: (wert) => `Die Kartenfläche ist keine einfache Farbe: ${wert}`,
       skala: (wert) => `Die Schriftskala (--ha-font-size-scale) ist keine Zahl: ${wert}`,
       wechsel: (name) => `Inzwischen gilt die Theme „${name}“. Bitte neu öffnen.`,
+      unschaerfe: (wert) => `Die Weichzeichnung ist kein einfacher Filter: ${wert}`,
+      teil: (was) => `Unbekanntes Teil: ${was}`,
+      bild: (was) => `Kein Bild aus /local/hats: ${was}`,
     },
     nurKurzform: "Das Badge kennt nur `controls` - Ziele und Schalter gehören in die Karte.",
     wahl: {
@@ -219,6 +237,21 @@ export const TEXTE = {
     seitenleiste: "Sidebar",
     assist: "Assist",
     bearbeiten: "Edit dashboard",
+    unschaerfe: "Blur",
+    fenster: {
+      titel: "Settings", zu: "Close",
+      seiten: { aussehen: "Appearance", hintergrund: "Background", schrift: "Text and size",
+                bewegung: "Motion", anzeige: "Display" },
+      modus: "Mode", karten: "Cards", farbe: "Colour", flaeche: "Card surface",
+      verlaeufe: "Gradients", bilder: "Your images",
+      keineBilder: "You upload your own images in the panel. They live in config/www/hats.",
+      schriftart: "Typeface", groesse: "Size", rundung: "Corners", dichte: "Density",
+      vollbild: "Fullscreen", theme: "Theme", themeHilfe: "Applies to every device you are signed in on.",
+      sicherungen: "Earlier versions", keineSicherungen: "None yet. HATS keeps one before every overwrite.",
+      zurueck: "Restore", zurueckGeholt: (zeit) => `The version from ${zeit} is back.`,
+      eigene: "None of the presets - adjusted in the panel.",
+      zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}`,
+    },
     transparenz: "Transparency",
     schrift: "Text size",
     deckend: "opaque",
@@ -246,6 +279,9 @@ export const TEXTE = {
       form: (wert) => `The card surface is not a plain colour: ${wert}`,
       skala: (wert) => `The font scale (--ha-font-size-scale) is not a number: ${wert}`,
       wechsel: (name) => `The theme "${name}" is active now. Please open again.`,
+      unschaerfe: (wert) => `The blur is not a plain filter: ${wert}`,
+      teil: (was) => `Unknown part: ${was}`,
+      bild: (was) => `Not an image from /local/hats: ${was}`,
     },
     nurKurzform: "The badge only takes `controls` - targets and switches belong in the card.",
     wahl: {
@@ -274,6 +310,11 @@ const SYMBOL = {
   seitenleiste: "mdi:menu",
   assist: "mdi:comment-processing-outline",
   bearbeiten: "mdi:pencil",
+  zu: "mdi:close",
+  aussehen: "mdi:palette-swatch-outline",
+  hintergrund: "mdi:image-outline",
+  schrift: "mdi:format-size",
+  anzeige: "mdi:monitor",
 };
 
 // Die Funktionen, die ein Fenster aufklappen, und unter welchem Namen das Feld
@@ -281,7 +322,7 @@ const SYMBOL = {
 // "settings" ist das eine Fenster fuer alles: Auf Ansage vom 14.10.2026
 // ("in der menueleiste nur ein icon machen und der rest in einem fenster")
 // steht am Rand der Leiste ein Knopf statt vier.
-const REGLER = { motion: "bewegung", appearance: "darstellung", settings: "alles" };
+const REGLER = { motion: "bewegung", appearance: "darstellung" };
 
 export function sprache(hass) {
   const s = String(
@@ -678,7 +719,9 @@ function ladeWerkzeug() {
   werkzeugLaden ??= Promise.all([
     import(new URL("./theme.js", import.meta.url).href),
     import(new URL("./hintergrund.js", import.meta.url).href),
-  ]).then(([theme, hintergrund]) => ({ ...theme, ...hintergrund }), (fehler) => {
+    import(new URL("./baukasten.js", import.meta.url).href),
+    import(new URL("./hintergrund-seite.js", import.meta.url).href),
+  ]).then((module) => Object.assign({}, ...module), (fehler) => {
     // Ein gescheitertes Laden nicht merken - der naechste Versuch darf gelingen.
     werkzeugLaden = null;
     throw fehler;
@@ -774,6 +817,8 @@ export function ausschlagStelle(grad) {
 // der Hinweis sagt deshalb nur "frueher", sobald es ueber 100 % geht.
 export const TRANSPARENZ = { min: 0, max: 80, schritt: 2 };
 export const SCHRIFT = { min: 90, max: 120, schritt: 5 };
+// Pixel der Weichzeichnung. glaswerk steht auf 26.
+export const UNSCHAERFE_SPANNE = { min: 0, max: 40, schritt: 2 };
 
 const FLAECHE = "ha-card-background";
 const UNSCHAERFE = "ha-card-backdrop-filter";
@@ -791,6 +836,26 @@ export const MUSHROOM_SCHRIFT = {
 };
 
 const zahlText = (x) => String(Math.round(x * 100) / 100);
+
+// Die Weichzeichnung steht als Filterkette im Feld, glaswerk etwa
+// "blur(26px) saturate(180%)". Gestellt wird nur die Zahl im blur(); was
+// sonst in der Kette steht, bleibt. Ein var() laesst sich nicht stellen, ohne
+// zu raten - dann ist der Regler gesperrt.
+const BLUR = /blur\(\s*(\d+(?:\.\d+)?)px\s*\)/;
+
+export function leseUnschaerfe(wert) {
+  const s = String(wert ?? "").trim();
+  if (s.includes("var(")) return null;
+  const m = BLUR.exec(s);
+  return m ? Number(m[1]) : 0;
+}
+
+export function mitUnschaerfe(wert, px) {
+  const s = String(wert ?? "").trim();
+  if (BLUR.test(s)) return s.replace(BLUR, `blur(${zahlText(px)}px)`);
+  if (s === "" || s === "none") return px > 0 ? `blur(${zahlText(px)}px)` : "none";
+  return px > 0 ? `blur(${zahlText(px)}px) ${s}` : s;
+}
 
 // Eine einfache Farbe als Rot, Gruen, Blau und Deckkraft - oder null. Den
 // Kartenstil "Liquid Glass" legt HATS als zwei Verlaeufe ab; die vierte Zahl
@@ -851,6 +916,8 @@ export function leseDarstellungAusDatei(text, themeName, modus, w) {
   // das Feld selbst nirgends - fehlt es in der Theme, zeichnet nichts weich.
   const weich = String(gilt[UNSCHAERFE] ?? "").trim();
   karte.weich = weich !== "" && weich !== "none";
+  const unschaerfe = { ebene: ebeneVon(m, UNSCHAERFE, modus), px: leseUnschaerfe(gilt[UNSCHAERFE]) };
+  if (unschaerfe.px === null) Object.assign(unschaerfe, { grund: "unschaerfe", detail: gilt[UNSCHAERFE] });
 
   const schrift = { ebene: ebeneVon(m, SKALA, modus) ?? "flach", faktor: 1 };
   if (gilt[SKALA] !== undefined) {
@@ -863,10 +930,11 @@ export function leseDarstellungAusDatei(text, themeName, modus, w) {
     .find((v) => v !== undefined && !/--ha-font-size-/.test(v)) ?? null;
 
   return {
-    modell: m, karte, schrift,
+    modell: m, karte, schrift, unschaerfe,
     werte: {
       transparenz: karte.deckkraft === undefined ? null : Math.round((1 - karte.deckkraft) * 100),
       schrift: Math.round(schrift.faktor * 100),
+      unschaerfe: unschaerfe.px ?? 0,
     },
   };
 }
@@ -893,6 +961,16 @@ export function schreibeDarstellungInDatei(text, themeName, modus, werte, w) {
       if (gilt[name] === undefined) m.flach[name] = wert;
     }
   }
+  if (werte.unschaerfe !== undefined) {
+    const u = stand.unschaerfe;
+    if (u.grund) return { grund: u.grund, detail: u.detail };
+    // Fehlt das Feld und soll es bei null bleiben, wird nichts geschrieben -
+    // sonst stuende ein "none" in der Datei, das vorher niemand wollte.
+    if (u.ebene || werte.unschaerfe > 0) {
+      const block = blockVon(m, u.ebene ?? "flach");
+      block[UNSCHAERFE] = mitUnschaerfe(block[UNSCHAERFE], werte.unschaerfe);
+    }
+  }
   return { yaml: w.schreibeTheme(m) };
 }
 
@@ -904,7 +982,7 @@ export function schreibeDarstellungInDatei(text, themeName, modus, werte, w) {
 // Transparenz verstellt hat.
 
 export const BEWEGUNG_REGLER = ["drift", "punkte", "farbe", "weite"];
-export const DARSTELLUNG_REGLER = ["transparenz", "schrift"];
+export const DARSTELLUNG_REGLER = ["transparenz", "schrift", "unschaerfe"];
 
 const nurDie = (werte, namen) => Object.fromEntries(namen.filter((n) => n in werte).map((n) => [n, werte[n]]));
 
@@ -916,7 +994,8 @@ export function leseReglerAusDatei(text, themeName, modus, art, w) {
   const b = leseBewegungAusDatei(text, themeName, w);
   if (b.grund) return b;
   const d = leseDarstellungAusDatei(text, themeName, modus, w);
-  return { punktebild: b.punktebild, karte: d.karte, schrift: d.schrift, werte: { ...b.werte, ...d.werte } };
+  return { punktebild: b.punktebild, karte: d.karte, schrift: d.schrift, unschaerfe: d.unschaerfe,
+    werte: { ...b.werte, ...d.werte } };
 }
 
 //   geaendert  die Namen der Regler, an denen gezogen wurde
@@ -936,6 +1015,71 @@ export function schreibeReglerInDatei(text, themeName, modus, werte, geaendert, 
     yaml = stand.yaml;
   }
   return { yaml };
+}
+
+// ---- Das Einstellungsfenster: was es liest und schreibt -------------------
+//
+// Die Teile des Baukastens, mit den Funktionen des Panels: erkenneTeil sagt,
+// welches gerade sitzt, teilAnwenden setzt eines. Das Fenster rechnet nichts
+// selbst - eine Palette sieht hier aus und wirkt wie im Panel, weil es
+// dieselbe Strecke ist.
+
+export const FENSTER_SORTEN = ["palette", "karten", "schrift", "rundung", "dichte", "hintergrund"];
+
+// Alles, was das Fenster zeigt: die Regler wie im Fenster "alles", dazu
+// welches Teil je Sorte sitzt und welcher Hintergrund im geltenden Modus steht.
+export function leseFensterAusDatei(text, themeName, modus, w) {
+  const alles = leseReglerAusDatei(text, themeName, modus, "alles", w);
+  if (alles.grund) return alles;
+  const m = w.leseTheme(text);
+  const lies = (name, ebene) => {
+    const k = name.replace(/^--/, "");
+    return ebene === "beide" ? m.flach[k] : m[ebene]?.[k];
+  };
+  const sitzt = Object.fromEntries(FENSTER_SORTEN.map((s) => [s, w.erkenneTeil(s, lies)]));
+  return { ...alles, sitzt, bild: w.wirksam(m, modus)["lovelace-background"] ?? "" };
+}
+
+// Ein Teil setzen - so, wie das Panel es tut: ein leerer Wert nimmt das Feld
+// heraus, statt ein leeres hineinzuschreiben, und ein neuer Hintergrund zieht
+// die Bewegung nach (hintergrundGewaehlt).
+export function schreibeTeilInDatei(text, themeName, sorte, teilId, w) {
+  const stand = pruefeDatei(text, themeName, w);
+  if (stand.grund) return stand;
+  const teil = FENSTER_SORTEN.includes(sorte) ? w.BAUKASTEN?.[sorte]?.teile?.find((t) => t.id === teilId) : null;
+  if (!teil) return { grund: "teil", detail: `${sorte}/${teilId}` };
+  const m = stand.modell;
+  w.teilAnwenden(sorte, teil, (name, wert, ebene) => {
+    const k = name.replace(/^--/, "");
+    if (wert === "" || wert === null || wert === undefined) w.entferne(m, k);
+    else w.setze(m, k, wert, ebene);
+  });
+  if (sorte === "hintergrund") w.hintergrundGewaehlt(m);
+  return { yaml: w.schreibeTheme(m) };
+}
+
+// Nur Bilder, die Home Assistant selbst unter /local/hats ausliefert - eine
+// Adresse, die nur HATS kennt, machte die Theme unuebertragbar. Und nichts,
+// was aus dem url() ausbrechen koennte.
+export const BILD_ADRESSE = /^\/local\/hats\/[A-Za-z0-9._-]+$/;
+
+export function bildWert(url, w) {
+  return w.stelleFest(`url(${url}) center / cover no-repeat`, true);
+}
+
+// Ein eigenes Bild als Hintergrund, fuer hell und dunkel zugleich - ein
+// Hintergrundbild wie am Mac. Fest am Fenster, wie jeder Hintergrund des
+// Baukastens.
+export function schreibeBildInDatei(text, themeName, url, w) {
+  if (!BILD_ADRESSE.test(String(url))) return { grund: "bild", detail: url };
+  const stand = pruefeDatei(text, themeName, w);
+  if (stand.grund) return stand;
+  const m = stand.modell;
+  const wert = bildWert(url, w);
+  w.setze(m, "lovelace-background", wert, "light");
+  w.setze(m, "lovelace-background", wert, "dark");
+  w.hintergrundGewaehlt(m);
+  return { yaml: w.schreibeTheme(m) };
 }
 
 export function aktuellerModus(hass) {
@@ -1215,6 +1359,9 @@ const STIL_GEMEINSAM = `
 
   .liste, .regler { display: none; }
   [hidden] { display: none !important; }
+  /* Der Inhalt der Karte - bei jeder neuen Breite neu gebaut. Das
+     Einstellungsfenster steht daneben und uebersteht das. */
+  .inhalt { display: contents; }
   .leer { color: var(--secondary-text-color); font-size: var(--ha-font-size-m, 14px);
           padding: 0 var(--ha-space-2, 8px); white-space: nowrap; }
 `;
@@ -1289,8 +1436,7 @@ const STIL_KARTE = `
   /* Die Regler fuer Bewegung, Transparenz und Schrift. Der Schieber ist der
      des Browsers, gefaerbt mit accent-color - wie die Knoepfe aus button
      gebaut sind statt aus einem Bauteil, das vielleicht nicht angemeldet ist. */
-  :host([offen="bewegung"]) .regler, :host([offen="darstellung"]) .regler,
-  :host([offen="alles"]) .regler {
+  :host([offen="bewegung"]) .regler, :host([offen="darstellung"]) .regler {
     display: flex; flex-direction: column; gap: var(--ha-space-2, 8px);
     position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
     width: min(340px, 100%); box-sizing: border-box; padding: var(--ha-space-3, 12px);
@@ -1312,11 +1458,102 @@ const STIL_KARTE = `
   }
   .rwert { text-align: end; white-space: nowrap; }
   .rhinweis { display: flex; flex-direction: column; gap: var(--ha-space-1, 4px); }
-  /* Das Fenster hinter settings: oben Modus und Vollbild in einer Reihe, dann
-     die beiden Reglergruppen, jede mit einer Ueberschrift ueber einem Strich. */
-  .rkopf { display: flex; align-items: center; gap: var(--ha-space-2, 8px); }
-  .rkopf .modus + .knopf { margin-inline-start: var(--ha-space-1, 4px); }
-  .rkopf .knopf:not([aria-pressed="true"])::before { background-color: var(--disabled-color); opacity: .2; }
+
+  /* Das Einstellungsfenster. Nach dem Vorbild der macOS-Systemeinstellungen:
+     links die Bereiche, rechts Gruppen auf einer etwas abgesetzten Flaeche,
+     darin Kacheln mit Bild und Namen. Alle Farben aus HA. Der Schleier ist
+     der der Theme (--mdc-dialog-scrim-color); fehlt er, HAs eigener Wert,
+     Schwarz bei 25 Prozent. --wa-color-overlay-modal, das HA dafuer
+     liest, steht am 14.10.2026 gemessen NICHT auf html - es lebt im Dialog
+     selbst, und ein Rueckfall darauf liefe hier ins Leere. */
+  dialog.fenster {
+    padding: 0; border: none; box-sizing: border-box;
+    width: min(880px, calc(100vw - 32px)); height: min(680px, calc(100vh - 32px));
+    max-width: none; max-height: none;
+    border-radius: var(--ha-card-border-radius, 12px);
+    background: var(--card-background-color); color: var(--primary-text-color);
+    box-shadow: var(--ha-card-box-shadow, none);
+    font-size: var(--ha-font-size-m, 14px);
+  }
+  dialog.fenster[open] { display: flex; flex-direction: column; }
+  dialog.fenster::backdrop {
+    background: var(--mdc-dialog-scrim-color, color-mix(in srgb, var(--black-color, #000) 25%, transparent));
+  }
+  .fkopf {
+    display: flex; align-items: center; gap: var(--ha-space-3, 12px);
+    padding: var(--ha-space-3, 12px) var(--ha-space-3, 12px) var(--ha-space-3, 12px) var(--ha-space-4, 16px);
+    border-bottom: 1px solid var(--divider-color);
+  }
+  .ftitel { font-size: var(--ha-font-size-l, 16px); font-weight: var(--ha-font-weight-medium, 500); }
+  .fdatei { color: var(--secondary-text-color); font-size: var(--ha-font-size-s, 12px); }
+  .fkoerper { flex: 1; min-height: 0; display: grid; grid-template-columns: 210px minmax(0, 1fr); }
+  .fnav {
+    display: flex; flex-direction: column; gap: 2px; overflow-y: auto;
+    padding: var(--ha-space-2, 8px); border-inline-end: 1px solid var(--divider-color);
+  }
+  .fnavknopf {
+    display: flex; align-items: center; justify-content: flex-start; gap: var(--ha-space-2, 8px); width: 100%;
+    padding: var(--ha-space-2, 8px) var(--ha-space-3, 12px); border-radius: var(--ha-border-radius-lg, 12px);
+    color: var(--primary-text-color); font-size: var(--ha-font-size-m, 14px); text-align: start;
+  }
+  .fnavknopf ha-icon { --mdc-icon-size: 20px; width: 20px; color: var(--secondary-text-color); }
+  .fnavknopf[aria-current="true"] { background: var(--primary-color); color: var(--ha-color-on-primary-loud, #fff); }
+  .fnavknopf[aria-current="true"] ha-icon { color: inherit; }
+  .fseite {
+    overflow-y: auto; padding: var(--ha-space-4, 16px);
+    display: flex; flex-direction: column; gap: var(--ha-space-3, 12px);
+  }
+  .fseite > .rtitel { font-size: var(--ha-font-size-l, 16px); }
+  .fgruppe {
+    display: flex; flex-direction: column; gap: var(--ha-space-3, 12px);
+    padding: var(--ha-space-3, 12px) var(--ha-space-4, 16px);
+    border-radius: var(--ha-border-radius-lg, 12px); background: var(--secondary-background-color);
+  }
+  .fgtitel { font-weight: var(--ha-font-weight-medium, 500); }
+  .fspalte { display: flex; flex-direction: column; gap: var(--ha-space-2, 8px); }
+  .fzeile { display: flex; align-items: center; justify-content: space-between; gap: var(--ha-space-3, 12px); }
+  .fknopf { align-self: flex-start; }
+  .fknoepfe { display: flex; flex-wrap: wrap; gap: var(--ha-space-2, 8px); }
+  .fknopf:not([aria-pressed="true"])::before { background-color: var(--disabled-color); opacity: .2; }
+  .fwahl {
+    height: var(--_h); padding: 0 var(--ha-space-3, 12px); border-radius: var(--ha-border-radius-lg, 12px);
+    border: 1px solid var(--divider-color); background: var(--card-background-color);
+    color: var(--primary-text-color); font: inherit;
+  }
+  .kacheln { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--ha-space-3, 12px); }
+  .kachel {
+    display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+    color: var(--secondary-text-color); font-size: var(--ha-font-size-s, 12px);
+  }
+  .kbild {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    aspect-ratio: 16 / 10; border-radius: var(--ha-border-radius-lg, 12px); overflow: hidden;
+    border: 1px solid var(--divider-color); background: var(--primary-background-color);
+  }
+  .kbild ha-icon { --mdc-icon-size: 24px; width: 24px; color: var(--primary-text-color); }
+  .kachel[aria-pressed="true"] { color: var(--primary-text-color); font-weight: var(--ha-font-weight-medium, 500); }
+  .kachel[aria-pressed="true"] .kbild { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+  .kachel[aria-disabled="true"] { cursor: not-allowed; }
+  .kachel:focus-visible .kbild { outline: 2px solid var(--secondary-text-color); outline-offset: 2px; }
+  .kname { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Die Probe einer Karte: dieselben Felder wie an ha-card, aus dem Teil
+     gesetzt - so sieht man Flaeche, Rundung, Rahmen und Schatten, bevor man
+     waehlt. Die Dichte zeigt ihre Luecke als Abstand zwischen zwei Proben. */
+  .kprobe {
+    width: 64%; height: 58%; box-sizing: border-box;
+    background: var(--ha-card-background, var(--card-background-color));
+    border-radius: var(--ha-card-border-radius, 12px);
+    border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color));
+    box-shadow: var(--ha-card-box-shadow, none);
+    backdrop-filter: var(--ha-card-backdrop-filter, none);
+  }
+  .kschrift { font-size: 26px; color: var(--primary-text-color); }
+  @media (max-width: 600px) {
+    dialog.fenster { width: 100vw; height: 100dvh; border-radius: 0; }
+    .fkoerper { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+    .fnav { flex-direction: row; overflow-x: auto; border-inline-end: none; border-bottom: 1px solid var(--divider-color); }
+    .fnavknopf { width: auto; white-space: nowrap; }
+  }
   .rabschnitt {
     margin-top: var(--ha-space-1, 4px); padding-top: var(--ha-space-2, 8px);
     border-top: 1px solid var(--divider-color);
@@ -1379,7 +1616,15 @@ class Steuerung extends Basis {
     // Waehrend des Ziehens nur die Anzeige, geschrieben wird beim Loslassen:
     // Jedes Schreiben ist eine Datei und ein Neuladen aller Themes.
     this.shadowRoot.addEventListener("input", (ev) => this._beiRegler(ev, false));
-    this.shadowRoot.addEventListener("change", (ev) => this._beiRegler(ev, true));
+    this.shadowRoot.addEventListener("change", (ev) => {
+      // Die Wahl der Theme - derselbe Weg wie die Zeile im Profil: settheme,
+      // gemischt in die Wahl, also bleibt der Modus stehen.
+      if (ev.target?.dataset?.themeWahl !== undefined) {
+        this._sende("settheme", { theme: ev.target.value });
+        return;
+      }
+      this._beiRegler(ev, true);
+    });
   }
 
   // Drei Dinge haengen ausserhalb der Leiste und halten sie fest: die
@@ -1576,8 +1821,16 @@ class Steuerung extends Basis {
   _baue(spr) {
     const t = TEXTE[spr];
     const c = this._config;
-    this._zu();
-    this.shadowRoot.innerHTML = `<style>${STIL_GEMEINSAM}${this._stil()}</style>${this._rahmen()}`;
+    // Das Einstellungsfenster bleibt offen, waehrend die Leiste neu baut - eine
+    // neue Breite (das Vollbild!) baut sie neu, und das Fenster ginge mit.
+    if (this.getAttribute("offen") !== "fenster") this._zu();
+    if (!this._inhalt) {
+      this._stilblatt = document.createElement("style");
+      this._inhalt = neu("div", "inhalt");
+      this.shadowRoot.append(this._stilblatt, this._inhalt);
+    }
+    this._stilblatt.textContent = `${STIL_GEMEINSAM}${this._stil()}`;
+    this._inhalt.innerHTML = this._rahmen();
 
     const leiste = this.shadowRoot.querySelector(".leiste");
     leiste.classList.add(`gr-${c.groesse}`, `form-${c.form}`);
@@ -1706,6 +1959,11 @@ class Steuerung extends Basis {
         this._beschrifte(e, k.icon || SYMBOL.seitenleiste, k.name, t.seitenleiste);
         continue;
       }
+      if (k.function === "settings") {
+        this._beschrifte(e, k.icon || SYMBOL.alles, k.name, t.alles);
+        e.setAttribute("aria-haspopup", "dialog");
+        continue;
+      }
       if (k.function === "assist") {
         this._beschrifte(e, k.icon || SYMBOL.assist, k.name, t.assist);
         continue;
@@ -1778,7 +2036,7 @@ class Steuerung extends Basis {
     }
     this._klebe(this._config.kopf && !wirdBearbeitet());
 
-    if (this.getAttribute?.("offen") === "alles" && this._regler?.art === "alles") this._stelleFensterkopf(t);
+    if (this.getAttribute?.("offen") === "fenster" && this._regler?.art === "fenster") this._stelleFenster(t);
     this._folgeModus();
 
     this._aktivIndex = this._bestimmeAktiv();
@@ -1888,7 +2146,9 @@ class Steuerung extends Basis {
 
   _zu() {
     if (!this.hasAttribute?.("offen")) return;
+    const warFenster = this.getAttribute("offen") === "fenster";
     this.removeAttribute("offen");
+    if (warFenster && this._fenster?.open) this._fenster.close();
     this._menueknopf?.setAttribute("aria-expanded", "false");
     for (const b of this.shadowRoot?.querySelectorAll("button[aria-haspopup]") ?? []) {
       b.setAttribute("aria-expanded", "false");
@@ -1897,18 +2157,20 @@ class Steuerung extends Basis {
     document.removeEventListener("keydown", this._beiTaste);
   }
 
-  // ---- Die Fenster: Bewegung, Transparenz und Schrift - einzeln oder alles ----
+  // ---- Die Regler: Bewegung oder Darstellung unter der Leiste ----
   //
-  // Ein Feld unter der Leiste, drei Belegungen. "alles" ist das Fenster hinter
-  // dem Knopf settings: oben Modus und Vollbild, darunter beide Reglergruppen.
-  // this._regler haelt, was beim Oeffnen gelesen wurde - welche Belegung, aus
-  // welcher Theme, in welchem Modus. Geschrieben wird genau dorthin.
+  // Ein Feld unter der Leiste, zwei Belegungen. this._regler haelt, was beim
+  // Oeffnen gelesen wurde - welche Belegung, aus welcher Theme, in welchem
+  // Modus. Geschrieben wird genau dorthin. Dieselben Regler stehen auch im
+  // Einstellungsfenster; this._feld ist der Behaelter, in dem sie gerade
+  // stehen.
 
   async _reglerAuf(knopf, art) {
     const feld = this.shadowRoot.querySelector(".regler");
     if (!feld) return;
     this._oeffne(art);
     knopf.setAttribute("aria-expanded", "true");
+    this._feld = feld;
     this._reglerMeldung(art, TEXTE[sprache(this._hass)].laedt);
     // Unter den Knopf, aber nie ueber den Rand der Leiste hinaus.
     const platz = feld.parentElement.clientWidth - feld.offsetWidth;
@@ -1928,12 +2190,13 @@ class Steuerung extends Basis {
     }
     // Inzwischen wieder geschlossen? Dann nichts mehr hineinzeichnen.
     if (this.getAttribute("offen") !== art) return;
-    if (stand.grund && art !== "alles") {
+    if (stand.grund && art !== "fenster") {
       this._reglerMeldung(art, t.grund[stand.grund](stand.detail));
       return;
     }
-    // Im Fenster bleiben Modus und Vollbild bedienbar, auch wenn sich die
-    // Datei nicht schreiben laesst - nur die Regler fallen dann weg.
+    // Im Fenster bleiben Modus, Vollbild und die Wahl der Theme bedienbar,
+    // auch wenn sich die Datei nicht schreiben laesst - nur was in die Datei
+    // schreibt, faellt dann weg, mit dem Grund als Satz.
     this._regler = stand.grund
       ? { art, sperre: stand, name: this._hass.themes?.theme, modus: aktuellerModus(this._hass),
           werte: {}, geaendert: new Set() }
@@ -1960,71 +2223,44 @@ class Steuerung extends Basis {
     } catch {
       return { grund: "ohneDatei", detail: name };
     }
-    const stand = leseReglerAusDatei(text, name, modus, art, this._w);
-    return stand.grund ? stand : { ...stand, name, modus };
+    const stand = art === "fenster"
+      ? leseFensterAusDatei(text, name, modus, this._w)
+      : leseReglerAusDatei(text, name, modus, art, this._w);
+    if (stand.grund) return stand;
+    if (art === "fenster") {
+      // Beides darf fehlen, ohne dass das Fenster leer bleibt.
+      const frage = (nachricht, feld) => hass.connection.sendMessagePromise(nachricht)
+        .then((r) => r?.[feld] ?? [], () => []);
+      stand.bilder = await frage({ type: "hats/list_images" }, "bilder");
+      stand.sicherungen = await frage({ type: "hats/list_backups", name }, "backups");
+    }
+    return { ...stand, name, modus };
   }
 
   _reglerMeldung(art, text) {
-    const feld = this.shadowRoot.querySelector(".regler");
+    const t = TEXTE[sprache(this._hass)];
     const titel = neu("div", "rtitel");
-    titel.textContent = TEXTE[sprache(this._hass)][art];
+    titel.textContent = art === "fenster" ? t.fenster.seiten[this._fensterSeite] : t[art];
     const meldung = neu("div", "rstatus");
     meldung.textContent = text;
-    feld.replaceChildren(titel, meldung);
+    this._feld?.replaceChildren(titel, meldung);
   }
 
   _reglerStatus(text) {
-    const status = this.shadowRoot.querySelector(".regler .rstatus");
+    const status = this._feld?.querySelector(".rstatus");
     if (status) status.textContent = text;
   }
 
   _reglerBaue(t) {
-    const feld = this.shadowRoot.querySelector(".regler");
     const r = this._regler;
+    if (r.art === "fenster") {
+      this._fensterZeichne(t);
+      return;
+    }
     const titel = neu("div", "rtitel");
     titel.textContent = t[r.art];
-    const teile = [titel];
-    if (r.art === "alles") teile.push(this._baueFensterkopf(t));
-    if (r.sperre) {
-      const satz = neu("div", "rhinweis");
-      satz.textContent = t.grund[r.sperre.grund](r.sperre.detail);
-      teile.push(satz);
-    } else {
-      // Erst was man sieht, dann was sich bewegt.
-      if (r.art !== "bewegung") teile.push(...this._baueGruppe(t, "darstellung", r.art === "alles"));
-      if (r.art !== "darstellung") teile.push(...this._baueGruppe(t, "bewegung", r.art === "alles"));
-    }
-    teile.push(neu("div", "rstatus"));
-    feld.replaceChildren(...teile);
+    this._feld.replaceChildren(titel, ...this._baueGruppe(t, r.art, false), neu("div", "rstatus"));
     this._reglerStelle(t);
-  }
-
-  // Modus und Vollbild im Fenster - dieselben Knoepfe wie in der Leiste, auf
-  // denselben Wegen: data-wahl schickt settheme, data-vollbild schaltet.
-  _baueFensterkopf(t) {
-    const kopf = neu("div", "rkopf");
-    const modus = this._baueKnopf({ function: "mode" }, t);
-    const voll = neu("button", "knopf");
-    voll.type = "button";
-    voll.dataset.vollbild = "";
-    voll._symbol = neu("ha-icon");
-    voll._name = neu("span", "name");
-    voll.append(voll._symbol, voll._name, neu("ha-ripple"));
-    // Vollbild neben dem Modus, der Stift ganz rechts - auf Ansage vom
-    // 14.10.2026, mit einem Bild des Fensters.
-    kopf.append(modus, voll, neu("span", "fueller"));
-    // Ersetzt die Leiste HAs Kopfzeile, steht deren Stift hier.
-    if (this._config.kopf && this._hass.user?.is_admin) {
-      const stift = neu("button", "knopf");
-      stift.type = "button";
-      stift.dataset.bearbeiten = "";
-      stift._symbol = neu("ha-icon");
-      stift._name = neu("span", "name");
-      stift.append(stift._symbol, stift._name, neu("ha-ripple"));
-      this._beschrifte(stift, SYMBOL.bearbeiten, "", t.bearbeiten);
-      kopf.append(stift);
-    }
-    return kopf;
   }
 
   _baueGruppe(t, gruppe, mitTitel) {
@@ -2036,6 +2272,7 @@ class Steuerung extends Basis {
       }
       : {
         transparenz: [TRANSPARENZ.min, TRANSPARENZ.max, TRANSPARENZ.schritt],
+        unschaerfe: [UNSCHAERFE_SPANNE.min, UNSCHAERFE_SPANNE.max, UNSCHAERFE_SPANNE.schritt],
         schrift: [SCHRIFT.min, SCHRIFT.max, SCHRIFT.schritt],
       };
     const teile = [];
@@ -2068,27 +2305,15 @@ class Steuerung extends Basis {
   _reglerStelle(t) {
     const r = this._regler;
     if (!r) return;
-    if (r.art === "alles") this._stelleFensterkopf(t);
+    if (r.art === "fenster") this._stelleFenster(t);
     if (r.sperre) return;
     if (r.art !== "darstellung") this._stelleBewegung(t);
     if (r.art !== "bewegung") this._stelleDarstellung(t);
   }
 
   _reglerEingaben(namen) {
-    return [...this.shadowRoot.querySelectorAll(".regler input[data-was]")]
+    return [...(this._feld?.querySelectorAll("input[data-was]") ?? [])]
       .filter((e) => namen.includes(e.dataset.was));
-  }
-
-  _stelleFensterkopf(t) {
-    const feld = this.shadowRoot.querySelector(".regler");
-    const gruppe = feld?.querySelector(".rkopf .modus");
-    if (gruppe) this._stelleModus(gruppe, t);
-    const voll = feld?.querySelector("[data-vollbild]");
-    if (voll) {
-      const an = this._hass.kioskMode === true;
-      voll.setAttribute("aria-pressed", String(an));
-      this._beschrifte(voll, an ? SYMBOL.vollbildAus : SYMBOL.vollbild, "", an ? t.vollbildAus : t.vollbild);
-    }
   }
 
   // Die Sperren sind die des Panels: Punkte nur auf einem Punktebild, der
@@ -2119,14 +2344,15 @@ class Steuerung extends Basis {
   // Eine Sperre steht hier als Satz unter den Reglern, nicht nur als title:
   // Wer mit dem Finger auf einem Tablett zieht, sieht keinen title.
   _stelleDarstellung(t) {
-    const { werte, karte, schrift, modus } = this._regler;
+    const { werte, karte, schrift, unschaerfe, modus } = this._regler;
+    const sperre = { transparenz: karte, schrift, unschaerfe: unschaerfe ?? {} };
     const hinweise = [];
     for (const regler of this._reglerEingaben(DARSTELLUNG_REGLER)) {
       const was = regler.dataset.was;
       const zeile = regler.parentElement;
       const wert = zeile.querySelector(".rwert");
-      const grund = was === "transparenz" ? karte.grund : schrift.grund;
-      const satz = grund ? t.grund[grund](was === "transparenz" ? karte.detail : schrift.detail) : "";
+      const grund = sperre[was].grund;
+      const satz = grund ? t.grund[grund](sperre[was].detail) : "";
       regler.disabled = Boolean(grund);
       zeile.title = satz;
       if (satz) hinweise.push(satz);
@@ -2134,7 +2360,10 @@ class Steuerung extends Basis {
         regler.value = String(werte.transparenz ?? 0);
         wert.textContent = grund ? "" : werte.transparenz ? `${werte.transparenz} %` : t.deckend;
         if (!grund && karte.ebene === modus) hinweise.push(t.nurHier(modus));
-        if (!grund && werte.transparenz > 0 && !karte.weich) hinweise.push(t.ohneUnschaerfe);
+        if (!grund && werte.transparenz > 0 && !karte.weich && !werte.unschaerfe) hinweise.push(t.ohneUnschaerfe);
+      } else if (was === "unschaerfe") {
+        regler.value = String(werte.unschaerfe ?? 0);
+        wert.textContent = grund ? "" : werte.unschaerfe ? `${werte.unschaerfe} px` : t.aus;
       } else {
         regler.value = String(werte.schrift);
         wert.textContent = grund ? "" : `${werte.schrift} %`;
@@ -2142,7 +2371,7 @@ class Steuerung extends Basis {
         if (!grund && schrift.mushFest) hinweise.push(t.mushFest(schrift.mushFest));
       }
     }
-    this.shadowRoot.querySelector('.regler .rhinweis[data-gruppe="darstellung"]')?.replaceChildren(
+    this._feld?.querySelector('.rhinweis[data-gruppe="darstellung"]')?.replaceChildren(
       ...hinweise.map((satz) => {
         const zeile = neu("div");
         zeile.textContent = satz;
@@ -2150,13 +2379,393 @@ class Steuerung extends Basis {
       }));
   }
 
-  // Wechselt der Modus, solange das Fenster offen ist - im Fenster selbst
-  // geht das ja -, gehoert die Transparenz des anderen Modus hinein. Die
-  // Bewegung gilt fuer beide, ihr Fenster bleibt.
+  // Wechselt der Modus, solange Regler offen sind - im Fenster geht das ja -,
+  // gehoert die Transparenz des anderen Modus hinein. Die Bewegung gilt fuer
+  // beide, ihr Feld bleibt. Wechselt die Theme - im Fenster geht auch das -,
+  // stammt alles Gelesene aus der falschen Datei: neu lesen, egal welches Feld.
   _folgeModus() {
     const r = this._regler;
-    if (!r || r.art === "bewegung" || this.getAttribute("offen") !== r.art) return;
-    if (r.modus !== aktuellerModus(this._hass)) this._reglerLaden(r.art);
+    if (!r || this.getAttribute("offen") !== r.art) return;
+    const andereTheme = r.name !== (this._hass.themes?.theme ?? r.name);
+    if (andereTheme || (r.art !== "bewegung" && r.modus !== aktuellerModus(this._hass))) {
+      if (r.art === "fenster") this._fensterNav(TEXTE[sprache(this._hass)]);
+      this._reglerLaden(r.art);
+    }
+  }
+
+  // ---- Das Einstellungsfenster ----
+  //
+  // Auf Ansage vom 14.10.2026, mit einem Bild der macOS-Systemeinstellungen:
+  // "eigendlich koennten wir die einstellungsseite 1 zu eins uebernehmen.
+  // wallpaper schriftgoesse und den rest den wir brauchen. dann geht ein
+  // ganzes fenster auf fuer die settings". Links die Bereiche, rechts die
+  // Einstellungen - wie dort.
+  //
+  // Ein <dialog> mit showModal: Er liegt in der obersten Ebene des Browsers,
+  // ueber HAs Kopfzeile und Seitenleiste, Escape schliesst ihn, und der Fokus
+  // bleibt darin. Er steht NEBEN dem Inhalt der Karte, nicht darin: Die Karte
+  // baut ihren Inhalt bei jeder neuen Breite neu, und ein offenes Fenster
+  // ginge dabei mit.
+
+  async _fensterAuf() {
+    const t = TEXTE[sprache(this._hass)];
+    if (!this._fenster) this._fenster = this._baueFenster(t);
+    this._oeffne("fenster");
+    if (!this._fenster.open) this._fenster.showModal?.();
+    this._fensterSeite ??= "aussehen";
+    this._feld = this._fenster.querySelector(".fseite");
+    this._fensterNav(t);
+    this._reglerMeldung("fenster", t.laedt);
+    await this._reglerLaden("fenster");
+  }
+
+  _baueFenster(t) {
+    const d = neu("dialog", "fenster");
+    d.setAttribute("aria-label", t.fenster.titel);
+    const kopf = neu("div", "fkopf");
+    const titel = neu("div", "ftitel");
+    titel.textContent = t.fenster.titel;
+    const datei = neu("div", "fdatei");
+    const zu = neu("button", "knopf nur-symbol fzu");
+    zu.type = "button";
+    zu.dataset.fensterZu = "";
+    zu.setAttribute("aria-label", t.fenster.zu);
+    zu.title = t.fenster.zu;
+    const symbol = neu("ha-icon");
+    symbol.setAttribute("icon", SYMBOL.zu);
+    zu.append(symbol, neu("ha-ripple"));
+    kopf.append(titel, datei, neu("span", "fueller"), zu);
+    const koerper = neu("div", "fkoerper");
+    koerper.append(neu("nav", "fnav"), neu("div", "fseite"));
+    d.append(kopf, koerper);
+    // Escape und der Knopf schliessen den Dialog selbst; die Leiste raeumt
+    // danach auf. Ein Klick auf den Schleier trifft den Dialog als solchen.
+    d.addEventListener("close", () => this._zu());
+    d.addEventListener("click", (ev) => { if (ev.target === d) d.close(); });
+    this.shadowRoot.append(d);
+    return d;
+  }
+
+  _fensterNav(t) {
+    const nav = this._fenster.querySelector(".fnav");
+    nav.replaceChildren(...Object.keys(t.fenster.seiten).map((seite) => {
+      const b = neu("button", "fnavknopf");
+      b.type = "button";
+      b.dataset.seite = seite;
+      b.setAttribute("aria-current", String(seite === this._fensterSeite));
+      const symbol = neu("ha-icon");
+      symbol.setAttribute("icon", SYMBOL[seite]);
+      const name = neu("span");
+      name.textContent = t.fenster.seiten[seite];
+      b.append(symbol, name);
+      return b;
+    }));
+    const datei = this._fenster.querySelector(".fdatei");
+    const theme = this._hass.themes?.theme;
+    datei.textContent = theme && theme !== "default" ? `${theme}.yaml` : "";
+  }
+
+  _fensterZeichne(t) {
+    const r = this._regler;
+    const tf = t.fenster;
+    const seite = this._fensterSeite;
+    const titel = neu("div", "rtitel");
+    titel.textContent = tf.seiten[seite];
+    const teile = [titel];
+    const gesperrt = () => {
+      const satz = neu("div", "rhinweis");
+      satz.textContent = t.grund[r.sperre.grund](r.sperre.detail);
+      return satz;
+    };
+
+    if (seite === "aussehen") {
+      teile.push(this._gruppe(tf.modus, this._kacheln(["auto", "light", "dark"].map((w) =>
+        // Auf der Kachel nur das erste Wort: "Automatisch - folgt dem Geraet"
+        // passt nicht darunter; der ganze Satz steht als title.
+        this._kachel({ name: t[w].split(" - ")[0], zweck: t[w], daten: { wahl: w }, symbol: SYMBOL[w] })))));
+      if (r.sperre) teile.push(gesperrt());
+      else {
+        teile.push(this._gruppe(tf.karten, this._baukastenKacheln(t, "karten")));
+        teile.push(this._gruppe(tf.farbe, this._baukastenKacheln(t, "palette")));
+        teile.push(this._gruppe(tf.flaeche, ...this._baueGruppe(t, "darstellung", false)
+          .filter((e) => e.dataset?.was !== "schrift" && e.querySelector?.("[data-was=schrift]") === null)));
+      }
+    } else if (seite === "hintergrund") {
+      if (r.sperre) teile.push(gesperrt());
+      else {
+        teile.push(this._gruppe(tf.verlaeufe, this._baukastenKacheln(t, "hintergrund")));
+        const bilder = (r.bilder ?? []).filter((b) => BILD_ADRESSE.test(b.url));
+        const hinweis = neu("div", "rhinweis");
+        hinweis.textContent = tf.keineBilder;
+        teile.push(this._gruppe(tf.bilder, bilder.length
+          ? this._kacheln(bilder.map((b) => this._kachel({
+            name: b.name.replace(/\.[^.]+$/, ""), daten: { bild: b.url },
+            an: String(r.bild).includes(b.url), hintergrund: `url(${b.url}) center / cover no-repeat`,
+          })))
+          : hinweis));
+      }
+    } else if (seite === "schrift") {
+      if (r.sperre) teile.push(gesperrt());
+      else {
+        const schrift = this._baueGruppe(t, "darstellung", false)
+          .filter((e) => e.querySelector?.("[data-was=schrift]") || e.dataset?.gruppe);
+        teile.push(this._gruppe(tf.groesse, ...schrift));
+        teile.push(this._gruppe(tf.schriftart, this._baukastenKacheln(t, "schrift")));
+        teile.push(this._gruppe(tf.rundung, this._baukastenKacheln(t, "rundung")));
+        teile.push(this._gruppe(tf.dichte, this._baukastenKacheln(t, "dichte")));
+      }
+    } else if (seite === "bewegung") {
+      teile.push(r.sperre ? gesperrt() : this._gruppe("", ...this._baueGruppe(t, "bewegung", false)));
+    } else if (seite === "anzeige") {
+      // Vollbild und Bearbeiten nebeneinander, ohne Ueberschrift - der Knopf
+      // sagt selbst, was er tut.
+      const knoepfe = neu("div", "fknoepfe");
+      knoepfe.append(this._fensterKnopf("vollbild", t));
+      if (this._config.kopf && this._hass.user?.is_admin) knoepfe.append(this._fensterKnopf("bearbeiten", t));
+      teile.push(this._gruppe("", knoepfe));
+      teile.push(this._gruppe(tf.theme, this._themeWahl(t)));
+      if (!r.sperre) teile.push(this._gruppe(tf.sicherungen, this._sicherungsListe(t)));
+    }
+    teile.push(neu("div", "rstatus"));
+    this._feld.replaceChildren(...teile);
+    this._reglerStelle(t);
+  }
+
+  _gruppe(titel, ...kinder) {
+    const g = neu("section", "fgruppe");
+    if (titel) {
+      const h = neu("div", "fgtitel");
+      h.textContent = titel;
+      g.append(h);
+    }
+    g.append(...kinder);
+    return g;
+  }
+
+  _kacheln(kinder) {
+    const k = neu("div", "kacheln");
+    k.append(...kinder);
+    return k;
+  }
+
+  // Eine Kachel: ein Bild und ein Name darunter, wie die Auswahl am Mac.
+  // Daten gehen als data-Attribute an den Knopf; _klick liest sie.
+  _kachel({ name, daten = {}, an = false, symbol, hintergrund, probe, schrift, zweck }) {
+    const b = neu("button", "kachel");
+    b.type = "button";
+    for (const [k, v] of Object.entries(daten)) b.dataset[k] = v;
+    b.setAttribute("aria-pressed", String(an));
+    if (zweck) b.title = zweck;
+    const bild = neu("span", "kbild");
+    if (hintergrund) bild.style.background = hintergrund;
+    if (symbol) {
+      const s = neu("ha-icon");
+      s.setAttribute("icon", symbol);
+      bild.append(s);
+    }
+    if (probe) {
+      const p = neu("span", "kprobe");
+      for (const [k, v] of Object.entries(probe)) if (v !== undefined && v !== "") p.style.setProperty(k, v);
+      bild.append(p);
+    }
+    if (schrift) {
+      const p = neu("span", "kschrift");
+      p.textContent = "Aa";
+      p.style.fontFamily = schrift;
+      bild.append(p);
+    }
+    const n = neu("span", "kname");
+    n.textContent = name;
+    b.append(bild, n);
+    return b;
+  }
+
+  // Die Teile einer Sorte des Baukastens als Kacheln, das sitzende markiert.
+  // Sitzt keins, sagt eine Zeile darunter warum - sonst saehe es aus, als
+  // haette die Theme nichts.
+  _baukastenKacheln(t, sorte) {
+    const r = this._regler;
+    const w = this._w;
+    const en = sprache(this._hass) === "en";
+    const dunkel = r.modus === "dark";
+    const wert = (teil, name) => teil[r.modus]?.[name] ?? teil.flach?.[name] ?? teil.felder?.[name];
+    const kacheln = (w.BAUKASTEN?.[sorte]?.teile ?? []).map((teil) => {
+      const k = { name: en ? teil.en : teil.de, daten: { sorte, teil: teil.id },
+                  an: r.sitzt?.[sorte] === teil.id, zweck: en ? teil.zweckEn : teil.zweckDe };
+      if (sorte === "palette") {
+        const punkte = w.palettenVorschau(teil, dunkel).map((p) => p.hex);
+        k.hintergrund = `linear-gradient(90deg, ${punkte.map((hex, i) =>
+          `${hex} ${Math.round(i / punkte.length * 100)}% ${Math.round((i + 1) / punkte.length * 100)}%`).join(", ")})`;
+      } else if (sorte === "hintergrund") {
+        const bild = teil.vorschau?.[r.modus] ?? w.ohneFest(String(wert(teil, "--lovelace-background") ?? ""));
+        k.hintergrund = bild || "var(--primary-background-color)";
+      } else if (sorte === "karten") {
+        k.probe = Object.fromEntries(["--ha-card-background", "--ha-card-border-radius", "--ha-card-border-width",
+          "--ha-card-border-color", "--ha-card-box-shadow", "--ha-card-backdrop-filter"].map((n) => [n, wert(teil, n)]));
+      } else if (sorte === "rundung") {
+        k.probe = { "--ha-card-border-radius": wert(teil, "--ha-card-border-radius") };
+      } else if (sorte === "schrift") {
+        k.schrift = wert(teil, "--ha-font-family-body");
+      }
+      return this._kachel(k);
+    });
+    const raster = this._kacheln(kacheln);
+    if (r.sitzt?.[sorte]) return raster;
+    const satz = neu("div", "rhinweis");
+    satz.textContent = t.fenster.eigene;
+    const huelle = neu("div");
+    huelle.append(raster, satz);
+    return huelle;
+  }
+
+  _fensterKnopf(was, t) {
+    const b = neu("button", "knopf fknopf");
+    b.type = "button";
+    b.dataset[was] = "";
+    b._symbol = neu("ha-icon");
+    b._name = neu("span", "name");
+    b.append(b._symbol, b._name, neu("ha-ripple"));
+    if (was === "bearbeiten") this._beschrifte(b, SYMBOL.bearbeiten, t.bearbeiten, t.bearbeiten);
+    return b;
+  }
+
+  // Die Themes, die Home Assistant kennt - dieselbe Liste wie im Profil.
+  _themeWahl(t) {
+    const wahl = neu("select", "fwahl");
+    wahl.dataset.themeWahl = "";
+    const namen = Object.keys(this._hass.themes?.themes ?? {}).sort((a, b) => a.localeCompare(b));
+    const jetzt = this._hass.selectedTheme?.theme ?? this._hass.themes?.theme ?? "default";
+    for (const name of ["default", ...namen]) {
+      const o = neu("option");
+      o.value = name;
+      o.textContent = name === "default" ? "Home Assistant" : name;
+      o.selected = name === jetzt;
+      wahl.append(o);
+    }
+    const hilfe = neu("div", "rhinweis");
+    hilfe.textContent = t.fenster.themeHilfe;
+    const huelle = neu("div", "fspalte");
+    huelle.append(wahl, hilfe);
+    return huelle;
+  }
+
+  _sicherungsListe(t) {
+    const liste = this._regler.sicherungen ?? [];
+    if (!liste.length) {
+      const satz = neu("div", "rhinweis");
+      satz.textContent = t.fenster.keineSicherungen;
+      return satz;
+    }
+    const huelle = neu("div", "fspalte");
+    for (const s of liste.slice(0, 5)) {
+      const zeile = neu("div", "fzeile");
+      const zeit = neu("span");
+      zeit.textContent = t.fenster.zeit(s.backup);
+      const b = neu("button", "knopf fknopf");
+      b.type = "button";
+      b.dataset.sicherung = s.backup;
+      b._symbol = neu("ha-icon");
+      b._name = neu("span", "name");
+      b.append(b._symbol, b._name, neu("ha-ripple"));
+      this._beschrifte(b, "mdi:history", t.fenster.zurueck, t.fenster.zurueck);
+      zeile.append(zeit, b);
+      huelle.append(zeile);
+    }
+    return huelle;
+  }
+
+  // Was sich ohne neues Lesen aendert: Modus und Vollbild.
+  _stelleFenster(t) {
+    const feld = this._feld;
+    if (!feld) return;
+    const lage = modusLage(this._hass);
+    for (const k of feld.querySelectorAll(".kachel[data-wahl]")) {
+      k.setAttribute("aria-pressed", String(k.dataset.wahl === lage.aktiv));
+      k.setAttribute("aria-disabled", String(!lage.schaltbar));
+      k.title = lage.schaltbar ? "" : t.fest(lage.theme, lage.fest);
+    }
+    const voll = feld.querySelector("[data-vollbild]");
+    if (voll) {
+      const an = this._hass.kioskMode === true;
+      voll.setAttribute("aria-pressed", String(an));
+      this._beschrifte(voll, an ? SYMBOL.vollbildAus : SYMBOL.vollbild, an ? t.vollbildAus : t.vollbild,
+        an ? t.vollbildAus : t.vollbild);
+    }
+  }
+
+  // Ein Teil, ein Bild oder eine Sicherung schreiben - eins nach dem anderen,
+  // frisch gelesen, und danach das Fenster neu: Was jetzt sitzt, sagt die
+  // Datei, nicht der Klick.
+  async _fensterSchreiben(machen) {
+    if (this._speichert) return;
+    const r = this._regler;
+    if (!r || r.sperre) return;
+    const t = TEXTE[sprache(this._hass)];
+    this._speichert = true;
+    try {
+      const hass = this._hass;
+      if (hass.themes?.theme !== r.name) {
+        this._reglerStatus(t.grund.wechsel(hass.themes?.theme || "default"));
+        return;
+      }
+      this._reglerStatus(t.speichert);
+      const text = (await hass.connection.sendMessagePromise({
+        type: "hats/load_theme_file", filename: `${r.name}.yaml` })).content;
+      const stand = await machen(text, r);
+      if (stand.grund) {
+        this._reglerStatus(t.grund[stand.grund](stand.detail));
+        return;
+      }
+      if (stand.yaml !== text) {
+        await hass.connection.sendMessagePromise({
+          type: "hats/save_theme", name: r.name, yaml: stand.yaml, overwrite: true });
+        await hass.callService("frontend", "reload_themes");
+      }
+      this._speichert = false;
+      await this._reglerLaden("fenster");
+      this._reglerStatus(stand.meldung ?? t.gespeichert(r.name));
+    } catch (fehler) {
+      this._reglerStatus(`${t.nichtGespeichert}: ${fehler?.message || fehler?.code || fehler}`);
+    } finally {
+      this._speichert = false;
+    }
+  }
+
+  _fensterKlick(knopf) {
+    const t = TEXTE[sprache(this._hass)];
+    const d = knopf.dataset;
+    if (d.fensterZu !== undefined) { this._fenster?.close(); return true; }
+    if (d.seite) {
+      this._fensterSeite = d.seite;
+      this._fensterNav(t);
+      if (this._regler) this._reglerBaue(t);
+      return true;
+    }
+    if (d.sorte && d.teil) {
+      // Wie im Panel: Ein Klick auf das Teil, das schon sitzt, wendet es nicht
+      // noch einmal an - sonst ginge jede Feinjustierung im Panel verloren.
+      if (knopf.getAttribute("aria-pressed") === "true") return true;
+      this._fensterSchreiben((text, r) => schreibeTeilInDatei(text, r.name, d.sorte, d.teil, this._w));
+      return true;
+    }
+    if (d.bild) {
+      if (knopf.getAttribute("aria-pressed") === "true") return true;
+      this._fensterSchreiben((text, r) => schreibeBildInDatei(text, r.name, d.bild, this._w));
+      return true;
+    }
+    if (d.sicherung) {
+      const kennung = d.sicherung;
+      this._fensterSchreiben(async (text, r) => {
+        const alt = (await this._hass.connection.sendMessagePromise({
+          type: "hats/load_backup", name: r.name, backup: kennung })).content;
+        // Eine Sicherung ist eine fruehere Fassung DIESER Datei - sonst nicht.
+        const stand = pruefeDatei(alt, r.name, this._w);
+        if (stand.grund) return stand;
+        return { yaml: alt, meldung: t.fenster.zurueckGeholt(t.fenster.zeit(kennung)) };
+      });
+      return true;
+    }
+    return false;
   }
 
   _beiRegler(ev, losgelassen) {
@@ -2239,6 +2848,7 @@ class Steuerung extends Basis {
       return;
     }
 
+    if (this._fensterKlick(knopf)) return;
     if (knopf.dataset.bearbeiten !== undefined) {
       this._bearbeiten();
       return;
@@ -2266,6 +2876,10 @@ class Steuerung extends Basis {
     if (REGLER[k.function]) {
       if (this.getAttribute("offen") === REGLER[k.function]) this._zu();
       else this._reglerAuf(knopf, REGLER[k.function]);
+      return;
+    }
+    if (k.function === "settings") {
+      this._fensterAuf();
       return;
     }
     // Die drei Knoepfe aus HAs Kopfzeile, auf HAs eigenen Wegen - am

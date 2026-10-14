@@ -173,20 +173,25 @@ pruefe("Deutsch bei de, sonst englisch", () => {
 pruefe("Die Datei steht allein - bis jemand den Regler der Bewegung oeffnet", () => {
   assert.ok(!/^\s*import\s/m.test(quelle), "ein import - die Karte muss allein stehen");
   assert.ok(!/https?:\/\//.test(quelle), "eine fremde Adresse");
-  assert.ok(!/@import|url\(/.test(quelle), "CSS, das etwas nachlaedt");
-  // Nachgeladen wird genau zweierlei, und zwar HATS' eigene Module neben der
-  // Karte: Der Regler schreibt die Theme mit dem Code des Panels, nicht mit
-  // einem zweiten. Nichts von aussen, und nichts ausserhalb von ladeWerkzeug.
+  assert.ok(!/@import/.test(quelle), "CSS, das etwas nachlaedt");
+  // url() steht genau dort, wo das Einstellungsfenster ein eigenes Bild als
+  // Hintergrund zeigt oder schreibt - und nur mit einer Adresse, die vorher
+  // gegen BILD_ADRESSE (/local/hats/...) geprueft ist. Sonst nirgends: kein
+  // Bild, keine Schrift, nichts, was von woanders kaeme.
+  const mitUrl = quelle.split("\n").filter((z) => /url\(/.test(z) && !/^\s*\/\//.test(z));
+  assert.strictEqual(mitUrl.length, 2, "url() an unerwarteter Stelle:\n" + mitUrl.join("\n"));
+  for (const z of mitUrl) assert.match(z, /url\(\$\{(?:url|b\.url)\}\)/, z);
+  // Nachgeladen werden HATS' eigene Module neben der Karte: Die Regler und
+  // das Fenster schreiben die Theme mit dem Code des Panels, nicht mit einem
+  // zweiten. Nichts von aussen, und nichts ausserhalb von ladeWerkzeug.
   const code = quelle.split("\n").filter((z) => !/^\s*\/\//.test(z)).join("\n");
   const nach = [...code.matchAll(/\bimport\s*\(([^)]*\))/g)].map((m) => m[1]);
-  assert.deepStrictEqual(nach, [
-    'new URL("./theme.js", import.meta.url)',
-    'new URL("./hintergrund.js", import.meta.url)',
-  ]);
+  const MODULE = ["theme.js", "hintergrund.js", "baukasten.js", "hintergrund-seite.js"];
+  assert.deepStrictEqual(nach, MODULE.map((m) => `new URL("./${m}", import.meta.url)`));
   const lader = /function ladeWerkzeug\(\) \{([\s\S]*?)\n\}/.exec(quelle);
-  assert.ok(lader && (lader[1].match(/\bimport\s*\(/g) || []).length === 2, "ein import ausserhalb von ladeWerkzeug");
-  // Und die beiden Dateien gibt es dort wirklich.
-  for (const datei of ["theme.js", "hintergrund.js"]) {
+  assert.ok(lader && (lader[1].match(/\bimport\s*\(/g) || []).length === MODULE.length, "ein import ausserhalb von ladeWerkzeug");
+  // Und die Dateien gibt es dort wirklich.
+  for (const datei of MODULE) {
     assert.ok(existsSync(path.join(wurzel, "custom_components/hats/www", datei)), datei + " fehlt");
   }
 });
@@ -234,7 +239,17 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     "--ha-space-3", "--ha-font-size-s", "--ha-font-weight-medium",
     "--white-color", "--black-color", "--state-active-color",
     "--card-background-color", "--ha-card-border-radius", "--ha-card-box-shadow",
+    // mit dem Einstellungsfenster dazugekommen, am 14.10.2026 in HAs eigenen
+    // Stylesheets gefunden (nicht in der Theme)
+    "--ha-space-4", "--ha-font-size-l", "--primary-background-color", "--secondary-background-color",
   ];
+  // Theme-Felder, die Home Assistant NICHT selbst setzt - gemessen: Mit
+  // glaswerk standen sie inline auf html, in HAs Stylesheets nirgends,
+  // --ha-card-border-color nicht einmal in der Theme. ha-card und HAs Dialoge
+  // lesen sie mit eigenem Rueckfall, und so liest sie auch das Fenster: die
+  // Probe einer Karte und der Schleier, jeder mit Rueckfall.
+  const ausDerTheme = ["--ha-card-background", "--ha-card-border-width", "--ha-card-border-color",
+    "--ha-card-backdrop-filter", "--mdc-dialog-scrim-color"];
   // Home Assistant liest die Namen (hui-card-features, ha-badge, hui-root),
   // belegt sie aber nicht - oder nur auf Geraeten mit Aussparung.
   const nurGelesen = ["--ha-card-features-border-radius", "--ha-badge-icon-size",
@@ -252,10 +267,10 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
 
   const gelesen = [...new Set([...quelle.matchAll(/var\(\s*(--[a-z0-9_-]+)/g)].map((m) => m[1]))];
   assert.ok(gelesen.length >= 8, `nur ${gelesen.length} Variablen gefunden - der Ausdruck greift nicht`);
-  const fremd = gelesen.filter((v) => ![...belegt, ...nurGelesen, ...eigen].includes(v));
+  const fremd = gelesen.filter((v) => ![...belegt, ...nurGelesen, ...eigen, ...ausDerTheme].includes(v));
   assert.deepStrictEqual(fremd, [], "nicht gemessen: " + fremd.join(", "));
   // Und umgekehrt: Die Liste traegt nichts mit, was die Karte gar nicht liest.
-  const tot = [...belegt, ...nurGelesen, ...eigen].filter((v) => !gelesen.includes(v));
+  const tot = [...belegt, ...nurGelesen, ...eigen, ...ausDerTheme].filter((v) => !gelesen.includes(v));
   assert.deepStrictEqual(tot, [], "steht in der Liste, wird aber nicht gelesen: " + tot.join(", "));
 });
 

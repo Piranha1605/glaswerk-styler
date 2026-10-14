@@ -185,11 +185,24 @@ the same way and under the same conditions:
 Only the value you moved is written.
 
 **Everything in one window** comes with `function: settings`: one button at
-the end of the bar, behind it mode and fullscreen, transparency and text size,
-and the background motion. One button instead of four. If you switch the mode
-in the window, the transparency shows the other mode's value right away.
+the end of the bar, behind it a settings window modelled on the Mac's System
+Settings — sections on the left, choices on the right:
 
-![The window behind the settings button](docs/bilder/steuerleiste-einstellungen.jpg)
+| Section | contains |
+|---|---|
+| Appearance | mode, card style, colour palette, card transparency and blur |
+| Background | the kit's gradients and your own images from `config/www/hats` |
+| Text and size | size, typeface, corners, density |
+| Motion | drift, colour dots, colour shift, range |
+| Display | fullscreen, edit dashboard, theme choice, earlier versions |
+
+![The settings window](docs/bilder/steuerkarte-einstellungsfenster.jpg)
+
+Card styles, palettes, typefaces and backgrounds are the parts of the panel's
+kit — the same values, written the same way. The window shows which part is in
+place. A click writes into the file of the active theme; the version before is
+then listed under "Earlier versions" and is back with one click. On a phone the
+window fills the screen.
 
 The single functions stay, for a bar that prefers to show them one by one.
 
