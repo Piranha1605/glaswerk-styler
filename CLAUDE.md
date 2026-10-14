@@ -1886,6 +1886,57 @@ ein Element weniger dazwischen.
 Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
 gibt es keine Variable, und dafür braucht man card-mod oder HATG.
 
+## `--primary-color` ist 2026 ein Name ohne Wirkung
+
+Am 14.10.2026 gemessen, auf die Frage, ob die Vereinheitlichung der Blautoene
+auch mit den alten HA-Werten gegangen waere. Der alte Weg war genau EIN Feld:
+`--primary-color`, und alles folgte.
+
+**Das Feld nimmt den Wert bis heute an** — HA deklariert es als
+`var(--ha-color-primary-40)`, und ein Wert im Theme schlaegt das (`#086ebf` →
+`#2196f3`, gemessen). **Gelesen wird es von den drei fraglichen Dingen aber
+nicht mehr.** Mit `--primary-color: #ff0000` durchgespielt:
+
+    Schalter        unveraendert   liest --ha-switch-checked-background-color
+                                   -> --ha-color-fill-primary-normal-resting
+    Regler          unveraendert   liest die Farbe der Entitaet
+    Seitenleiste    unveraendert   liest --sidebar-selected-icon-color
+
+Die Seitenleiste zeigt es am deutlichsten. Aus `ha-sidebar` gelesen:
+
+```css
+ha-list-item-button.selected::part(headline) { color: var(--sidebar-selected-icon-color) }
+ha-list-item-button.selected:before {
+  background-color: var(--sidebar-selected-icon-color);
+  opacity: var(--dark-divider-opacity);
+}
+```
+
+Kein `--primary-color` darin, auch nicht als Ausweichwert. Und
+`--switch-checked-color`, das klassische Feld fuer den Schalter, kommt in
+`ha-switch` ueberhaupt nicht mehr vor.
+
+**Was der alte Weg besser konnte:** einen Ton GENAU treffen.
+`--primary-color: #2196f3` ist dieser Wert. Die Rampe laesst nur den Farbton
+waehlen und legt die Helligkeit je Stufe selbst fest — Stufe 40 landet auf
+`#086ebf`, und keine Basis bringt sie auf `#2196f3`.
+
+**Was er schlechter konnte:** jedes Blau einzeln suchen, je Modus, ohne
+Gewaehr, dass Ueberfahren und Gedrueckt dazu passen. Das ist HATGs Welt mit
+798 Variablen.
+
+**Und die Ironie, die man nennen sollte:** Dass die vier Blautoene ueberhaupt
+auseinanderliefen, ist zum Teil der Umstieg selbst. Home Assistant hat die
+Schalter auf die neue Ebene gehoben, die 86 Zustandsfarben auf der alten
+gelassen, und Mushroom folgt mal der einen und mal keiner. In einer reinen
+Alt-Welt waeren die vier wahrscheinlich gleich gewesen — weil alle vier
+dieselbe eine Variable gelesen haetten.
+
+**Woran HATS das nicht aendert:** Die Richtung stimmt trotzdem. 15
+Entscheidungen statt 798, und Ueberfahr- und Druckzustaende kommen von selbst.
+Nur darf man nicht behaupten, der neue Weg koenne alles, was der alte konnte.
+Einen Pixelwert festnageln kann er nicht.
+
 ## Das Thermostat-Rad: steuerbar, aber nicht ueber seine eigenen Variablen
 
 Am 14.10.2026 gemessen, nachdem eine Thermostat-Karte in die Vergleichsseite
