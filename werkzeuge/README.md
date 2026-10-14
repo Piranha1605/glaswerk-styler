@@ -11,6 +11,41 @@ test/empfangen.py              Dateien von der Maschine zurueckholen
 
 ---
 
+## Die Fassungen der Theme glaswerk
+
+Auf Ansage vom 14.10.2026, um optisch vergleichen zu koennen statt sich zu
+erinnern.
+
+    node werkzeuge/glaswerk-bauen.mjs
+
+schreibt **zwei** Dateien:
+
+    glaswerk.yaml      immer der neueste Stand
+    glaswerk_vN.yaml   dieselbe Theme unter eigenem NAMEN
+
+Eigener Name, nicht nur eigener Dateiname: Home Assistant fuehrt Themes nach
+dem Wurzelschluessel, und nur so stehen sie im Waehler nebeneinander. Das
+`uix-theme` wird mitgetauscht — zeigte es auf den alten Namen, kaeme keine
+einzige UIX-Vorlage an, und das lautlos.
+
+**Eine neue Fassung anlegen:** in `werkzeuge/glaswerk-bauen.mjs` die Zahl
+`FASSUNG` hochzaehlen und in `FASSUNGEN` eine Zeile dazuschreiben, was sich
+geaendert hat. Die vorige Datei wird danach nicht mehr angefasst — sie bleibt
+auf der Instanz liegen.
+
+Die Zeile ist der eigentliche Punkt. Ohne sie weiss in einer Woche niemand
+mehr, was v2 von v3 unterschied, und dann sind beide gleich nutzlos.
+
+**Umschalten zum Vergleichen** geht im Profil, oder von aussen:
+
+```bash
+cd /Users/enricofischer/Projekte/haos-test && node --input-type=module -e '
+const { verbinde } = await import("./ws.mjs"); const c = await verbinde();
+await c.ruf({type: "frontend/set_user_data", key: "theme",
+             value: {theme: "glaswerk_v1", dark: false}}); process.exit(0);'
+```
+
+
 ## Der Arbeitsplatz ist die Testmaschine
 
 **Seit dem 13.10.2026, auf Ansage.** Eine QEMU-Maschine auf dem Mac mit

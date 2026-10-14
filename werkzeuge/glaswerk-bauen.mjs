@@ -57,6 +57,31 @@ import { PALETTEN, KARTENSTILE, SCHRIFTEN, BAUKASTEN, teilAnwenden }
 import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergrund.js";
 
 const OHNE_UIX = process.argv.includes("--ohne-uix");
+
+// --- Fassungen -------------------------------------------------------------
+//
+// Auf Ansage vom 14.10.2026: "koennen wir die glaswerk theme langsam mit
+// versionsnummern versehen das ich optisch testen kann vorher nacher und so."
+//
+// Jeder Lauf schreibt ZWEI Dateien: glaswerk.yaml, die immer den neuesten
+// Stand traegt, und glaswerk_vN.yaml, eine Kopie unter eigenem Namen. Eigener
+// NAME, nicht nur eigener Dateiname - Home Assistant fuehrt Themes nach dem
+// Wurzelschluessel, und nur so stehen sie im Waehler nebeneinander.
+//
+// Wer FASSUNG hochzaehlt, friert die vorige ein: Ihre Datei wird nicht mehr
+// angefasst, sie bleibt auf der Instanz liegen und laesst sich jederzeit
+// gegen die neue stellen.
+//
+// Die Zeile dahinter steht im Kopf jeder Datei. Sie ist der Grund, warum man
+// eine Fassung ueberhaupt aufhebt - ohne sie weiss in einer Woche niemand
+// mehr, was v2 von v3 unterscheidet.
+const FASSUNG = 1;
+const FASSUNGEN = {
+  1: "Erste gezaehlte Fassung. Glas-Karten auf dem diagonalen Raster, ein Blau " +
+     "ueberall (#2196f3), Regler glimmen und sind 28px schlank, Schalter mit " +
+     "voller Spur und weissem Daumen.",
+};
+
 const NAME = OHNE_UIX ? "glaswerk_ohne_uix" : "glaswerk";
 
 // --- Die Grundlage ---------------------------------------------------------
@@ -305,6 +330,30 @@ mkdirSync("werkzeuge/themes", { recursive: true });
 const text = schreibeTheme(m);
 writeFileSync(`werkzeuge/themes/${NAME}.yaml`, text);
 
+// Dieselbe Theme noch einmal unter ihrem Fassungsnamen. Der Name steht im
+// Modell, also wird er getauscht und neu geschrieben - nicht die Datei kopiert
+// und der Schluessel mit einem Suchen-und-Ersetzen verbogen.
+let fassungsText = null;
+if (!OHNE_UIX) {
+  const fname = `glaswerk_v${FASSUNG}`;
+  m.name = fname;
+  m.kopf = [
+    ...m.kopf.slice(0, 2),
+    "",
+    `FASSUNG ${FASSUNG} - eingefroren, damit man sie gegen die naechste stellen kann.`,
+    ...FASSUNGEN[FASSUNG].match(/.{1,70}(\s|$)/g).map((z) => z.trim()),
+    "",
+    "Dieselbe Theme wie glaswerk, nur unter eigenem Namen. Wer glaswerk",
+    "weiterbaut, kann hier jederzeit zurueckschauen - im Theme-Waehler stehen",
+    "beide nebeneinander.",
+    "",
+    ...m.kopf.slice(3),
+  ];
+  fassungsText = schreibeTheme(m);
+  writeFileSync(`werkzeuge/themes/${fname}.yaml`, fassungsText);
+  m.name = NAME;
+}
+
 // --- Gegenprobe: zweimal durch und zurueck muss dasselbe liefern -----------
 const zurueck = leseTheme(text);
 const nochmal = schreibeTheme(zurueck.modell ?? zurueck);
@@ -328,6 +377,7 @@ const treffer = Object.fromEntries(
 const erkannt = Object.entries(soll).every(([s, id]) => treffer[s] === id);
 
 console.log(`${gesetzt} Felder gesetzt, ${OHNE_UIX ? 0 : VORLAGEN.length - NICHT_AN.length} Vorlagen an`);
+if (fassungsText) console.log(`Fassung ${FASSUNG} mitgeschrieben: glaswerk_v${FASSUNG}.yaml`);
 console.log(`${text.length} Bytes, ${text.split("\n").length} Zeilen`);
 console.log(`idempotent: ${idempotent ? "ja" : "NEIN"}`);
 console.log(`Baukasten erkennt: ${Object.entries(treffer).map(([s, v]) => `${s}=${v}`).join(" ")}`);
