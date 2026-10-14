@@ -1886,6 +1886,63 @@ ein Element weniger dazwischen.
 Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
 gibt es keine Variable, und dafür braucht man card-mod oder HATG.
 
+## Die Regler der drei Familien: was von HATS aus geht
+
+Am 14.10.2026 an der Vergleichsseite durchgemessen, nachdem der Maintainer
+zwei Sammlungen von card-mod-Rezepten geschickt hat. Die Rezepte greifen mit
+`$` durch jede Shadow-Grenze; HATS kann das nicht. **Trotzdem geht das
+meiste** — nur über andere Hebel, und für jede Familie über einen anderen.
+
+| | HA-Kachel | Mushroom | Bubble |
+|---|---|---|---|
+| Wo liegt der Regler | 5 Grenzen unter der Karte | 2 Grenzen | **im Karten-Root** |
+| Höhe | `--feature-height` | `--mush-control-height` | direkt |
+| Rundung | `--feature-border-radius` | `--mush-control-border-radius` | direkt |
+| Füllfarbe | `--feature-color` | `--slider-color` | direkt |
+| Spurfarbe | nicht getrennt | `--slider-bg-color` | direkt |
+| Innenschatten | **nein** | **nein** | ja |
+| Verlauf als Füllung | **nein** | **nein** | ja |
+| Griff / Thumb | **nein** | gibt es nicht | — |
+
+**Wo der Hebel ansetzt, ist je Familie verschieden:**
+
+- **HA-Kachel:** auf `hui-card-features`, mit `!important`. Das Bauteil liegt
+  im Shadow Root der Karte und setzt `--feature-height: 42px` auf sich selbst
+  — deshalb verliert ein Wert am `html`. Gemessen: 42 px → 16 px, Rundung
+  20 px → 8 px.
+- **Mushroom:** auf `mushroom-light-brightness-control`, mit `!important`.
+  Höhe und Rundung gehen auch als gewöhnliche Theme-Felder (`--mush-*`).
+- **Bubble:** gewöhnliche Selektoren in `uix-card`. `.bubble-container`,
+  `.bubble-range-slider` und `.bubble-range-fill` liegen alle direkt im
+  Shadow Root von `bubble-card`. `.bubble-range-fill` trägt die Farbe inline,
+  also auch hier `!important`.
+
+**Was bei der HA-Kachel nicht geht und warum:** `--feature-height` gilt für
+die ganze Reihe, nicht für den Regler allein. Jeder Funktionsteil liest
+dieselbe Zahl — gemessen, `hui-card-features` setzt sie einmal für alle. Ein
+schlanker Regler macht also auch die +/−-Knöpfe der Klimakarte schlank, und
+bei 16 px trifft man die nicht mehr. Wer schlank will, bleibt besser bei
+28 px oder lässt die Kachel in Ruhe.
+
+**Was gar nicht geht, in allen drei Familien:** jede Eigenschaft ohne
+Variable. Innenschatten auf der Spur, ein Farbverlauf als Füllung, ein
+anderer Thumb — dafür gibt es bei HA und Mushroom keinen Namen, und ohne
+Namen kommt man nicht durch die Grenze. Das ist der Punkt, an dem card-mod
+oder HATG anfangen.
+
+**Der Glanzpunkt, der doch geht:** ein Leuchten in der Farbe der Entität.
+`ha-card` trägt `--tile-color` inline, und `hui-card-features` liegt im
+Karten-Root:
+
+```css
+hui-card-features {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tile-color) 60%, transparent));
+}
+```
+
+Gemessen an sechs Kacheln: Licht orange, Rollladen violett, Media Player
+blau — jede in ihrer eigenen Farbe, ohne eine einzige feste Farbe im CSS.
+
 ## Bubbles Slider: `--bubble-slider-color` gibt es nicht
 
 Am 13.10.2026 im Stylesheet der laufenden Karte gezählt: **null** Vorkommen von
