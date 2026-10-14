@@ -1021,6 +1021,11 @@ class HatsPanel extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
+    // Die Steuerkarte lebt laenger als das Markup um sie herum und zeichnet
+    // nur neu, wenn sie ein frisches hass bekommt. Ohne diese Zeile zeigte
+    // sie den Modus von vor dem Umschalten - gemessen am 14.10.2026: Das
+    // Panel zeichnet genau EINMAL, und danach bekam sie nichts mehr.
+    if (this._steuerkarte) this._steuerkarte.hass = hass;
     if (!this._gezeichnet) {
       this._gezeichnet = true;
       this.zeichne();
@@ -2050,6 +2055,56 @@ class HatsPanel extends HTMLElement {
     }
   }
 
+  // Die eigene Steuerkarte oben auf der Uebersicht
+  //
+  // Auf Ansage vom 14.10.2026. Dieselbe Karte wie auf einem Dashboard, nur
+  // hier - beim Bauen einer Theme will man den Modus umschalten und die
+  // Bewegung drehen, ohne das Panel zu verlassen.
+  //
+  // NUR DIE FUNKTIONSKNOEPFE. Der Maintainer hat seine eigene Konfiguration
+  // geschickt, mit Zielen auf /hats-test und einer Wetterentitaet. Die gehoert
+  // seiner Instanz: Auf jeder anderen zeigten die Ziele ins Leere und das
+  // Wetter auf eine Entitaet, die es nicht gibt. Die vier Funktionen dagegen
+  // laufen ueberall - sie haengen an nichts als an Home Assistant selbst.
+  //
+  // theme steht vor fullscreen, weil es beim Bauen oefter gebraucht wird.
+  // motion ganz rechts: Es klappt vier Regler auf und braucht Platz.
+  static STEUERKARTE = {
+    type: "custom:hats-control-card",
+    collapse: "never",
+    buttons: [
+      { function: "mode" },
+      { function: "theme" },
+      { function: "fullscreen", align_end: true },
+      { function: "motion", align_end: true },
+    ],
+  };
+
+  async steuerkarteEinsetzen() {
+    const platz = this.shadowRoot?.querySelector(".steuerplatz");
+    if (!platz) return;
+    try {
+      if (!this._steuerkarte) {
+        // Relativ, nicht absolut: Seit 0.2.0b5 steht die Pruefsumme im Pfad,
+        // und ein relativer Import wird gegen die Adresse DIESES Moduls
+        // aufgeloest. Die Karte kommt damit von selbst aus demselben Stand.
+        await import("./hats-control-card.js");
+        const el = document.createElement("hats-control-card");
+        el.setConfig(HatsPanel.STEUERKARTE);
+        this._steuerkarte = el;
+      }
+      if (this._steuerkarte.parentElement !== platz) platz.replaceChildren(this._steuerkarte);
+      // hass bei JEDEM Zeichnen nachreichen - die Karte lebt laenger als das
+      // Markup um sie herum, und ohne frisches hass zeigt sie einen alten
+      // Modus an.
+      if (this._hass) this._steuerkarte.hass = this._hass;
+    } catch (e) {
+      // Eine fehlende Karte ist kein Grund, das Panel nicht zu zeigen.
+      platz.replaceChildren();
+      console.warn("[HATS] Steuerkarte nicht eingesetzt:", e);
+    }
+  }
+
   zeichneWirklich() {
     const T = (s) => t(s, this.spr);
     const fertig = STUFEN.filter((s) => s.stand === "fertig").length;
@@ -2109,6 +2164,7 @@ class HatsPanel extends HTMLElement {
 
           <div class="rumpf">
             <section class="inhalt">
+            <div class="steuerplatz"></div>
             <header class="kopf">
               <div>
                 <h1>${ZUSTAND.start ? T("Womit faengst du an?") : T("Guten Tag")}</h1>
@@ -2198,6 +2254,11 @@ class HatsPanel extends HTMLElement {
     this.shadowRoot.querySelectorAll("[data-schalter]").forEach((b) =>
       b.addEventListener("click", () => schalter[b.dataset.schalter]?.())
     );
+
+    // Die Steuerkarte oben auf der Uebersicht. Nach dem innerHTML, weil sie
+    // ein ELEMENT ist und kein Markup - sie uebersteht das Neuzeichnen nur,
+    // weil sie in this._steuerkarte haengenbleibt und nur umgehaengt wird.
+    this.steuerkarteEinsetzen();
     // Die grossen Karten auf der Startseite fuehren zu denselben Aktionen wie
     // die Symbolleiste - ein eigener Name, damit ein Klick nicht zweimal
     // ankommt, falls eine Karte je in der Leiste landet.
@@ -3045,6 +3106,13 @@ class HatsPanel extends HTMLElement {
       .meldung { margin: 0 0 12px; min-height: 18px; font-size: 13px; }
       .meldung.gut { color: #2f6b22; }
       .meldung.fehler { color: #a31f1f; }
+
+      /* Die Steuerkarte sitzt ueber der Begruessung und bringt ihre eigene
+         Flaeche mit (ha-card). Hier steht deshalb nur der Abstand - und
+         display:block, damit der Platz nicht zusammenfaellt, solange die
+         Karte noch laedt. */
+      .steuerplatz { display: block; margin-bottom: 18px; }
+      .steuerplatz:empty { display: none; }
 
       .kennzahlen { display: flex; gap: 14px; margin: 22px 0 18px; flex-wrap: wrap; }
       .kennzahl { flex: 1 1 180px; display: flex; align-items: center; gap: 12px;

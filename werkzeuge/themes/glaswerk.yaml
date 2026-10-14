@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:55:51
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 17:19:54
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -80,10 +80,10 @@ glaswerk:
   dark-disabled-opacity: ".38"
   dark-divider-opacity: ".12"
   dark-grey-color: "#606060"
-  dark-primary-color: "#003587"
+  dark-primary-color: "#064b81"
   dark-primary-opacity: ".87"
   dark-secondary-opacity: ".54"
-  darker-primary-color: "#002256"
+  darker-primary-color: "#042f52"
   deep-orange-color: "#ff6f22"
   deep-purple-color: "#6e41ab"
   direction: "ltr"
@@ -156,17 +156,17 @@ glaswerk:
   ha-color-orange-80: "#f0c698"
   ha-color-orange-90: "#f8e5cf"
   ha-color-orange-95: "#fcf2e7"
-  ha-color-primary-05: "#000d21"
-  ha-color-primary-10: "#00193e"
-  ha-color-primary-20: "#002256"
-  ha-color-primary-30: "#003587"
-  ha-color-primary-40: "#004fc7"
-  ha-color-primary-50: "#166ef4"
-  ha-color-primary-60: "#3585ff"
-  ha-color-primary-70: "#7aadfc"
-  ha-color-primary-80: "#b8d3fd"
-  ha-color-primary-90: "#dfeafc"
-  ha-color-primary-95: "#eff5fe"
+  ha-color-primary-05: "#011220"
+  ha-color-primary-10: "#03223b"
+  ha-color-primary-20: "#042f52"
+  ha-color-primary-30: "#064b81"
+  ha-color-primary-40: "#086ebf"
+  ha-color-primary-50: "#2190e9"
+  ha-color-primary-60: "#3fa4f5"
+  ha-color-primary-70: "#80c2f6"
+  ha-color-primary-80: "#bcdef9"
+  ha-color-primary-90: "#e0effb"
+  ha-color-primary-95: "#f0f7fd"
   ha-color-red-05: "#2b0903"
   ha-color-red-10: "#3f1008"
   ha-color-red-20: "#641e12"
@@ -224,7 +224,7 @@ glaswerk:
   light-divider-opacity: ".12"
   light-green-color: "#8bc34a"
   light-grey-color: "#bdbdbd"
-  light-primary-color: "#b8d3fd"
+  light-primary-color: "#bcdef9"
   light-primary-opacity: "1"
   light-secondary-opacity: ".7"
   lime-color: "#cddc39"
@@ -235,8 +235,11 @@ glaswerk:
   pink-color: "#e91e63"
   purple-color: "#926bc7"
   red-color: "#f44336"
-  rgb-primary-color: "0, 79, 199"
-  state-icon-color: "#004fc7"
+  rgb-primary-color: "8, 110, 191"
+  sidebar-selected-icon-color: "#2196f3"
+  sidebar-selected-text-color: "#2196f3"
+  state-cover-active-color: "#2196f3"
+  state-icon-color: "#086ebf"
   state-weather-snowy-color: "#c0e0ff"
   success-color: "#43a047"
   teal-color: "#009688"
@@ -977,7 +980,7 @@ glaswerk:
 
   modes:
     light:
-      accent-color: "#7b5cf0"
+      accent-color: "#2196f3"
       app-header-background-color: "rgba(255, 255, 255, 0.3)"
       app-header-text-color: "#121a2b"
       card-background-color: "#ffffff"
@@ -1023,7 +1026,7 @@ glaswerk:
       sidebar-text-color: "#121a2b"
 
     dark:
-      accent-color: "#9b84f8"
+      accent-color: "#5ab4f7"
       app-header-background-color: "rgba(20, 25, 40, 0.34)"
       app-header-text-color: "#e8edf7"
       bar-box-shadow: "0 2px 12px var(--shadow-color)"

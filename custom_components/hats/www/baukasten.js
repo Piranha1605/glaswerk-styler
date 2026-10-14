@@ -321,12 +321,17 @@ export const PALETTEN = [
     // der Farbfelder darin. ENTSCHIEDEN, nicht gemessen: Ein Bild hat keine
     // Palette, es hat Pixel; was hier steht, ist mein Lesen davon.
     //
-    // Der Akzent ist violett und nicht azur. In der Vorlage steht beides
-    // nebeneinander, und der Akzent ist das, was auf Reglern und aktiven
-    // Zustaenden liegt - gleiche Farbe wie die Primaerfarbe waere dort
-    // unsichtbar.
-    farben: { primary: "#2b7fff", neutral: "#5a6880", red: "#f4674f", green: "#44c9a0", orange: "#e08a2b" },
-    akzent: { light: "#7b5cf0", dark: "#9b84f8" },
+    // Primaerfarbe und Akzent tragen DENSELBEN Ton, und das ist eine
+    // Entscheidung gegen die uebliche: Am 14.10.2026 standen auf einer Seite
+    // vier verschiedene Blautoene und Violetts nebeneinander - Schalter in
+    // #004fc7, Akzent in #7b5cf0, Rollladen in #926bc7, Mushrooms Regler in
+    // #2196f3. Auf Ansage ("alle auf die selbe farbe wie bei mushroom") ist
+    // jetzt #2196f3 der eine Ton.
+    //
+    // Im Dunkeln eine Stufe heller, wie bei jeder Palette: Derselbe Ton auf
+    // dunklem Grund verliert zu viel Wahrnehmungshelligkeit.
+    farben: { primary: "#2196f3", neutral: "#5a6880", red: "#f4674f", green: "#44c9a0", orange: "#e08a2b" },
+    akzent: { light: "#2196f3", dark: "#5ab4f7" },
   },
   {
     id: "solarized",

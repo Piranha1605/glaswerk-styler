@@ -168,6 +168,9 @@ for (const quelle of [SCHRIFT, SCHATTEN]) {
 //
 //     --mush-control-border-radius   Stufe 6, Gruppe Mushroom Masse
 //     --bubble-border-radius         Stufe 6, Gruppe Bubble Flaechen
+//     --sidebar-selected-icon-color  Stufe 7, Gruppe Seitenleiste
+//     --sidebar-selected-text-color  Stufe 7, Gruppe Seitenleiste
+//     --state-cover-active-color     Stufe 5, Gruppe Zustandsfarben
 //
 const NOCH_OHNE_KACHEL = {
   // Am 14.10.2026 an der Vergleichsseite gemessen, auf Ansage ("wir gehen
@@ -188,6 +191,34 @@ const NOCH_OHNE_KACHEL = {
   // Die allgemeine Stufe ist die richtige - sie erreicht alle Kartentypen und
   // laesst Bubbles Typlogik in Ruhe (CLAUDE.md, "die Kette ist dreistufig").
   "--bubble-border-radius": "20px",
+
+  // --- Ein Blau, nicht vier -------------------------------------------------
+  //
+  // Auf Ansage vom 14.10.2026: "kannst du in der theme die blauen schalter
+  // slider und menuepunkte alle auf die selbe farbe setzen wie bei mushroom
+  // living room windows slider". Gemessen, was da nebeneinander stand:
+  //
+  //     Schalter, Seitenleiste   #004fc7   primary-40 der alten Rampe
+  //     Akzent                   #7b5cf0   violett
+  //     Rollladen (HA-Kachel)    #926bc7   --state-cover-active-color
+  //     Mushrooms Rollladen      #2196f3   <- das Ziel
+  //
+  // Die Palette traegt jetzt #2196f3 als Primaerfarbe UND als Akzent. Was sie
+  // nicht kann: den Ton auf einer bestimmten Stufe festnageln. HAs Rampe legt
+  // die Helligkeit je Stufe fest - mit dieser Basis liegt Stufe 40 auf
+  // #086ebf und Stufe 50 auf #2190e9. Wo HA die 40 nimmt (Seitenleiste,
+  // Schalterfuellung), bleibt es also etwas dunkler als Mushrooms Regler.
+  // Eine Basis, die Stufe 40 genau auf #2196f3 bringt, gibt es nicht; das ist
+  // ausgerechnet, nicht geschaetzt.
+  //
+  // Diese drei Felder setzen den Ton deshalb direkt - sie gehen NICHT ueber
+  // die Rampe:
+  "--sidebar-selected-icon-color": "#2196f3",
+  "--sidebar-selected-text-color": "#2196f3",
+  // Die Zustandsfarbe des Rollladens, damit HAs Kachel nicht als einzige
+  // violett bleibt. Eines der 86 --state-*-color, die das Panel noch nicht
+  // anbietet.
+  "--state-cover-active-color": "#2196f3",
 };
 for (const [name, wert] of Object.entries(NOCH_OHNE_KACHEL)) schreibe(name, wert, "beide");
 
