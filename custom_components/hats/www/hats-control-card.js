@@ -77,7 +77,7 @@ export const BEDIENTEILE = ["mode", "fullscreen"];
 
 // Was ein Knopf im Browser tut statt in Home Assistant. Ein solcher Knopf hat
 // weder Ziel noch Schalter.
-export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion", "appearance"];
+export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion", "appearance", "settings"];
 export const GROESSEN = ["small", "normal", "large"];
 export const FORMEN = ["theme", "pill"];
 export const EINKLAPPEN = ["never", "narrow", "always"];
@@ -122,10 +122,12 @@ export const TEXTE = {
       align_end: "Ans Ende der Leiste", separator_before: "Trennstrich davor",
     },
     funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter",
-                motion: "Bewegung des Hintergrunds", appearance: "Transparenz und Schrift" },
+                motion: "Bewegung des Hintergrunds", appearance: "Transparenz und Schrift",
+                settings: "Einstellungen (alles in einem Fenster)" },
     teil: { mode: "Modus", fullscreen: "Vollbild" },
     bewegung: "Bewegung des Hintergrunds",
     darstellung: "Transparenz und Schrift",
+    alles: "Einstellungen",
     transparenz: "Transparenz",
     schrift: "Schrift",
     deckend: "deckend",
@@ -196,10 +198,12 @@ export const TEXTE = {
       align_end: "At the end of the bar", separator_before: "Separator before",
     },
     funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather",
-                motion: "Background motion", appearance: "Transparency and text" },
+                motion: "Background motion", appearance: "Transparency and text",
+                settings: "Settings (everything in one window)" },
     teil: { mode: "Mode", fullscreen: "Fullscreen" },
     bewegung: "Background motion",
     darstellung: "Transparency and text",
+    alles: "Settings",
     transparenz: "Transparency",
     schrift: "Text size",
     deckend: "opaque",
@@ -250,11 +254,15 @@ const SYMBOL = {
   pfeil: "mdi:chevron-down",
   bewegung: "mdi:motion-play-outline",
   darstellung: "mdi:tune-variant",
+  alles: "mdi:cog-outline",
 };
 
-// Die Funktionen, die Regler aufklappen, und unter welchem Namen das Feld
-// dann offen ist. Beide nur in der Karte - das Badge bleibt die kleine Form.
-const REGLER = { motion: "bewegung", appearance: "darstellung" };
+// Die Funktionen, die ein Fenster aufklappen, und unter welchem Namen das Feld
+// dann offen ist. Alle nur in der Karte - das Badge bleibt die kleine Form.
+// "settings" ist das eine Fenster fuer alles: Auf Ansage vom 14.10.2026
+// ("in der menueleiste nur ein icon machen und der rest in einem fenster")
+// steht am Rand der Leiste ein Knopf statt vier.
+const REGLER = { motion: "bewegung", appearance: "darstellung", settings: "alles" };
 
 export function sprache(hass) {
   const s = String(
@@ -847,6 +855,52 @@ export function schreibeDarstellungInDatei(text, themeName, modus, werte, w) {
   return { yaml: w.schreibeTheme(m) };
 }
 
+// ---- Alle Regler zusammen -------------------------------------------------
+//
+// Die beiden Gruppen liegen in derselben Datei. Das Fenster liest sie in
+// einem Zug und schreibt in einem Zug - aber nur die Gruppe, an der gezogen
+// wurde: Der Bewegungsblock wird nicht neu geschrieben, weil jemand die
+// Transparenz verstellt hat.
+
+export const BEWEGUNG_REGLER = ["drift", "punkte", "farbe", "weite"];
+export const DARSTELLUNG_REGLER = ["transparenz", "schrift"];
+
+const nurDie = (werte, namen) => Object.fromEntries(namen.filter((n) => n in werte).map((n) => [n, werte[n]]));
+
+//   art      "bewegung" | "darstellung" | "alles"
+//   zurueck  { grund, detail }   oder alles, was die Regler zeigen
+export function leseReglerAusDatei(text, themeName, modus, art, w) {
+  if (art === "bewegung") return leseBewegungAusDatei(text, themeName, w);
+  if (art === "darstellung") return leseDarstellungAusDatei(text, themeName, modus, w);
+  const b = leseBewegungAusDatei(text, themeName, w);
+  if (b.grund) return b;
+  const d = leseDarstellungAusDatei(text, themeName, modus, w);
+  return { punktebild: b.punktebild, karte: d.karte, schrift: d.schrift, werte: { ...b.werte, ...d.werte } };
+}
+
+//   geaendert  die Namen der Regler, an denen gezogen wurde
+//   zurueck    { grund, detail }   oder { yaml }
+export function schreibeReglerInDatei(text, themeName, modus, werte, geaendert, w) {
+  const namen = [...geaendert];
+  let yaml = text;
+  if (namen.some((n) => BEWEGUNG_REGLER.includes(n))) {
+    const stand = schreibeBewegungInDatei(yaml, themeName, nurDie(werte, BEWEGUNG_REGLER), w);
+    if (stand.grund) return stand;
+    yaml = stand.yaml;
+  }
+  const dargestellt = nurDie(werte, namen.filter((n) => DARSTELLUNG_REGLER.includes(n)));
+  if (Object.keys(dargestellt).length) {
+    const stand = schreibeDarstellungInDatei(yaml, themeName, modus, dargestellt, w);
+    if (stand.grund) return stand;
+    yaml = stand.yaml;
+  }
+  return { yaml };
+}
+
+export function aktuellerModus(hass) {
+  return hass?.themes?.darkMode ? "dark" : "light";
+}
+
 // ---- Vollbild ------------------------------------------------------------
 //
 // Home Assistant haelt den Kiosk-Modus in hass.kioskMode und hoert dafuer auf
@@ -1167,7 +1221,8 @@ const STIL_KARTE = `
   /* Die Regler fuer Bewegung, Transparenz und Schrift. Der Schieber ist der
      des Browsers, gefaerbt mit accent-color - wie die Knoepfe aus button
      gebaut sind statt aus einem Bauteil, das vielleicht nicht angemeldet ist. */
-  :host([offen="bewegung"]) .regler, :host([offen="darstellung"]) .regler {
+  :host([offen="bewegung"]) .regler, :host([offen="darstellung"]) .regler,
+  :host([offen="alles"]) .regler {
     display: flex; flex-direction: column; gap: var(--ha-space-2, 8px);
     position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
     width: min(340px, 100%); box-sizing: border-box; padding: var(--ha-space-3, 12px);
@@ -1189,6 +1244,16 @@ const STIL_KARTE = `
   }
   .rwert { text-align: end; white-space: nowrap; }
   .rhinweis { display: flex; flex-direction: column; gap: var(--ha-space-1, 4px); }
+  /* Das Fenster hinter settings: oben Modus und Vollbild in einer Reihe, dann
+     die beiden Reglergruppen, jede mit einer Ueberschrift ueber einem Strich. */
+  .rkopf { display: flex; align-items: center; gap: var(--ha-space-2, 8px); }
+  .rkopf .knopf:not([aria-pressed="true"])::before { background-color: var(--disabled-color); opacity: .2; }
+  .rabschnitt {
+    margin-top: var(--ha-space-1, 4px); padding-top: var(--ha-space-2, 8px);
+    border-top: 1px solid var(--divider-color);
+    color: var(--secondary-text-color); font-size: var(--ha-font-size-s, 12px);
+    font-weight: var(--ha-font-weight-medium, 500);
+  }
   .rstatus:empty, .rhinweis:empty { display: none; }
 `;
 
@@ -1508,15 +1573,7 @@ class Steuerung extends Basis {
       const k = e._k;
 
       if (k.function === "mode") {
-        const lage = modusLage(hass);
-        // Der Theme-Name kommt aus einer YAML-Datei und geht deshalb als
-        // Attribut hinein, nie als HTML.
-        e.setAttribute("aria-disabled", String(!lage.schaltbar));
-        if (lage.schaltbar) e.removeAttribute("title");
-        else e.setAttribute("title", t.fest(lage.theme, lage.fest));
-        for (const w of e.querySelectorAll(".wahl")) {
-          w.setAttribute("aria-pressed", String(w.dataset.wahl === lage.aktiv));
-        }
+        this._stelleModus(e, t);
         continue;
       }
 
@@ -1581,10 +1638,15 @@ class Steuerung extends Basis {
     // Der gemerkte Zustand wird einmal je Seite wiederhergestellt, die
     // Kopfzeile bei JEDEM Durchlauf nachgezogen: Home Assistant baut sie bei
     // jedem Panelwechsel neu.
-    if (hatVollbild) {
+    // Das Fenster hinter settings traegt das Vollbild auch - eine Leiste mit
+    // ihm muss es beim Neuladen genauso wiederherstellen.
+    if (hatVollbild || this._config.knoepfe.some((k) => k.function === "settings")) {
       gleicheVollbildAb(hass);
       kopfzeile(this, hass.kioskMode === true);
     }
+
+    if (this.getAttribute?.("offen") === "alles" && this._regler?.art === "alles") this._stelleFensterkopf(t);
+    this._folgeModus();
 
     this._aktivIndex = this._bestimmeAktiv();
     this._stelleMenueknopf(t);
@@ -1593,6 +1655,19 @@ class Steuerung extends Basis {
     // sonst mit Breite null.
     this._setzeKapsel();
     if (globalThis.requestAnimationFrame) requestAnimationFrame(() => this._setzeKapsel());
+  }
+
+  // Die Modus-Gruppe, in der Leiste wie im Fenster.
+  _stelleModus(gruppe, t) {
+    const lage = modusLage(this._hass);
+    // Der Theme-Name kommt aus einer YAML-Datei und geht deshalb als
+    // Attribut hinein, nie als HTML.
+    gruppe.setAttribute("aria-disabled", String(!lage.schaltbar));
+    if (lage.schaltbar) gruppe.removeAttribute("title");
+    else gruppe.setAttribute("title", t.fest(lage.theme, lage.fest));
+    for (const w of gruppe.querySelectorAll(".wahl")) {
+      w.setAttribute("aria-pressed", String(w.dataset.wahl === lage.aktiv));
+    }
   }
 
   // Symbol, Beschriftung und Name fuer Vorleser - an einer Stelle. Der Text
@@ -1687,26 +1762,29 @@ class Steuerung extends Basis {
     document.removeEventListener("keydown", this._beiTaste);
   }
 
-  // ---- Die Regler: Bewegung, Transparenz und Schrift ----
+  // ---- Die Fenster: Bewegung, Transparenz und Schrift - einzeln oder alles ----
   //
-  // Ein Feld unter der Leiste, zwei Belegungen. this._regler haelt, was beim
-  // Oeffnen gelesen wurde - welche Belegung, aus welcher Theme, in welchem
-  // Modus. Geschrieben wird genau dorthin, auch wenn inzwischen ein anderer
-  // Modus gilt: Die Regler zeigen DIESEN Stand.
+  // Ein Feld unter der Leiste, drei Belegungen. "alles" ist das Fenster hinter
+  // dem Knopf settings: oben Modus und Vollbild, darunter beide Reglergruppen.
+  // this._regler haelt, was beim Oeffnen gelesen wurde - welche Belegung, aus
+  // welcher Theme, in welchem Modus. Geschrieben wird genau dorthin.
 
   async _reglerAuf(knopf, art) {
     const feld = this.shadowRoot.querySelector(".regler");
     if (!feld) return;
-    const t = TEXTE[sprache(this._hass)];
     this._oeffne(art);
     knopf.setAttribute("aria-expanded", "true");
-    this._regler = null;
-    this._reglerMeldung(art, t.laedt);
+    this._reglerMeldung(art, TEXTE[sprache(this._hass)].laedt);
     // Unter den Knopf, aber nie ueber den Rand der Leiste hinaus.
     const platz = feld.parentElement.clientWidth - feld.offsetWidth;
     const links = knopf._inListe ? 0 : knopf.offsetLeft;
     feld.style.insetInlineStart = `${Math.max(0, Math.min(links, platz))}px`;
+    await this._reglerLaden(art);
+  }
 
+  async _reglerLaden(art) {
+    const t = TEXTE[sprache(this._hass)];
+    this._regler = null;
     let stand;
     try {
       stand = await this._themeLesen(art);
@@ -1715,11 +1793,16 @@ class Steuerung extends Basis {
     }
     // Inzwischen wieder geschlossen? Dann nichts mehr hineinzeichnen.
     if (this.getAttribute("offen") !== art) return;
-    if (stand.grund) {
+    if (stand.grund && art !== "alles") {
       this._reglerMeldung(art, t.grund[stand.grund](stand.detail));
       return;
     }
-    this._regler = { art, ...stand, werte: { ...stand.werte }, geaendert: new Set() };
+    // Im Fenster bleiben Modus und Vollbild bedienbar, auch wenn sich die
+    // Datei nicht schreiben laesst - nur die Regler fallen dann weg.
+    this._regler = stand.grund
+      ? { art, sperre: stand, name: this._hass.themes?.theme, modus: aktuellerModus(this._hass),
+          werte: {}, geaendert: new Set() }
+      : { art, ...stand, werte: { ...stand.werte }, geaendert: new Set() };
     this._reglerBaue(t);
   }
 
@@ -1733,7 +1816,7 @@ class Steuerung extends Basis {
     if (!name || name === "default" || !/^[A-Za-z0-9_-]{1,64}$/.test(name)) {
       return { grund: "ohneDatei", detail: name || "default" };
     }
-    const modus = hass.themes?.darkMode ? "dark" : "light";
+    const modus = aktuellerModus(hass);
     this._w = await ladeWerkzeug();
     let text;
     try {
@@ -1742,9 +1825,7 @@ class Steuerung extends Basis {
     } catch {
       return { grund: "ohneDatei", detail: name };
     }
-    const stand = art === "bewegung"
-      ? leseBewegungAusDatei(text, name, this._w)
-      : leseDarstellungAusDatei(text, name, modus, this._w);
+    const stand = leseReglerAusDatei(text, name, modus, art, this._w);
     return stand.grund ? stand : { ...stand, name, modus };
   }
 
@@ -1764,11 +1845,43 @@ class Steuerung extends Basis {
 
   _reglerBaue(t) {
     const feld = this.shadowRoot.querySelector(".regler");
-    const art = this._regler.art;
+    const r = this._regler;
     const titel = neu("div", "rtitel");
-    titel.textContent = t[art];
+    titel.textContent = t[r.art];
+    const teile = [titel];
+    if (r.art === "alles") teile.push(this._baueFensterkopf(t));
+    if (r.sperre) {
+      const satz = neu("div", "rhinweis");
+      satz.textContent = t.grund[r.sperre.grund](r.sperre.detail);
+      teile.push(satz);
+    } else {
+      // Erst was man sieht, dann was sich bewegt.
+      if (r.art !== "bewegung") teile.push(...this._baueGruppe(t, "darstellung", r.art === "alles"));
+      if (r.art !== "darstellung") teile.push(...this._baueGruppe(t, "bewegung", r.art === "alles"));
+    }
+    teile.push(neu("div", "rstatus"));
+    feld.replaceChildren(...teile);
+    this._reglerStelle(t);
+  }
+
+  // Modus und Vollbild im Fenster - dieselben Knoepfe wie in der Leiste, auf
+  // denselben Wegen: data-wahl schickt settheme, data-vollbild schaltet.
+  _baueFensterkopf(t) {
+    const kopf = neu("div", "rkopf");
+    const modus = this._baueKnopf({ function: "mode" }, t);
+    const voll = neu("button", "knopf");
+    voll.type = "button";
+    voll.dataset.vollbild = "";
+    voll._symbol = neu("ha-icon");
+    voll._name = neu("span", "name");
+    voll.append(voll._symbol, voll._name, neu("ha-ripple"));
+    kopf.append(modus, neu("span", "fueller"), voll);
+    return kopf;
+  }
+
+  _baueGruppe(t, gruppe, mitTitel) {
     const stufen = this._w.BEWEGUNG_STUFEN ?? 10;
-    const spannen = art === "bewegung"
+    const spannen = gruppe === "bewegung"
       ? {
         drift: [0, stufen, 1], punkte: [0, stufen, 1], farbe: [0, stufen, 1],
         weite: [0, AUSSCHLAEGE.length - 1, 1],
@@ -1777,10 +1890,16 @@ class Steuerung extends Basis {
         transparenz: [TRANSPARENZ.min, TRANSPARENZ.max, TRANSPARENZ.schritt],
         schrift: [SCHRIFT.min, SCHRIFT.max, SCHRIFT.schritt],
       };
-    const zeilen = Object.entries(spannen).map(([was, [min, max, schritt]]) => {
+    const teile = [];
+    if (mitTitel) {
+      const abschnitt = neu("div", "rabschnitt");
+      abschnitt.textContent = t[gruppe];
+      teile.push(abschnitt);
+    }
+    for (const [was, [min, max, schritt]] of Object.entries(spannen)) {
       const zeile = neu("label", "rzeile");
       const name = neu("span", "rname");
-      name.textContent = art === "bewegung" ? t.regler[was] : t[was];
+      name.textContent = gruppe === "bewegung" ? t.regler[was] : t[was];
       const regler = neu("input");
       regler.type = "range";
       regler.min = String(min);
@@ -1788,16 +1907,40 @@ class Steuerung extends Basis {
       regler.step = String(schritt);
       regler.dataset.was = was;
       zeile.append(name, regler, neu("span", "rwert"));
-      return zeile;
-    });
-    const hinweis = art === "bewegung" ? [] : [neu("div", "rhinweis")];
-    feld.replaceChildren(titel, ...zeilen, ...hinweis, neu("div", "rstatus"));
-    this._reglerStelle(t);
+      teile.push(zeile);
+    }
+    if (gruppe === "darstellung") {
+      const hinweis = neu("div", "rhinweis");
+      hinweis.dataset.gruppe = "darstellung";
+      teile.push(hinweis);
+    }
+    return teile;
   }
 
   _reglerStelle(t) {
-    if (this._regler.art === "bewegung") this._stelleBewegung(t);
-    else this._stelleDarstellung(t);
+    const r = this._regler;
+    if (!r) return;
+    if (r.art === "alles") this._stelleFensterkopf(t);
+    if (r.sperre) return;
+    if (r.art !== "darstellung") this._stelleBewegung(t);
+    if (r.art !== "bewegung") this._stelleDarstellung(t);
+  }
+
+  _reglerEingaben(namen) {
+    return [...this.shadowRoot.querySelectorAll(".regler input[data-was]")]
+      .filter((e) => namen.includes(e.dataset.was));
+  }
+
+  _stelleFensterkopf(t) {
+    const feld = this.shadowRoot.querySelector(".regler");
+    const gruppe = feld?.querySelector(".rkopf .modus");
+    if (gruppe) this._stelleModus(gruppe, t);
+    const voll = feld?.querySelector("[data-vollbild]");
+    if (voll) {
+      const an = this._hass.kioskMode === true;
+      voll.setAttribute("aria-pressed", String(an));
+      this._beschrifte(voll, an ? SYMBOL.vollbildAus : SYMBOL.vollbild, "", an ? t.vollbildAus : t.vollbild);
+    }
   }
 
   // Die Sperren sind die des Panels: Punkte nur auf einem Punktebild, der
@@ -1806,7 +1949,7 @@ class Steuerung extends Basis {
   _stelleBewegung(t) {
     const { werte: b, punktebild } = this._regler;
     const dauer = { drift: this._w.driftDauer, punkte: this._w.punkteDauer, farbe: this._w.farbDauer };
-    for (const regler of this.shadowRoot.querySelectorAll(".regler input")) {
+    for (const regler of this._reglerEingaben(BEWEGUNG_REGLER)) {
       const was = regler.dataset.was;
       const zeile = regler.parentElement;
       const wert = zeile.querySelector(".rwert");
@@ -1830,7 +1973,7 @@ class Steuerung extends Basis {
   _stelleDarstellung(t) {
     const { werte, karte, schrift, modus } = this._regler;
     const hinweise = [];
-    for (const regler of this.shadowRoot.querySelectorAll(".regler input")) {
+    for (const regler of this._reglerEingaben(DARSTELLUNG_REGLER)) {
       const was = regler.dataset.was;
       const zeile = regler.parentElement;
       const wert = zeile.querySelector(".rwert");
@@ -1851,11 +1994,21 @@ class Steuerung extends Basis {
         if (!grund && schrift.mushFest) hinweise.push(t.mushFest(schrift.mushFest));
       }
     }
-    this.shadowRoot.querySelector(".regler .rhinweis")?.replaceChildren(...hinweise.map((satz) => {
-      const zeile = neu("div");
-      zeile.textContent = satz;
-      return zeile;
-    }));
+    this.shadowRoot.querySelector('.regler .rhinweis[data-gruppe="darstellung"]')?.replaceChildren(
+      ...hinweise.map((satz) => {
+        const zeile = neu("div");
+        zeile.textContent = satz;
+        return zeile;
+      }));
+  }
+
+  // Wechselt der Modus, solange das Fenster offen ist - im Fenster selbst
+  // geht das ja -, gehoert die Transparenz des anderen Modus hinein. Die
+  // Bewegung gilt fuer beide, ihr Fenster bleibt.
+  _folgeModus() {
+    const r = this._regler;
+    if (!r || r.art === "bewegung" || this.getAttribute("offen") !== r.art) return;
+    if (r.modus !== aktuellerModus(this._hass)) this._reglerLaden(r.art);
   }
 
   _beiRegler(ev, losgelassen) {
@@ -1880,7 +2033,7 @@ class Steuerung extends Basis {
       do {
         this._nochmal = false;
         const r = this._regler;
-        if (!r) return;
+        if (!r || r.sperre) return;
         this._reglerStatus(t.speichert);
         const hass = this._hass;
         // Gilt inzwischen eine andere Theme, gehoeren die Werte nicht in
@@ -1893,11 +2046,7 @@ class Steuerung extends Basis {
         // inzwischen gespeichert hat, soll mit.
         const text = (await hass.connection.sendMessagePromise({
           type: "hats/load_theme_file", filename: `${r.name}.yaml` })).content;
-        const stand = r.art === "bewegung"
-          ? schreibeBewegungInDatei(text, r.name, r.werte, this._w)
-          // Nur, woran gezogen wurde - der andere Wert steht vielleicht nicht mehr.
-          : schreibeDarstellungInDatei(text, r.name, r.modus,
-            Object.fromEntries([...r.geaendert].map((was) => [was, r.werte[was]])), this._w);
+        const stand = schreibeReglerInDatei(text, r.name, r.modus, r.werte, r.geaendert, this._w);
         if (stand.grund) {
           this._reglerStatus(t.grund[stand.grund](stand.detail));
           return;
@@ -1939,6 +2088,12 @@ class Steuerung extends Basis {
     if (knopf === this._menueknopf) {
       if (this.getAttribute("offen") === "liste") this._zu();
       else this._oeffne("liste");
+      return;
+    }
+
+    // Der Vollbildknopf im Fenster: derselbe Weg wie der in der Leiste.
+    if (knopf.dataset.vollbild !== undefined) {
+      schalteVollbild(this._hass.kioskMode !== true, this._config.kiosk_only);
       return;
     }
 

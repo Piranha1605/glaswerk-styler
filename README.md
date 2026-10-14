@@ -135,7 +135,7 @@ Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form:
 | `tap_action` | jede Aktion von Home Assistant; sie schlägt `link` und das Umschalten |
 | `state_background` | Vorgabe `true`: ein eingeschalteter Knopf wird gefüllt |
 | `light_background` | Vorgabe `true`: in der Farbe der Lampe, sonst in Home Assistants Zustandsfarbe |
-| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion`, `appearance` |
+| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion`, `appearance`, `settings` |
 | `temperature`, `temperature_source` | nur bei `weather`: eigener Sensor, und ob der Wert von dort (`sensor`) oder aus der Wetterentität (`weather`) kommt |
 | `align_end`, `separator_before` | ans Ende der Leiste; dünner Strich davor |
 
@@ -185,6 +185,16 @@ dieselbe Weise und mit denselben Bedingungen:
   Card bleiben, wie sie sind. Über 100 % kürzen Kacheln lange Namen früher ab.
 
 Geschrieben wird nur der Wert, an dem gezogen wurde.
+
+**Alles in einem Fenster** gibt es mit `function: settings`: ein Knopf am Rand
+der Leiste, dahinter Modus und Vollbild, Transparenz und Schrift und die
+Bewegung des Hintergrunds. Ein Knopf statt vier. Wechselt der Modus im
+Fenster, zeigt die Transparenz gleich den Wert des anderen Modus.
+
+![Das Fenster hinter dem Einstellungsknopf](docs/bilder/steuerleiste-einstellungen.jpg)
+
+Die einzelnen Funktionen bleiben, für eine Leiste, die sie lieber einzeln
+zeigt.
 
 Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten. Jede Zeile
 nennt den Knopf beim Namen, und ohne Namen beim Ziel, der Entität oder der

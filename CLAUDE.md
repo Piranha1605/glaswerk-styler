@@ -928,7 +928,7 @@ buttons:
     link: /dashboard-home
   - entity: light.kueche          # ein Schalter - leuchtet, solange sie an ist
     align_end: true
-  - function: weather             # mode | theme | fullscreen | weather | motion | appearance
+  - function: weather             # mode | theme | fullscreen | weather | motion | appearance | settings
     entity: weather.forecast_home
     align_end: true
 collapse: narrow                  # never | narrow | always
@@ -1445,6 +1445,47 @@ Kartenbreite; wird ein Wert schmaler, bleibt es beim Plan.
 Maintainers wörtlich, die Beschriftung nach HAs eigener Regel nachgebaut,
 mit der Gegenprobe, dass es vorher vier leere Zeilen waren. Fünf Mutationen
 gegengeprüft.
+
+### Ein Knopf, ein Fenster: `settings`
+
+Auf Ansage vom 14.10.2026, mit zwei Bildern der Regler: *„kannst du in der
+menüleiste nur ein icon machen und der rest in in einem fenster auf"*. Am Rand
+der Leiste standen Vollbild, Hell/Dunkel, Bewegung und Darstellung — vier
+Knöpfe für Dinge, die man selten anfasst.
+
+```yaml
+  - function: settings      # Modus, Vollbild, Transparenz und Schrift, Bewegung
+    align_end: true
+```
+
+Das Wetter bleibt in der Leiste: Es zeigt etwas an, es schaltet nichts. Die
+einzelnen Funktionen bleiben auch — die Steuerkarte im Panel benutzt sie.
+
+**Gelesen und geschrieben wird in einem Zug, aber nur, woran gezogen wurde.**
+`leseReglerAusDatei` liest beide Gruppen aus derselben Datei,
+`schreibeReglerInDatei` schreibt den Bewegungsblock nur, wenn an der Bewegung
+gezogen wurde, und die Darstellung nur für die gezogenen Felder.
+
+**Modus und Vollbild bleiben bedienbar, wenn die Datei gesperrt ist** — kein
+Administrator, keine HATS-Theme. Dann fallen nur die Regler weg, mit dem
+Grund als Satz. Ein Fenster, das wegen einer Datei auch den Modus verweigert,
+wäre schlechter als die vier Knöpfe vorher.
+
+**Wechselt der Modus, liest das Fenster neu.** Die Transparenz hängt am Modus,
+und im Fenster lässt er sich ja umschalten. Gemessen: hell 58 %, dunkel 54 %,
+das Fenster blieb dabei offen.
+
+**Dabei gefunden, bevor es jemand merkte:** Das gemerkte Vollbild und die
+ausgeblendete Kopfzeile stellt die Leiste nur her, wenn sie einen
+Vollbildknopf hat. Mit `settings` statt `fullscreen` hätte sie das Vollbild
+beim Neuladen vergessen. `settings` zählt jetzt mit — gemessen: gemerkt,
+neu geladen, Kiosk an, Kopfzeile weg.
+
+An der Testmaschine, auf der Leiste des Maintainers (vorher gesichert als
+`testmaschine-hats-test-2026-10-14-vor-einstellungen.json`): Fenster bei 693 px
+und bei 375 px, Modus hin und zurück, Vollbild an und aus, danach alles wie
+vorher. `tests/hats-steuerkarte-fenster.test.js`: neun Prüfungen mit
+`glaswerk.yaml`, drei Mutationen gegengeprüft.
 
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 

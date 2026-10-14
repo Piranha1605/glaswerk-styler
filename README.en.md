@@ -132,7 +132,7 @@ Without `buttons` it shows mode and fullscreen — the short form:
 | `tap_action` | any Home Assistant action; it wins over `link` and over toggling |
 | `state_background` | default `true`: a button that is on is filled |
 | `light_background` | default `true`: in the lamp's colour, otherwise in Home Assistant's state colour |
-| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion`, `appearance` |
+| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion`, `appearance`, `settings` |
 | `temperature`, `temperature_source` | `weather` only: a sensor of your own, and whether the value comes from it (`sensor`) or from the weather entity (`weather`) |
 | `align_end`, `separator_before` | at the end of the bar; a thin line before it |
 
@@ -182,6 +182,15 @@ the same way and under the same conditions:
   are. Above 100 %, tiles cut long names short sooner.
 
 Only the value you moved is written.
+
+**Everything in one window** comes with `function: settings`: one button at
+the end of the bar, behind it mode and fullscreen, transparency and text size,
+and the background motion. One button instead of four. If you switch the mode
+in the window, the transparency shows the other mode's value right away.
+
+![The window behind the settings button](docs/bilder/steuerleiste-einstellungen.jpg)
+
+The single functions stay, for a bar that prefers to show them one by one.
 
 The editor lets you add, sort and edit the buttons. Each row shows the
 button's name, or without one its target, entity or function:
