@@ -149,7 +149,9 @@ export const TEXTE = {
       sicherungen: "Frühere Fassungen", keineSicherungen: "Noch keine. HATS sichert vor jedem Überschreiben.",
       zurueck: "Zurückholen", zurueckGeholt: (zeit) => `Die Fassung von ${zeit} gilt wieder.`,
       eigene: "Keine der Vorgaben - im Panel angepasst.",
-      zeit: (k) => `${k.slice(6, 8)}.${k.slice(4, 6)}. ${k.slice(9, 11)}:${k.slice(11, 13)}`,
+      // Mit Sekunden: Ein Regler legt mehrere Fassungen in derselben Minute an,
+      // und ohne sie standen fuenf gleiche Zeilen untereinander.
+      zeit: (k) => `${k.slice(6, 8)}.${k.slice(4, 6)}. ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
     },
     transparenz: "Transparenz",
     schrift: "Schrift",
@@ -250,7 +252,7 @@ export const TEXTE = {
       sicherungen: "Earlier versions", keineSicherungen: "None yet. HATS keeps one before every overwrite.",
       zurueck: "Restore", zurueckGeholt: (zeit) => `The version from ${zeit} is back.`,
       eigene: "None of the presets - adjusted in the panel.",
-      zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}`,
+      zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
     },
     transparenz: "Transparency",
     schrift: "Text size",
@@ -1525,7 +1527,6 @@ const STIL_KARTE = `
   .fspalte { display: flex; flex-direction: column; gap: var(--ha-space-2, 8px); }
   .fzeile { display: flex; align-items: center; justify-content: space-between; gap: var(--ha-space-3, 12px); }
   .fknopf { align-self: flex-start; }
-  .fknoepfe { display: flex; flex-wrap: wrap; gap: var(--ha-space-2, 8px); }
   .fknopf:not([aria-pressed="true"])::before { background-color: var(--disabled-color); opacity: .2; }
   .fwahl {
     height: var(--_h); padding: 0 var(--ha-space-3, 12px); border-radius: var(--ha-border-radius-lg, 12px);
@@ -2427,6 +2428,8 @@ class Steuerung extends Basis {
     this._fensterSeite ??= "aussehen";
     this._feld = this._fenster.querySelector(".fseite");
     this._fensterNav(t);
+    // Die Knoepfe oben haengen nicht an der Datei - sie stehen sofort.
+    this._stelleFenster(t);
     this._reglerMeldung("fenster", t.laedt);
     await this._reglerLaden("fenster");
   }
@@ -2446,7 +2449,19 @@ class Steuerung extends Basis {
     const symbol = neu("ha-icon");
     symbol.setAttribute("icon", SYMBOL.zu);
     zu.append(symbol, neu("ha-ripple"));
-    kopf.append(titel, datei, neu("span", "fueller"), zu);
+    // Bearbeiten und Vollbild stehen oben neben dem Schliessen, nicht auf einer
+    // Seite - auf Ansage vom 14.10.2026, mit einem Bild der Kopfzeile. Sie
+    // gehoeren zu keinem Bereich, man will sie von ueberall erreichen.
+    const knopf = (daten) => {
+      const b = neu("button", "knopf nur-symbol");
+      b.type = "button";
+      b.dataset[daten] = "";
+      b._symbol = neu("ha-icon");
+      b._name = neu("span", "name");
+      b.append(b._symbol, b._name, neu("ha-ripple"));
+      return b;
+    };
+    kopf.append(titel, datei, neu("span", "fueller"), knopf("bearbeiten"), knopf("vollbild"), zu);
     const koerper = neu("div", "fkoerper");
     koerper.append(neu("nav", "fnav"), neu("div", "fseite"));
     d.append(kopf, koerper);
@@ -2529,12 +2544,6 @@ class Steuerung extends Basis {
     } else if (seite === "bewegung") {
       teile.push(r.sperre ? gesperrt() : this._gruppe("", ...this._baueGruppe(t, "bewegung", false)));
     } else if (seite === "anzeige") {
-      // Vollbild und Bearbeiten nebeneinander, ohne Ueberschrift - der Knopf
-      // sagt selbst, was er tut.
-      const knoepfe = neu("div", "fknoepfe");
-      knoepfe.append(this._fensterKnopf("vollbild", t));
-      if (this._config.kopf && this._hass.user?.is_admin) knoepfe.append(this._fensterKnopf("bearbeiten", t));
-      teile.push(this._gruppe("", knoepfe));
       teile.push(this._gruppe(tf.theme, this._themeWahl(t)));
       if (!r.sperre) teile.push(this._gruppe(tf.sicherungen, this._sicherungsListe(t)));
     }
@@ -2630,17 +2639,6 @@ class Steuerung extends Basis {
     return huelle;
   }
 
-  _fensterKnopf(was, t) {
-    const b = neu("button", "knopf fknopf");
-    b.type = "button";
-    b.dataset[was] = "";
-    b._symbol = neu("ha-icon");
-    b._name = neu("span", "name");
-    b.append(b._symbol, b._name, neu("ha-ripple"));
-    if (was === "bearbeiten") this._beschrifte(b, SYMBOL.bearbeiten, t.bearbeiten, t.bearbeiten);
-    return b;
-  }
-
   // Die Themes, die Home Assistant kennt - dieselbe Liste wie im Profil.
   _themeWahl(t) {
     const wahl = neu("select", "fwahl");
@@ -2696,12 +2694,18 @@ class Steuerung extends Basis {
       k.setAttribute("aria-disabled", String(!lage.schaltbar));
       k.title = lage.schaltbar ? "" : t.fest(lage.theme, lage.fest);
     }
-    const voll = feld.querySelector("[data-vollbild]");
+    const kopf = this._fenster?.querySelector(".fkopf");
+    const voll = kopf?.querySelector("[data-vollbild]");
     if (voll) {
       const an = this._hass.kioskMode === true;
       voll.setAttribute("aria-pressed", String(an));
-      this._beschrifte(voll, an ? SYMBOL.vollbildAus : SYMBOL.vollbild, an ? t.vollbildAus : t.vollbild,
-        an ? t.vollbildAus : t.vollbild);
+      this._beschrifte(voll, an ? SYMBOL.vollbildAus : SYMBOL.vollbild, "", an ? t.vollbildAus : t.vollbild);
+    }
+    // Den Stift zeigt HA nur Administratoren - das Fenster auch.
+    const stift = kopf?.querySelector("[data-bearbeiten]");
+    if (stift) {
+      stift.hidden = !this._hass.user?.is_admin;
+      this._beschrifte(stift, SYMBOL.bearbeiten, "", t.bearbeiten);
     }
   }
 

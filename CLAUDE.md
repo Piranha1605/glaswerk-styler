@@ -1664,6 +1664,11 @@ Gruppe sieht aus wie eine Karte der Theme (`--ha-card-background`, Rundung,
 Rahmen). Alle drei setzt HA nicht selbst, sie kommen aus der Theme, mit
 Rückfall auf `--card-background-color`.
 
+**Bearbeiten und Vollbild stehen oben im Fenster**, neben dem Schliessen —
+auf Ansage, mit einem Bild der Kopfzeile: *„bekommen wir die dashboard
+bearbeiten und vollbild da hinein"*. Sie gehören zu keinem Bereich. Den Stift
+sehen nur Administratoren, wie in HAs eigener Kopfzeile.
+
 **Beim Einspielen einmal rot durchgerutscht:** `pruefen.sh … | grep -E "ROT|gruen"
 && einspielen` — grep findet die Zeile „ROT" und meldet Erfolg, also lief das
 Einspielen. Seitdem: `pruefen.sh` in eine Datei, Exit-Code prüfen, nur bei 0
