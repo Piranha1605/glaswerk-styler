@@ -1886,6 +1886,54 @@ ein Element weniger dazwischen.
 Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
 gibt es keine Variable, und dafür braucht man card-mod oder HATG.
 
+## Das Thermostat-Rad: steuerbar, aber nicht ueber seine eigenen Variablen
+
+Am 14.10.2026 gemessen, nachdem eine Thermostat-Karte in die Vergleichsseite
+gelegt wurde — vorher gab es auf keiner Testseite ein Rad, denn
+`ha-control-circular-slider` steckt **nur in der `thermostat`-Karte**. Die
+Kachel mit `target-temperature` zeichnet +/−-Knoepfe.
+
+Der naheliegende Weg fuehrt zweimal ins Leere:
+
+    --control-circular-slider-color   auf dem Wirt, !important   nichts
+    --low-color / --high-color        auf dem Wirt, !important   nichts
+
+Die Kette sieht naemlich so aus — aus `ha-state-control-climate-temperature`
+gelesen:
+
+```css
+ha-control-circular-slider {
+  --control-circular-slider-low-color: var(--low-color, var(--disabled-color));
+}
+```
+
+`--low-color` ist aber **ueberall leer**, in der ganzen Kette bis zur Karte.
+Der Wert kommt aus einer Regel, die naeher am Element sitzt und vom Modus
+abhaengt.
+
+**Was wirklich greift, ist die klassische Zustandsfarbe.** Gemessen:
+
+    --state-climate-heat-color  #ff6f22 -> #e0533d   der Bogen geht mit
+
+Also ein gewoehnliches Theme-Feld, kein UIX, kein card-mod. Dieselbe Lehre wie
+ueberall: erst den Wirt suchen, dann die Variable — und wenn die dokumentierte
+Variable nicht greift, ist es die aeltere darunter.
+
+### Und dabei das groesste Loch im Panel gefunden
+
+Home Assistant definiert **86** Namen der Form `--state-<domaene>-<zustand>-color`
+(aus `document.styleSheets` gezaehlt, nicht geraten). Das Panel bietet davon
+**einen** an: `--state-weather-snowy-color`.
+
+Das ist nicht irgendeine Gruppe. Diese Farben treiben die Zustaende in allen
+drei Familien, und Bubble faellt ausdruecklich auf sie zurueck — die
+Rueckfallkette im Abschnitt *Erst Bubbles eigene Rueckfallkette lesen* endet
+genau dort.
+
+Beim Anlegen zu beachten: **`--state-climate-fan_only-color` traegt einen
+Unterstrich**, die uebrigen Bindestriche. Wer die Namen aus der Domaene
+zusammensetzt statt sie auszulesen, verliert genau diesen.
+
 ## Rezepte aus dem Netz zielen auf MDC — das gibt es in 2026 nicht mehr
 
 Am 14.10.2026 an der Testmaschine nachgesehen, nachdem vier Sammlungen von
