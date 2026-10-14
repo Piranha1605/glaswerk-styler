@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:30:04
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:55:51
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -641,6 +641,85 @@ glaswerk:
       --ha-ripple-pressed-opacity: 0.16;
     }
     /* HATS:glas-knoepfe:ENDE */
+    /* HATS:regler-gluehen:START */
+    /* Die EINZIGE der gesammelten Spielereien, die bei allen drei Familien
+       laeuft. Am 14.10.2026 an der Vergleichsseite gemessen, an 17 Karten.
+
+       Der Trick ist jedes Mal derselbe und die Quelle jedes Mal eine andere: Jede
+       Familie legt die Farbe der Entitaet irgendwo als Variable ab, und zwar
+       INLINE am Element. Man muss nur das richtige Element erwischen - eines, das
+       im Shadow Root der Karte liegt.
+
+           HA-Kachel   --tile-color                 inline an ha-card
+           Mushroom    --slider-color               inline an *-control
+           Bubble      --bubble-slider-fill-color   inline an .bubble-range-fill
+
+       Deshalb steht hier nirgends eine Farbe. Eine feste waere bei der zweiten
+       Lampe schon falsch - gemessen: Licht orange, Rollladen violett, Media
+       Player blau, auf derselben Seite.
+
+       drop-shadow und nicht box-shadow: box-shadow folgt dem Rechteck des
+       Elements, drop-shadow der gezeichneten FORM. Bei einem Regler, dessen
+       Fuellung nur bis 71 % reicht, ist das der Unterschied zwischen einem Schein
+       um den Balken und einem Schein um den ganzen Kasten. */
+
+    /* HA-Kachel. hui-card-features liegt im Shadow Root der Karte, der Regler
+       fuenf Grenzen tiefer - erreichbar ist also nur der Behaelter, und das
+       genuegt, weil drop-shadow die Form seiner Kinder nimmt. */
+    hui-card-features {
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tile-color, var(--primary-color)) 58%, transparent));
+    }
+
+    /* Mushroom. Dieselbe Stelle, zwei Grenzen statt fuenf. Die Steuerungen heissen
+       je Domaene anders; wer eine vergisst, bemerkt es nur an dieser einen Karte. */
+    mushroom-light-brightness-control,
+    mushroom-cover-position-control,
+    mushroom-fan-percentage-control,
+    mushroom-media-player-volume-control,
+    mushroom-climate-temperature-control {
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--slider-color, transparent) 58%, transparent));
+    }
+
+    /* Bubble. Hier liegt alles im Karten-Root, also trifft man die Fuellung
+       selbst - und damit glimmt genau der gefuellte Teil, nicht die ganze Spur. */
+    .bubble-range-fill {
+      filter: drop-shadow(0 0 7px color-mix(in srgb, var(--bubble-slider-fill-color, transparent) 58%, transparent));
+    }
+    /* HATS:regler-gluehen:ENDE */
+    /* HATS:regler-schlank:START */
+    /* Zwei von drei Familien, und das ist keine Nachlaessigkeit: Bei Bubble ist
+       der Regler die Karte. Am 14.10.2026 gemessen - .bubble-range-slider,
+       .bubble-container und die Karte selbst sind alle 56 px hoch. "Schlanker"
+       hiesse dort "kleinere Karte", und das ist eine andere Entscheidung.
+
+       DIE FALLE: --feature-height gilt fuer die ganze Funktionsreihe, nicht fuer
+       den Regler. Die +/--Knoepfe der Klimakarte werden mitschlank. Bei 16 px
+       trifft man die nicht mehr - deshalb 28 und nicht weniger. An der Klimakarte
+       gegengesehen: bei 28 px noch gut zu bedienen. */
+
+    /* hui-card-features setzt --feature-height auf sich SELBST (gemessen: 42px),
+       nicht am html. Ein Wert in der Theme verliert deshalb - es muss diese Regel
+       sein, und sie braucht !important. */
+    hui-card-features {
+      --feature-height: 28px !important;
+      --feature-border-radius: 14px !important;
+    }
+
+    /* Mushroom braucht das hier eigentlich nicht - --mush-control-height ist ein
+       gewoehnliches Theme-Feld und wirkt auch von dort (gemessen: 42 -> 28).
+       Es steht trotzdem hier, damit EIN Schalter beide Familien bewegt. Haenge
+       die Hoehe am Theme-Feld und die Kachel an der Vorlage, dann steht nach dem
+       Abschalten die eine schlank und die andere nicht. */
+    mushroom-light-brightness-control,
+    mushroom-cover-position-control,
+    mushroom-fan-percentage-control,
+    mushroom-media-player-volume-control,
+    mushroom-climate-temperature-control {
+      --mush-control-height: 28px !important;
+      --control-height: 28px !important;
+      --control-border-radius: 14px !important;
+    }
+    /* HATS:regler-schlank:ENDE */
   uix-dialog: |-
     /* HATS:glas-dialoge:START */
     /* KEIN backdrop-filter auf der Dialogflaeche.

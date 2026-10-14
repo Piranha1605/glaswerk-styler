@@ -903,7 +903,7 @@ export const KARTENSTIL_FELDER = [...KARTENFELDER, ...FLAECHENFELDER];
 
 export const SORTEN_VORLAGEN = {
   karten: ["glas-karten", "glas-bubble", "glas-lichtkante", "glas-symbolkachel",
-           "sync-bedienelemente", "glas-knoepfe"],
+           "sync-bedienelemente", "glas-knoepfe", "regler-gluehen", "regler-schlank"],
   hintergrund: ["abschnitte-trennen"],
   oberflaeche: ["glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
                 "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast"],
