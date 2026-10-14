@@ -479,6 +479,112 @@ export const KARTENSTILE = [
     braucht: { hintergrund: true },
   },
   {
+    id: "macos",
+    de: "macOS", en: "macOS",
+    zweckDe: "Apples Material: staerker weichgezeichnet, deckender als Glas, mit Haarlinie und weitem Schatten.",
+    zweckEn: "Apple's material: blurred harder, more opaque than Glass, with a hairline and a wide shadow.",
+    // Die Werte stehen schon in werkzeuge/macos-bauen.mjs und sind dort
+    // belegt: Die FARBEN sind am System ausgelesen (AppKit, macOS 26.5.2),
+    // Deckkraft und Weichzeichnung sind Entscheidungen. Hier stehen sie
+    // wortgleich, damit die gebaute Theme und der Baukasten dasselbe liefern -
+    // und damit erkenneTeil sie wiedererkennt.
+    //
+    // Der Unterschied zu "Glas" ist nicht nur die Zahl: Apple laesst den Grund
+    // AHNEN, nicht lesen. Deshalb 0.62 statt 0.42, und deshalb 30 px
+    // Weichzeichnung statt 26.
+    flach: { "--ha-card-backdrop-filter": "blur(30px) saturate(180%)",
+             "--ha-card-border-radius": "12px",
+             // Apples Trennlinien sind Haarlinien, nicht Striche.
+             "--ha-card-border-width": "0.5px",
+             // Leer, mit Absicht: Dann nimmt die Karte --divider-color, und
+             // das ist Apples separatorColor - je Modus, und gemessen.
+             "--ha-card-border-color": "",
+             // Die Titelleiste zeichnet am staerksten weich: Dort rutscht der
+             // Inhalt darunter durch, und nur die Unschaerfe haelt die
+             // Schrift lesbar.
+             "--app-header-backdrop-filter": "blur(40px) saturate(180%)",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.32)" },
+    light: { "--ha-card-background": "rgba(255, 255, 255, 0.62)",
+             // Haarlinie, weiter Schatten, kurzer Schatten - zusammen ergibt
+             // das ein macOS-Fenster. Der Schatten allein wirkt schmutzig,
+             // die Linie allein flach.
+             "--ha-card-box-shadow": "0 0 0 0.5px rgba(0, 0, 0, 0.08), " +
+               "0 10px 30px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06)",
+             "--ha-dialog-surface-background": "rgba(255, 255, 255, 0.86)",
+             // Die Seitenleiste ist durchscheinender als der Inhalt: Sie liegt
+             // ueber dem Schreibtisch, nicht ueber dem Dokument.
+             "--sidebar-background-color": "rgba(246, 246, 248, 0.72)",
+             "--app-header-background-color": "rgba(255, 255, 255, 0.72)",
+             // windowBackgroundColor, gemessen. Deckend, weil Menues und
+             // Auswahllisten dieses Feld lesen.
+             "--card-background-color": "#ffffff" },
+    dark:  { "--ha-card-background": "rgba(30, 30, 30, 0.58)",
+             // Im Dunkeln traegt nicht mehr der Schatten die Kante, sondern
+             // das Licht darauf - die Haarlinie ist hell.
+             "--ha-card-box-shadow": "0 0 0 0.5px rgba(255, 255, 255, 0.10), " +
+               "0 12px 36px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35)",
+             "--ha-dialog-surface-background": "rgba(38, 38, 40, 0.86)",
+             "--sidebar-background-color": "rgba(28, 28, 30, 0.72)",
+             "--app-header-background-color": "rgba(30, 30, 30, 0.72)",
+             "--card-background-color": "#1e1e1e" },
+    braucht: { hintergrund: true },
+  },
+  {
+    id: "gepraegt",
+    de: "Gepraegt", en: "Embossed",
+    zweckDe: "Die Karte hat dieselbe Farbe wie der Grund und steht nur durch Licht und Schatten heraus.",
+    zweckEn: "The card is the same colour as the ground and stands out through light and shadow alone.",
+    // Kein Rahmen und keine eigene Flaechenfarbe - die Kante entsteht
+    // ausschliesslich aus zwei Schatten: Licht von oben links, Schatten nach
+    // unten rechts. Deshalb braucht dieser Stil einen EINFARBIGEN Grund; vor
+    // einem Verlauf oder Bild sieht die Karte aus wie ein Fleck.
+    flach: { "--ha-card-backdrop-filter": "none", "--ha-card-border-radius": "18px",
+             "--ha-card-border-width": "0", "--ha-card-border-color": "",
+             "--app-header-backdrop-filter": "none",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.36)" },
+    light: { "--ha-card-background": "#eef0f4",
+             "--ha-card-box-shadow": "-6px -6px 14px rgba(255, 255, 255, .9), " +
+               "6px 6px 16px rgba(13, 22, 43, .14)",
+             "--ha-dialog-surface-background": "#eef0f4",
+             "--sidebar-background-color": "#eef0f4",
+             "--app-header-background-color": "#eef0f4",
+             "--card-background-color": "#eef0f4" },
+    // Im Dunkeln traegt das Licht fast nichts mehr - ein weisser Schein auf
+    // #1a1c20 waere ein grauer Fleck. Also wenig Licht, viel Schatten.
+    dark:  { "--ha-card-background": "#1a1c20",
+             "--ha-card-box-shadow": "-6px -6px 14px rgba(255, 255, 255, .04), " +
+               "6px 6px 18px rgba(0, 0, 0, .55)",
+             "--ha-dialog-surface-background": "#1a1c20",
+             "--sidebar-background-color": "#1a1c20",
+             "--app-header-background-color": "#1a1c20",
+             "--card-background-color": "#1a1c20" },
+  },
+  {
+    id: "kontur",
+    de: "Kontur", en: "Outline",
+    zweckDe: "Nur Linien: Die Karte hat die Farbe des Grundes, kein Schatten, ein deutlicher Rahmen.",
+    zweckEn: "Lines only: the card takes the ground's colour, no shadow, a clear border.",
+    // Der Gegenentwurf zu "Gepraegt" - dieselbe Flaeche, aber die Kante wird
+    // gezeichnet statt beleuchtet. Zwei Pixel, nicht einer: Bei einem
+    // sieht es aus wie "Flach" mit vergessenem Hintergrund.
+    flach: { "--ha-card-backdrop-filter": "none", "--ha-card-border-radius": "14px",
+             "--ha-card-border-width": "2px", "--ha-card-border-color": "var(--divider-color)",
+             "--app-header-backdrop-filter": "none",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.36)" },
+    light: { "--ha-card-background": "#f4f5f8", "--ha-card-box-shadow": "none",
+             // Der Dialog ist die Ausnahme: Er liegt ueber der Seite und
+             // braucht eine eigene Flaeche, sonst liest man beide zugleich.
+             "--ha-dialog-surface-background": "#ffffff",
+             "--sidebar-background-color": "#f4f5f8",
+             "--app-header-background-color": "#f4f5f8",
+             "--card-background-color": "#ffffff" },
+    dark:  { "--ha-card-background": "#17181c", "--ha-card-box-shadow": "none",
+             "--ha-dialog-surface-background": "#1f2126",
+             "--sidebar-background-color": "#17181c",
+             "--app-header-background-color": "#17181c",
+             "--card-background-color": "#1f2126" },
+  },
+  {
     id: "flach",
     de: "Flach", en: "Flat",
     zweckDe: "Deckend, ohne Schatten, mit feiner Kante. Haelt auch vor einem einfarbigen Hintergrund.",
@@ -552,6 +658,123 @@ export const KARTENSTILE = [
 ];
 
 // ---------------------------------------------------------------------------
+// Rundung
+//
+// Home Assistant fuehrt seine Ecken als LEITER, nicht als Einzelwert: sm, md,
+// lg, xl, 2xl bis 6xl. Knoepfe, Chips, Eingabefelder, Dialoge und Badges lesen
+// daraus, jeder seine Stufe. Ein Teil setzt deshalb die ganze Leiter - eine
+// halbe ergaebe eckige Knoepfe an runden Karten.
+//
+// Die Karte bekommt ihre eigene Stufe dazu. Gemessen am 14.10.2026 an
+// ha-card auf der Testmaschine:
+//
+//     border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg))
+//
+// Home Assistant nimmt also von sich aus lg. Jedes Teil hier setzt
+// --ha-card-border-radius auf genau sein lg - dann sieht die Karte aus wie der
+// Rest, und wer sie anders will, dreht den Regler auf der Seite der Sorte.
+//
+// pill, circle und square stehen NICHT dabei: 9999px, 50% und 0 sind keine
+// Stufen einer Leiter, sondern Formen. Sie aendern sich mit der Rundung nicht.
+
+const RADIUS_STUFEN = ["sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl"];
+
+function radiusLeiter(werte) {
+  const f = {};
+  RADIUS_STUFEN.forEach((s, i) => { f[`--ha-border-radius-${s}`] = `${werte[i]}px`; });
+  // Die Karte folgt der Leiter, wie bei Home Assistant selbst: lg ist der
+  // dritte Wert.
+  f["--ha-card-border-radius"] = `${werte[2]}px`;
+  return f;
+}
+
+export const RUNDUNGEN = [
+  {
+    id: "eckig",
+    de: "Eckig", en: "Square",
+    zweckDe: "Kaum gerundet. Streng, und auf kleinen Flaechen am ruhigsten.",
+    zweckEn: "Barely rounded. Strict, and calmest on small surfaces.",
+    // Nicht ueberall 0: Ein Knopf mit scharfer Ecke wirkt beschaedigt, und
+    // HAs Umschalter zeichnen ihre Spur mit demselben Radius.
+    felder: radiusLeiter([0, 0, 2, 2, 4, 4, 6, 6, 8]),
+  },
+  {
+    id: "weich",
+    de: "Weich", en: "Soft",
+    zweckDe: "Flach ansteigend: kleine Dinge deutlich gerundet, grosse kaum mehr. Apples Leiter.",
+    zweckEn: "Rises gently: small things clearly rounded, large ones barely more. Apple's ladder.",
+    // Am 14.10.2026 an macOS 26.5.2 abgelesen, nicht geschaetzt.
+    felder: radiusLeiter([6, 8, 10, 12, 16, 20, 24, 28, 32]),
+  },
+  {
+    id: "ha",
+    de: "Home Assistant", en: "Home Assistant",
+    zweckDe: "Wie ausgeliefert: vier Pixel je Stufe, von 4 bis 36.",
+    zweckEn: "As shipped: four pixels per step, from 4 to 36.",
+    felder: radiusLeiter([4, 8, 12, 16, 20, 24, 28, 32, 36]),
+  },
+  {
+    id: "rund",
+    de: "Rund", en: "Round",
+    zweckDe: "Deutlich gerundet. Weich und freundlich, braucht aber Platz.",
+    zweckEn: "Clearly rounded. Soft and friendly, but it needs room.",
+    felder: radiusLeiter([10, 14, 20, 26, 32, 38, 44, 50, 56]),
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Dichte
+//
+// --ha-space-1 bis -20 ist dieselbe Sorte Leiter, und Home Assistant haelt sie
+// linear: vier Pixel mal n, von 4 bis 80. Ein Teil multipliziert also nur den
+// Schritt.
+//
+// Dass es ankommt, ist gemessen - ha-card polstert mit
+//
+//     .card-header   padding: var(--ha-space-5) var(--ha-space-4) var(--ha-space-6)
+//     .card-content  padding: var(--ha-space-4)
+//     .card-actions  padding: var(--ha-space-2)
+//
+// Die Leiter wird also nicht nur gesetzt, sie wird auch gelesen.
+
+function abstandsLeiter(schritt) {
+  const f = {};
+  for (let i = 1; i <= 20; i++) f[`--ha-space-${i}`] = `${schritt * i}px`;
+  return f;
+}
+
+export const DICHTEN = [
+  {
+    id: "eng",
+    de: "Eng", en: "Tight",
+    zweckDe: "Drei Pixel je Stufe. Mehr auf den Schirm, enger beieinander.",
+    zweckEn: "Three pixels per step. More on screen, closer together.",
+    felder: abstandsLeiter(3),
+  },
+  {
+    id: "ha",
+    de: "Home Assistant", en: "Home Assistant",
+    zweckDe: "Wie ausgeliefert: vier Pixel je Stufe.",
+    zweckEn: "As shipped: four pixels per step.",
+    felder: abstandsLeiter(4),
+  },
+  {
+    id: "weit",
+    de: "Weit", en: "Roomy",
+    zweckDe: "Fuenf Pixel je Stufe. Luftiger, und mit dem Finger leichter zu treffen.",
+    zweckEn: "Five pixels per step. Airier, and easier to hit with a finger.",
+    felder: abstandsLeiter(5),
+  },
+  {
+    id: "sehr-weit",
+    de: "Sehr weit", en: "Very roomy",
+    zweckDe: "Sechs Pixel je Stufe. Fuer Wandtablets, aus zwei Metern Abstand.",
+    zweckEn: "Six pixels per step. For wall tablets, seen from two metres away.",
+    felder: abstandsLeiter(6),
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Hintergruende
 //
 // Die Teile selbst stehen seit dem 13.10.2026 in hintergrund.js - uebergeben
@@ -609,6 +832,8 @@ export const SORTEN_VORLAGEN = {
                 "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast"],
   palette: [],
   schrift: [],
+  rundung: [],
+  dichte: [],
 };
 
 // Welche Felder einer Sorte lassen sich nach der Wahl noch von Hand drehen?
@@ -626,6 +851,16 @@ export const SORTEN_FELDER = {
     { v: "--ha-font-size-scale", de: "Groesse", en: "Scale", art: "zahl", min: 0.8, max: 1.4, schritt: 0.05 },
     { v: "--ha-line-height-normal", de: "Zeilenhoehe", en: "Line height", art: "zahl", min: 1.2, max: 2, schritt: 0.1 },
   ],
+  // Die Karte darf aus der Leiter ausscheren - sie ist die groesste Flaeche
+  // und die einzige, bei der man es sofort sieht.
+  rundung: [
+    { v: "--ha-card-border-radius", de: "Karten", en: "Cards", art: "mass", min: 0, max: 40 },
+  ],
+  // Die vierte Stufe polstert den Karteninhalt (gemessen an ha-card), also
+  // die Zahl, die man am ehesten drehen will.
+  dichte: [
+    { v: "--ha-space-4", de: "Kartenpolster", en: "Card padding", art: "mass", min: 0, max: 40 },
+  ],
   palette: [], hintergrund: [], oberflaeche: [],
 };
 
@@ -636,6 +871,12 @@ export const OBERFLAECHE_LEER = [];
 export const BAUKASTEN = {
   palette: { de: "Farben", en: "Colours", teile: PALETTEN },
   schrift: { de: "Schrift", en: "Typeface", teile: SCHRIFTEN },
+  rundung: { de: "Rundung", en: "Corners", teile: RUNDUNGEN,
+             zweckDe: "Wie weich die Ecken sind - Knoepfe, Felder, Dialoge und Karten.",
+             zweckEn: "How soft the corners are - buttons, fields, dialogs and cards." },
+  dichte: { de: "Dichte", en: "Density", teile: DICHTEN,
+            zweckDe: "Wie viel Luft zwischen den Dingen steht.",
+            zweckEn: "How much air sits between things." },
   karten: { de: "Karten", en: "Cards", teile: KARTENSTILE },
   // gleich: Mit und ohne das Wort "fixed" ist es derselbe Hintergrund, nur
   // anders aufgehaengt. Ohne diesen Vergleich verloere eine Theme ihren Haken,
@@ -743,11 +984,14 @@ export function erkenneTeil(sorte, lies) {
   const teile = BAUKASTEN[sorte]?.teile || [];
   // Eine Sorte darf sagen, was fuer sie "derselbe Wert" ist.
   const glatt = BAUKASTEN[sorte]?.gleich || ((w) => w);
-  for (const teil of teile) {
+
+  const passtAuf = (teil, ausser) => {
     let passt = true;
     const pruefe = (name, soll, ebene) => {
       if (!passt) return;
-      const ist = lies(name.startsWith("--") ? name : "--" + name, ebene);
+      const v = name.startsWith("--") ? name : "--" + name;
+      if (ausser.has(v)) return;
+      const ist = lies(v, ebene);
       // Ein leerer Sollwert heisst "Feld nicht gesetzt" - beides zaehlt gleich.
       if (glatt(ist ?? "") !== glatt(soll ?? "")) passt = false;
     };
@@ -762,7 +1006,30 @@ export function erkenneTeil(sorte, lies) {
       for (const [k, v] of Object.entries(teil.light || {})) pruefe(k, v, "light");
       for (const [k, v] of Object.entries(teil.dark || {})) pruefe(k, v, "dark");
     }
-    if (passt) return teil.id;
+    return passt;
+  };
+
+  // Erster Durchgang: alles muss stimmen.
+  for (const teil of teile) if (passtAuf(teil, new Set())) return teil.id;
+
+  // Zweiter Durchgang, OHNE die Felder, die die Sorte selbst als Regler
+  // anbietet.
+  //
+  // Am 14.10.2026 gemessen: Kartenstil "Glas" waehlen, dann den Regler
+  // "Rundung" auf der Seite derselben Sorte um zwei Pixel drehen - und der
+  // Haken war weg. Der Baukasten laedt zum Drehen ein und erklaert die Theme
+  // danach fuer keinen bekannten Stil. Das ist auch die Voraussetzung dafuer,
+  // dass Rundung und Kartenstil nebeneinander bestehen: Beide schreiben
+  // --ha-card-border-radius, und beide sollen ihren Haken behalten.
+  //
+  // Nur EINDEUTIG. Bei der Schrift unterscheiden sich "Home Assistant" und
+  // "Groesser" allein in --ha-font-size-scale - und genau das ist der Regler.
+  // Ohne ihn passen beide, und dann weiss der Baukasten es eben nicht. Lieber
+  // kein Haken als der falsche.
+  const regler = new Set((SORTEN_FELDER[sorte] || []).map((f) => f.v));
+  if (regler.size) {
+    const treffer = teile.filter((t) => passtAuf(t, regler));
+    if (treffer.length === 1) return treffer[0].id;
   }
   return null;
 }

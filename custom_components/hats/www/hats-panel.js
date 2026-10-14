@@ -177,7 +177,7 @@ const STUFEN = [
         { t: "Red 90", art: "farbe", v: "--ha-color-red-90", ebene: "beide" },
         { t: "Red 95", art: "farbe", v: "--ha-color-red-95", ebene: "beide" },
         { t: "White", art: "farbe", v: "--ha-color-white", ebene: "beide" },
-        { t: "Hell Primaer Farbe", art: "farbe", v: "--light-primary-color", ebene: "beide" },
+        { t: "Primaer hell", art: "farbe", v: "--light-primary-color", ebene: "beide" },
       ] },
       { name: "Klassische Textfarben", felder: [
         { t: "Deaktiviert", art: "farbe", v: "--disabled-color", ebene: "getrennt" },

@@ -8,8 +8,10 @@ import assert from "node:assert";
 import { rampe } from "../custom_components/hats/www/palette.js";
 import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau, seiteHatInhalt,
          SORTEN_FELDER,
-         KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN } from "../custom_components/hats/www/baukasten.js";
+         KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN,
+         RUNDUNGEN, DICHTEN } from "../custom_components/hats/www/baukasten.js";
 import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
+import { leseTheme } from "../custom_components/hats/www/theme.js";
 
 let n = 0;
 function pruefe(was, fn) { fn(); n++; console.log("ok", was); }
@@ -19,11 +21,15 @@ function leer() { return { beide: {}, light: {}, dark: {} }; }
 function schreiberFuer(m) { return (name, wert, ebene) => { m[ebene === "beide" ? "beide" : ebene][name] = wert; }; }
 function leserFuer(m) { return (name, ebene) => (ebene === "beide" ? m.beide[name] : m[ebene][name]); }
 
-pruefe("Fuenf Sorten, jede mit beiden Sprachen", () => {
-  // "oberflaeche" ist die fuenfte und traegt KEINE Teile, nur Vorlagen -
-  // Seitenleiste, Kopfleiste und Dialoge haetten sonst nirgends hingehoert.
+pruefe("Sieben Sorten, jede mit beiden Sprachen", () => {
+  // "oberflaeche" traegt KEINE Teile, nur Vorlagen - Seitenleiste, Kopfleiste
+  // und Dialoge haetten sonst nirgends hingehoert.
+  //
+  // "rundung" und "dichte" sind am 14.10.2026 dazugekommen, auf Ansage: Sie
+  // stehen VOR den Karten, weil sie die ganze Oberflaeche betreffen und die
+  // Karten nur einen Teil davon.
   assert.deepStrictEqual(Object.keys(BAUKASTEN),
-    ["palette", "schrift", "karten", "hintergrund", "oberflaeche"]);
+    ["palette", "schrift", "rundung", "dichte", "karten", "hintergrund", "oberflaeche"]);
   for (const [sorte, s] of Object.entries(BAUKASTEN)) {
     assert.ok(s.de && s.en, `${sorte}: eine Sprache fehlt`);
     if (s.nurVorlagen) {
@@ -151,14 +157,25 @@ pruefe("Ein angewendetes Teil wird wiedererkannt", () => {
   }
 });
 
-pruefe("Glas sagt, dass es einen Hintergrund braucht", () => {
+pruefe("Wer weichzeichnet, sagt dass er einen Hintergrund braucht", () => {
   // Eine durchscheinende Flaeche vor einer einfarbigen Wand sieht aus wie eine
-  // etwas hellere Wand. Wer Glas waehlt und keinen Hintergrund hat, sieht
+  // etwas hellere Wand. Wer sie waehlt und keinen Hintergrund hat, sieht
   // nichts - und sucht den Fehler in der Theme.
-  const glas = KARTENSTILE.find((s) => s.id === "glas");
-  assert.ok(glas.braucht?.hintergrund, "glas traegt kein braucht.hintergrund");
-  for (const s of KARTENSTILE.filter((x) => x.id !== "glas"))
-    assert.ok(!s.braucht?.hintergrund, `${s.id} braucht keinen Hintergrund`);
+  //
+  // Geprueft wird nicht gegen eine Liste von ids, sondern gegen den GRUND:
+  // Weichzeichnung heisst, dass etwas durchscheinen soll. Am 14.10.2026 kam
+  // "macOS" dazu, und eine Liste haette hier nur gesagt, dass sie nicht
+  // nachgefuehrt wurde.
+  let weich = 0;
+  for (const s of KARTENSTILE) {
+    const f = s.flach?.["--ha-card-backdrop-filter"] || "none";
+    const zeichnet = f !== "none" && f !== "";
+    if (zeichnet) weich++;
+    assert.strictEqual(!!s.braucht?.hintergrund, zeichnet,
+      zeichnet ? `${s.id} zeichnet weich und sagt es nicht`
+               : `${s.id} braucht keinen Hintergrund`);
+  }
+  assert.ok(weich >= 2, `nur ${weich} Stile zeichnen weich - die Pruefung laeuft ins Leere`);
   assert.ok(HINTERGRUENDE.some((h) => h.id !== "keiner"), "es gibt keinen Hintergrund zur Auswahl");
 });
 
@@ -350,6 +367,182 @@ pruefe("Eine Sorte ohne Inhalt bekommt keine Unterseite", () => {
   assert.match(klick, /if \(seiteHatInhalt\(sorte\)\) this\._bkSeite = sorte;/, "nach dem Anwenden wird weiter immer geoeffnet");
   assert.doesNotMatch(klick, /\n\s*this\._bkSeite = sorte;\n\s*this\.zeichneBaukasten\(\);\n\s*this\.zeichneZaehler/,
     "irgendwo wird _bkSeite noch ungeprueft gesetzt");
+});
+
+// --- Rundung und Dichte, 14.10.2026 ------------------------------------
+
+pruefe("Jede Rundung setzt die ganze Leiter und die Karte dazu", () => {
+  // Eine halbe Leiter ergaebe eckige Knoepfe an runden Dialogen. Und die
+  // Karte braucht ihren eigenen Wert: ha-card liest
+  // var(--ha-card-border-radius, var(--ha-border-radius-lg)) - der
+  // Ausweichwert greift nur, solange niemand das Feld setzt, und jeder
+  // Kartenstil setzt es.
+  const STUFEN = ["sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl"];
+  for (const t of RUNDUNGEN) {
+    const k = Object.keys(t.felder || {});
+    for (const s of STUFEN)
+      assert.ok(k.includes(`--ha-border-radius-${s}`), `${t.id}: Stufe ${s} fehlt`);
+    assert.ok(k.includes("--ha-card-border-radius"), `${t.id}: die Karte fehlt`);
+    assert.strictEqual(k.length, STUFEN.length + 1, `${t.id}: setzt mehr als die Leiter`);
+    // Die Karte nimmt lg, wie Home Assistant selbst.
+    assert.strictEqual(t.felder["--ha-card-border-radius"], t.felder["--ha-border-radius-lg"],
+      `${t.id}: die Karte folgt nicht der Stufe lg`);
+    // Die Leiter steigt. Eine, die faellt, waere ein Tippfehler.
+    const w = STUFEN.map((s) => parseInt(t.felder[`--ha-border-radius-${s}`], 10));
+    assert.deepStrictEqual(w, [...w].sort((a, b) => a - b), `${t.id}: die Leiter faellt`);
+  }
+  // pill, circle und square sind Formen, keine Stufen - sie bleiben stehen.
+  for (const t of RUNDUNGEN)
+    for (const s of ["pill", "circle", "square"])
+      assert.ok(!(`--ha-border-radius-${s}` in t.felder), `${t.id}: fasst ${s} an`);
+});
+
+pruefe("Jede Dichte setzt alle zwanzig Stufen, linear", () => {
+  // Home Assistant haelt die Leiter linear: vier Pixel mal n. Ein Teil
+  // multipliziert also nur den Schritt - eine Stufe, die aus der Reihe
+  // faellt, waere in jedem Polster sichtbar.
+  for (const t of DICHTEN) {
+    const k = Object.keys(t.felder || {});
+    assert.strictEqual(k.length, 20, `${t.id}: nicht zwanzig Stufen`);
+    const schritt = parseInt(t.felder["--ha-space-1"], 10);
+    assert.ok(schritt > 0, `${t.id}: Schritt null`);
+    for (let i = 1; i <= 20; i++)
+      assert.strictEqual(t.felder[`--ha-space-${i}`], `${schritt * i}px`, `${t.id}: Stufe ${i}`);
+  }
+  // Und einer davon ist Home Assistants eigener - sonst kaeme man nicht
+  // zurueck.
+  const ha = DICHTEN.find((t) => t.id === "ha");
+  assert.ok(ha && ha.felder["--ha-space-4"] === "16px", "die ausgelieferte Dichte fehlt");
+});
+
+pruefe("Rundung, Dichte und Kartenstil stehen nebeneinander", () => {
+  // Beide schreiben --ha-card-border-radius. Vor dem 14.10.2026 haette das
+  // einem von beiden den Haken genommen - erkenneTeil verglich jedes Feld,
+  // auch die, die die Sorte selbst als Regler anbietet.
+  const m = leer();
+  const schreibe = schreiberFuer(m);
+  const lies = leserFuer(m);
+  teilAnwenden("karten", KARTENSTILE.find((t) => t.id === "glas"), schreibe);
+  assert.strictEqual(erkenneTeil("karten", lies), "glas");
+
+  // Der Regler auf der Seite der Sorte - genau der Fall, der den Haken nahm.
+  m.beide["--ha-card-border-radius"] = "18px";
+  assert.strictEqual(erkenneTeil("karten", lies), "glas", "der Regler nimmt den Haken");
+
+  teilAnwenden("rundung", RUNDUNGEN.find((t) => t.id === "eckig"), schreibe);
+  teilAnwenden("dichte", DICHTEN.find((t) => t.id === "weit"), schreibe);
+  assert.strictEqual(erkenneTeil("karten", lies), "glas");
+  assert.strictEqual(erkenneTeil("rundung", lies), "eckig");
+  assert.strictEqual(erkenneTeil("dichte", lies), "weit");
+  // Die Rundung hat die Karte wirklich mitgenommen - sonst waere der Haken
+  // oben nur deshalb geblieben, weil gar nichts passiert ist.
+  assert.strictEqual(lies("--ha-card-border-radius", "beide"), "2px");
+  assert.strictEqual(lies("--ha-space-4", "beide"), "20px");
+});
+
+pruefe("Ohne den Regler bleibt der Haken nur, wenn er EINDEUTIG ist", () => {
+  // Die Gegenprobe zur Lockerung oben. Bei der Schrift unterscheiden sich
+  // "Home Assistant" und "Groesser" allein in --ha-font-size-scale, und genau
+  // das ist der Regler der Sorte. Faellt er weg, passen beide - dann darf
+  // nicht der erste gewinnen.
+  const unterschied = ["ha", "gross"].map((id) => SCHRIFTEN.find((t) => t.id === id));
+  const felder = new Set(unterschied.flatMap((t) => Object.keys(t.felder)));
+  const trennend = [...felder].filter((k) => unterschied[0].felder[k] !== unterschied[1].felder[k]);
+  assert.deepStrictEqual(trennend, ["--ha-font-size-scale"], "die beiden trennen sich woanders");
+  assert.ok(SORTEN_FELDER.schrift.some((f) => f.v === "--ha-font-size-scale"),
+    "die Groesse ist gar kein Regler mehr");
+
+  const m = leer();
+  const schreibe = schreiberFuer(m);
+  const lies = leserFuer(m);
+  teilAnwenden("schrift", unterschied[1], schreibe);
+  assert.strictEqual(erkenneTeil("schrift", lies), "gross");
+  // Auf einen Wert gedreht, den kein Teil hat: zwei passen, also keiner.
+  m.beide["--ha-font-size-scale"] = "1.2";
+  assert.strictEqual(erkenneTeil("schrift", lies), null,
+    "ein Haken, den der Baukasten gar nicht wissen kann");
+});
+
+pruefe("Der Baukasten schreibt nur Felder, die das Panel auch anbietet", () => {
+  // Die Regel aus CLAUDE.md, als Pruefung: Ein Feld, das in der Datei landet
+  // und im Panel nicht vorkommt, kann der Nutzer nie wieder aendern oder
+  // entfernen. Beim Bau der Liquid-Glass-Theme am 13.10.2026 war
+  // --primary-color so ein Fall.
+  //
+  // Mit Rundung und Dichte schreibt der Baukasten 29 beziehungsweise 20
+  // Felder auf einen Klick - da faellt ein Tippfehler im Namen sonst
+  // niemandem auf.
+  const angeboten = new Set([...panel.matchAll(/v: "(--[a-z0-9-]+)"/g)].map((m) => m[1]));
+  assert.ok(angeboten.size > 300, `nur ${angeboten.size} Felder aus dem Panel gelesen`);
+
+  // Die eine dokumentierte Ausnahme. --rgb-primary-color schreibt der
+  // Baukasten mit, und es hat mit Absicht KEINE Kachel: Home Assistant
+  // leitet die Tripel sonst selbst ab, je Modus, und ueberspringt dabei jeden
+  // Namen, den die Theme mitbringt. Bei primary-color gibt es nichts
+  // abzuleiten - das Feld muss also stehen -, aber es ist ein GERECHNETER
+  // Wert. Von Hand gedreht liefe er der Primaerfarbe davon, und genau das war
+  // am 12.10.2026 der Fehler bei rgb-accent-color: 255,152,0 neben einem
+  // --accent-color von #e8833a. tests/hats-import.test.js haelt fest, dass
+  // die Kachel nicht zurueckkommt.
+  const AUSNAHMEN = new Set(["--rgb-primary-color"]);
+
+  const fehlt = [];
+  let geprueft = 0;
+  for (const [sorte, s] of Object.entries(BAUKASTEN)) {
+    for (const teil of s.teile) {
+      const m = leer();
+      teilAnwenden(sorte, teil, schreiberFuer(m));
+      for (const ebene of ["beide", "light", "dark"])
+        for (const k of Object.keys(m[ebene])) {
+          geprueft++;
+          if (!angeboten.has(k) && !AUSNAHMEN.has(k)) fehlt.push(`${sorte}/${teil.id}: ${k}`);
+        }
+    }
+  }
+  assert.ok(geprueft > 500, `nur ${geprueft} geschriebene Felder gesehen`);
+  assert.deepStrictEqual([...new Set(fehlt)], [], "kennt das Panel nicht");
+
+  // Gegenprobe: Ein erfundener Name wuerde wirklich auffallen - sonst waere
+  // die Pruefung nur eine Liste, die mit sich selbst uebereinstimmt.
+  assert.ok(!angeboten.has("--hats-gibt-es-nicht"));
+  // Und die Ausnahme ist keine leere Geste: Das Feld wird wirklich
+  // geschrieben und hat wirklich keine Kachel.
+  for (const a of AUSNAHMEN) assert.ok(!angeboten.has(a), `${a} hat doch eine Kachel`);
+  const mitPalette = leer();
+  teilAnwenden("palette", PALETTEN.find((t) => t.farben?.primary), schreiberFuer(mitPalette));
+  assert.ok("--rgb-primary-color" in mitPalette.beide, "die Ausnahme wird gar nicht mehr geschrieben");
+});
+
+pruefe("Der Baukasten beschreibt die macos-Theme vollstaendig", () => {
+  // Die schaerfste Pruefung, die der Baukasten haben kann: eine Theme, die
+  // OHNE ihn gebaut wurde - werkzeuge/macos-bauen.mjs schreibt ihre Felder
+  // selbst - muss sich in seinen Teilen wiederfinden. Trifft jede Sorte, dann
+  // sind die Werte wirklich dieselben und nicht nur aehnlich.
+  //
+  // Am 14.10.2026 war genau das der Grund, "macOS" als Kartenstil
+  // aufzunehmen: Die Theme hatte Apples Glas, der Baukasten kannte nur das
+  // der Projektwerkbank, und die Karten-Kachel blieb ohne Haken.
+  const datei = readFileSync(path.join(hier, "../werkzeuge/themes/macos.yaml"), "utf8");
+  const m = leseTheme(datei);
+  assert.deepStrictEqual(m.unklar || [], [], "die Datei laesst sich nicht sauber lesen");
+  const lies = (name, ebene) => {
+    const k = name.replace(/^--/, "");
+    return ebene === "beide" ? m.flach[k] : (m[ebene]?.[k] ?? m.flach[k]);
+  };
+  const soll = { palette: "macos", schrift: "ha", rundung: "weich", dichte: "ha",
+                 karten: "macos", hintergrund: "macos" };
+  for (const [sorte, id] of Object.entries(soll))
+    assert.strictEqual(erkenneTeil(sorte, lies), id, `${sorte}: nicht wiedererkannt`);
+
+  // Gegenprobe: Ein einziger geaenderter Wert nimmt den Haken wieder - sonst
+  // sagte die Pruefung oben nur, dass erkenneTeil irgendetwas zurueckgibt.
+  const kaputt = { ...m, flach: { ...m.flach, "ha-card-backdrop-filter": "blur(31px) saturate(180%)" } };
+  const liesKaputt = (name, ebene) => {
+    const k = name.replace(/^--/, "");
+    return ebene === "beide" ? kaputt.flach[k] : (kaputt[ebene]?.[k] ?? kaputt.flach[k]);
+  };
+  assert.strictEqual(erkenneTeil("karten", liesKaputt), null,
+    "ein Pixel mehr Weichzeichnung faellt nicht auf");
 });
 
 console.log(`\n${n} Pruefungen`);
