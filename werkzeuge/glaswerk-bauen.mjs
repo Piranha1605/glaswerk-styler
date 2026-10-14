@@ -119,12 +119,34 @@ const teil = (sorte, id) => {
 // "Glas" entschieden: Lichtkante oben, Schattenkante unten, Seiten offen,
 // kein Rahmen - die Karte wirkt gewoelbt statt umrandet. Liquid Glass liegt
 // weiter im Baukasten, es ist nur nicht die Wahl fuer diese Theme.
-teilAnwenden("palette", teil("palette", "glaswerk"), schreibe);
-teilAnwenden("schrift", teil("schrift", "system"), schreibe);
-teilAnwenden("rundung", teil("rundung", "rund"), schreibe);
-teilAnwenden("dichte", teil("dichte", "weit"), schreibe);
-teilAnwenden("karten", teil("karten", "glas"), schreibe);
-teilAnwenden("hintergrund", teil("hintergrund", "glaswerk"), schreibe);
+// Die Reihenfolge ist Teil der Aussage, deshalb eine Liste und kein Objekt:
+// Der Kartenstil kommt NACH der Rundung, sonst verliert "Glas" seine 20px.
+const TEILE = [
+  ["palette",     "glaswerk-orange"],
+  ["schrift",     "system"],
+  ["rundung",     "rund"],
+  ["dichte",      "weit"],
+  ["karten",      "glas"],
+  ["hintergrund", "glaswerk"],
+];
+for (const [sorte, id] of TEILE) teilAnwenden(sorte, teil(sorte, id), schreibe);
+
+// Der Satz im Kopf der Datei, aus denselben Angaben wie die Theme selbst.
+// Umgebrochen auf zwei Zeilen, damit der Kommentarblock seine Breite behaelt.
+function kopfSatz() {
+  const wort = { palette: "Farben", schrift: "Schrift", rundung: "Rundung",
+                 dichte: "Dichte", karten: "Karten", hintergrund: "Hintergrund" };
+  const satz = "Alle sechs Teile kommen aus dem Baukasten: "
+    + TEILE.map(([sorte, id]) => `${wort[sorte]} ${id}`).join(", ") + ".";
+  const zeilen = [];
+  let zeile = "";
+  for (const w of satz.split(" ")) {
+    if ((zeile + " " + w).trim().length > 70) { zeilen.push(zeile.trim()); zeile = w; }
+    else zeile += " " + w;
+  }
+  if (zeile.trim()) zeilen.push(zeile.trim());
+  return zeilen;
+}
 
 // --- Die Rasterzeile unter dem, was "weit" vorgibt -------------------------
 //
@@ -388,8 +410,12 @@ m.kopf = [
   "gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit HATS' eigenen",
   "Funktionen.",
   "",
-  "Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk, Schrift",
-  "system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk.",
+  // GERECHNET, NICHT GETIPPT. Hier stand der Satz bis zum 14.10.2026
+  // woertlich - und als die Palette auf glaswerk-orange wechselte, nannte er
+  // weiter "Farben glaswerk". Ein Kopf, der sich selbst widerspricht, ist
+  // schlimmer als keiner: Ein Test der Steuerkarte vergleicht genau ihn
+  // gegen das, was der Baukasten erkennt.
+  ...kopfSatz(),
   "Wer die Theme im Panel oeffnet, sieht sie dort alle sechs angehakt und",
   "kann eines austauschen, ohne den Rest zu verlieren.",
   "",

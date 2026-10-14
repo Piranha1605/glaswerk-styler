@@ -334,6 +334,35 @@ export const PALETTEN = [
     akzent: { light: "#2196f3", dark: "#5ab4f7" },
   },
   {
+    id: "glaswerk-orange",
+    de: "Glaswerk Orange", en: "Glasswork Orange",
+    zweckDe: "Dieselbe Theme in warmem Orange - Glut statt Azur, derselbe Aufbau.",
+    zweckEn: "The same theme in warm orange - ember instead of azure, same structure.",
+    // Auf Ansage vom 14.10.2026 ("ja mach das orange"), nachdem der Ton kurz
+    // auf der Testmaschine stand und wieder verschwunden war.
+    //
+    // DER GRUNDTON IST ZURUECKGERECHNET, NICHT GEWAEHLT. Vom Bildschirm
+    // abgelesen waren Stufe 40, 50 und 60 der Rampe:
+    //
+    //     40 #c75900    50 #f47a16    60 #ff9035
+    //
+    // rampe() nimmt vom Grundton nur Farbwinkel und Saettigung, die
+    // Helligkeit je Stufe steht fest. Ueber 26 Farbwinkel und 31 Saettigungen
+    // gesucht, welcher Grundton diese drei Stufen ergibt: #fe7301, also
+    // Farbwinkel 27 Grad bei 99 Prozent. Die Rampe weicht damit um 5 von 765
+    // moeglichen Einheiten ab - dieselbe Rampe, nicht eine aehnliche.
+    //
+    // neutral bleibt kuehl: rampe() setzt die Saettigung der neutralen Rolle
+    // ohnehin auf null, der Wert traegt dort also nur den Namen.
+    //
+    // Rot, Gruen und Bernstein bleiben, wie sie sind. Sie sagen "Gefahr",
+    // "gut" und "Achtung" - das haengt nicht am Geschmack der Theme.
+    farben: { primary: "#fe7301", neutral: "#5a6880", red: "#f4674f", green: "#44c9a0", orange: "#e08a2b" },
+    // Wie bei Glaswerk: hell der Grundton selbst, dunkel eine Stufe heller.
+    // #ff9342 ist der Wert, der an der Instanz gemessen wurde.
+    akzent: { light: "#fe7301", dark: "#ff9342" },
+  },
+  {
     id: "solarized",
     de: "Solarized", en: "Solarized",
     zweckDe: "Der Klassiker von 2011 - als Paar aus Hell und Dunkel entworfen.",

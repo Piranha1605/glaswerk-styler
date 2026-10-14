@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 23:25:58
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 23:31:32
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # FASSUNG 1 - eingefroren, damit man sie gegen die naechste stellen kann.
@@ -14,8 +14,9 @@
 # gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit HATS' eigenen
 # Funktionen.
 # 
-# Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk, Schrift
-# system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk.
+# Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk-orange,
+# Schrift system, Rundung rund, Dichte weit, Karten glas, Hintergrund
+# glaswerk.
 # Wer die Theme im Panel oeffnet, sieht sie dort alle sechs angehakt und
 # kann eines austauschen, ohne den Rest zu verlieren.
 # 
@@ -89,10 +90,10 @@ glaswerk_v1:
   dark-disabled-opacity: ".38"
   dark-divider-opacity: ".12"
   dark-grey-color: "#606060"
-  dark-primary-color: "#064b81"
+  dark-primary-color: "#873d00"
   dark-primary-opacity: ".87"
   dark-secondary-opacity: ".54"
-  darker-primary-color: "#042f52"
+  darker-primary-color: "#562700"
   deep-orange-color: "#ff6f22"
   deep-purple-color: "#6e41ab"
   direction: "ltr"
@@ -165,17 +166,17 @@ glaswerk_v1:
   ha-color-orange-80: "#f0c698"
   ha-color-orange-90: "#f8e5cf"
   ha-color-orange-95: "#fcf2e7"
-  ha-color-primary-05: "#011220"
-  ha-color-primary-10: "#03223b"
-  ha-color-primary-20: "#042f52"
-  ha-color-primary-30: "#064b81"
-  ha-color-primary-40: "#086ebf"
-  ha-color-primary-50: "#2190e9"
-  ha-color-primary-60: "#3fa4f5"
-  ha-color-primary-70: "#80c2f6"
-  ha-color-primary-80: "#bcdef9"
-  ha-color-primary-90: "#e0effb"
-  ha-color-primary-95: "#f0f7fd"
+  ha-color-primary-05: "#210f00"
+  ha-color-primary-10: "#3e1c00"
+  ha-color-primary-20: "#562700"
+  ha-color-primary-30: "#873d00"
+  ha-color-primary-40: "#c75a00"
+  ha-color-primary-50: "#f37a17"
+  ha-color-primary-60: "#fe9036"
+  ha-color-primary-70: "#fcb57a"
+  ha-color-primary-80: "#fcd7b9"
+  ha-color-primary-90: "#fcecdf"
+  ha-color-primary-95: "#fef6ef"
   ha-color-red-05: "#2b0903"
   ha-color-red-10: "#3f1008"
   ha-color-red-20: "#641e12"
@@ -241,7 +242,7 @@ glaswerk_v1:
   light-divider-opacity: ".12"
   light-green-color: "#8bc34a"
   light-grey-color: "#bdbdbd"
-  light-primary-color: "#bcdef9"
+  light-primary-color: "#fcd7b9"
   light-primary-opacity: "1"
   light-secondary-opacity: ".7"
   lime-color: "#cddc39"
@@ -250,10 +251,10 @@ glaswerk_v1:
   mush-control-border-radius: "20px"
   orange-color: "#ff9800"
   pink-color: "#e91e63"
-  primary-color: "#2190e9"
+  primary-color: "#f37a17"
   purple-color: "#926bc7"
   red-color: "#f44336"
-  rgb-primary-color: "33, 144, 233"
+  rgb-primary-color: "243, 122, 23"
   sidebar-selected-icon-color: "#2196f3"
   state-cover-active-color: "#2196f3"
   state-icon-color: "#2196f3"
@@ -1246,7 +1247,7 @@ glaswerk_v1:
 
   modes:
     light:
-      accent-color: "#2196f3"
+      accent-color: "#fe7301"
       app-header-background-color: "rgba(255, 255, 255, 0.3)"
       app-header-text-color: "#121a2b"
       card-background-color: "#ffffff"
@@ -1292,7 +1293,7 @@ glaswerk_v1:
       sidebar-text-color: "#121a2b"
 
     dark:
-      accent-color: "#5ab4f7"
+      accent-color: "#ff9342"
       app-header-background-color: "rgba(20, 25, 40, 0.34)"
       app-header-text-color: "#e8edf7"
       bar-box-shadow: "0 2px 12px var(--shadow-color)"

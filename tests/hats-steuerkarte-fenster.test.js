@@ -130,14 +130,16 @@ pruefe("Der Modus kommt aus hass.themes.darkMode", () => {
 // ---- Das grosse Fenster: Teile des Baukastens, Bilder, Weichzeichnung ----------
 
 pruefe("Das Fenster erkennt die sechs Teile, aus denen glaswerk gebaut ist", () => {
-  // Die Erwartung steht im Kopf der Datei selbst: "Farben glaswerk, Schrift
-  // system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk."
-  assert.ok(/Farben glaswerk, Schrift\s*#?\s*system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk/
+  // Die Erwartung steht im Kopf der Datei selbst - und der wird seit dem
+  // 14.10.2026 aus den angewendeten Teilen GERECHNET, nicht getippt. Vorher
+  // stand er fest da und nannte weiter "Farben glaswerk", als die Palette
+  // laengst glaswerk-orange war. Dieser Test hat das gefunden.
+  assert.ok(/Farben glaswerk-orange, Schrift\s*#?\s*system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk/
     .test(DATEI.replace(/\n# /g, " ")), "der Kopf von glaswerk nennt andere Teile");
   for (const modus of ["light", "dark"]) {
     const stand = leseFensterAusDatei(DATEI, NAME, modus, w);
     assert.strictEqual(stand.grund, undefined);
-    assert.deepStrictEqual(stand.sitzt, { palette: "glaswerk", karten: "glas", schrift: "system",
+    assert.deepStrictEqual(stand.sitzt, { palette: "glaswerk-orange", karten: "glas", schrift: "system",
       rundung: "rund", dichte: "weit", hintergrund: "glaswerk" }, modus);
     assert.ok(stand.bild.startsWith("linear-gradient"), modus);
   }
