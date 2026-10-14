@@ -319,27 +319,55 @@ pruefe("Die Seitenleiste zentriert ueber max-width, nicht ueber width", () => {
   assert.match(block, /--ha-row-item-padding-inline/, "ruecke das Symbol nicht ein");
 });
 
-pruefe("Der Verlauf der Seitenleiste haengt am Akzent, nicht an festen Farben", () => {
+pruefe("Jeder aktive Knopf traegt DENSELBEN Verlauf, aus dem Akzent", () => {
   // Auf Ansage vom 14.10.2026: "im alten hatg konnten wir die aktiven buttons
-  // mit einem farbverlauf belegen". Eine Vorlage liest Theme-Felder, sie
-  // nagelt keine Farben fest - sonst aendert der Nutzer den Akzent und der
-  // Verlauf bleibt stehen.
-  const sb = VORLAGEN.find((v) => v.id === "glas-seitenleiste");
-  const ab = sb.css.indexOf("background-image: linear-gradient");
-  assert.ok(ab > -1, "der Verlauf fehlt");
-  const block = sb.css.slice(ab, sb.css.indexOf(";", ab));
-  // Beide Stufen kommen aus --accent-color.
-  assert.strictEqual((block.match(/var\(--accent-color\)/g) || []).length, 2,
-    "nicht beide Stufen haengen am Akzent");
-  // Kein Hex und kein rgb() im Verlauf - white und black sind das Aufhellen
-  // und Abdunkeln, keine Farben der Theme.
-  assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, "feste Hexfarbe im Verlauf");
-  assert.doesNotMatch(block, /\brgba?\(/i, "feste rgb-Farbe im Verlauf");
-  // Und die flache Flaeche bleibt als Rueckfall stehen: Ein Browser ohne
-  // color-mix zeigt sonst gar nichts.
-  const vor = sb.css.slice(sb.css.indexOf(".selected::before"));
-  assert.match(vor.slice(0, vor.indexOf("}")), /background-color:\s*var\(--accent-color\)/,
-    "ohne color-mix bliebe die Pille leer");
+  // mit einem farbverlauf belegen", und dann, mit drei Bildern: "bekommen wir
+  // den farbverlauf aus dem kalender auf die aktiven buttons".
+  //
+  // Die Zahlen sind am Datumsfeld der Kalender-Kachel abgelesen, nicht
+  // gewaehlt: 150 Grad, 48 Prozent nach 24 Prozent Akzent. Sie stehen an zwei
+  // Stellen - Seitenleiste und Kapsel der Steuerleiste -, und genau deshalb
+  // prueft dieser Test sie GEGENEINANDER. Ein Verlauf, der zweimal anders
+  // gerechnet wird, laeuft auseinander, sobald jemand einen davon anfasst.
+  const hol = (id) => {
+    const v = VORLAGEN.find((x) => x.id === id);
+    assert.ok(v, `${id} gibt es nicht mehr`);
+    const ab = v.css.indexOf("background-image: linear-gradient");
+    assert.ok(ab > -1, `${id}: der Verlauf fehlt`);
+    return { v, block: v.css.slice(ab, v.css.indexOf(";", ab)) };
+  };
+  const a = hol("glas-seitenleiste");
+  const b = hol("verlauf-kapsel");
+
+  const ohneLeerraum = (t) => t.replace(/\s+/g, " ").trim();
+  assert.strictEqual(ohneLeerraum(a.block), ohneLeerraum(b.block),
+    "die beiden Verlaeufe sind nicht mehr derselbe");
+
+  for (const { v, block } of [a, b]) {
+    // Beide Stufen kommen aus --accent-color.
+    assert.strictEqual((block.match(/var\(--accent-color\)/g) || []).length, 2,
+      `${v.id}: nicht beide Stufen haengen am Akzent`);
+    // Keine festen Farben - der Nutzer aendert den Akzent, der Verlauf geht mit.
+    assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, `${v.id}: feste Hexfarbe im Verlauf`);
+    assert.doesNotMatch(block, /\brgba?\(/i, `${v.id}: feste rgb-Farbe im Verlauf`);
+    // Und der Winkel des Kalenders.
+    assert.match(block, /150deg/, `${v.id}: nicht der Winkel des Kalenders`);
+  }
+
+  // KEIN deckender Rueckfall mehr, und das ist Absicht: Ein durchscheinender
+  // Verlauf ueber einer deckenden Akzentflaeche ergibt wieder eine deckende
+  // Flaeche - der Rueckfall haette die Wirkung aufgehoben. Der Kalender macht
+  // es genauso, dort steht background-color auf rgba(0,0,0,0) (gemessen).
+  for (const id of ["glas-seitenleiste", "verlauf-kapsel"]) {
+    const v = VORLAGEN.find((x) => x.id === id);
+    const ab = v.css.indexOf("background-image: linear-gradient");
+    const regelAnfang = v.css.lastIndexOf("{", ab);
+    const regel = v.css.slice(regelAnfang, v.css.indexOf("}", ab));
+    assert.doesNotMatch(regel, /background-color:\s*var\(--accent-color\)/,
+      `${id}: deckende Akzentflaeche unter dem Verlauf - er wird unsichtbar`);
+    assert.match(regel, /background-color:\s*transparent/,
+      `${id}: background-color muss ausdruecklich transparent sein`);
+  }
 });
 
 pruefe("Der Grund ausserhalb des Dashboards liegt UNTER dem bewegten", () => {

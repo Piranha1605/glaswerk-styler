@@ -936,7 +936,10 @@ export const SORTEN_VORLAGEN = {
            "sync-bedienelemente", "glas-knoepfe", "regler-gluehen", "regler-schlank"],
   hintergrund: ["abschnitte-trennen"],
   oberflaeche: ["grund-ueberall", "glas-leistenknoepfe", "glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
-                "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast"],
+                "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast",
+                // Zielt auf uix-card, gehoert aber zur Oberflaeche: Die Kapsel
+                // ist der aktive Knopf der Steuerleiste, kein Kartenstil.
+                "verlauf-kapsel"],
   palette: [],
   schrift: [],
   rundung: [],

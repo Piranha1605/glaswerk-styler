@@ -616,18 +616,32 @@ ha-md-list-item[selected] {
    Weil --accent-color je Modus gesetzt ist und --primary-color flach, laufen
    die beiden im Hellmodus zusammen. color-mix auf dem Akzent selbst haengt
    dagegen an nur einem Feld: Wer den Akzent aendert, bekommt den ganzen
-   Verlauf mit. Weiss und Schwarz sind hier keine Farben der Theme, sondern
-   das Aufhellen und Abdunkeln - deshalb stehen sie fest.
+   Verlauf mit.
 
-   background-color BLEIBT stehen: Ein Browser ohne color-mix zeigt dann die
-   flache Akzentflaeche statt gar keine. */
+   DIE ZAHLEN SIND NICHT ERFUNDEN. Am 14.10.2026 gefragt: "bekommen wir den
+   farbverlauf aus dem kalender auf die aktiven buttons". Also am Datumsfeld
+   der Kalender-Kachel abgelesen, was dort wirklich steht:
+
+       linear-gradient(150deg, rgba(--accent-color, .48), rgba(--accent-color, .24))
+
+   Genau das steht hier. Ein Verlauf an zwei Orten, der zweimal anders
+   gerechnet wird, laeuft frueher oder spaeter auseinander.
+
+   KEIN background-color MEHR. Ein durchscheinender Verlauf ueber einer
+   deckenden Akzentflaeche ergibt wieder eine deckende Akzentflaeche - der
+   Rueckfall haette die Wirkung aufgehoben. Der Kalender macht es genauso:
+   background-color steht dort auf rgba(0,0,0,0), gemessen.
+
+   Und es wird dadurch LESBARER, nicht schlechter: Die Kapsel der Steuerleiste
+   trug weisse Schrift auf #f47a16, Kontrast 2,75 : 1 - unter dem, was auch
+   fuer grosse Schrift reicht. Der Verlauf ist dunkler. */
 ha-list-item-button.selected::before,
 .selected::before {
   border-radius: 999px !important;
-  background-color: var(--accent-color) !important;
-  background-image: linear-gradient(135deg,
-    color-mix(in srgb, var(--accent-color) 82%, white),
-    color-mix(in srgb, var(--accent-color) 78%, black)) !important;
+  background-color: transparent !important;
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--accent-color) 48%, transparent),
+    color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
   opacity: 1 !important;
 }
 
@@ -674,6 +688,48 @@ ha-list-item-button.selected::part(headline),
 ha-list-item-button.selected ha-svg-icon[slot="start"],
 ha-list-item-button.selected ha-icon[slot="start"] {
   color: var(--text-accent-color, var(--text-primary-color)) !important;
+}`,
+  },
+
+  // -------------------------------------------------------------------------
+  {
+    id: "verlauf-kapsel",
+    gruppe: "glas",
+    ziel: "card",
+    de: "Aktiver Knopf mit Farbverlauf",
+    en: "Active button with a gradient",
+    zweckDe: "Die Kapsel der HATS-Steuerleiste bekommt denselben Verlauf wie das Datumsfeld der Kalender-Kachel.",
+    zweckEn: "The pill in the HATS control bar gets the same gradient as the calendar tile's date box.",
+    css: `/* Auf Ansage vom 14.10.2026, mit drei Bildern: "bekommen wir den
+   farbverlauf aus dem kalender auf die aktiven buttons".
+
+   DIE ZAHLEN SIND ABGELESEN, NICHT GEWAEHLT. Am Datumsfeld der
+   Kalender-Kachel gemessen steht dort:
+
+       linear-gradient(150deg, rgba(--accent-color, .48), rgba(--accent-color, .24))
+
+   Dasselbe steht in glas-seitenleiste fuer den aktiven Eintrag. Drei Orte,
+   eine Formel - sonst laufen sie auseinander, sobald jemand einen davon
+   anfasst.
+
+   WARUM HIER UND NICHT IN DER KARTE: hats-control-card.js gehoert der
+   Sitzung, die die Steuerkarte baut. UIX haengt seinen Knoten in den Shadow
+   Root jedes Karten-Elements ein - gemessen, in der Steuerleiste liegen drei
+   davon -, also ist die Kapsel von uix-card aus erreichbar, ohne eine fremde
+   Datei anzufassen.
+
+   .kapsel gibt es nur in der Steuerleiste. Die Regel laeuft in jeder anderen
+   Karte ins Leere, und das kostet nichts.
+
+   ES WIRD DADURCH LESBARER. Gemessen: weisse Schrift auf der bisherigen
+   Kapsel (#f47a16, das ist --primary-color) ergab 2,75 : 1 - unter dem, was
+   selbst fuer grosse Schrift reicht. Der Verlauf ist dunkler, die Schrift
+   bleibt weiss. */
+.kapsel {
+  background-color: transparent !important;
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--accent-color) 48%, transparent),
+    color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
 }`,
   },
 

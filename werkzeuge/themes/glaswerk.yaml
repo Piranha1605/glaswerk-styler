@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 22:16:22
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 23:25:58
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -619,6 +619,39 @@ glaswerk:
       min-height: 36px !important;
     }
     /* HATS:sync-bedienelemente:ENDE */
+    /* HATS:verlauf-kapsel:START */
+    /* Auf Ansage vom 14.10.2026, mit drei Bildern: "bekommen wir den
+       farbverlauf aus dem kalender auf die aktiven buttons".
+
+       DIE ZAHLEN SIND ABGELESEN, NICHT GEWAEHLT. Am Datumsfeld der
+       Kalender-Kachel gemessen steht dort:
+
+           linear-gradient(150deg, rgba(--accent-color, .48), rgba(--accent-color, .24))
+
+       Dasselbe steht in glas-seitenleiste fuer den aktiven Eintrag. Drei Orte,
+       eine Formel - sonst laufen sie auseinander, sobald jemand einen davon
+       anfasst.
+
+       WARUM HIER UND NICHT IN DER KARTE: hats-control-card.js gehoert der
+       Sitzung, die die Steuerkarte baut. UIX haengt seinen Knoten in den Shadow
+       Root jedes Karten-Elements ein - gemessen, in der Steuerleiste liegen drei
+       davon -, also ist die Kapsel von uix-card aus erreichbar, ohne eine fremde
+       Datei anzufassen.
+
+       .kapsel gibt es nur in der Steuerleiste. Die Regel laeuft in jeder anderen
+       Karte ins Leere, und das kostet nichts.
+
+       ES WIRD DADURCH LESBARER. Gemessen: weisse Schrift auf der bisherigen
+       Kapsel (#f47a16, das ist --primary-color) ergab 2,75 : 1 - unter dem, was
+       selbst fuer grosse Schrift reicht. Der Verlauf ist dunkler, die Schrift
+       bleibt weiss. */
+    .kapsel {
+      background-color: transparent !important;
+      background-image: linear-gradient(150deg,
+        color-mix(in srgb, var(--accent-color) 48%, transparent),
+        color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
+    }
+    /* HATS:verlauf-kapsel:ENDE */
     /* HATS:glas-knoepfe:START */
     /* Nur Variablen, keine Regeln auf das Innere des Knopfes.
 
@@ -1081,18 +1114,32 @@ glaswerk:
        Weil --accent-color je Modus gesetzt ist und --primary-color flach, laufen
        die beiden im Hellmodus zusammen. color-mix auf dem Akzent selbst haengt
        dagegen an nur einem Feld: Wer den Akzent aendert, bekommt den ganzen
-       Verlauf mit. Weiss und Schwarz sind hier keine Farben der Theme, sondern
-       das Aufhellen und Abdunkeln - deshalb stehen sie fest.
+       Verlauf mit.
 
-       background-color BLEIBT stehen: Ein Browser ohne color-mix zeigt dann die
-       flache Akzentflaeche statt gar keine. */
+       DIE ZAHLEN SIND NICHT ERFUNDEN. Am 14.10.2026 gefragt: "bekommen wir den
+       farbverlauf aus dem kalender auf die aktiven buttons". Also am Datumsfeld
+       der Kalender-Kachel abgelesen, was dort wirklich steht:
+
+           linear-gradient(150deg, rgba(--accent-color, .48), rgba(--accent-color, .24))
+
+       Genau das steht hier. Ein Verlauf an zwei Orten, der zweimal anders
+       gerechnet wird, laeuft frueher oder spaeter auseinander.
+
+       KEIN background-color MEHR. Ein durchscheinender Verlauf ueber einer
+       deckenden Akzentflaeche ergibt wieder eine deckende Akzentflaeche - der
+       Rueckfall haette die Wirkung aufgehoben. Der Kalender macht es genauso:
+       background-color steht dort auf rgba(0,0,0,0), gemessen.
+
+       Und es wird dadurch LESBARER, nicht schlechter: Die Kapsel der Steuerleiste
+       trug weisse Schrift auf #f47a16, Kontrast 2,75 : 1 - unter dem, was auch
+       fuer grosse Schrift reicht. Der Verlauf ist dunkler. */
     ha-list-item-button.selected::before,
     .selected::before {
       border-radius: 999px !important;
-      background-color: var(--accent-color) !important;
-      background-image: linear-gradient(135deg,
-        color-mix(in srgb, var(--accent-color) 82%, white),
-        color-mix(in srgb, var(--accent-color) 78%, black)) !important;
+      background-color: transparent !important;
+      background-image: linear-gradient(150deg,
+        color-mix(in srgb, var(--accent-color) 48%, transparent),
+        color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
       opacity: 1 !important;
     }
 
