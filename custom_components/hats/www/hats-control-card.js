@@ -1315,6 +1315,7 @@ const STIL_KARTE = `
   /* Das Fenster hinter settings: oben Modus und Vollbild in einer Reihe, dann
      die beiden Reglergruppen, jede mit einer Ueberschrift ueber einem Strich. */
   .rkopf { display: flex; align-items: center; gap: var(--ha-space-2, 8px); }
+  .rkopf .modus + .knopf { margin-inline-start: var(--ha-space-1, 4px); }
   .rkopf .knopf:not([aria-pressed="true"])::before { background-color: var(--disabled-color); opacity: .2; }
   .rabschnitt {
     margin-top: var(--ha-space-1, 4px); padding-top: var(--ha-space-2, 8px);
@@ -2009,7 +2010,9 @@ class Steuerung extends Basis {
     voll._symbol = neu("ha-icon");
     voll._name = neu("span", "name");
     voll.append(voll._symbol, voll._name, neu("ha-ripple"));
-    kopf.append(modus, neu("span", "fueller"));
+    // Vollbild neben dem Modus, der Stift ganz rechts - auf Ansage vom
+    // 14.10.2026, mit einem Bild des Fensters.
+    kopf.append(modus, voll, neu("span", "fueller"));
     // Ersetzt die Leiste HAs Kopfzeile, steht deren Stift hier.
     if (this._config.kopf && this._hass.user?.is_admin) {
       const stift = neu("button", "knopf");
@@ -2021,7 +2024,6 @@ class Steuerung extends Basis {
       this._beschrifte(stift, SYMBOL.bearbeiten, "", t.bearbeiten);
       kopf.append(stift);
     }
-    kopf.append(voll);
     return kopf;
   }
 

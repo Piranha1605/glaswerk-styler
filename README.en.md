@@ -197,7 +197,7 @@ The single functions stay, for a bar that prefers to show them one by one.
 Assistant's header disappears on the dashboard, the bar stays at the top while
 scrolling, and it brings what the header had: a sidebar button and — if there
 is no settings window — the pencil for editing. In the settings window the
-pencil sits next to fullscreen. Assist is available as `function: assist`.
+pencil sits at the far right. Assist is available as `function: assist`.
 
 ![The bar in place of the header](docs/bilder/steuerleiste-kopfzeile.jpg)
 

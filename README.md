@@ -201,7 +201,7 @@ zeigt.
 Assistants Kopfzeile verschwindet auf dem Dashboard, die Leiste bleibt beim
 Rollen oben, und sie bringt mit, was die Kopfzeile hatte: einen Knopf für die
 Seitenleiste und — wenn kein Einstellungsfenster da ist — den Stift zum
-Bearbeiten. Im Einstellungsfenster steht der Stift neben dem Vollbild. Assist
+Bearbeiten. Im Einstellungsfenster steht der Stift ganz rechts. Assist
 gibt es als `function: assist`.
 
 ![Die Leiste an Stelle der Kopfzeile](docs/bilder/steuerleiste-kopfzeile.jpg)
