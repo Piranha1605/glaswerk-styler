@@ -70,6 +70,7 @@
 
 const KARTE = "hats-control-card";
 const BADGE = "hats-control-badge";
+const EDITOR = "hats-control-card-editor";
 
 // Die Kurzform der Steuerkarte. Ihre Reihenfolge ist die Vorgabe.
 export const BEDIENTEILE = ["mode", "fullscreen"];
@@ -86,7 +87,7 @@ export const EINKLAPPEN = ["never", "narrow", "always"];
 // Schreibtisch genauso eng wie auf dem Telefon.
 export const EINKLAPPBREITE = 500;
 
-const TEXTE = {
+export const TEXTE = {
   de: {
     name: "HATS Steuerkarte",
     nameBadge: "HATS Steuerung",
@@ -117,6 +118,7 @@ const TEXTE = {
     knopffeld: {
       name: "Name", icon: "Symbol", link: "Ziel", entity: "Entität",
       function: "Eingebaute Funktion", temperature: "Temperatursensor (nur Wetter)",
+      temperature_source: "Temperatur aus (nur Wetter)", tap_action: "Aktion beim Antippen",
       align_end: "Ans Ende der Leiste", separator_before: "Trennstrich davor",
     },
     funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter",
@@ -157,6 +159,7 @@ const TEXTE = {
       theme: "Rundung der Theme", pill: "ganz rund",
       small: "klein", normal: "normal", large: "groß",
       never: "nie", narrow: "wenn es eng wird", always: "immer",
+      sensor: "dem Temperatursensor", weather: "der Wetter-Entität",
     },
   },
   en: {
@@ -189,6 +192,7 @@ const TEXTE = {
     knopffeld: {
       name: "Name", icon: "Icon", link: "Target", entity: "Entity",
       function: "Built-in function", temperature: "Temperature sensor (weather only)",
+      temperature_source: "Temperature from (weather only)", tap_action: "Tap action",
       align_end: "At the end of the bar", separator_before: "Separator before",
     },
     funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather",
@@ -229,6 +233,7 @@ const TEXTE = {
       theme: "theme radius", pill: "fully round",
       small: "small", normal: "normal", large: "large",
       never: "never", narrow: "when it gets narrow", always: "always",
+      sensor: "the temperature sensor", weather: "the weather entity",
     },
   },
 };
@@ -386,6 +391,28 @@ export function eingeklappt(einstellung, breite) {
   if (einstellung.einklappen === "always") return true;
   if (einstellung.einklappen !== "narrow") return false;
   return breite > 0 && breite < einstellung.einklappbreite;
+}
+
+// Der naechste Schritt, wenn die Reihe nicht in die Karte passt - oder null,
+// wenn es keinen mehr gibt. Erst die Ziele ins Menue, dann vom rechten Ende
+// her die Knoepfe am Rand. Ohne Ziele kommt mit dem Menue gleich der erste.
+//
+// "nie" heisst nie: Wer das Einklappen abgestellt hat, bekommt eine Reihe,
+// die rollt, statt einer, die ihm Knoepfe wegnimmt.
+export function mehrInDieListe(plan, einstellung, einklappbar) {
+  if (!einklappbar || einstellung.einklappen === "never") return null;
+  const kn = einstellung.knoepfe;
+  if (!plan.zu && kn.some((k) => !k.align_end)) return { zu: true, weg: plan.weg };
+  if (plan.weg < kn.filter((k) => k.align_end).length) return { zu: true, weg: plan.weg + 1 };
+  return null;
+}
+
+// Welche Knoepfe in der Liste stehen: eingeklappt die Ziele, dazu die letzten
+// `weg` am Rand.
+export function inDieListe(knoepfe, zu, weg) {
+  if (!zu) return new Set();
+  const amEnde = geordnet(knoepfe).filter((k) => k.align_end);
+  return new Set([...knoepfe.filter((k) => !k.align_end), ...amEnde.slice(amEnde.length - weg)]);
 }
 
 // Das Badge liest NUR die Kurzform. Was hier herauskommt, geht an
@@ -1243,7 +1270,13 @@ class Steuerung extends Basis {
       // und nichts sonst meldet das: Kein Zustand hat sich geaendert, die
       // Adresse nicht, die Karte ist so breit wie vorher. Gemessen am
       // 13.10.2026: Die Kapsel sass 200 Pixel neben ihrem Knopf.
-      this._knopfbeobachter = new ResizeObserver(() => this._setzeKapsel());
+      // Dasselbe gilt fuer das Passen: Als die Karte ihre Breite bekam, waren
+      // die Symbole noch nicht gezeichnet, und die Reihe passte. Gemessen am
+      // 14.10.2026 - danach lief sie 61 Pixel ueber, und niemand sah nach.
+      this._knopfbeobachter = new ResizeObserver(() => {
+        this._setzeKapsel();
+        this._passeBald();
+      });
       this._beobachteKnoepfe();
     }
     this._zeichne();
@@ -1272,6 +1305,7 @@ class Steuerung extends Basis {
     this._beobachtet = [...new Set(this._config.knoepfe
       .flatMap((k) => [k.entity, k.temperature]).filter(Boolean))];
     this._gebaut = null;
+    this._plan = null;
     this._zeichne();
   }
 
@@ -1292,20 +1326,73 @@ class Steuerung extends Basis {
     }
   }
 
+  // Die Reihe muss in die Karte passen. Am 14.10.2026 im Editor gesehen: Mit
+  // neun Knoepfen lief sie 52 Pixel ueber, und der letzte Knopf stand halb
+  // hinter dem Rand - erreichbar nur durch seitliches Rollen, und das sah
+  // niemand. Passt sie nicht, wandert Schritt fuer Schritt mehr in die Liste
+  // unter dem Menueknopf: erst die Ziele, wie "wenn es eng wird" es
+  // verspricht, dann vom rechten Ende her die Knoepfe am Rand.
+  //
+  // Neu geplant wird, wenn sich Breite, Sprache oder Konfiguration aendern -
+  // dann von vorn, damit eine breitere Karte auch wieder auslegt. Ein Wert,
+  // der breiter wird (die Temperatur), schiebt nur weiter in die Liste.
   _zeichne() {
     if (!this._config || !this._hass) return;
     const spr = sprache(this._hass);
-    const zu = this._einklappbar() && eingeklappt(this._config, this._breite);
-    // Neu gebaut wird nur, wenn sich Aufbau, Sprache oder das Einklappen
-    // aendern. Sonst wechseln bloss Werte - der Fokus bleibt, wo er ist.
-    const marke = `${spr}|${zu}`;
-    if (this._gebaut !== marke) {
-      this._eingeklappt = zu;
-      this._baue(spr);
-      this._gebaut = marke;
-      this._beobachteKnoepfe();
+    if (!this._plan || this._plan.spr !== spr || this._plan.breite !== this._breite) {
+      this._plan = { spr, breite: this._breite, weg: 0,
+        zu: this._einklappbar() && eingeklappt(this._config, this._breite) };
     }
+    this._baueNach(this._plan);
     this._stelle(spr);
+    this._passe();
+  }
+
+  _passe() {
+    const plan = this._plan;
+    if (!plan) return;
+    while (this._laeuftUeber() && this._mehrInListe(plan)) {
+      this._baueNach(plan);
+      this._stelle(plan.spr);
+    }
+  }
+
+  // Aus dem Beobachter heraus erst im naechsten Bild: Ein Neubau dort legt
+  // neue Knoepfe unter denselben Beobachter, und der meldete sich noch im
+  // selben Durchlauf - der Browser bricht das mit einer Fehlermeldung ab.
+  _passeBald() {
+    if (this._passtBald) return;
+    this._passtBald = true;
+    requestAnimationFrame(() => {
+      this._passtBald = false;
+      if (this.isConnected) this._passe();
+    });
+  }
+
+  // Neu gebaut wird nur, wenn sich der Plan aendert. Sonst wechseln bloss
+  // Werte - der Fokus bleibt, wo er ist.
+  _baueNach(plan) {
+    const marke = `${plan.spr}|${plan.zu}|${plan.weg}`;
+    if (this._gebaut === marke) return;
+    this._eingeklappt = plan.zu;
+    this._weg = plan.weg;
+    this._baue(plan.spr);
+    this._gebaut = marke;
+    this._beobachteKnoepfe();
+  }
+
+  // Eine Reihe ohne Breite ist nicht gezeichnet (verdeckt, noch nicht
+  // eingehaengt) - dann laesst sich nichts sagen, und es bleibt beim Plan.
+  _laeuftUeber() {
+    const r = this._reihe;
+    return Boolean(r && r.clientWidth > 0 && r.scrollWidth > r.clientWidth + 1);
+  }
+
+  _mehrInListe(plan) {
+    const naechster = mehrInDieListe(plan, this._config, this._einklappbar());
+    if (!naechster) return false;
+    Object.assign(plan, naechster);
+    return true;
   }
 
   _baue(spr) {
@@ -1340,10 +1427,13 @@ class Steuerung extends Basis {
       this._reihe.append(this._menueknopf);
     }
 
+    const reihenfolge = geordnet(c.knoepfe);
+    const liste = inDieListe(c.knoepfe, this._eingeklappt, this._weg || 0);
+
     let fueller = false;
     let davor = null;
-    for (const k of geordnet(c.knoepfe)) {
-      const inListe = this._eingeklappt && !k.align_end;
+    for (const k of reihenfolge) {
+      const inListe = liste.has(k);
       const ziel = inListe ? this._liste : this._reihe;
       if (!inListe && k.align_end && !fueller) {
         ziel.append(neu("span", "fueller"));
@@ -1507,7 +1597,11 @@ class Steuerung extends Basis {
 
   // Symbol, Beschriftung und Name fuer Vorleser - an einer Stelle. Der Text
   // kommt aus der Konfiguration und geht als textContent hinein, nie als HTML.
+  // In der Liste steht ein Funktionsknopf mit Namen da: Eine Spalte aus
+  // Symbolen sagt nicht, was hinter jedem steckt, und einen title sieht auf
+  // dem Tablett niemand.
   _beschrifte(e, symbol, name, titel) {
+    if (!name && e._inListe && e._k?.function) name = titel;
     if (e._symbol.tagName === "HA-ICON") {
       if (symbol) e._symbol.setAttribute("icon", symbol);
       e._symbol.hidden = !symbol;
@@ -1902,6 +1996,172 @@ class Steuerung extends Basis {
   }
 }
 
+// ---- Der Editor ------------------------------------------------------------
+//
+// Home Assistant zeichnet die Liste der Knoepfe selbst (ha-selector-object) und
+// beschriftet jede Zeile mit EINEM Feld, label_field. Am 14.10.2026 aus dem
+// Buendel von 2026.10.1 gelesen:
+//
+//     label = label_field in fields ? format(item[label_field])
+//           : alle Felder, formatiert, mit " · " verbunden
+//
+// Mit name als label_field standen die Funktionsknoepfe als LEERE Zeilen da -
+// sie haben keinen Namen. Ohne label_field stuende "fullscreen · true" da:
+// Eine Auswahl formatiert HA als rohen Wert, einen Schalter als "true".
+//
+// Die Zeile bekommt deshalb zwei Anzeigefelder, die nur im Editor leben. Ihr
+// Waehler ist "constant" mit leerer Beschriftung; HAs ha-selector-constant
+// zeichnet `label ?? value`, und "" ist ein Wert - im Unterformular steht
+// also nichts. Vor jedem config-changed fallen beide wieder heraus. In der
+// Konfiguration landen sie nie.
+const ZEILE = "_zeile";
+const ZEILE_UNTER = "_zeile_unter";
+
+// Was in der Zeile steht: der Name, sonst was der Knopf ist. Darunter, was er
+// tut - aber nur, wenn oben der Name steht, sonst stuende es zweimal da.
+export function knopfZeile(b, index, hass, t) {
+  const name = String(b?.name ?? "").trim();
+  let art = "";
+  if (b?.function) art = t.funktion[b.function] ?? b.function;
+  else if (b?.link) art = b.link;
+  else if (b?.entity) art = hass?.states?.[b.entity]?.attributes?.friendly_name || b.entity;
+  return { titel: name || art || b?.icon || t.knopf(index + 1), unter: name ? art : "" };
+}
+
+export function mitZeilen(config, hass, t) {
+  if (!Array.isArray(config?.buttons)) return config;
+  return {
+    ...config,
+    buttons: config.buttons.map((b, i) => {
+      if (!b || typeof b !== "object") return b;
+      const z = knopfZeile(b, i, hass, t);
+      return { ...b, [ZEILE]: z.titel, [ZEILE_UNTER]: z.unter };
+    }),
+  };
+}
+
+export function ohneZeilen(config) {
+  if (!Array.isArray(config?.buttons)) return config;
+  return {
+    ...config,
+    buttons: config.buttons.map((b) => {
+      if (!b || typeof b !== "object") return b;
+      const { [ZEILE]: _titel, [ZEILE_UNTER]: _unter, ...rest } = b;
+      return rest;
+    }),
+  };
+}
+
+// Das Formular der Karte. mitAnzeige: mit den beiden Anzeigefeldern fuer den
+// eigenen Editor; ohne sie fuer HAs Formular-Editor, falls der einspringt.
+//
+// kiosk_only ist absichtlich so herum benannt, dass "aus" die Vorgabe ist:
+// Ein Schalter im Formular zeigt ein fehlendes Feld als aus. Hiesse es
+// browser_fullscreen mit Vorgabe an, staende der Schalter auf aus, waehrend
+// die Karte das Gegenteil taete. Aus demselben Grund fehlen state_background,
+// light_background und show_highlight: Sie sind von sich aus an.
+export function kartenFormular(t, mitAnzeige) {
+  const wahl = (werte) => ({ select: { mode: "dropdown",
+    options: werte.map((wert) => ({ value: wert, label: t.wahl[wert] })) } });
+  const anzeige = { selector: { constant: { value: "", label: "" } } };
+  return {
+    schema: [
+      // Eine Liste von Objekten, jedes mit eigenem Unterformular - auch das
+      // zeichnet Home Assistant selbst (am 13.10.2026 an 2026.10.1 gesehen:
+      // Zeilen mit Griff, Stift und Papierkorb, darunter "Hinzufuegen").
+      // Die Kurzform `controls` steht hier absichtlich nicht mehr: Sie gilt
+      // im YAML weiter, aber zwei Wege im selben Formular waeren einer zu viel.
+      { name: "buttons",
+        selector: { object: { multiple: true,
+          label_field: mitAnzeige ? ZEILE : "name",
+          description_field: mitAnzeige ? ZEILE_UNTER : "link",
+          fields: {
+            name: { label: t.knopffeld.name, selector: { text: {} } },
+            icon: { label: t.knopffeld.icon, selector: { icon: {} } },
+            link: { label: t.knopffeld.link, selector: { navigation: {} } },
+            entity: { label: t.knopffeld.entity, selector: { entity: {} } },
+            tap_action: { label: t.knopffeld.tap_action, selector: { ui_action: {} } },
+            function: { label: t.knopffeld.function, selector: { select: { mode: "dropdown",
+              options: FUNKTIONEN.map((wert) => ({ value: wert, label: t.funktion[wert] })) } } },
+            temperature: { label: t.knopffeld.temperature, selector: { entity: { domain: "sensor" } } },
+            temperature_source: { label: t.knopffeld.temperature_source, selector: wahl(["sensor", "weather"]) },
+            align_end: { label: t.knopffeld.align_end, selector: { boolean: {} } },
+            separator_before: { label: t.knopffeld.separator_before, selector: { boolean: {} } },
+            ...(mitAnzeige ? { [ZEILE]: anzeige, [ZEILE_UNTER]: anzeige } : {}),
+          } } } },
+      { name: "kiosk_only", selector: { boolean: {} } },
+      { name: "menu_shape", selector: wahl(FORMEN) },
+      { name: "menu_size", selector: wahl(GROESSEN) },
+      { name: "collapse", selector: wahl(EINKLAPPEN) },
+      { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
+    ],
+    computeLabel: (feld) => t.feld[feld.name],
+    computeHelper: (feld) => t.hilfe[feld.name],
+  };
+}
+
+// ha-form ist ein Bauteil von Home Assistant, angemeldet wird es aber erst,
+// wenn ein Editor es braucht. HAs Formular-Editor laedt es selbst; ein eigener
+// Editor muss darum bitten. Das geht ueber den Editor einer HA-Karte, der es
+// mitbringt - loadCardHelpers stellt Home Assistant dafuer bereit.
+//
+//   zurueck  true, sobald ha-form angemeldet ist; false nach drei Sekunden
+async function ladeFormular() {
+  const da = () => Boolean(customElements.get("ha-form"));
+  if (da()) return true;
+  try {
+    const helfer = await window.loadCardHelpers?.();
+    const karte = await helfer?.createCardElement({ type: "entities", entities: [] });
+    await karte?.constructor?.getConfigElement?.();
+  } catch {
+    // Unten wird ohnehin gewartet - vielleicht laedt es jemand anders.
+  }
+  await Promise.race([customElements.whenDefined("ha-form"), new Promise((ok) => setTimeout(ok, 3000))]);
+  return da();
+}
+
+// HAs ha-form mit beschrifteten Zeilen - mehr tut der Editor nicht. Felder,
+// Unterformulare, Liste und Ziehen zeichnet weiter Home Assistant.
+class HatsControlCardEditor extends Basis {
+  setConfig(config) {
+    this._config = ohneZeilen(config);
+    this._zeichne();
+  }
+
+  // hass kommt bei jeder Zustandsaenderung. Neu beschriftet wird nur, wenn
+  // es das erste ist (vorher fehlten die Namen der Entitaeten) oder die
+  // Sprache wechselt.
+  set hass(hass) {
+    const neu = !this._hass || sprache(this._hass) !== sprache(hass);
+    this._hass = hass;
+    if (this._form) this._form.hass = hass;
+    if (neu) this._zeichne();
+  }
+
+  connectedCallback() { this._zeichne(); }
+
+  _zeichne() {
+    if (!this._config || !this.isConnected) return;
+    const t = TEXTE[sprache(this._hass)];
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.addEventListener("value-changed", (ev) => {
+        ev.stopPropagation();
+        this._config = ohneZeilen(ev.detail.value);
+        this.dispatchEvent(new CustomEvent("config-changed",
+          { detail: { config: this._config }, bubbles: true, composed: true }));
+      });
+      this.append(this._form);
+    }
+    const formular = kartenFormular(t, true);
+    this._form.hass = this._hass;
+    this._form.schema = formular.schema;
+    this._form.computeLabel = formular.computeLabel;
+    this._form.computeHelper = formular.computeHelper;
+    this._form.data = mitZeilen(this._config, this._hass, t);
+  }
+}
+
 class HatsControlCard extends Steuerung {
   // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
   // eine leere Liste, waehrend die Vorgabe - Modus und Vollbild - gezeichnet
@@ -1910,45 +2170,18 @@ class HatsControlCard extends Steuerung {
     return { buttons: BEDIENTEILE.map((funktion) => ({ function: funktion })) };
   }
 
-  // Home Assistant baut den Editor aus diesem Schema selbst.
-  //
-  // kiosk_only ist absichtlich so herum benannt, dass "aus" die Vorgabe ist:
-  // Ein Schalter im Formular zeigt ein fehlendes Feld als aus. Hiesse es
-  // browser_fullscreen mit Vorgabe an, staende der Schalter auf aus, waehrend
-  // die Karte das Gegenteil taete.
+  // Home Assistant baut den Editor aus diesem Schema selbst - ueber
+  // getConfigElement unten mit beschrifteten Zeilen, und nur wenn das nicht
+  // geht, ueber dieses Schema allein.
   static getConfigForm() {
-    const t = TEXTE[sprache()];
-    const wahl = (werte) => ({ select: { mode: "dropdown",
-      options: werte.map((wert) => ({ value: wert, label: t.wahl[wert] })) } });
-    return {
-      schema: [
-        // Eine Liste von Objekten, jedes mit eigenem Unterformular - auch das
-        // zeichnet Home Assistant selbst (am 13.10.2026 an 2026.10.1 gesehen:
-        // Zeilen mit Griff, Stift und Papierkorb, darunter "Hinzufuegen").
-        // Die Kurzform `controls` steht hier absichtlich nicht mehr: Sie gilt
-        // im YAML weiter, aber zwei Wege im selben Formular waeren einer zu viel.
-        { name: "buttons",
-          selector: { object: { multiple: true, label_field: "name", description_field: "link",
-            fields: {
-              name: { label: t.knopffeld.name, selector: { text: {} } },
-              icon: { label: t.knopffeld.icon, selector: { icon: {} } },
-              link: { label: t.knopffeld.link, selector: { navigation: {} } },
-              entity: { label: t.knopffeld.entity, selector: { entity: {} } },
-              function: { label: t.knopffeld.function, selector: { select: { mode: "dropdown",
-                options: FUNKTIONEN.map((wert) => ({ value: wert, label: t.funktion[wert] })) } } },
-              temperature: { label: t.knopffeld.temperature, selector: { entity: { domain: "sensor" } } },
-              align_end: { label: t.knopffeld.align_end, selector: { boolean: {} } },
-              separator_before: { label: t.knopffeld.separator_before, selector: { boolean: {} } },
-            } } } },
-        { name: "kiosk_only", selector: { boolean: {} } },
-        { name: "menu_shape", selector: wahl(FORMEN) },
-        { name: "menu_size", selector: wahl(GROESSEN) },
-        { name: "collapse", selector: wahl(EINKLAPPEN) },
-        { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
-      ],
-      computeLabel: (feld) => t.feld[feld.name],
-      computeHelper: (feld) => t.hilfe[feld.name],
-    };
+    return kartenFormular(TEXTE[sprache()], false);
+  }
+
+  static async getConfigElement() {
+    // Ohne ha-form zeichnete der Editor nichts. Dann lieber HAs eigener
+    // Formular-Editor aus getConfigForm - mit leeren Zeilen, aber bedienbar.
+    if (!(await ladeFormular())) return undefined;
+    return document.createElement(EDITOR);
   }
 
   _liesConfig(config) { return pruefeConfig(config); }
@@ -2016,6 +2249,7 @@ if (globalThis.customElements) {
       type: KARTE, name: t.name, description: t.beschreibung, preview: true,
     });
   }
+  if (!customElements.get(EDITOR)) customElements.define(EDITOR, HatsControlCardEditor);
   // Badges fuehrt Home Assistant in einer eigenen Liste. Wer dort fehlt, steht
   // im Badge-Waehler nicht unter "Community-Badges".
   if (!customElements.get(BADGE)) {

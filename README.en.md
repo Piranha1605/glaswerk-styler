@@ -150,8 +150,8 @@ by hand; the log shows the line.
 
 | Field | Default | |
 |---|---|---|
-| `collapse` | `never` | `narrow` or `always`: the targets move into a list under a menu button |
-| `collapse_width` | `500` | with `narrow`: below this **card width**, not window width |
+| `collapse` | `never` | `narrow` or `always`: the targets move into a list under a menu button. If the bar still does not fit, the buttons at the end follow, starting from the right. With `never` the row scrolls sideways instead |
+| `collapse_width` | `500` | with `narrow`: below this **card width**, not window width — and whenever the bar does not fit |
 | `menu_shape` | `theme` | `pill` for fully round ends |
 | `menu_size` | `normal` | `small`, `normal`, `large` |
 | `show_highlight` | `true` | the pill on the current view |
@@ -183,7 +183,8 @@ the same way and under the same conditions:
 
 Only the value you moved is written.
 
-The editor lets you add, sort and edit the buttons:
+The editor lets you add, sort and edit the buttons. Each row shows the
+button's name, or without one its target, entity or function:
 
 ![The editor with the list of buttons](docs/bilder/steuerleiste-editor.jpg)
 

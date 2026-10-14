@@ -904,7 +904,7 @@ buttons:
     link: /dashboard-home
   - entity: light.kueche          # ein Schalter - leuchtet, solange sie an ist
     align_end: true
-  - function: weather             # mode | theme | fullscreen | weather | motion
+  - function: weather             # mode | theme | fullscreen | weather | motion | appearance
     entity: weather.forecast_home
     align_end: true
 collapse: narrow                  # never | narrow | always
@@ -940,7 +940,7 @@ eigene Farbe.
 | Modus | das Ereignis `settheme` |
 | Vollbild | das Ereignis `hass-kiosk-mode` |
 | Meldung | das Ereignis `hass-notification` (HAs Toast) |
-| Editor | `getConfigForm` — Home Assistant zeichnet das Formular selbst |
+| Editor | `ha-form` mit HAs Wählern — Home Assistant zeichnet Liste und Unterformulare selbst |
 
 `tests/hats-steuerkarte.test.js` hält das fest: nur diese drei Bauteile, nur
 diese drei Ereignisse, keine Farbe außer dem Weiß, das auch in
@@ -1344,14 +1344,83 @@ sagt deshalb nur „früher", sobald es über 100 % geht.
 Bewegungsregler — gesetzt wurde es nur beim nächsten Zeichnen. Jetzt beim
 Öffnen und beim Schließen.
 
-**Die Leiste des Nutzers rollt jetzt.** Mit dem neunten Knopf ist die Reihe auf
-`/hats-test/eigene` bei 1024 px um 52 px breiter als die Karte; der neue Knopf
-liegt hinter dem Rand. Eingeklappt wird erst unter 500 px Kartenbreite.
+**Die Leiste des Nutzers lief danach über** — mit dem neunten Knopf 52 px
+breiter als die Karte. Behoben im nächsten Abschnitt.
 
 `tests/hats-steuerkarte-darstellung.test.js`: 22 Prüfungen mit dem echten
 `theme.js` und `glaswerk.yaml`. Die Erwartungen sind Textersetzungen in der
 Datei, keine Aufrufe der Module. Vier Mutationen gegengeprüft, dazu eine für
 die Feldliste des Panels. Am Ende PyYAML.
+
+### Voll lauffähig: beschriftete Zeilen, und die Leiste passt immer
+
+Auf Ansage vom 14.10.2026, mit einem Bild des Editors: *„kannst du die
+steuerkarte und alles was dazu gehört voll lauffähig machen."* Auf dem Bild
+zwei Fehler: vier leere Zeilen in der Liste der Knöpfe, und in der Vorschau
+ein Knopf halb hinter dem rechten Rand.
+
+**Die leeren Zeilen.** Home Assistant zeichnet die Liste selbst
+(`ha-selector-object`) und beschriftet jede Zeile mit **einem** Feld. Aus dem
+Bündel von 2026.10.1 gelesen:
+
+    label = label_field in fields ? format(item[label_field])
+          : alle Felder formatiert, mit " · " verbunden
+
+Mit `name` als `label_field` blieben die Funktionsknöpfe leer — sie haben
+keinen Namen. Ohne `label_field` stünde `fullscreen · true` da: Eine Auswahl
+formatiert HA als rohen Wert, einen Schalter als `true`.
+
+Der Ausweg ist ein **dünner eigener Editor** um HAs `ha-form`
+(`hats-control-card-editor`). Er legt jedem Knopf zwei Anzeigefelder
+`_zeile` und `_zeile_unter` bei, nur solange der Editor offen ist, und nimmt
+sie vor jedem `config-changed` wieder heraus. Ihr Wähler ist `constant` mit
+leerer Beschriftung: `ha-selector-constant` zeichnet `label ?? value`, und
+`""` ist ein Wert — gemessen 0 px hoch im Unterformular. Liste, Ziehen,
+Unterformular und alle Felder zeichnet weiter Home Assistant.
+
+    vorher   Home, Vergleich, Bösel, Alles, Eigene, -, -, -, -
+    nachher  ... Vollbild, Hell / Dunkel, Bewegung des Hintergrunds,
+             Transparenz und Schrift
+
+**`getConfigElement` gewinnt über `getConfigForm`**, aus `hui-element-editor`
+gelesen. Kommt von dort nichts zurück, nimmt HA das Formular — darauf stützt
+sich der Rückfall: Ist `ha-form` nach drei Sekunden nicht angemeldet, gibt
+`getConfigElement` nichts zurück, und es gibt den Editor wie vorher, mit
+leeren Zeilen, aber bedienbar. Auf der Testmaschine war `ha-form` auf jeder
+Seite schon da, auch auf `/map`; der Rückfall ist deshalb **nicht gemessen**.
+
+An der Testmaschine im echten Dialog: alle neun Zeilen beschriftet, das
+Unterformular eines Knopfs mit Bestätigen geschlossen, gemeldet wurde eine
+Konfiguration ohne `_zeile`, und nach Abbrechen stand auf dem Server dasselbe
+wie vorher. Dazu im Unterformular neu: **Aktion beim Antippen** (`ui_action`)
+und **Temperatur aus** (Sensor oder Wetter-Entität). `state_background`,
+`light_background` und `show_highlight` bleiben draußen — sie sind von sich
+aus an, und ein Schalter im Formular zeigt Fehlendes als aus.
+
+**Der Knopf hinter dem Rand.** `collapse: narrow` klappte nach einer festen
+Kartenbreite ein (500 px), nicht danach, ob die Reihe passt. Jetzt plant die
+Karte: Läuft die Reihe über, wandern erst die Ziele ins Menü, dann vom
+rechten Ende her die Knöpfe am Rand — bis sie passt. Funktionsknöpfe stehen
+in der Liste mit Namen, eine Spalte aus Symbolen sagt nichts.
+
+    Karte 693 px     Ziele im Menü, alle fünf am Rand sichtbar   673 / 673
+    Telefon 375 px   dazu Hell/Dunkel, Bewegung, Darstellung in der Liste
+                     Darstellung aus der Liste geöffnet: Regler im Rahmen der Karte
+
+`never` heißt weiter nie: Die Reihe rollt dann, statt Knöpfe wegzunehmen.
+
+**Die Falle dabei:** Der erste Stand prüfte nur, wenn sich die Breite der
+Karte änderte. In dem Moment waren die Symbole noch nicht gezeichnet, die
+Reihe passte, und danach lief sie trotzdem 61 px über. Geprüft wird jetzt
+auch, wenn ein Knopf seine Größe ändert — derselbe Beobachter, der schon die
+Kapsel nachzieht, im nächsten Bild, damit der Neubau ihn nicht im selben
+Durchlauf wieder auslöst. Zurück zu weniger Liste geht es nur bei einer neuen
+Kartenbreite; wird ein Wert schmaler, bleibt es beim Plan.
+
+`tests/hats-steuerkarte-editor.test.js`: 12 Prüfungen, die Leiste des
+Maintainers wörtlich, die Beschriftung nach HAs eigener Regel nachgebaut,
+mit der Gegenprobe, dass es vorher vier leere Zeilen waren. Fünf Mutationen
+gegengeprüft.
 
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 

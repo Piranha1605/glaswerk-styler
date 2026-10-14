@@ -215,7 +215,11 @@ pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
   // Und diese drei sind keine Bauteile, sondern Theme-Felder: Die Regler fuer
   // Transparenz und Schrift lesen und schreiben sie in der Datei.
   const felder = ["ha-card-backdrop-filter", "ha-card-background", "ha-font-size-scale"];
-  assert.deepStrictEqual(tags, [...angelegt, ...gesucht, ...felder].sort());
+  // ha-form legt nur der Editor an. Ist es nach drei Sekunden nicht
+  // angemeldet, gibt getConfigElement nichts zurueck, und HAs eigener
+  // Formular-Editor springt ein - gezeichnet wird also immer etwas.
+  const imEditor = ["ha-form"];
+  assert.deepStrictEqual(tags, [...angelegt, ...gesucht, ...felder, ...imEditor].sort());
 });
 
 pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
@@ -267,12 +271,14 @@ pruefe("Keine eigene Farbe ausser HAs Weiss auf der Auswahl", () => {
   assert.ok(/var\(--ha-color-on-primary-loud, #fff\)/.test(stil[1]));
 });
 
-pruefe("Genau die fuenf Ereignisse von Home Assistant, und die richtigen steigen auf", () => {
-  // Vier gehen ueber _sende, eins haengt an window.
+pruefe("Genau die sechs Ereignisse von Home Assistant, und die richtigen steigen auf", () => {
+  // Vier gehen ueber _sende, eins haengt an window, und eins schickt der
+  // Editor: config-changed, an dem hui-element-editor die neue Konfiguration
+  // abholt.
   const ueberSende = [...new Set([...quelle.matchAll(/this\._sende\("([^"]+)"/g)].map((m) => m[1]))].sort();
   assert.deepStrictEqual(ueberSende, ["hass-action", "hass-more-info", "hass-notification", "settheme"]);
   const direkt = [...new Set([...quelle.matchAll(/new CustomEvent\("([^"]+)"/g)].map((m) => m[1]))].sort();
-  assert.deepStrictEqual(direkt, ["hass-kiosk-mode"]);
+  assert.deepStrictEqual(direkt, ["config-changed", "hass-kiosk-mode"]);
 
   // Home Assistant hoert die vier am Element <home-assistant>. Ohne composed
   // bleiben sie im Shadow Root der Leiste stecken - und nichts passiert, ohne
@@ -356,7 +362,12 @@ pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formula
   // Jede Form hat IHR Formular: das Badge die Auswahl der Bedienteile, die
   // Karte die Liste der Knoepfe. Und der Waehler legt an, was dazu passt.
   assert.ok(/\{ name: "controls", required: true,/.test(badge) && !/name: "buttons"/.test(badge));
-  assert.ok(/\{ name: "buttons",/.test(karte) && !/name: "controls"/.test(karte));
+  // Das Formular der Karte steht seit dem Editor mit beschrifteten Zeilen in
+  // kartenFormular - die Klasse reicht nur durch.
+  const formular = /export function kartenFormular\(t, mitAnzeige\) \{([\s\S]*?)\n\}\n/.exec(quelle);
+  assert.ok(formular, "kartenFormular nicht gefunden");
+  assert.ok(/\{ name: "buttons",/.test(formular[1]) && !/name: "controls"/.test(formular[1]));
+  assert.ok(/return kartenFormular\(TEXTE\[sprache\(\)\], false\);/.test(karte));
   assert.ok(/return \{ controls: \[\.\.\.BEDIENTEILE\] \};/.test(badge));
   assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(karte));
 });

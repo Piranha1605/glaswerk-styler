@@ -153,8 +153,8 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 
 | Feld | Vorgabe | |
 |---|---|---|
-| `collapse` | `never` | `narrow` oder `always`: die Ziele wandern in eine Liste unter einem Menüknopf |
-| `collapse_width` | `500` | bei `narrow`: unter dieser **Kartenbreite**, nicht Fensterbreite |
+| `collapse` | `never` | `narrow` oder `always`: die Ziele wandern in eine Liste unter einem Menüknopf. Passt die Leiste dann noch nicht, folgen die Knöpfe am Rand, vom rechten Ende her. Mit `never` rollt die Reihe stattdessen seitlich |
+| `collapse_width` | `500` | bei `narrow`: unter dieser **Kartenbreite**, nicht Fensterbreite — und immer, wenn die Leiste nicht passt |
 | `menu_shape` | `theme` | `pill` für ganz runde Enden |
 | `menu_size` | `normal` | `small`, `normal`, `large` |
 | `show_highlight` | `true` | die Kapsel auf der aktuellen Ansicht |
@@ -186,7 +186,9 @@ dieselbe Weise und mit denselben Bedingungen:
 
 Geschrieben wird nur der Wert, an dem gezogen wurde.
 
-Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten:
+Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten. Jede Zeile
+nennt den Knopf beim Namen, und ohne Namen beim Ziel, der Entität oder der
+Funktion:
 
 ![Der Editor mit der Liste der Knöpfe](docs/bilder/steuerleiste-editor.jpg)
 
