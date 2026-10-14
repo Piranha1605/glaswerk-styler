@@ -479,6 +479,67 @@ export const KARTENSTILE = [
     braucht: { hintergrund: true },
   },
   {
+    id: "liquid",
+    de: "Liquid Glass", en: "Liquid Glass",
+    zweckDe: "Dicke Scheibe: heller Saum rundum, schraeger Lichtstreifen, tiefer Schatten. Der Grund scheint durch.",
+    zweckEn: "A thick pane: bright rim all round, a diagonal sheen, a deep shadow. The ground shows through.",
+    // Am 14.10.2026 an der Testmaschine gebaut, auf Ansage: "so muss fuer
+    // mich eine glaskarte aussehen", mit einem Bild daneben. Drei Durchgaenge
+    // gegen das Bild, hell und dunkel, auf dem Hintergrund "Lavendel".
+    //
+    // Was diesen Stil von "Glas" unterscheidet, sind drei Dinge - und alle
+    // drei gehen mit gewoehnlichen Theme-Feldern, ohne UI eXtension:
+    //
+    // 1. --ha-card-background ist kein einzelner rgba-Wert, sondern ZWEI
+    //    Ebenen. ha-card liest background (die Kurzform), also darf dort
+    //    alles stehen, was CSS als Hintergrund kennt. Oben ein schraeger
+    //    Verlauf - das ist der Lichtstreifen, der die Scheibe erst dick
+    //    aussehen laesst -, darunter eine kuehle Grundtoenung.
+    // 2. Der Saum laeuft RUNDUM, nicht nur oben: inset 0 0 0 1px. "Glas"
+    //    setzt nur eine Lichtkante oben und eine dunkle unten; dadurch sieht
+    //    es aus wie eine Flaeche mit Kante, nicht wie eine Scheibe mit Rand.
+    // 3. Die Unterkante ist HELL, nicht dunkel. Die Trennung nach unten macht
+    //    der aeussere Schatten, in drei Stufen - 1 px fuer die Kante, 24 px
+    //    fuer die Naehe, 60 px fuer den Raum darunter.
+    flach: { "--ha-card-backdrop-filter": "blur(34px) saturate(200%)",
+             "--ha-card-border-radius": "26px",
+             // Kein Rahmen: Der Saum steckt im Schatten. Ein zusaetzlicher
+             // Rahmen laege AUSSERHALB des Saums und machte zwei Linien.
+             "--ha-card-border-width": "0", "--ha-card-border-color": "",
+             "--app-header-backdrop-filter": "blur(22px) saturate(170%)" },
+    light: { "--ha-card-background":
+               "linear-gradient(150deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.32) 32%, " +
+               "rgba(255,255,255,.16) 58%, rgba(255,255,255,.42) 100%), " +
+               "linear-gradient(0deg, rgba(186,202,234,.24), rgba(186,202,234,.24))",
+             "--ha-card-box-shadow":
+               "inset 0 1.5px 0 rgba(255,255,255,1), inset 0 0 0 1px rgba(255,255,255,.72), " +
+               "inset 0 -1px 0 rgba(255,255,255,.50), 0 1px 2px rgba(26,40,72,.08), " +
+               "0 10px 24px rgba(26,40,72,.13), 0 28px 60px rgba(26,40,72,.15)",
+             "--ha-dialog-surface-background": "rgba(255,255,255,.88)",
+             "--mdc-dialog-scrim-color": "rgba(16,24,44,.30)",
+             "--sidebar-background-color": "rgba(255,255,255,.42)",
+             "--app-header-background-color": "rgba(255,255,255,.34)",
+             // DECKEND: Auswahllisten und Menues lesen dieses Feld, und sie
+             // haben nichts, durch das sie scheinen koennten.
+             "--card-background-color": "#ffffff" },
+    // Im Dunkeln traegt das Licht die Kante, nicht der Schatten - deshalb ein
+    // deutlich hellerer Saum und ein viel tieferer Schatten als im Hellen.
+    dark:  { "--ha-card-background":
+               "linear-gradient(150deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.055) 34%, " +
+               "rgba(255,255,255,.02) 58%, rgba(255,255,255,.075) 100%), " +
+               "linear-gradient(0deg, rgba(20,26,46,.44), rgba(20,26,46,.44))",
+             "--ha-card-box-shadow":
+               "inset 0 1.5px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(255,255,255,.15), " +
+               "inset 0 -1px 0 rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.35), " +
+               "0 10px 26px rgba(0,0,0,.45), 0 30px 64px rgba(0,0,0,.50)",
+             "--ha-dialog-surface-background": "rgba(26,29,43,.90)",
+             "--mdc-dialog-scrim-color": "rgba(0,0,0,.54)",
+             "--sidebar-background-color": "rgba(18,20,32,.46)",
+             "--app-header-background-color": "rgba(18,20,32,.36)",
+             "--card-background-color": "#1a1d2b" },
+    braucht: { hintergrund: true },
+  },
+  {
     id: "macos",
     de: "macOS", en: "macOS",
     zweckDe: "Apples Material: staerker weichgezeichnet, deckender als Glas, mit Haarlinie und weitem Schatten.",
