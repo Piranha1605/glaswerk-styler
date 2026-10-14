@@ -11,9 +11,6 @@ Angelegt am 13.10.2026 fuer einen Film und eine Vorankuendigung.
 | [`2026-10-13-baukasten-seite-karten.jpg`](2026-10-13-baukasten-seite-karten.jpg) | Die Seite einer Sorte: das gewaehlte Teil oben, darunter die Stellschrauben und die sechs Tweaks, die zu Karten gehoeren. Ein Klick auf eine Kachel wendet an und oeffnet diese Seite. |
 | [`2026-10-13-kopie-laeuft.jpg`](2026-10-13-kopie-laeuft.jpg) | Die ueber das Panel gebaute Kopie, geladen und gemessen: 52 von 52 UIX-Knoten gefuellt, alle Werte identisch mit der laufenden Theme. |
 | [`2026-10-13-startseite-wege.jpg`](2026-10-13-startseite-wege.jpg) | Die Startseite mit vier grossen Wegen statt einem Satz in der Mitte. Der Zaehler nennt die Themes auf der Instanz, 'Mit dem Baukasten' legt eine Theme an und oeffnet ihn in einem Zug. |
-| [`2026-10-14-vergleich-1-vorher.jpg`](2026-10-14-vergleich-1-vorher.jpg) | Home Assistant pur, dunkel - dieselben Karten ohne Theme |
-| [`2026-10-14-vergleich-2-nur-felder.jpg`](2026-10-14-vergleich-2-nur-felder.jpg) | Theme macos, nur die Felder - Apples Farben, Glas, Rundungen, Schatten. Kein UIX. |
-| [`2026-10-14-vergleich-3-mit-uix.jpg`](2026-10-14-vergleich-3-mit-uix.jpg) | Dieselbe Theme mit UI eXtension - Trennlinien, Glas auf den Karten, Kopf- und Seitenleiste |
 
 ## Die drei Vergleichsbilder vom 14.10.2026
 
@@ -30,8 +27,18 @@ Gemessen beim dritten Bild, damit die Bildunterschrift nicht behauptet, was
 nicht da ist: 48 uix-node-Knoten, 40 gefuellt, neun Stilziele mit dreizehn
 Vorlagen.
 
-**Was man auf den Bildern NICHT sieht:** `glas-seitenleiste`. Die Seitenleiste
-war bei dieser Fensterbreite eingeklappt (gemessen: 0 px breit). Ihre Wirkung
-steht also in keinem der drei Bilder - das gehoert dazugesagt, statt sie in die
-Unterschrift zu schreiben.
+**Die Seitenleiste ist dabei**, auf Ansage neu aufgenommen. Beim ersten Versuch
+war sie bei 800 px Fensterbreite eingeklappt (gemessen: 0 px) und
+`glas-seitenleiste` stand in keinem Bild. Bei 1000 x 700 ist sie 255 px breit,
+und der Unterschied zwischen dem zweiten und dem dritten Bild ist genau dort am
+deutlichsten: Die aktive Zeile wird zur Pille im Akzent, die Flaeche bekommt
+`blur(24px) saturate(1.7)` - beides gemessen, nicht am Bild abgelesen.
 
+Die Fenstergroesse ist dafuer **emuliert**, nicht die des Bereichs. Bei 1000 x
+700 fuellt die Seite den ganzen Screenshot; waehlt man sie groesser, rendert
+der eingebaute Browser sie in die obere linke Ecke und der Rest bleibt
+schwarz.
+
+| [`2026-10-14-vergleich-1-vorher.jpg`](2026-10-14-vergleich-1-vorher.jpg) | Home Assistant pur, dunkel - dieselben Karten und dieselbe Seitenleiste, ohne Theme |
+| [`2026-10-14-vergleich-2-nur-felder.jpg`](2026-10-14-vergleich-2-nur-felder.jpg) | Theme macos, nur die Felder - Apples Farben, Glas, Rundungen, Schatten. Die Seitenleiste bleibt HAs eigene. |
+| [`2026-10-14-vergleich-3-mit-uix.jpg`](2026-10-14-vergleich-3-mit-uix.jpg) | Dieselbe Theme mit UI eXtension - die Seitenleiste wird zu Glas, die aktive Zeile zur Pille, dazu Trennlinien und Glas auf den Karten |
