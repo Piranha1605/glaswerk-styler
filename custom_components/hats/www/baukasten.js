@@ -819,9 +819,34 @@ export const RUNDUNGEN = [
 //
 // Die Leiter wird also nicht nur gesetzt, sie wird auch gelesen.
 
+// Die Leiter allein macht die Karten NICHT kleiner. Am 14.10.2026 gemessen,
+// nachdem gemeldet wurde, sie seien zu gross - dieselbe Ansicht bei 3, 4 und
+// 5 px je Stufe:
+//
+//     Kachel, Mushroom   120 / 120 / 120     unveraendert
+//     entities           230 / 217 / 204
+//     glance             201 / 190 / 179
+//
+// Eine Kachel haengt an der RASTERZEILE, nicht am Polster: 120 px sind zwei
+// Zeilen zu 56 plus 8 Luecke. Ein Teil, das "Eng" heisst und daran nichts
+// aendert, verspricht mehr als es haelt - deshalb setzt die Dichte seitdem
+// auch die Zeile und die Luecke zwischen den Karten.
+//
+//     Zeile     8 * schritt + 24     3:48  4:56  5:64  6:72
+//     Luecke    2 * schritt          3:6   4:8   5:10  6:12
+//
+// Bei vier Pixeln je Stufe kommen genau HAs eigene Werte heraus (56 und 8),
+// also bleibt das Teil "Home Assistant" das, was es behauptet.
+//
+// Die Luecken ZWISCHEN den Abschnitten ruehrt die Dichte nicht an - die
+// aendern die Luft um die Spalten, nicht die Groesse einer Karte. Sie stehen
+// als eigene Felder in Stufe 3.
 function abstandsLeiter(schritt) {
   const f = {};
   for (let i = 1; i <= 20; i++) f[`--ha-space-${i}`] = `${schritt * i}px`;
+  f["--ha-section-grid-row-height"] = `${8 * schritt + 24}px`;
+  f["--ha-section-grid-row-gap"] = `${2 * schritt}px`;
+  f["--ha-section-grid-column-gap"] = `${2 * schritt}px`;
   return f;
 }
 
@@ -829,29 +854,29 @@ export const DICHTEN = [
   {
     id: "eng",
     de: "Eng", en: "Tight",
-    zweckDe: "Drei Pixel je Stufe. Mehr auf den Schirm, enger beieinander.",
-    zweckEn: "Three pixels per step. More on screen, closer together.",
+    zweckDe: "Drei Pixel je Stufe, Zeilenhoehe 48. Mehr auf den Schirm.",
+    zweckEn: "Three pixels per step, row height 48. More on screen.",
     felder: abstandsLeiter(3),
   },
   {
     id: "ha",
     de: "Home Assistant", en: "Home Assistant",
-    zweckDe: "Wie ausgeliefert: vier Pixel je Stufe.",
-    zweckEn: "As shipped: four pixels per step.",
+    zweckDe: "Wie ausgeliefert: vier Pixel je Stufe, Zeilenhoehe 56.",
+    zweckEn: "As shipped: four pixels per step, row height 56.",
     felder: abstandsLeiter(4),
   },
   {
     id: "weit",
     de: "Weit", en: "Roomy",
-    zweckDe: "Fuenf Pixel je Stufe. Luftiger, und mit dem Finger leichter zu treffen.",
-    zweckEn: "Five pixels per step. Airier, and easier to hit with a finger.",
+    zweckDe: "Fuenf Pixel je Stufe, Zeilenhoehe 64. Mit dem Finger leichter zu treffen.",
+    zweckEn: "Five pixels per step, row height 64. Easier to hit with a finger.",
     felder: abstandsLeiter(5),
   },
   {
     id: "sehr-weit",
     de: "Sehr weit", en: "Very roomy",
-    zweckDe: "Sechs Pixel je Stufe. Fuer Wandtablets, aus zwei Metern Abstand.",
-    zweckEn: "Six pixels per step. For wall tablets, seen from two metres away.",
+    zweckDe: "Sechs Pixel je Stufe, Zeilenhoehe 72. Fuer Wandtablets.",
+    zweckEn: "Six pixels per step, row height 72. For wall tablets.",
     felder: abstandsLeiter(6),
   },
 ];
@@ -939,9 +964,21 @@ export const SORTEN_FELDER = {
     { v: "--ha-card-border-radius", de: "Karten", en: "Cards", art: "mass", min: 0, max: 40 },
   ],
   // Die vierte Stufe polstert den Karteninhalt (gemessen an ha-card), also
-  // die Zahl, die man am ehesten drehen will.
+  // die Zahl, die man am ehesten drehen will. Die Zeilenhoehe steht daneben,
+  // weil sie die Hoehe JEDER Kachel macht - und die Luecke, weil sie dasselbe
+  // fuer den Zwischenraum tut.
+  //
+  // Dass die drei hier stehen und nicht nur in den Teilen, hat einen zweiten
+  // Grund: erkenneTeil ueberspringt im zweiten Durchgang die Regler einer
+  // Sorte. Eine Theme von vor dem 14.10.2026 traegt die Rasterfelder noch
+  // nicht - ohne diese Zeilen verloere sie ihren Haken bei der Dichte, obwohl
+  // sich an ihr nichts geaendert hat. Mit ihnen passt weiter genau ein Teil,
+  // denn die Leiter selbst unterscheidet die vier.
   dichte: [
     { v: "--ha-space-4", de: "Kartenpolster", en: "Card padding", art: "mass", min: 0, max: 40 },
+    { v: "--ha-section-grid-row-height", de: "Zeilenhoehe", en: "Row height", art: "mass", min: 24, max: 96 },
+    { v: "--ha-section-grid-row-gap", de: "Luecke untereinander", en: "Gap, stacked", art: "mass", min: 0, max: 32 },
+    { v: "--ha-section-grid-column-gap", de: "Luecke nebeneinander", en: "Gap, side by side", art: "mass", min: 0, max: 32 },
   ],
   palette: [], hintergrund: [], oberflaeche: [],
 };

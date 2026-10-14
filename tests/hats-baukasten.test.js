@@ -428,18 +428,58 @@ pruefe("Jede Dichte setzt alle zwanzig Stufen, linear", () => {
   // Home Assistant haelt die Leiter linear: vier Pixel mal n. Ein Teil
   // multipliziert also nur den Schritt - eine Stufe, die aus der Reihe
   // faellt, waere in jedem Polster sichtbar.
+  const RASTER = ["--ha-section-grid-row-height", "--ha-section-grid-row-gap",
+                  "--ha-section-grid-column-gap"];
   for (const t of DICHTEN) {
     const k = Object.keys(t.felder || {});
-    assert.strictEqual(k.length, 20, `${t.id}: nicht zwanzig Stufen`);
+    assert.strictEqual(k.length, 20 + RASTER.length, `${t.id}: falsche Feldzahl`);
     const schritt = parseInt(t.felder["--ha-space-1"], 10);
     assert.ok(schritt > 0, `${t.id}: Schritt null`);
     for (let i = 1; i <= 20; i++)
       assert.strictEqual(t.felder[`--ha-space-${i}`], `${schritt * i}px`, `${t.id}: Stufe ${i}`);
+    // Das Raster haengt am selben Schritt. Ohne diese drei waere "Eng" ein
+    // Name ohne Wirkung: an der Instanz gemessen bleibt eine Kachel bei 3, 4
+    // und 5 px je Stufe auf 120 px, weil ihre Hoehe aus der Zeile kommt.
+    for (const n of RASTER) assert.ok(t.felder[n], `${t.id}: ${n} fehlt`);
+    assert.strictEqual(t.felder["--ha-section-grid-row-height"], `${8 * schritt + 24}px`,
+      `${t.id}: Zeilenhoehe nicht am Schritt`);
+    assert.strictEqual(t.felder["--ha-section-grid-row-gap"], `${2 * schritt}px`,
+      `${t.id}: Zeilenluecke nicht am Schritt`);
+    assert.strictEqual(t.felder["--ha-section-grid-column-gap"], `${2 * schritt}px`,
+      `${t.id}: Spaltenluecke nicht am Schritt`);
   }
   // Und einer davon ist Home Assistants eigener - sonst kaeme man nicht
-  // zurueck.
+  // zurueck. Beim Raster heisst das: genau die Ausweichwerte, die in
+  // hui-grid-section stehen (am 14.10.2026 aus elementStyles gelesen).
   const ha = DICHTEN.find((t) => t.id === "ha");
   assert.ok(ha && ha.felder["--ha-space-4"] === "16px", "die ausgelieferte Dichte fehlt");
+  assert.strictEqual(ha.felder["--ha-section-grid-row-height"], "56px", "HAs Zeilenhoehe");
+  assert.strictEqual(ha.felder["--ha-section-grid-row-gap"], "8px", "HAs Zeilenluecke");
+  assert.strictEqual(ha.felder["--ha-section-grid-column-gap"], "8px", "HAs Spaltenluecke");
+});
+
+pruefe("Eine Theme ohne die Rasterfelder behaelt ihren Haken bei der Dichte", () => {
+  // Die Gegenprobe zum Umbau vom 14.10.2026. Jede Theme von vorher traegt die
+  // drei Rasterfelder nicht. Ohne sie darf die Dichte trotzdem erkannt werden
+  // - sonst haette ein Umbau am Baukasten jeder bestehenden Datei einen Haken
+  // genommen, ohne dass an ihr etwas geaendert wurde.
+  const m = leer();
+  const schreibe = schreiberFuer(m);
+  teilAnwenden("dichte", DICHTEN.find((t) => t.id === "weit"), schreibe);
+  const lies = leserFuer(m);
+  assert.strictEqual(erkenneTeil("dichte", lies), "weit", "frisch gebaut nicht erkannt");
+
+  // Jetzt die drei Felder herausnehmen, wie in einer alten Datei.
+  for (const n of ["--ha-section-grid-row-height", "--ha-section-grid-row-gap",
+                   "--ha-section-grid-column-gap"]) {
+    delete m.beide[n]; delete m.light[n]; delete m.dark[n];
+  }
+  assert.strictEqual(erkenneTeil("dichte", leserFuer(m)), "weit", "alte Datei verliert den Haken");
+
+  // Gegenprobe: Es ist nicht so, dass die Dichte gar nicht mehr geprueft wird.
+  // Eine Leiter, die zu keinem Teil gehoert, bleibt ohne Haken.
+  m.beide["--ha-space-7"] = "99px";
+  assert.strictEqual(erkenneTeil("dichte", leserFuer(m)), null, "fremde Leiter erkannt");
 });
 
 pruefe("Rundung, Dichte und Kartenstil stehen nebeneinander", () => {

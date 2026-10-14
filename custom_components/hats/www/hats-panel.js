@@ -342,7 +342,7 @@ const STUFEN = [
       ] },
     ] },
 
-  { n: 3, titel: "Form", symbol: "mdi:border-radius", kurz: "Rundung, Rahmen, Abstaende, Schatten, Knoepfe",
+  { n: 3, titel: "Form", symbol: "mdi:border-radius", kurz: "Rundung, Rahmen, Abstaende, Raster, Schatten, Knoepfe",
     marke: "#c2c8d2", stand: "wartet", gruppen: [
       // Masse sind in beiden Modi gleich - HA setzt sie einmal in
       // core.globals.ts. Nur die Schatten unterscheiden sich.
@@ -392,6 +392,35 @@ const STUFEN = [
         { t: "18", art: "mass", v: "--ha-space-18", ebene: "beide", min: 0, max: 216 },
         { t: "19", art: "mass", v: "--ha-space-19", ebene: "beide", min: 0, max: 228 },
         { t: "20", art: "mass", v: "--ha-space-20", ebene: "beide", min: 0, max: 240 } ] },
+      // Das Raster der Sections-Ansicht. Am 14.10.2026 gemessen, nachdem
+      // gemeldet wurde, die Karten seien zu gross - und die Abstandsleiter
+      // darueber daran nichts aenderte: eine Kachel blieb bei 3, 4 und 5 px
+      // je Stufe auf 120 px. Ihre Hoehe kommt aus der Rasterzeile.
+      //
+      // Elf Namen, alle elf von HA NICHT vorbelegt - der Ausweichwert im
+      // Bauteil ist die einzige Quelle, und ein Wert am html kommt an:
+      //
+      //     hui-grid-section   --row-height: var(--ha-section-grid-row-height, 56px)
+      //     hui-sections-view  --row-height: var(--ha-view-sections-row-height, 56px)
+      //
+      // Die Karten liegen in der Section, also gewinnt deren Zeile. Gemessen:
+      // --ha-section-grid-row-height 40px laesst die Kachel von 120 auf 88 px
+      // fallen, --ha-view-sections-row-height 40px bewegt sie um keinen Pixel.
+      // Das zweite bedient nur die Hilfsflaechen im Bearbeitungsmodus; es
+      // steht hier trotzdem, weil es gelesen wird - mit dem Namen, der sagt,
+      // wofuer.
+      { name: "Raster", felder: [
+        { t: "Zeilenhoehe", art: "mass", v: "--ha-section-grid-row-height", ebene: "beide", min: 24, max: 96 },
+        { t: "Zeilenluecke", art: "mass", v: "--ha-section-grid-row-gap", ebene: "beide", min: 0, max: 32 },
+        { t: "Spaltenluecke", art: "mass", v: "--ha-section-grid-column-gap", ebene: "beide", min: 0, max: 32 },
+        { t: "Abschnitte untereinander", art: "mass", v: "--ha-view-sections-row-gap", ebene: "beide", min: 0, max: 64 },
+        { t: "Abschnitte nebeneinander", art: "mass", v: "--ha-view-sections-column-gap", ebene: "beide", min: 0, max: 80 },
+        { t: "Abschnitt schmalste Breite", art: "mass", v: "--ha-view-sections-column-min-width", ebene: "beide", min: 160, max: 640 },
+        { t: "Abschnitt breiteste Breite", art: "mass", v: "--ha-view-sections-column-max-width", ebene: "beide", min: 240, max: 960 },
+        { t: "Abschnitte nebeneinander, schmal", art: "mass", v: "--ha-view-sections-narrow-column-gap", ebene: "beide", min: 0, max: 48 },
+        { t: "Luft ueber der ersten Zeile", art: "mass", v: "--ha-view-sections-extra-top-margin", ebene: "beide", min: 0, max: 160 },
+        { t: "Rundung der Abschnitte", art: "mass", v: "--ha-section-border-radius", ebene: "beide", min: 0, max: 48 },
+        { t: "Zeilenhoehe im Bearbeiten", art: "mass", v: "--ha-view-sections-row-height", ebene: "beide", min: 24, max: 96 } ] },
       // Schatten stehen in semantic.globals.ts zweimal, je Modus verschieden.
       { name: "Schatten", felder: [
         { t: "Klein", art: "text", v: "--ha-box-shadow-s", ebene: "getrennt" },
@@ -874,6 +903,7 @@ const ZWECK = {
   "Rundung": "Wie weich die Ecken sind, von klein bis Karte",
   "Rahmen": "Breite und Farbe der Kanten",
   "Abstaende": "Luft zwischen den Dingen",
+  "Raster": "Die Zeilenhoehe, aus der jede Karte ihre Hoehe bekommt",
   "Schatten": "Tiefe in drei Stufen, je Modus verschieden",
 
   "Leise": "Kaum sichtbare Flaeche, etwa hinter einem Eintrag",
@@ -1072,7 +1102,7 @@ const TEXTE = {
     "Feinschliff": "Polish", "Ausgabe": "Output",
     "Name, Grundlage, Akzent, Textfarben, Schrift": "Name, base, accent, text colours, font",
     "Hintergrund, Karten, Dialoge, Leisten": "Background, cards, dialogs, bars",
-    "Rundung, Rahmen, Abstaende, Schatten": "Radius, borders, spacing, shadows",
+    "Rundung, Rahmen, Abstaende, Raster, Schatten, Knoepfe": "Radius, borders, spacing, grid, shadows, buttons",
     "Lautstaerken, Ueberfahren, Druecken": "Loudness, hover, press",
     "Form, Groesse, Zustandsfarben": "Shape, size, state colours",
     "Bubble Card und Mushroom anbinden": "Wire up Bubble Card and Mushroom",

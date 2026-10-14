@@ -126,6 +126,31 @@ teilAnwenden("dichte", teil("dichte", "weit"), schreibe);
 teilAnwenden("karten", teil("karten", "glas"), schreibe);
 teilAnwenden("hintergrund", teil("hintergrund", "glaswerk"), schreibe);
 
+// --- Die Rasterzeile unter dem, was "weit" vorgibt -------------------------
+//
+// Gemeldet am 14.10.2026: "ich glaub die karten sind etwas gross". Gemessen,
+// woran das haengt - und es war nicht das Polster: dieselbe Ansicht bei 3, 4
+// und 5 px je Stufe liess eine Kachel auf 120 px stehen. Die Hoehe kommt aus
+// der Rasterzeile der Section, und die stand bis dahin auf HAs 56, weil die
+// Dichte sie gar nicht anfasste.
+//
+// Seit demselben Tag tut sie es, und "weit" hiesse 64 - also MEHR als vorher.
+// Das waere die falsche Richtung. Deshalb bleibt das Polster bei fuenf Pixeln
+// je Stufe, und nur die Zeile geht auf 48:
+//
+//     Zeile 64   Kachel 134     zu wuchtig
+//     Zeile 56   Kachel 120     der Stand, der zu gross war
+//     Zeile 48   Kachel 104     an der Instanz verglichen, hell und dunkel
+//
+// Das Polster ist der Innenraum einer Karte und entscheidet, ob man mit dem
+// Finger trifft; die Zeile ist ihre Hoehe. Der Vorwurf galt der Hoehe.
+//
+// Die Theme behaelt dabei ihren Haken bei "Dichte: weit" - erkenneTeil
+// ueberspringt im zweiten Durchgang die Felder, die die Sorte als Regler
+// fuehrt, und die Zeilenhoehe ist seit dem 14.10.2026 eines davon. Genau
+// dafuer ist der zweite Durchgang da: Der Baukasten laedt zum Drehen ein.
+schreibe("--ha-section-grid-row-height", "48px", "beide");
+
 // --- Schrift auf kuehlem Grund ---------------------------------------------
 //
 // ENTSCHEIDUNG. ha_blanko bringt HAs eigene Schriftfarben mit, und die sind

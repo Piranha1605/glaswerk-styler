@@ -2297,6 +2297,72 @@ Beim Anlegen zu beachten: **`--state-climate-fan_only-color` traegt einen
 Unterstrich**, die uebrigen Bindestriche. Wer die Namen aus der Domaene
 zusammensetzt statt sie auszulesen, verliert genau diesen.
 
+## Wie gross eine Karte ist, entscheidet die Rasterzeile — nicht das Polster
+
+Am 14.10.2026 gemeldet: *„ich glaub die karten sind etwas gross"*. Der
+naheliegende Hebel war die Abstandsleiter, und er ist der falsche. Dieselbe
+Ansicht bei drei, vier und fuenf Pixeln je Stufe:
+
+    Kachel, Mushroom   120 / 120 / 120     unveraendert
+    entities           230 / 217 / 204
+    glance             201 / 190 / 179
+    gauge              202 / 201 / 199
+
+Eine Kachel haengt nicht am Polster. 120 px sind **zwei Rasterzeilen zu 56
+plus 8 Luecke**, und die Zeile kommt aus der Sections-Ansicht.
+
+**Elf Namen, und HA setzt keinen davon.** Aus `elementStyles` gelesen:
+
+```css
+hui-grid-section  :host { --row-height: var(--ha-section-grid-row-height, 56px);
+                          --row-gap:    var(--ha-section-grid-row-gap, 8px);
+                          --column-gap: var(--ha-section-grid-column-gap, 8px) }
+hui-sections-view :host { --row-height: var(--ha-view-sections-row-height, 56px);
+                          --row-gap:    var(--ha-view-sections-row-gap, 24px);
+                          --column-gap: var(--ha-view-sections-column-gap, 32px);
+                          --column-min-width: var(--ha-view-sections-column-min-width, 320px);
+                          --column-max-width: var(--ha-view-sections-column-max-width, 500px) }
+```
+
+Alle elf stehen als `(leer)` am `html` — der Ausweichwert im Bauteil ist die
+einzige Quelle, also **ist** er die Vorgabe, und ein Theme-Feld kommt an. Kein
+UIX noetig: Das Bauteil liest eine Variable, und die erbt durch jede Grenze.
+
+**Welche davon die Karten traegt, ist eine Messung, keine Lesart.** Die beiden
+`row-height` sehen gleich aus und sind es nicht:
+
+    --ha-section-grid-row-height  40px   Kachel 120 -> 88
+    --ha-view-sections-row-height 40px   Kachel 120 -> 120, kein Pixel
+
+Die Karten liegen in der Section, also gewinnt deren Zeile. Das Feld der
+Ansicht bedient nur die Hilfsflaechen im Bearbeitungsmodus. Es steht trotzdem
+im Panel, mit dem Namen, der sagt wofuer — ein gelesenes Feld zu verschweigen
+waere dasselbe Loch wie die 86 Zustandsfarben.
+
+**Was daraus fuer den Baukasten folgt.** Das Teil „Dichte" setzte bis dahin
+nur `--ha-space-1` bis `-20` und liess die Karten, wie sie waren. „Eng" war
+damit ein Name ohne Wirkung. Seitdem setzt es die Zeile und die beiden
+Luecken dazu, am selben Schritt:
+
+    Zeile     8 * schritt + 24     3:48  4:56  5:64  6:72
+    Luecke    2 * schritt          3:6   4:8   5:10  6:12
+
+Bei vier Pixeln kommen genau HAs eigene Werte heraus, also bleibt das Teil
+„Home Assistant" das, was es behauptet.
+
+**Eine Theme von vorher darf ihren Haken nicht verlieren.** Dieselbe Regel wie
+beim Hintergrund und `fixed`: Ein Umbau am Baukasten darf einer bestehenden
+Datei nichts nehmen, an der sich nichts geaendert hat. Die drei Rasterfelder
+stehen deshalb zugleich in `SORTEN_FELDER.dichte`, und `erkenneTeil`
+ueberspringt die Regler einer Sorte im zweiten Durchgang. Die Leiter allein
+unterscheidet die vier Teile weiter eindeutig. Zwei Pruefungen halten es fest,
+mit der Gegenprobe, dass eine fremde Leiter trotzdem ohne Haken bleibt.
+
+**Was die Theme NICHT erreicht: Karten, die sich selbst bemessen.** Die
+Horizon-Widgets melden `rows: "auto"` und standen bei einer Zeile von 32, 48
+und 80 px unveraendert auf 200 bzw. 304. Wer die kleiner haben will, aendert
+die Dashboard-Konfiguration oder die Karte, nicht die Theme.
+
 ## Rezepte aus dem Netz zielen auf MDC — das gibt es in 2026 nicht mehr
 
 Am 14.10.2026 an der Testmaschine nachgesehen, nachdem vier Sammlungen von

@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 20:40:43
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 21:03:14
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # FASSUNG 1 - eingefroren, damit man sie gegen die naechste stellen kann.
@@ -203,6 +203,9 @@ glaswerk_v1:
   ha-line-height-expanded: "2"
   ha-line-height-normal: "1.6"
   ha-moz-osx-font-smoothing: "grayscale"
+  ha-section-grid-column-gap: "10px"
+  ha-section-grid-row-gap: "10px"
+  ha-section-grid-row-height: "48px"
   ha-space-1: "5px"
   ha-space-10: "50px"
   ha-space-11: "55px"
