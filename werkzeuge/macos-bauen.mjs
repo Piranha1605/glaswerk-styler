@@ -36,7 +36,14 @@ import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
 import { PALETTEN, teilAnwenden } from "../custom_components/hats/www/baukasten.js";
 import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergrund.js";
 
-const NAME = "macos";
+// Mit --ohne-uix entsteht dieselbe Theme ohne ein einziges Stilziel.
+//
+// Sie ist kein zweites Produkt, sondern das MITTLERE Bild eines Vergleichs:
+// vorher (Home Assistant pur), nur die Felder, und dann mit UIX. Ohne den
+// mittleren Schritt schreibt man den Vorlagen zu, was die Felder getan haben -
+// und das ist bei HATS der groessere Teil.
+const OHNE_UIX = process.argv.includes("--ohne-uix");
+const NAME = OHNE_UIX ? "macos_ohne_uix" : "macos";
 
 // --- Die Grundlage ---------------------------------------------------------
 const roh = readFileSync("docs/beispiele/ha-blanko.yaml", "utf8");
@@ -177,12 +184,12 @@ for (const quelle of [RUNDUNG, FLAECHE, SCHATTEN]) {
 // einen zweiten Saum mit festen Hell-Werten UEBER die Flaeche, und die Kante
 // kommt hier schon aus --ha-card-box-shadow, je Modus.
 const NICHT_AN = ["glas-lichtkante"];
-for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
+if (!OHNE_UIX) for (const v of VORLAGEN) if (!NICHT_AN.includes(v.id)) vorlageAn(m, v);
 
 // Die Farbpunkte bewegen sich, wie in liquid_glass - aber ruhiger. Apples
 // Oberflaeche bewegt sich nicht von selbst; was hier laeuft, soll man erst
 // bemerken, wenn man eine Weile hinsieht.
-vorlageAn(m, bewegung({ drift: 0, punkte: 4, farbe: 3, weite: 40 }, { punkte: true }));
+if (!OHNE_UIX) vorlageAn(m, bewegung({ drift: 0, punkte: 4, farbe: 3, weite: 40 }, { punkte: true }));
 
 // --- Der Kopf --------------------------------------------------------------
 const version = /VERSION = "([^"]+)"/.exec(
@@ -192,6 +199,13 @@ m.kopf = [
   `Erzeugt mit HATS ${version} am ${heute}`,
   "Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)",
   "",
+  ...(OHNE_UIX ? [
+    "OHNE UI eXtension. Dieselbe Theme wie macos, aber ohne ein einziges",
+    "Stilziel - nur die Felder. Sie ist das mittlere Bild eines Vergleichs,",
+    "kein zweites Produkt: Ohne diesen Schritt schreibt man den Vorlagen zu,",
+    "was die Felder getan haben.",
+    "",
+  ] : []),
   "macOS. Apples Systemfarben auf Home Assistant, gebaut mit",
   "werkzeuge/macos-bauen.mjs - also mit HATS' eigenen Funktionen.",
   "",
@@ -214,7 +228,7 @@ const zurueck = leseTheme(text);
 const nochmal = schreibeTheme(zurueck.modell ?? zurueck);
 const idempotent = text === nochmal;
 
-console.log(`${gesetzt} Felder gesetzt, ${VORLAGEN.length - NICHT_AN.length} Vorlagen an`);
+console.log(`${gesetzt} Felder gesetzt, ${OHNE_UIX ? 0 : VORLAGEN.length - NICHT_AN.length} Vorlagen an`);
 console.log(`${text.length} Bytes, ${text.split("\n").length} Zeilen`);
 console.log(`idempotent: ${idempotent ? "ja" : "NEIN"}`);
 if (!idempotent) process.exit(1);
