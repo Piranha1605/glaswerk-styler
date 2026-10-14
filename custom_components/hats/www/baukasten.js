@@ -34,6 +34,7 @@
 export const PALETTEN = [
   {
     id: "ha",
+    gruppe: "richtung",
     de: "Home Assistant", en: "Home Assistant",
     zweckDe: "HAs eigene Toene, unveraendert. Der Ausgangspunkt, wenn nichts auffallen soll.",
     zweckEn: "Home Assistant's own tones, unchanged. The starting point when nothing should stand out.",
@@ -60,6 +61,7 @@ export const PALETTEN = [
   },
   {
     id: "liquid",
+    gruppe: "richtung",
     de: "Liquid Glass", en: "Liquid Glass",
     zweckDe: "HAs Palette, violetter Akzent. Der Ton der Projektwerkbank.",
     zweckEn: "Home Assistant's palette, violet accent. The tone of the project workbench.",
@@ -88,6 +90,7 @@ export const PALETTEN = [
   },
   {
     id: "warm",
+    gruppe: "richtung",
     de: "Warm", en: "Warm",
     zweckDe: "Bernstein und Terrakotta. Fuer Wohnraeume, in denen Blau kalt wirkt.",
     zweckEn: "Amber and terracotta. For living spaces where blue feels cold.",
@@ -99,6 +102,7 @@ export const PALETTEN = [
   },
   {
     id: "kuehl",
+    gruppe: "richtung",
     de: "Kuehl", en: "Cool",
     zweckDe: "Teal auf grauem Neutral. Ruhig, ohne das Blau von Home Assistant.",
     zweckEn: "Teal on grey neutral. Calm, without Home Assistant's blue.",
@@ -106,10 +110,81 @@ export const PALETTEN = [
     akzent: { light: "#00897b", dark: "#2dd4bf" },
   },
   {
+    id: "blau",
+    gruppe: "richtung",
+    de: "Blau", en: "Blue",
+    zweckDe: "Ein klares Blau. Naeher an Material als HAs eigenes Cyan.",
+    zweckEn: "A clear blue. Closer to Material than Home Assistant's own cyan.",
+    farben: { primary: "#2196f3", neutral: "#9e9e9e", red: "#f44336", green: "#4caf50", orange: "#ff9800" },
+    akzent: { light: "#1976d2", dark: "#64b5f6" },
+  },
+  {
+    id: "gruen",
+    gruppe: "richtung",
+    de: "Gruen", en: "Green",
+    zweckDe: "Gruen als Marke. Die Zustandsfarben bleiben davon unberuehrt.",
+    zweckEn: "Green as the brand colour. State colours stay as they are.",
+    // Primaer und die Rolle "green" liegen hier dicht beieinander - das ist der
+    // Preis einer gruenen Marke. Anders als bei Warm, wo Primaer und Orange
+    // denselben Wert tragen, bleiben sie hier wenigstens zwei Toene.
+    farben: { primary: "#4caf50", neutral: "#9e9e9e", red: "#f44336", green: "#2e9e52", orange: "#ff9800" },
+    akzent: { light: "#388e3c", dark: "#81c784" },
+  },
+  {
+    id: "orange",
+    gruppe: "richtung",
+    de: "Orange", en: "Orange",
+    zweckDe: "HAs eigenes Orange als Marke - heller und klarer als Warm.",
+    zweckEn: "Home Assistant's own orange as the brand colour - brighter and cleaner than Warm.",
+    // Nicht dasselbe wie "Warm": Das traegt #f36d00, ein gedecktes Terrakotta.
+    // Hier steht HAs --orange-color, also Material Orange 500.
+    farben: { primary: "#ff9800", neutral: "#9e9e9e", red: "#f44336", green: "#4caf50", orange: "#fb8c00" },
+    akzent: { light: "#ef6c00", dark: "#ffb74d" },
+  },
+  {
+    id: "grau",
+    gruppe: "richtung",
+    de: "Grau", en: "Grey",
+    zweckDe: "Blaugrau als Marke. Ruhig, aber nicht farblos wie Monochrom.",
+    zweckEn: "Blue-grey as the brand colour. Calm, but not colourless like Monochrome.",
+    // Der Unterschied zu Monochrom: Dort ist der AKZENT grau und die Farbe kommt
+    // allein aus den Geraeten. Hier ist die Marke ein Blaugrau, die Akzentfarbe
+    // also sichtbar - nur eben leise.
+    farben: { primary: "#607d8b", neutral: "#9e9e9e", red: "#f44336", green: "#4caf50", orange: "#ff9800" },
+    akzent: { light: "#455a64", dark: "#90a4ae" },
+  },
+  {
+    id: "mono",
+    gruppe: "richtung",
+    de: "Monochrom", en: "Monochrome",
+    zweckDe: "Nur Graustufen als Akzent. Die Farbe kommt dann allein aus den Geraeten.",
+    zweckEn: "Greyscale accent only. Colour then comes from the devices alone.",
+    // Bewusst KEIN graues Rot oder Gruen: Zustandsfarben muessen
+    // unterscheidbar bleiben, sonst sieht eine Stoerung aus wie Normalbetrieb.
+    farben: { primary: "#7a7a7a", neutral: "#989898", red: "#f3676c", green: "#00ac49", orange: "#f36d00" },
+    akzent: { light: "#4a4a4a", dark: "#ccc" },
+  },
+  // ---------------------------------------------------------------------------
+  // Uebernommene Paletten
+  //
+  // Nicht erfunden und nicht aus dem Gedaechtnis: Jede hat unten ihre Quelle.
+  // Apple ist GEMESSEN (werkzeuge/test/macos-farben.swift und -ios.swift), die
+  // uebrigen sind veroeffentlichte Werte, am 14.10.2026 von der jeweiligen
+  // Quelle geholt.
+  //
+  // Zwei Regeln bei der Zuordnung auf HATS' fuenf Rollen, beide aus derselben
+  // Einsicht: Die Rampe steht FLACH, gilt also fuer hell und dunkel zugleich.
+  //   - Je Rolle EIN Ton, und zwar der gesaettigte. Die hellen und dunklen
+  //     Stufen rechnet palette.js daraus; wer den blassen Dunkelmodus-Ton
+  //     nimmt, bekommt im Hellen eine blasse Rampe.
+  //   - Der Akzent ist die einzige Groesse, die je Modus verschieden sein darf -
+  //     dort stehen deshalb die beiden Fassungen der Palette, wo es sie gibt.
+  {
     id: "macos",
+    gruppe: "uebernommen",
     de: "macOS", en: "macOS",
-    zweckDe: "Apples Systemfarben, an macOS 26 ausgelesen. Blau, Grau und die drei Zustandstoene.",
-    zweckEn: "Apple's system colours, read from macOS 26. Blue, grey and the three state tones.",
+    zweckDe: "Apples Systemfarben, an macOS 26 und iOS ausgelesen. Beide tragen dieselben.",
+    zweckEn: "Apple's system colours, read from macOS 26 and iOS. Both carry the same ones.",
     // GEMESSEN, nicht abgeschrieben: werkzeuge/test/macos-farben.swift liest
     // die NSColor-Werte je Erscheinungsbild aus. Am 14.10.2026 an macOS 26.5.2
     // gelaufen - und die bekannten Werte aus aelteren Versionen stimmen nicht
@@ -118,6 +193,16 @@ export const PALETTEN = [
     //     systemRed     #ff3b30  ->  #ff383c
     //     systemBlue    #007aff  ->  #0088ff (hell) / #0091ff (dunkel)
     //     systemOrange  #ff9500  ->  #ff8d28
+    //
+    // UND ES GIBT KEINE ZWEITE APPLE-PALETTE. Am 14.10.2026 auch iOS gemessen,
+    // ueber Mac Catalyst (werkzeuge/test/ios-farben.swift): Alle dreizehn
+    // Systemfarben sind Wert fuer Wert dieselben wie unter macOS. Ein eigener
+    // Eintrag "iOS" waere eine Kopie mit anderem Namen.
+    //
+    // Was sich WIRKLICH unterscheidet, sind die Graustufen: iOS hat die Leiter
+    // systemGray2 bis systemGray6 (hell #aeaeb2 … #f2f2f7, dunkel #636366 …
+    // #1c1c1e), macOS hat sie nicht. Fuer HATS spielt das keine Rolle - die
+    // Rolle "neutral" ist systemGray, und der ist auf beiden #8e8e93.
     //
     // Der Primaerton ist bewusst controlAccentColor und nicht systemBlue: Die
     // Rampe steht FLACH, gilt also fuer beide Modi, und controlAccentColor ist
@@ -147,16 +232,103 @@ export const PALETTEN = [
     dark:  { "--primary-text-color": "#dddddd", "--secondary-text-color": "#9a9a9a",
              "--divider-color": "rgba(255, 255, 255, 0.098)" },
   },
+
+  // ---------------------------------------------------------------------------
+  // Vier Richtungen, nach Farbe benannt
+  //
+  // Die Grundtoene sind Home Assistants eigene klassische Toene, am 14.10.2026
+  // am laufenden Stylesheet ausgelesen (--blue-color, --green-color,
+  // --orange-color, --blue-grey-color). Sie sind identisch mit Material Design
+  // 500; die Akzente nehmen deshalb 700 und 300 aus derselben Rampe, hell und
+  // dunkel. Nichts davon ist von mir erfunden.
+  //
+  // Rot, Gruen und Orange bleiben dabei stehen, wie bei Warm und Kuehl: Eine
+  // Stoerung muss sich von Normalbetrieb unterscheiden lassen, und ein
+  // durchgehend eingefaerbtes Schema macht genau das unmoeglich.
   {
-    id: "mono",
-    de: "Monochrom", en: "Monochrome",
-    zweckDe: "Nur Graustufen als Akzent. Die Farbe kommt dann allein aus den Geraeten.",
-    zweckEn: "Greyscale accent only. Colour then comes from the devices alone.",
-    // Bewusst KEIN graues Rot oder Gruen: Zustandsfarben muessen
-    // unterscheidbar bleiben, sonst sieht eine Stoerung aus wie Normalbetrieb.
-    farben: { primary: "#7a7a7a", neutral: "#989898", red: "#f3676c", green: "#00ac49", orange: "#f36d00" },
-    akzent: { light: "#4a4a4a", dark: "#ccc" },
+    id: "android",
+    gruppe: "uebernommen",
+    de: "Android", en: "Android",
+    zweckDe: "Material 3, die Grundfarben von Google. Violett auf gedecktem Neutral.",
+    zweckEn: "Material 3 baseline from Google. Violet on a muted neutral.",
+    // Material 3 rechnet normalerweise alles aus EINEM Startton; "Baseline" ist
+    // der Rueckfall, wenn die dynamische Farbe aus ist. Genau so arbeitet HATS
+    // auch - ein Ton je Rolle, den Rest rechnet palette.js. Die Uebernahme ist
+    // hier also naeher am Original als eine Tabelle es waere.
+    //
+    // Startton #6750a4 und Fehlerfarbe #b3261e sind die Baseline-Werte. Gruen
+    // und Orange gibt es in M3 nicht als Rolle - dort stehen Googles eigene
+    // Material-Toene (Green 500, Orange 500), damit "laeuft" und "Warnung"
+    // unterscheidbar bleiben.
+    farben: { primary: "#6750a4", neutral: "#625b71", red: "#b3261e", green: "#4caf50", orange: "#ff9800" },
+    // Baseline hell und dunkel, beide veroeffentlicht.
+    akzent: { light: "#6750a4", dark: "#d0bcff" },
   },
+  {
+    id: "nord",
+    gruppe: "uebernommen",
+    de: "Nord", en: "Nord",
+    zweckDe: "Arktisches Blaugrau. Gedeckt, kuehl, sehr ruhig.",
+    zweckEn: "Arctic blue-grey. Muted, cool, very calm.",
+    // nordtheme.com/docs/colors-and-palettes, am 14.10.2026 geholt.
+    // primary  nord10 #5e81ac   neutral nord3  #4c566a
+    // red      nord11 #bf616a   green   nord14 #a3be8c   orange nord12 #d08770
+    //
+    // Nord hat KEINE mittleren Grautoene: Zwischen nord3 (#4c566a) und nord4
+    // (#d8dee9) klafft die halbe Helligkeitsskala. Als Basis steht deshalb
+    // nord3 da und die Rampe rechnet nach oben - ein erfundener Mittelton waere
+    // kein Nord mehr.
+    farben: { primary: "#5e81ac", neutral: "#4c566a", red: "#bf616a", green: "#a3be8c", orange: "#d08770" },
+    akzent: { light: "#5e81ac", dark: "#88c0d0" },
+  },
+  {
+    id: "solarized",
+    gruppe: "uebernommen",
+    de: "Solarized", en: "Solarized",
+    zweckDe: "Der Klassiker von 2011 - als Paar aus Hell und Dunkel entworfen.",
+    zweckEn: "The 2011 classic - designed as a light and dark pair from the start.",
+    // ethanschoonover.com/solarized, am 14.10.2026 geholt.
+    // Solarized ist die einzige hier, die von Anfang an BEIDE Modi meinte: Die
+    // acht Grundtoene sind so gewaehlt, dass dieselben Akzentfarben auf hellem
+    // und dunklem Grund funktionieren. base00 #657b83 ist der Mittelton - genau
+    // das, was eine flache Rampe braucht.
+    farben: { primary: "#268bd2", neutral: "#657b83", red: "#dc322f", green: "#859900", orange: "#cb4b16" },
+    akzent: { light: "#268bd2", dark: "#2aa198" },
+  },
+  {
+    id: "catppuccin",
+    gruppe: "uebernommen",
+    de: "Catppuccin", en: "Catppuccin",
+    zweckDe: "Pastellig, violett getoent. Die heute meistgenutzte Entwicklerpalette.",
+    zweckEn: "Pastel, violet-tinted. Today's most widely used developer palette.",
+    // github.com/catppuccin/palette, am 14.10.2026 geholt.
+    //
+    // Catppuccin hat vier Geschmaecker; die Rollen nehmen die GESAETTIGTEN
+    // Werte aus Latte (hell), nicht die Pastelltoene aus Mocha. Grund: Die
+    // Rampe rechnet die hellen Stufen selbst, aus Mocha's #f38ba8 wuerde im
+    // Hellen ein ausgewaschenes Rosa. Der AKZENT zeigt dafuer beide - Latte
+    // Mauve hell, Mocha Mauve dunkel.
+    farben: { primary: "#8839ef", neutral: "#6c7086", red: "#d20f39", green: "#40a02b", orange: "#fe640b" },
+    akzent: { light: "#8839ef", dark: "#cba6f7" },
+  },
+  {
+    id: "gruvbox",
+    gruppe: "uebernommen",
+    de: "Gruvbox", en: "Gruvbox",
+    zweckDe: "Warm, retro, erdig. Senf und Terrakotta auf Braun.",
+    zweckEn: "Warm, retro, earthy. Mustard and terracotta on brown.",
+    // github.com/morhetz/gruvbox, colors/gruvbox.vim, am 14.10.2026 geholt.
+    // Die "neutral"-Reihe, nicht die bright- oder faded-Reihe: Sie liegt in der
+    // Mitte und taugt damit als Basis fuer eine Rampe in beide Richtungen.
+    //
+    // Gruvbox' Blau (#458588) ist kein Blau im ueblichen Sinn, sondern ein
+    // gedecktes Petrol - das ist die Palette, nicht ein Fehler bei der
+    // Uebernahme. Der Akzent nimmt dafuer das Orange, mit dem man Gruvbox
+    // erkennt.
+    farben: { primary: "#458588", neutral: "#928374", red: "#cc241d", green: "#98971a", orange: "#d65d0e" },
+    akzent: { light: "#af3a03", dark: "#fe8019" },
+  },
+
 ];
 
 // ---------------------------------------------------------------------------

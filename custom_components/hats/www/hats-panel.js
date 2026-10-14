@@ -813,6 +813,11 @@ function ansichtSchreiben(v) {
 
 const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 
+// Wie die Untergruppen einer Baukasten-Sorte heissen. Steht hier und nicht in
+// baukasten.js, weil es eine Sache der Oberflaeche ist - die Daten tragen nur
+// die Kennung.
+const GRUPPEN_TITEL = { richtung: "Richtung", uebernommen: "Uebernommen" };
+
 const felderZahl = (st) => st.gruppen.reduce((n, g) => n + g.felder.length, 0);
 const felderGesamt = STUFEN.reduce((n, st) => n + felderZahl(st), 0);
 
@@ -947,6 +952,7 @@ const TEXTE = {
     "Beide Modi": "Both modes", "Alle anbinden": "Wire up all",
     "Zuordnungen eingetragen": "mappings written", "Toene": "tones", "Aenderungen": "changes", "Speichern": "Save",
     "bietet das Panel an": "the panel offers",
+    "Richtung": "Direction", "Uebernommen": "Adopted",
     "Grundlage nicht geladen: ": "Base not loaded: ",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
     "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
@@ -1228,14 +1234,25 @@ class HatsPanel extends HTMLElement {
         <section class="bk-sorte">
           <h3>${name}${vorlagen ? ` <span class="bk-zahl">${anV}/${vorlagen} ${T("Tweaks")}</span>` : ""}</h3>
           <div class="bk-teile">
-            ${s.teile.map((teil) => {
+            ${s.teile.map((teil, i) => {
               const an = sitzt[schluessel] === teil.id;
+              // Eine Zwischenueberschrift, sobald die Gruppe wechselt. Seit dem
+              // 14.10.2026 stehen bei den Farben zwei Sorten in einer Liste:
+              // eine RICHTUNG (Warm, Blau, Monochrom - eine Stimmung) und eine
+              // UEBERNOMMENE (macOS, Nord, Solarized - eine Herkunft). Ohne die
+              // Trennung sucht man "Nord" zwischen "Warm" und "Kuehl".
+              //
+              // Nur die Sorten, die Gruppen tragen, bekommen eine - Schrift,
+              // Karten und Hintergrund haben keine.
+              const vorher = i ? s.teile[i - 1].gruppe : null;
+              const kopf = teil.gruppe && teil.gruppe !== vorher
+                ? `<h4 class="bk-untertitel">${T(GRUPPEN_TITEL[teil.gruppe] || teil.gruppe)}</h4>` : "";
               // Zehn Hintergruende mit Namen allein sind nicht zu
               // unterscheiden. Der Streifen zeigt die vier Farben des Teils -
               // im Modus, in dem der Nutzer gerade sitzt, sonst waere er eine
               // Auskunft ueber den anderen.
               const v = teil.vorschau && teil.vorschau[dunkel ? "dark" : "light"];
-              return `
+              return kopf + `
               <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}>
                 ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
@@ -3199,6 +3216,13 @@ class HatsPanel extends HTMLElement {
                      text-transform: uppercase; color: var(--s-tinte-leise); }
       .bk-teile { display: grid; gap: 10px;
                   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+      /* Die Zwischenueberschrift laeuft ueber alle Spalten - ohne
+         grid-column stuende sie als schmale Kachel in der ersten. Die erste
+         braucht keinen Abstand nach oben, die folgenden schon. */
+      .bk-untertitel { grid-column: 1 / -1; margin: 14px 0 0 4px; font-size: 11.5px;
+                       font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+                       color: var(--s-tinte-leise); }
+      .bk-untertitel:first-child { margin-top: 0; }
       .bk-teil { position: relative; text-align: left; cursor: pointer; font: inherit;
                  display: flex; flex-direction: column; gap: 4px;
                  background: var(--s-karte); color: var(--s-tinte);
