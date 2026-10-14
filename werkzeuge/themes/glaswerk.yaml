@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 21:03:14
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 21:38:04
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -1037,12 +1037,67 @@ glaswerk:
 
        opacity bleibt bei 1 statt bei HAs .12 - sonst traegt die Pille keine
        Farbe, und genau das war der gemeldete Fehler. Die Akzentfarbe ist je Modus
-       im Theme gesetzt, der Block gilt also fuer beide. */
+       im Theme gesetzt, der Block gilt also fuer beide.
+
+       DER VERLAUF, auf Ansage vom 14.10.2026: "im alten hatg konnten wir die
+       aktiven buttons mit einem farbverlauf belegen".
+
+       Beide Stufen kommen aus EINEM Feld. Der naheliegende Weg - Akzent nach
+       --primary-color - waere im Hellmodus fast unsichtbar gewesen, an glaswerk
+       gemessen:
+
+           dunkel   #5ab4f7 -> #2190e9    deutlich
+           hell     #2196f3 -> #2190e9    sechs Einheiten Unterschied
+
+       Weil --accent-color je Modus gesetzt ist und --primary-color flach, laufen
+       die beiden im Hellmodus zusammen. color-mix auf dem Akzent selbst haengt
+       dagegen an nur einem Feld: Wer den Akzent aendert, bekommt den ganzen
+       Verlauf mit. Weiss und Schwarz sind hier keine Farben der Theme, sondern
+       das Aufhellen und Abdunkeln - deshalb stehen sie fest.
+
+       background-color BLEIBT stehen: Ein Browser ohne color-mix zeigt dann die
+       flache Akzentflaeche statt gar keine. */
     ha-list-item-button.selected::before,
     .selected::before {
       border-radius: 999px !important;
       background-color: var(--accent-color) !important;
+      background-image: linear-gradient(135deg,
+        color-mix(in srgb, var(--accent-color) 82%, white),
+        color-mix(in srgb, var(--accent-color) 78%, black)) !important;
       opacity: 1 !important;
+    }
+
+    /* Eingeklappt sitzen die Symbole mittig.
+
+       Gemeldet am 14.10.2026 mit einem Bild der schmalen Leiste: "erstens sind
+       die icons nicht mittig". Gemessen, und es ist unsere Leiter:
+
+           ha-sidebar ha-list-item-button { width: var(--ha-space-12);
+                                            margin: 0 var(--ha-space-1) ...;
+                                            --ha-row-item-padding-inline: var(--ha-space-3) }
+           ha-icon[slot=start] { width: var(--ha-space-6) }
+
+       Bei HAs vier Pixeln je Stufe geht die Rechnung genau auf: 48 + 2*4 = 56,
+       und das ist die Schiene. Die Schiene selbst steht aber FEST - in
+       home-assistant-main als calc(56px + safe-area-inset-left), also an einem
+       Element, das ein Theme-Feld am html nicht erreicht. Bei fuenf Pixeln je
+       Stufe wird der Eintrag 60 breit, das Symbol sitzt bei 5+15+15 = 35, und die
+       Schienenmitte liegt bei 27,5. Gemessen: 7,5 px zu weit rechts.
+
+       Gerechnet wird deshalb aus der Schiene zurueck, nicht aus der Leiter. Bei
+       vier Pixeln je Stufe kommt wieder HAs eigener Stand heraus (46 und 8 statt
+       48 und 12, Symbolmitte 28 wie vorher), bei jeder anderen Dichte sitzt es
+       mittig statt daneben.
+
+       MAX-WIDTH UND NICHT WIDTH, und das ist der Punkt, an dem drei Versuche
+       scheiterten: Auf width liegt HAs eigenes transition: width .25s. Eine
+       Breite von aussen wird davon aufgefressen - selbst inline mit !important
+       blieb der Knopf bei 60 (gemessen, dreimal). max-width wird nicht
+       mitanimiert und greift sofort. */
+    :host(:not([expanded])) ha-list-item-button {
+      max-width: calc(var(--ha-sidebar-width, 56px) - 2 * var(--ha-space-1)) !important;
+      --ha-row-item-padding-inline: calc(
+        (var(--ha-sidebar-width, 56px) - 2 * var(--ha-space-1) - var(--ha-space-6)) / 2) !important;
     }
 
     /* Schrift und Symbol auf der Akzentflaeche. HA faerbt beide mit

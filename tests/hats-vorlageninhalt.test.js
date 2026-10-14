@@ -295,4 +295,51 @@ pruefe("Keine Jinja-Zeichen in einer Vorlage", () => {
   }
 });
 
+pruefe("Die Seitenleiste zentriert ueber max-width, nicht ueber width", () => {
+  // Gemeldet am 14.10.2026 mit einem Bild der schmalen Leiste: "erstens sind
+  // die icons nicht mittig". Die Ursache ist unsere Abstandsleiter - HAs
+  // Kette (48 + 2*4 = 56) ist genau auf vier Pixel je Stufe getrimmt, die
+  // Schiene steht dagegen fest.
+  //
+  // Und die Behebung hat eine eigene Falle: Auf width liegt HAs
+  // "transition: width .25s". Eine Breite von aussen wird davon
+  // aufgefressen - selbst inline mit !important blieb der Knopf bei 60,
+  // dreimal gemessen. max-width wird nicht mitanimiert.
+  const sb = VORLAGEN.find((v) => v.id === "glas-seitenleiste");
+  assert.ok(sb, "glas-seitenleiste gibt es nicht mehr");
+  const regel = sb.css.slice(sb.css.indexOf(":host(:not([expanded]))"));
+  assert.ok(regel.startsWith(":host(:not([expanded]))"), "die Regel fuer die schmale Leiste fehlt");
+  const block = regel.slice(0, regel.indexOf("}") + 1);
+  assert.match(block, /max-width:/, "zentriert nicht ueber max-width");
+  assert.doesNotMatch(block, /(^|[^-])width:\s*calc/m,
+    "setzt width - das frisst HAs eigene transition auf");
+  // Gerechnet wird aus der Schiene, nicht aus der Leiter: Sonst waere das
+  // Ergebnis wieder an die Dichte gekoppelt, und genau die war das Problem.
+  assert.match(block, /--ha-sidebar-width/, "rechnet nicht aus der Schiene");
+  assert.match(block, /--ha-row-item-padding-inline/, "ruecke das Symbol nicht ein");
+});
+
+pruefe("Der Verlauf der Seitenleiste haengt am Akzent, nicht an festen Farben", () => {
+  // Auf Ansage vom 14.10.2026: "im alten hatg konnten wir die aktiven buttons
+  // mit einem farbverlauf belegen". Eine Vorlage liest Theme-Felder, sie
+  // nagelt keine Farben fest - sonst aendert der Nutzer den Akzent und der
+  // Verlauf bleibt stehen.
+  const sb = VORLAGEN.find((v) => v.id === "glas-seitenleiste");
+  const ab = sb.css.indexOf("background-image: linear-gradient");
+  assert.ok(ab > -1, "der Verlauf fehlt");
+  const block = sb.css.slice(ab, sb.css.indexOf(";", ab));
+  // Beide Stufen kommen aus --accent-color.
+  assert.strictEqual((block.match(/var\(--accent-color\)/g) || []).length, 2,
+    "nicht beide Stufen haengen am Akzent");
+  // Kein Hex und kein rgb() im Verlauf - white und black sind das Aufhellen
+  // und Abdunkeln, keine Farben der Theme.
+  assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, "feste Hexfarbe im Verlauf");
+  assert.doesNotMatch(block, /\brgba?\(/i, "feste rgb-Farbe im Verlauf");
+  // Und die flache Flaeche bleibt als Rueckfall stehen: Ein Browser ohne
+  // color-mix zeigt sonst gar nichts.
+  const vor = sb.css.slice(sb.css.indexOf(".selected::before"));
+  assert.match(vor.slice(0, vor.indexOf("}")), /background-color:\s*var\(--accent-color\)/,
+    "ohne color-mix bliebe die Pille leer");
+});
+
 console.log(`\n${n} Pruefungen`);
