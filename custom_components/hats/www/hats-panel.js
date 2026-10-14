@@ -27,7 +27,7 @@ import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teile
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
-import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau,
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, seiteHatInhalt,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
@@ -1446,6 +1446,10 @@ class HatsPanel extends HTMLElement {
         // passiert - und es sieht nicht nach einem Fehler aus, sondern nach
         // einem Wert, der nicht haelt.
         if (b.classList.contains("an")) {
+          // Hat die Sorte keine Unterseite, ist hier nichts zu tun: Das Teil
+          // sitzt schon, und eine Seite, die nur es selbst zeigt, waere ein
+          // Klick ins Leere.
+          if (!seiteHatInhalt(sorte)) return;
           this._bkSeite = sorte;
           this.zeichneBaukasten();
           return;
@@ -1473,9 +1477,14 @@ class HatsPanel extends HTMLElement {
 
         ZUSTAND.meldung = { art: "gut",
           text: `${this.spr === "en" ? teil.en : teil.de} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
-        // Anwenden UND oeffnen, nicht zweimal klicken lassen: Wer ein Teil
+ // Anwenden UND oeffnen, nicht zweimal klicken lassen: Wer ein Teil
         // waehlt, will als Naechstes sehen, was daran noch zu drehen ist.
-        this._bkSeite = sorte;
+        //
+        // Ausser es gibt nichts zu drehen. Bei den Farben stand dann eine
+        // Seite da, auf der nur dieselbe Kachel noch einmal lag - am
+        // 14.10.2026 gemeldet. Jetzt bleibt die Liste stehen, und der Haken,
+        // der auf das neue Teil springt, ist die Rueckmeldung.
+        if (seiteHatInhalt(sorte)) this._bkSeite = sorte;
         this.zeichneBaukasten();
         this.zeichneZaehler();
         // Die Meldung steht auf der Seite HINTER dem Dialog - sie wird erst
@@ -3186,18 +3195,41 @@ class HatsPanel extends HTMLElement {
       /* ---- Pop-up: Geschwister von .buehne, damit kein backdrop-filter darueber liegt ---- */
       .overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; }
       .overlay[hidden] { display: none; }
-      .schleier { position: absolute; inset: 0; background: rgba(16,28,45,.38); opacity: 0;
+      /* ---- Das Pop-up, im Stil des Panels ----
+         Bis zum 14.10.2026 war es eine flache Flaeche in #f7f8fb, waehrend das
+         Fenster dahinter aus Glas war. Auf Ansage angeglichen: dieselbe
+         Glasflaeche, derselbe Lichtsaum oben, dieselbe Rundung.
+         Der Schleier ist dafuer heller geworden. Bei .38 nahm das Glas den
+         dunklen Schleier an und wurde grau - es soll aber den blauen Verlauf
+         und die Wolken aufnehmen, sonst ist es kein Glas, sondern Milch.
+
+         UND DAS GEHT HIER, weil die beiden .overlay GESCHWISTER von .buehne
+         sind, nicht Kinder (siehe Kopf der Datei). Ein backdrop-filter macht
+         sein Element zum Bezugsrahmen fuer alles, was darin position:fixed
+         ist - in .dialog steht nichts dergleichen, und die Feldseite liegt
+         NEBEN der Stufenseite, nicht darin. */
+      .schleier { position: absolute; inset: 0; background: rgba(16,28,45,.26); opacity: 0;
                   transition: opacity .18s ease; }
       .overlay.da .schleier { opacity: 1; }
       .dialog { position: relative; width: min(1180px, 100%); max-height: 100%; overflow: auto;
-                border-radius: var(--s-r-gross); background: #f7f8fb;
-                box-shadow: 0 40px 90px rgba(10,22,40,.42);
+                border-radius: var(--s-r-gross); background: var(--s-glas-innen);
+                -webkit-backdrop-filter: blur(30px) saturate(1.6);
+                backdrop-filter: blur(30px) saturate(1.6);
+                box-shadow: 0 40px 90px rgba(10,22,40,.34), inset 0 1px 0 var(--s-kante);
                 transform: translateY(10px) scale(.985); opacity: 0;
                 transition: transform .2s ease, opacity .2s ease; }
       .overlay.da .dialog { transform: none; opacity: 1; }
 
+      /* Der Kopf klebt oben, waehrend der Inhalt darunter wegrollt - er
+         braucht deshalb eine eigene Weichzeichnung. Mit blosser Deckkraft
+         saehe man den Text durchscheinen. 14px statt 30: Er liegt schon auf
+         der weichgezeichneten Flaeche des Dialogs, zweimal 30 waere Milch. */
       .dkopf { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; flex-wrap: wrap;
-               gap: 12px 16px; padding: 22px 26px 16px; background: #f7f8fb; border-bottom: 1px solid var(--s-linie); }
+               gap: 12px 16px; padding: 22px 26px 16px;
+               background: rgba(255,255,255,.62);
+               -webkit-backdrop-filter: blur(14px) saturate(1.4);
+               backdrop-filter: blur(14px) saturate(1.4);
+               border-bottom: 1px solid var(--s-linie); }
       /* Das Symbol der Stufe. Dieselbe weiche Flaeche wie der Schliessen-Knopf
          daneben, nicht die Marke aus der Liste: Die ist die STANDfarbe (gruen
          fuer die laufende Stufe, #c2c8d2 fuer die sieben anderen), und ein
@@ -3221,6 +3253,10 @@ class HatsPanel extends HTMLElement {
       .dinhalt.bk { display: flex; flex-direction: column; gap: 26px; padding: 20px 26px 28px; }
       .bk-sorte h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: .02em;
                      text-transform: uppercase; color: var(--s-tinte-leise); }
+      /* Auf Glas traegt Abstand allein nicht mehr: Die Flaeche darunter ist
+         nicht weiss, sondern durchscheinend, und die Gruppen verschwimmen.
+         Eine Haarlinie ueber jeder Sorte ausser der ersten gliedert sie. */
+      .bk-sorte + .bk-sorte { border-top: 1px solid var(--s-linie); padding-top: 22px; }
       .bk-teile { display: grid; gap: 10px;
                   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
       /* Die Zwischenueberschrift laeuft ueber alle Spalten - ohne
@@ -3230,17 +3266,23 @@ class HatsPanel extends HTMLElement {
                        font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
                        color: var(--s-tinte-leise); }
       .bk-untertitel:first-child { margin-top: 0; }
+      /* Dieselbe Karte wie auf dem Startbild (.startweg): weiche Flaeche,
+         Haarlinie, kleiner Schatten, und beim Ueberfahren hebt sie sich einen
+         Pixel. Vorher fehlten Schatten und Bewegung - die Kacheln lagen flach
+         auf der Flaeche, waehrend jede andere Karte im Panel schwebt. */
       .bk-teil { position: relative; text-align: left; cursor: pointer; font: inherit;
                  display: flex; flex-direction: column; gap: 4px;
                  background: var(--s-karte); color: var(--s-tinte);
                  border: 1px solid rgba(27,36,48,.08); border-radius: var(--s-r);
-                 padding: 13px 15px; transition: border-color .15s, box-shadow .15s; }
-      .bk-teil:hover:not([disabled]) { border-color: var(--s-akzent); }
+                 padding: 13px 15px; box-shadow: var(--s-schatten-klein);
+                 transition: border-color .15s, box-shadow .15s, transform .15s; }
+      .bk-teil:hover:not([disabled]) { border-color: var(--s-akzent); transform: translateY(-1px); }
       .bk-teil[disabled] { opacity: .45; cursor: default; }
       /* Das gewaehlte Teil traegt die Akzentfarbe als Rahmen, nicht als
          Flaeche: Eine gefuellte Kachel wuerde den Zwecktext darauf erschlagen,
          und genau der ist die Entscheidungshilfe. */
-      .bk-teil.an { border-color: var(--s-akzent); box-shadow: inset 0 0 0 1px var(--s-akzent); }
+      .bk-teil.an { border-color: var(--s-akzent);
+                    box-shadow: inset 0 0 0 1px var(--s-akzent), var(--s-schatten-klein); }
       /* Der Farbstreifen eines Hintergrunds. Er sitzt UEBER dem Namen, nicht
          als Flaeche hinter ihm: Vier Farben hinter Text machen beides
          unlesbar. Der Haken steht rechts daneben, deshalb endet er bei 70 %. */

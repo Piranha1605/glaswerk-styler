@@ -676,6 +676,26 @@ export const BAUKASTEN = {
 
 import { rampe, begleiter } from "./palette.js";
 
+// Hat die Unterseite einer Sorte ueberhaupt etwas zu zeigen?
+//
+// Gemeldet am 14.10.2026: "die farbauswahl muss in das popup von
+// Farben/Richtung der rest ist doppelt." Ein Klick auf eine Palette oeffnete
+// eine Seite, auf der nur dieselbe Kachel noch einmal stand - die Sorte hat
+// weder Vorlagen noch Felder. Gemessen:
+//
+//   palette      0 Vorlagen, 0 Felder   <- leer
+//   schrift      0 Vorlagen, 2 Felder
+//   karten       6 Vorlagen, 2 Felder
+//   hintergrund  1 Vorlage,  0 Felder   (dazu Lage, Bewegung, Himmel)
+//   oberflaeche  7 Vorlagen, 0 Felder
+//
+// Also nur die Farben. Die Wahl selbst steht in der Liste, und eine Seite, die
+// nur wiederholt, worauf man gerade geklickt hat, ist ein Klick zu viel.
+export function seiteHatInhalt(schluessel) {
+  return (SORTEN_VORLAGEN[schluessel] || []).length > 0
+      || (SORTEN_FELDER[schluessel] || []).length > 0;
+}
+
 export function teilAnwenden(sorte, teil, schreibe) {
   if (!teil || typeof schreibe !== "function") return { gesetzt: 0, felder: [] };
   const felder = [];

@@ -6,7 +6,8 @@
 
 import assert from "node:assert";
 import { rampe } from "../custom_components/hats/www/palette.js";
-import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau,
+import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau, seiteHatInhalt,
+         SORTEN_FELDER,
          KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN } from "../custom_components/hats/www/baukasten.js";
 import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
 
@@ -325,6 +326,30 @@ pruefe("Der Tupfer zeigt die gerechnete Stufe, nicht den Basiston", () => {
   // Und: neutral steht NICHT dabei. rampe() setzt dort die Saettigung auf 0,
   // also saehe der Tupfer bei allen fuenfzehn gleich aus.
   assert.ok(!palettenVorschau(PALETTEN[0], false).some((f) => f.rolle === "neutral"));
+});
+
+pruefe("Eine Sorte ohne Inhalt bekommt keine Unterseite", () => {
+  // Gemeldet am 14.10.2026: "die farbauswahl muss in das popup von
+  // Farben/Richtung der rest ist doppelt." Ein Klick auf eine Palette oeffnete
+  // eine Seite, auf der nur dieselbe Kachel noch einmal stand.
+  assert.strictEqual(seiteHatInhalt("palette"), false, "die Farben haben eine leere Unterseite");
+  for (const k of ["schrift", "karten", "hintergrund", "oberflaeche"])
+    assert.strictEqual(seiteHatInhalt(k), true, `${k} hat nichts zu zeigen`);
+
+  // Gegenprobe gegen eine haendisch gepflegte Liste: Die Antwort kommt aus den
+  // Daten, nicht aus einer zweiten Aufzaehlung.
+  for (const k of Object.keys(BAUKASTEN)) {
+    const hat = (SORTEN_VORLAGEN[k] || []).length > 0 || (SORTEN_FELDER[k] || []).length > 0;
+    assert.strictEqual(seiteHatInhalt(k), hat, k);
+  }
+
+  // Und das Panel fragt wirklich, statt immer zu oeffnen.
+  const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
+  const klick = panel.slice(panel.indexOf('wurzel.querySelectorAll("[data-bk-teil]")'), panel.indexOf("oeffneUix() {"));
+  assert.match(klick, /if \(!seiteHatInhalt\(sorte\)\) return;/, "ein Klick auf das gesetzte Teil oeffnet weiter");
+  assert.match(klick, /if \(seiteHatInhalt\(sorte\)\) this\._bkSeite = sorte;/, "nach dem Anwenden wird weiter immer geoeffnet");
+  assert.doesNotMatch(klick, /\n\s*this\._bkSeite = sorte;\n\s*this\.zeichneBaukasten\(\);\n\s*this\.zeichneZaehler/,
+    "irgendwo wird _bkSeite noch ungeprueft gesetzt");
 });
 
 console.log(`\n${n} Pruefungen`);
