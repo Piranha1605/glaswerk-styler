@@ -2052,25 +2052,21 @@ class HatsPanel extends HTMLElement {
       <div class="buehne">
         <div class="wolke a"></div><div class="wolke b"></div>
         <div class="fenster">
-          <!-- Eine Leiste statt dreier Stellen: links die acht Stufen, rechts
-               die Aktionen. Nach dem Vorbild der Menuekarte auf dem Dashboard
-               des Nutzers - Pille, Symbol plus Beschriftung, die aktuelle im
-               Akzent. NUR Symbole: Die Uebersichtsseite darunter nennt jede
-               Stufe ohnehin beim Namen, und so passt die Leiste in jede Breite.
-               Speichern steht bewusst NICHT hier, sondern im Kopf - zweimal
-               derselbe Knopf nebeneinander ist einer zu viel. -->
+          <!-- In der Leiste stehen nur noch die AKTIONEN.
+               Links sassen bis zum 14.10.2026 die acht Stufen. Sie sind weg,
+               auf Ansage: "eigendlich brauchen wir das menue oben link nicht
+               mehr da wir eh die seite haben und alles als popup auf geht."
+               Nachgesehen und bestaetigt - beide Wege riefen dieselbe Zeile:
+               die Knoepfe oben ueber data-rail, die Zeile in der Liste ueber
+               ihren eigenen Klick, und beide landeten in oeffne(nr), also im
+               selben Pop-up. Die Liste darunter nennt jede Stufe beim Namen,
+               mit Stand, Gruppen und Feldzahl; die Knoepfe hatten nur ein
+               Symbol. Zwei Wege zur selben Sache, und der schlechtere oben.
+               Damit ist auch die alte Begruendung wieder ganz: eine Leiste
+               statt dreier Stellen - jetzt wirklich eine.
+               Speichern steht bewusst NICHT hier, sondern im Kopf. -->
           <nav class="menueleiste">
             <div class="ml-marke"></div>
-            <div class="ml-stufen">
-              ${STUFEN.map((st) => `
-                <button class="ml-knopf ${this._offen === st.n ? "an" : ""}"
-                        data-rail="${st.n}" title="${st.n}. ${T(st.titel)}"
-                        aria-label="${st.n}. ${T(st.titel)}"
-                        ${ZUSTAND.start ? "disabled" : ""}>
-                  <ha-icon icon="${st.symbol}"></ha-icon>
-                </button>`).join("")}
-            </div>
-            <div class="ml-trenner"></div>
             <div class="ml-aktionen">
               ${[
                 { id: "baukasten", icon: "mdi:toy-brick-outline",  t: T("Baukasten"), aus: ZUSTAND.start },
@@ -2167,9 +2163,6 @@ class HatsPanel extends HTMLElement {
     this.shadowRoot.querySelectorAll("[data-galerie]").forEach((b) =>
       b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
-    this.shadowRoot.querySelectorAll("[data-rail]").forEach((b) =>
-      b.addEventListener("click", () => this.oeffne(Number(b.dataset.rail)))
-    );
     const schalter = {
       baukasten: () => this.oeffneBaukasten(),
       uix: () => this.oeffneUix(),
@@ -2253,6 +2246,11 @@ class HatsPanel extends HTMLElement {
     const d = this.shadowRoot.querySelector(".dialog");
     d.innerHTML = `
       <header class="dkopf">
+        <!-- Das Symbol sass bis zum 14.10.2026 in der Menueleiste. Mit den
+             Stufenknoepfen ist es hierher gezogen, statt als Feld ohne Leser
+             in STUFEN stehen zu bleiben: Das Pop-up ist jetzt der einzige Ort,
+             an dem eine Stufe aufgeht, und es weist sich damit selbst aus. -->
+        <span class="dsymbol"><ha-icon icon="${st.symbol}"></ha-icon></span>
         <div>
           <h2>${st.n}. ${T(st.titel)}</h2>
           <p>${T(st.kurz)} · ${st.gruppen.length} ${T("Gruppen")} · ${felderZahl(st)} ${T("Felder")}</p>
@@ -2869,10 +2867,12 @@ class HatsPanel extends HTMLElement {
       }
 
       /* ---- Die Menueleiste oben: HA ----
-         Vorbild ist die Menuekarte auf dem Dashboard des Nutzers: eine Pille,
-         Symbol plus Beschriftung, die aktuelle Seite im Akzent. Sie ersetzt
-         die linke Symbolleiste UND die runde Schalterreihe - drei Stellen
-         fuer Navigation waren zwei zu viel. */
+         Vorbild ist die Menuekarte auf dem Dashboard des Nutzers: eine Pille
+         mit Symbolknoepfen. Sie ersetzte die linke Symbolleiste UND die runde
+         Schalterreihe; seit dem 14.10.2026 stehen auch die acht Stufen nicht
+         mehr darin - die Liste darunter ist der Weg, und beide fuehrten
+         ohnehin in dasselbe Pop-up. Geblieben sind die Aktionen, rechts, wo
+         sie vorher auch sassen. */
       .menueleiste { display: flex; align-items: center; gap: 4px;
                      padding: 6px; margin-bottom: 16px;
                      border-radius: 999px; background: var(--s-glas-innen);
@@ -2880,19 +2880,16 @@ class HatsPanel extends HTMLElement {
       .ml-marke { width: 30px; height: 30px; flex: none; border-radius: 9px; margin: 0 6px 0 2px;
                   background: linear-gradient(145deg, #c6f24d, #8fd92a);
                   box-shadow: var(--s-schatten-klein); }
-      .ml-stufen { display: flex; gap: 2px; min-width: 0; overflow: hidden; }
-      .ml-aktionen { display: flex; gap: 2px; }
-      .ml-trenner { width: 1px; align-self: stretch; margin: 4px 8px;
-                    background: var(--s-linie); margin-left: auto; }
+      /* margin-left: auto hielt frueher der Trenner - er stand zwischen den
+         Stufen und den Aktionen. Ohne die Stufen gibt es nichts zu trennen,
+         die Aktionen bleiben aber rechts: Wer sie dort sucht, findet sie dort. */
+      .ml-aktionen { display: flex; gap: 2px; margin-left: auto; }
       .ml-knopf { display: flex; align-items: center; justify-content: center; flex: none;
                   width: 38px; height: 38px; border: 0; background: none;
                   color: var(--s-tinte); cursor: pointer; border-radius: 999px;
                   transition: background .15s ease, box-shadow .15s ease; }
       .ml-knopf ha-icon { --mdc-icon-size: 19px; color: var(--s-tinte-leise); flex: none; }
       .ml-knopf:hover:not([disabled]) { background: rgba(255,255,255,.7); }
-      .ml-knopf.an { background: linear-gradient(145deg, #c6f24d, #8fd92a);
-                     font-weight: 600; box-shadow: var(--s-schatten-klein); }
-      .ml-knopf.an ha-icon { color: var(--s-tinte); }
       /* Nicht verfuegbar heisst leiser, nicht unsichtbar - siehe die alte
          Schalterreihe, wo opacity .35 den Knopf verschwinden liess. */
       .ml-knopf[disabled] { cursor: default; }
@@ -3177,6 +3174,16 @@ class HatsPanel extends HTMLElement {
 
       .dkopf { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; flex-wrap: wrap;
                gap: 12px 16px; padding: 22px 26px 16px; background: #f7f8fb; border-bottom: 1px solid var(--s-linie); }
+      /* Das Symbol der Stufe. Dieselbe weiche Flaeche wie der Schliessen-Knopf
+         daneben, nicht die Marke aus der Liste: Die ist die STANDfarbe (gruen
+         fuer die laufende Stufe, #c2c8d2 fuer die sieben anderen), und ein
+         weisses Symbol darauf kam auf 1,9:1. Erst beim Ansehen an der Instanz
+         aufgefallen - dieselbe Sorte wie der Farbwaehler, der weiss auf
+         durchsichtigem Grund schrieb. flex: none, sonst zieht der Titel es schmal. */
+      .dsymbol { display: flex; align-items: center; justify-content: center; flex: none;
+                 width: 38px; height: 38px; border-radius: 11px;
+                 background: rgba(27,36,48,.06); }
+      .dsymbol ha-icon { --mdc-icon-size: 21px; color: var(--s-tinte-leise); }
       .dkopf h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
       .dkopf p { margin: 3px 0 0; color: var(--s-tinte-leise); font-size: 13px; }
       .zu { width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer; font-size: 15px;

@@ -125,21 +125,39 @@ pruefe("Gegenprobe: ein fehlendes Feld wird gefunden", () => {
   assert.ok(inUi.size > 350, `nur ${inUi.size} Felder in der Oberflaeche`);
 });
 
-pruefe("Jede Stufe hat ein Symbol fuer die Leiste", () => {
-  // Die Leiste trug bis zum 13.10.2026 drei leere Platzhalter. Jetzt ein
-  // Symbol je Stufe, wie in HATG - und es steht in den Daten, nicht im
-  // Markup, damit Leiste und Stufenliste nicht auseinanderlaufen koennen.
+pruefe("Jede Stufe hat ein eigenes Symbol, und es wird auch gelesen", () => {
   const symbole = [...block.matchAll(/symbol: "(mdi:[a-z0-9-]+)"/g)].map((m) => m[1]);
   assert.strictEqual(symbole.length, 8, `${symbole.length} Symbole statt 8`);
   assert.strictEqual(new Set(symbole).size, 8, `Symbole doppelt vergeben: ${symbole}`);
+  // Bis zum 14.10.2026 sass es in der Menueleiste. Mit den Stufenknoepfen ist
+  // es ins Pop-up gezogen - ein Feld, das niemand liest, gehoert weg und nicht
+  // stehengelassen.
+  assert.match(quelle, /<span class="dsymbol"><ha-icon icon="\$\{st\.symbol\}"/,
+    "st.symbol wird nirgends mehr gelesen");
+  // Gegenprobe: NICHT auf der Marke aus der Liste - die ist die Standfarbe,
+  // und ein weisses Symbol auf ihrem Grau kam auf 1,9:1.
+  assert.doesNotMatch(quelle, /class="dsymbol" style="background:\$\{st\.marke\}"/);
 });
 
-pruefe("Die Menueleiste wird aus STUFEN erzeugt, nicht getippt", () => {
-  // Gegenprobe gegen eine handgeschriebene Knopfreihe: Die waere beim
-  // naechsten Umbau still veraltet. Seit dem 13.10.2026 heisst sie
-  // Menueleiste und sitzt oben statt links.
-  assert.match(quelle, /STUFEN\.map\(\(st\) => `\s*\n\s*<button class="ml-knopf/);
+pruefe("Die Stufen stehen NUR in der Liste, nicht noch einmal in der Leiste", () => {
+  // Ansage vom 14.10.2026: "eigendlich brauchen wir das menue oben link nicht
+  // mehr da wir eh die seite haben und alles als popup auf geht."
+  //
+  // Nachgesehen: Beide Wege riefen oeffne(nr), also dasselbe Pop-up. Die
+  // Zeile in der Liste nennt Name, Stand, Gruppen und Felder, der Knopf oben
+  // hatte nur ein Symbol.
+  assert.doesNotMatch(quelle, /data-rail=/, "die Stufenknoepfe sind zurueck in der Leiste");
   assert.doesNotMatch(quelle, /<button class="railknopf/, "die alte Seitenleiste ist zurueck");
+  assert.doesNotMatch(quelle, /class="ml-stufen"/);
+  // Gegenprobe: Die Zeile in der Liste fuehrt wirklich ins Pop-up - sonst
+  // waere die Stufe jetzt gar nicht mehr zu erreichen.
+  assert.match(quelle, /querySelectorAll\("\.zeile"\)[\s\S]{0,120}this\.oeffne\(Number\(z\.dataset\.stufe\)\)/,
+    "die Zeile in der Liste oeffnet die Stufe nicht");
+  assert.match(quelle, /<div class="zeile" data-stufe="\$\{s\.n\}">/);
+  // Und die Aktionen sind geblieben, rechts: Die Leiste ist nicht leer.
+  assert.match(quelle, /data-schalter="\$\{k\.id\}"/);
+  assert.match(quelle, /\{ id: "baukasten",/);
+  assert.match(quelle, /\.ml-aktionen \{[^}]*margin-left: auto/);
 });
 
 console.log(`\n${n} Pruefungen`);

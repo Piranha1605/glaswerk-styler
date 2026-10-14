@@ -180,9 +180,12 @@ pruefe("Gegenprobe: ohne Blockskalar waere es kaputt", () => {
 // ---------------------------------------------------------------------------
 // Die Schalterreihe oben links.
 
-pruefe("Eine Leiste oben statt Seitenleiste und Schalterreihe", () => {
-  // Drei Stellen fuer Navigation waren zwei zu viel. Seit dem 13.10.2026 eine
-  // Pille oben: links die acht Stufen, rechts die Aktionen.
+pruefe("Eine Leiste oben, und darin nur noch die Aktionen", () => {
+  // Drei Stellen fuer Navigation waren zwei zu viel: Seitenleiste,
+  // Schalterreihe und Startkarten wurden am 13.10.2026 zu einer Pille oben.
+  // Links standen dann die acht Stufen, rechts die Aktionen - und am
+  // 14.10.2026 sind auch die Stufen gegangen. Sie fuehrten in dasselbe
+  // Pop-up wie die Zeile in der Liste darunter, und die sagt mehr.
   const block = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
   assert.ok(block.length > 600, "die Leiste wurde nicht gefunden");
   const ids = [...block.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
@@ -192,17 +195,22 @@ pruefe("Eine Leiste oben statt Seitenleiste und Schalterreihe", () => {
   // auf Ansage, damit rechts frei wird. Der Baukasten steht davor: Er kommt
   // in der Arbeit zuerst, UIX ist der Feinschliff danach.
   assert.deepStrictEqual(ids, ["baukasten", "uix", "neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
-  assert.match(block, /data-rail="\$\{st\.n\}"/, "die Stufen fehlen in der Leiste");
+  assert.doesNotMatch(block, /data-rail=/, "die Stufen stehen wieder in der Leiste");
   assert.doesNotMatch(panel, /class="rail"/, "die alte Seitenleiste ist zurueck");
+  // Gegenprobe: Die Leiste ist nicht leer geworden - die Marke und die acht
+  // Aktionen stehen noch da, und die Aktionen weiter rechts.
+  assert.match(block, /<div class="ml-marke"><\/div>/);
+  assert.strictEqual((block.match(/class="ml-knopf"/g) || []).length, 1,
+    "die Aktionen werden nicht mehr aus EINER Vorlage erzeugt");
 });
 
 pruefe("Nur Symbole, keine Beschriftung", () => {
-  // Die Uebersichtsseite darunter nennt jede Stufe beim Namen - ein zweites
-  // Mal daneben braucht es nicht, und so passt die Leiste in jede Breite.
+  // Gilt weiter fuer die Aktionen: Der Titel steht im title und im aria-label,
+  // nicht als Text daneben - so passt die Leiste in jede Breite.
   const block = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
-  assert.doesNotMatch(block, /<span>\$\{T\(st\.titel\)\}<\/span>/, "die Beschriftungen sind zurueck");
-  assert.match(block, /aria-label="\$\{st\.n\}\. \$\{T\(st\.titel\)\}"/,
-    "ohne Beschriftung braucht es wenigstens ein aria-label");
+  assert.doesNotMatch(block, /<span>\$\{k\.t\}<\/span>/, "die Beschriftungen sind zurueck");
+  assert.match(block, /title="\$\{k\.t\}" aria-label="\$\{k\.t\}"/,
+    "ohne Beschriftung braucht es wenigstens title und aria-label");
 });
 
 pruefe("Verwerfen geht auf den Stand beim Oeffnen zurueck", () => {
