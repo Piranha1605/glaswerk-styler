@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 17:19:54
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 18:10:40
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -214,6 +214,11 @@ glaswerk:
   ha-space-7: "35px"
   ha-space-8: "40px"
   ha-space-9: "45px"
+  ha-switch-checked-background-color: "#2196f3"
+  ha-switch-checked-background-color-hover: "#1b86de"
+  ha-switch-checked-border-color: "#2196f3"
+  ha-switch-checked-thumb-background-color: "#ffffff"
+  ha-switch-checked-thumb-border-color: "#ffffff"
   header-height: "56px"
   history-unavailable-color: "transparent"
   indigo-color: "#3f51b5"
@@ -239,7 +244,7 @@ glaswerk:
   sidebar-selected-icon-color: "#2196f3"
   sidebar-selected-text-color: "#2196f3"
   state-cover-active-color: "#2196f3"
-  state-icon-color: "#086ebf"
+  state-icon-color: "#2196f3"
   state-weather-snowy-color: "#c0e0ff"
   success-color: "#43a047"
   teal-color: "#009688"

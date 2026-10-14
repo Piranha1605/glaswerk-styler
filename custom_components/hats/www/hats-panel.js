@@ -377,6 +377,34 @@ const STUFEN = [
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       
       
+      // Der Schalter ist seit 2026 reine Variablensache - keine MDC-Klassen
+      // mehr, dafuer dreizehn eigene Felder. Am 14.10.2026 aus ha-switch
+      // gelesen, nachdem der Maintainer meldete, die Schalter passten nicht:
+      // Die Spur stand auf --ha-color-fill-primary-normal-resting (#e0effb,
+      // fast weiss), der Daumen auf --ha-color-on-primary-normal (#086ebf).
+      // Also ein blasser Trog mit dunklem Punkt, waehrend alles daneben voll
+      // gefaerbt war.
+      //
+      // Die Ausweichwerte sind HAs neue Farbebene, eine HATS-Theme steuert
+      // ihn also schon ueber die Rolle. Diese Felder sind die Feinstellung
+      // darueber - und der einzige Weg, Spur und Daumen UNABHAENGIG zu
+      // setzen.
+      { name: "Schalter", felder: [
+        { t: "Spur", art: "farbe", v: "--ha-switch-background-color", ebene: "getrennt" },
+        { t: "Spur ueberfahren", art: "farbe", v: "--ha-switch-background-color-hover", ebene: "getrennt" },
+        { t: "Rahmen", art: "farbe", v: "--ha-switch-border-color", ebene: "getrennt" },
+        { t: "Spur an", art: "farbe", v: "--ha-switch-checked-background-color", ebene: "getrennt" },
+        { t: "Spur an ueberfahren", art: "farbe", v: "--ha-switch-checked-background-color-hover", ebene: "getrennt" },
+        { t: "Rahmen an", art: "farbe", v: "--ha-switch-checked-border-color", ebene: "getrennt" },
+        { t: "Daumen", art: "farbe", v: "--ha-switch-thumb-background-color", ebene: "getrennt" },
+        { t: "Daumen Rahmen", art: "farbe", v: "--ha-switch-thumb-border-color", ebene: "getrennt" },
+        { t: "Daumen Schatten", art: "text", v: "--ha-switch-thumb-box-shadow", ebene: "getrennt" },
+        { t: "Daumen an", art: "farbe", v: "--ha-switch-checked-thumb-background-color", ebene: "getrennt" },
+        { t: "Groesse", art: "mass", v: "--ha-switch-size", ebene: "beide", min: 10, max: 40 },
+        { t: "Breite", art: "mass", v: "--ha-switch-width", ebene: "beide", min: 20, max: 80 },
+        { t: "Daumengroesse", art: "mass", v: "--ha-switch-thumb-size", ebene: "beide", min: 6, max: 36 },
+        { t: "Trefferflaeche", art: "mass", v: "--ha-switch-min-touch-size", ebene: "beide", min: 24, max: 64 },
+        { t: "Deaktiviert Deckkraft", art: "zahl", v: "--ha-switch-disabled-opacity", ebene: "beide", min: 0, max: 1, schritt: 0.05 } ] },
       { name: "Knoepfe", felder: [
         { t: "Neutral Farbe", art: "farbe", v: "--ha-button-neutral-color", ebene: "getrennt" },
         { t: "Neutral hell Farbe", art: "farbe", v: "--ha-button-neutral-light-color", ebene: "getrennt" },
@@ -781,6 +809,7 @@ const ZWECK = {
   "Kanten": "Trennlinien und Rahmen, je Rolle und Lautstaerke",
   "Eingabefelder": "Flaechen und Rahmen von Eingaben - die alten input-Namen liest HA 2026 nicht mehr",
   "Schrift invertiert": "Schrift auf umgekehrtem Grund, etwa in einem Hinweisbalken",
+  "Schalter": "Spur, Daumen und Groesse der Kippschalter - an und aus getrennt",
   "Knoepfe": "Die vier Knopffarben, die HA ausserhalb der Rollen fuehrt",
   "Deckkraft": "Wie stark Deaktiviertes und Trennlinien durchscheinen, je Modus",
   "Bewegung": "Dauer der Uebergaenge, von sofort bis langsam",

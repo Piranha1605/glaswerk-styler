@@ -216,10 +216,40 @@ const NOCH_OHNE_KACHEL = {
   "--sidebar-selected-icon-color": "#2196f3",
   "--sidebar-selected-text-color": "#2196f3",
   // Die Zustandsfarbe des Rollladens, damit HAs Kachel nicht als einzige
-  // violett bleibt. Eines der 86 --state-*-color, die das Panel noch nicht
-  // anbietet.
+  // violett bleibt.
   "--state-cover-active-color": "#2196f3",
 };
+
+// --- Schalter und Zeilensymbole -------------------------------------------
+//
+// Gemeldet am 14.10.2026: "nur die schalter passen noch nicht ganz und ich
+// meine auch die icons und toogle in zeilen". Gemessen, was da stand:
+//
+//     Schalter Spur an    #e0effb   fill-primary-normal-resting, fast weiss
+//     Schalter Daumen     #086ebf   on-primary-normal
+//     Zeilensymbol        #086ebf   --state-icon-color
+//     Modus-Pille         #086ebf   --primary-color, also Rampenstufe 40
+//
+// Der Schalter war damit als einziger ein BLASSER Trog mit dunklem Punkt,
+// waehrend daneben alles voll gefaerbt war. Jetzt andersherum: volle Spur,
+// weisser Daumen - das Bild, das jeder von einem Kippschalter hat.
+//
+// Die Pille bleibt auf #086ebf und das ist Absicht: HAs eigenes
+// ha-control-select nimmt dort ebenfalls --primary-color (aus seinen
+// elementStyles gelesen). Wer sie verschoebe, wiche von Home Assistant ab,
+// nicht von der Theme.
+const SCHALTER = {
+  "--ha-switch-checked-background-color": "#2196f3",
+  "--ha-switch-checked-background-color-hover": "#1b86de",
+  "--ha-switch-checked-border-color": "#2196f3",
+  // Weiss auf Blau - und im Dunkeln dasselbe, denn der Daumen liegt auf der
+  // Spur, nicht auf dem Grund.
+  "--ha-switch-checked-thumb-background-color": "#ffffff",
+  "--ha-switch-checked-thumb-border-color": "#ffffff",
+  // Das Zeilensymbol: dieselbe Farbe wie alles andere Aktive.
+  "--state-icon-color": "#2196f3",
+};
+for (const [name, wert] of Object.entries(SCHALTER)) schreibe(name, wert, "beide");
 for (const [name, wert] of Object.entries(NOCH_OHNE_KACHEL)) schreibe(name, wert, "beide");
 
 // --- Vorlagen --------------------------------------------------------------
