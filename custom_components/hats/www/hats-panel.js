@@ -523,11 +523,50 @@ const STUFEN = [
         { t: "Symbolfarbe", art: "farbe", v: "--state-icon-color", ebene: "beide" } ] },
       // Die klassischen Toene sind modusunabhaengig und die einzige Quelle
       // fuer Farbvielfalt - HAs neue Ebene hat nur fuenf.
+      //
+      // Am 14.10.2026 waren es vier von neunzehn, und das war ein viel
+      // groesseres Loch als es aussah. Gemessen: Home Assistant definiert 86
+      // Felder der Form --state-<domaene>-<zustand>-color, und 82 davon sind
+      // KEINE Farbe, sondern ein Verweis:
+      //
+      //     --state-cover-active-color   = var(--purple-color)
+      //     --state-light-active-color   = var(--amber-color)
+      //     --state-climate-heat-color   = var(--deep-orange-color)
+      //     23 Gefahr-Zustaende          = var(--red-color)
+      //
+      // Siebzehn Toene tragen also alle 86. Wer die Toene hat, hat die
+      // Zustaende - und wer sie nicht hat, kommt an keinen einzigen heran.
+      // Genau das war der Fall: Von den vier Blautoenen, die auf einer Seite
+      // nebeneinander standen, war Mushrooms #2196f3 nichts anderes als
+      // --blue-color, und das Panel bot es nicht an.
+      //
+      // Deshalb stehen hier jetzt alle neunzehn, in der Reihenfolge des
+      // Farbkreises statt in der des Zufalls. Schwarz und Weiss nicht - die
+      // sind keine Toene und stehen in "Zustandsfarben".
+      //
+      // sync traegt den Ton an Mushrooms Tripel weiter. Mushroom hat fuer
+      // jeden der neunzehn eines (am 14.10.2026 aus seinen elementStyles
+      // gezaehlt), sonst zoege es seine eigene Vorgabe vor.
       { name: "Toene", felder: [
-        { t: "Gelb", art: "farbe", v: "--yellow-color", ebene: "beide", sync: { mush: "--mush-rgb-yellow" } },
-        { t: "Tuerkis", art: "farbe", v: "--teal-color", ebene: "beide", sync: { mush: "--mush-rgb-teal" } },
+        { t: "Rot", art: "farbe", v: "--red-color", ebene: "beide", sync: { mush: "--mush-rgb-red" } },
+        { t: "Rosa", art: "farbe", v: "--pink-color", ebene: "beide", sync: { mush: "--mush-rgb-pink" } },
         { t: "Violett", art: "farbe", v: "--purple-color", ebene: "beide", sync: { mush: "--mush-rgb-purple" } },
-        { t: "Bernstein", art: "farbe", v: "--amber-color", ebene: "beide", sync: { mush: "--mush-rgb-amber" } } ] },
+        { t: "Dunkelviolett", art: "farbe", v: "--deep-purple-color", ebene: "beide", sync: { mush: "--mush-rgb-deep-purple" } },
+        { t: "Indigo", art: "farbe", v: "--indigo-color", ebene: "beide", sync: { mush: "--mush-rgb-indigo" } },
+        { t: "Blau", art: "farbe", v: "--blue-color", ebene: "beide", sync: { mush: "--mush-rgb-blue" } },
+        { t: "Hellblau", art: "farbe", v: "--light-blue-color", ebene: "beide", sync: { mush: "--mush-rgb-light-blue" } },
+        { t: "Cyan", art: "farbe", v: "--cyan-color", ebene: "beide", sync: { mush: "--mush-rgb-cyan" } },
+        { t: "Tuerkis", art: "farbe", v: "--teal-color", ebene: "beide", sync: { mush: "--mush-rgb-teal" } },
+        { t: "Gruen", art: "farbe", v: "--green-color", ebene: "beide", sync: { mush: "--mush-rgb-green" } },
+        { t: "Hellgruen", art: "farbe", v: "--light-green-color", ebene: "beide", sync: { mush: "--mush-rgb-light-green" } },
+        { t: "Limette", art: "farbe", v: "--lime-color", ebene: "beide", sync: { mush: "--mush-rgb-lime" } },
+        { t: "Gelb", art: "farbe", v: "--yellow-color", ebene: "beide", sync: { mush: "--mush-rgb-yellow" } },
+        { t: "Bernstein", art: "farbe", v: "--amber-color", ebene: "beide", sync: { mush: "--mush-rgb-amber" } },
+        { t: "Orange", art: "farbe", v: "--orange-color", ebene: "beide", sync: { mush: "--mush-rgb-orange" } },
+        { t: "Dunkelorange", art: "farbe", v: "--deep-orange-color", ebene: "beide", sync: { mush: "--mush-rgb-deep-orange" } },
+        { t: "Braun", art: "farbe", v: "--brown-color", ebene: "beide", sync: { mush: "--mush-rgb-brown" } },
+        { t: "Grau", art: "farbe", v: "--grey-color", ebene: "beide", sync: { mush: "--mush-rgb-grey" } },
+        { t: "Blaugrau", art: "farbe", v: "--blue-grey-color", ebene: "beide", sync: { mush: "--mush-rgb-blue-grey" } } ] },
 
       // --- Ergaenzt am 12.10.2026: die restlichen Felder der Grundlage. ---
       // Art und Ebene sind aus ha-blanko.yaml ABGELEITET, nicht getippt: die

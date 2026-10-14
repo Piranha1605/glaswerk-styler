@@ -1886,6 +1886,44 @@ ein Element weniger dazwischen.
 Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
 gibt es keine Variable, und dafür braucht man card-mod oder HATG.
 
+## Die 86 Zustandsfarben sind keine Farben, sondern Verweise
+
+Am 14.10.2026 gemessen, auf die Frage, ob HATS sich aus der alten Ebene
+holen soll, was fehlt. Die Antwort fiel kleiner aus als die Frage.
+
+Home Assistant definiert 86 Felder der Form `--state-<domaene>-<zustand>-color`.
+**82 davon sind kein Wert, sondern ein `var()` auf einen klassischen Ton:**
+
+    --state-cover-active-color        var(--purple-color)        #926bc7
+    --state-light-active-color        var(--amber-color)         #ffc107
+    --state-climate-heat-color        var(--deep-orange-color)   #ff6f22
+    --state-climate-cool-color        var(--blue-color)          #2196f3
+    --state-fan-active-color          var(--cyan-color)          #00bcd4
+    23 Gefahr-Zustaende               var(--red-color)           #f44336
+
+Siebzehn Toene tragen alle 86. Nur vier haben einen eigenen Wert:
+`--state-icon-color` (#44739e), `--state-weather-snowy-color` (#c0e0ff) und
+zwei, die auf `--error-color` beziehungsweise `--disabled-text-color` zeigen.
+
+**Was daraus folgt: Es braucht keine 86 Kacheln.** Wer die neunzehn
+klassischen Toene hat, hat alle Zustaende — und wer sie nicht hat, kommt an
+keinen einzigen heran. Am 14.10.2026 bot das Panel **vier von neunzehn** an
+(Gelb, Tuerkis, Violett, Bernstein). Jetzt alle neunzehn, in der Reihenfolge
+des Farbkreises, jeder mit `sync` auf Mushrooms Tripel.
+
+**Das erklaert auch die vier Blautoene** aus dem Abschnitt darueber
+rueckwirkend: Mushrooms Rollladen-Regler stand auf `#2196f3`, und das ist
+nichts anderes als `--blue-color`. HAs eigene Kachel stand auf `#926bc7`, also
+`--purple-color`. Zwei verschiedene Toene fuer dieselbe Domaene — HA sagt
+"Rollladen ist violett", Mushroom sagt "Rollladen ist blau". Mit den Toenen im
+Panel ist das jetzt eine Entscheidung statt eines Zufalls.
+
+**Die Regel, die sich daraus ergibt:** Aus der alten Ebene holen wir, was
+etwas TRAEGT, nicht was etwas doppelt. Die neunzehn Toene tragen 86 Zustaende.
+`--primary-color` traegt nichts mehr (siehe unten) und bleibt deshalb draussen.
+Der Test dafuer ist derselbe wie ueberall: Aendert sich das Ding, wenn die
+Rolle sich aendert? Wenn ja, braucht es kein eigenes Feld.
+
 ## `--primary-color` ist 2026 ein Name ohne Wirkung
 
 Am 14.10.2026 gemessen, auf die Frage, ob die Vereinheitlichung der Blautoene
