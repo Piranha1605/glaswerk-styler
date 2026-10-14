@@ -759,6 +759,30 @@ Bei `glas-toast` und `glas-badges` gibt es auf der Musterseite keinen Wirt —
 `ha-badge` und `ha-toast` entstehen erst im Betrieb. Ein Bild ohne erkennbaren
 Unterschied ist schlechter als keines: Es behauptet, geprüft zu sein.
 
+## `glaswerk` ist die Theme des Projekts
+
+Entschieden am 14.10.2026: *„wir machen am glaswerk weiter. das ist unsere
+theme."*
+
+    werkzeuge/glaswerk-bauen.mjs     baut sie
+    werkzeuge/themes/glaswerk.yaml   der neueste Stand
+    werkzeuge/themes/glaswerk_vN.yaml  gezaehlte Fassungen zum Vergleichen
+
+`liquid_glass` und `macos` bleiben liegen, aber sie werden nicht
+weitergebaut — `macos` als Beleg, dass gemessene Fremdfarben durchlaufen,
+`liquid_glass` als Stand vom 13.10. Wer eine Vorlage oder ein Feld prueft,
+prueft es an `glaswerk`.
+
+**Woran man sie misst:** Alle sechs Baukastenteile muessen sie beschreiben.
+Das Build-Skript prueft es selbst und bricht ab, wenn eine Sorte nicht
+trifft — sonst saehe der Nutzer im Panel eine Theme ohne Haken und wuesste
+nicht, woran es liegt.
+
+**Und was noch keine Kachel hat**, steht im Block `NOCH_OHNE_KACHEL` im
+Build-Skript. Das ist der Uebergabezettel fuer den Generator: Jedes Feld
+dort ist eines, das die Theme schreibt und das Panel nicht anbietet. Am
+14.10.2026 waren es zehn von 412.
+
 ## Vorlagen für UIX
 
 Seit dem 13.10.2026 bringt HATS zehn fertige CSS-Blöcke mit, Gruppe **Liquid
