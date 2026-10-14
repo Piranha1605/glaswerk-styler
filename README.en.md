@@ -262,6 +262,14 @@ under Settings → Devices & Services.
 
 Requires Home Assistant 2026.10.0 or newer.
 
+## Backups
+
+Before HATS overwrites a theme file — from the panel or from the control
+card — it stores the previous version under `config/hats/sicherungen/<name>/`,
+with date and time in the name. The last ten per theme are kept. The file is
+written to a helper file first and then renamed in one step; if something
+breaks off, the old file stays as it was.
+
 ## Licence
 
 MIT

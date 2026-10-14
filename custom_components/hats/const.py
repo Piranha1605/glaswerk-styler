@@ -28,6 +28,12 @@ CARD_FILE = "hats-control-card.js"
 
 THEMES_SUBDIR = "themes"
 
+# Die Fassung vor jedem Ueberschreiben einer Theme, die letzten zehn je Theme.
+# Ausserhalb von themes/: !include_dir_merge_named liest auch Unterordner, und
+# eine Sicherung waere dort beim naechsten Start eine zweite Theme gleichen
+# Namens. Siehe datei.py.
+SICHERUNGEN_SUBDIR = "hats/sicherungen"
+
 # Hintergrundbilder liegen in config/www/hats und kommen unter /local/hats von
 # Home Assistant SELBST. Das ist der ganze Punkt: Eine Adresse, die nur HATS
 # ausliefert, macht eine weitergegebene Theme unbrauchbar - beim Empfaenger

@@ -415,6 +415,53 @@ sondern die ganze Datei.
 Nach der Korrektur: dieselbe Datei, **null unlesbare Zeilen**, 287 bedienbar,
 400 mitgenommen, 13 Stilziele.
 
+### Schreiben in einem Schritt, mit Sicherung davor
+
+Am 14.10.2026 eingebaut, auf Ansage — vor dem großen Einstellungsfenster der
+Steuerkarte, das viel mehr schreibt als vorher. Bis dahin schrieb
+`ws_save_theme` mit `Path.write_text` direkt in die Datei: ohne Sicherung, und
+ein Abbruch mittendrin ließ eine halbe Datei im Themes-Ordner, also beim
+nächsten Start den Wiederherstellungsmodus.
+
+`datei.py` (ohne HA-Import, wie `karte.py`) schreibt jetzt erst in
+`.<name>.yaml.hats-neu` und setzt sie mit `os.replace` an ihren Platz. Vorher
+geht die alte Fassung nach `config/hats/sicherungen/<name>/<zeit>.yaml`, die
+letzten zehn je Theme. Zwei Befehle lesen sie: `hats/list_backups`,
+`hats/load_backup`. Zurückgeschrieben wird über `save_theme` — das sichert
+dabei die Fassung, die gerade gilt.
+
+**Drei Entscheidungen, jede mit einem Grund:**
+
+- **Die Hilfsdatei endet nicht auf `.yaml` und ist versteckt.** Bliebe sie
+  nach einem Absturz liegen, läse HA sie sonst als zweite, kaputte Theme.
+- **Die Sicherungen liegen außerhalb von `themes/`.**
+  `!include_dir_merge_named` liest auch Unterordner.
+- **Derselbe Text legt keine Sicherung an.** Sonst verdrängten zehn Klicks
+  ohne Änderung die Fassung, die man zurückhaben will.
+
+**Zwei Fehler, beide vor dem Commit gefunden:**
+
+- Nach dem Namen sortiert stand `200005.yaml` vor `200005-2.yaml` — der Punkt
+  kommt nach dem Strich —, und die neuere Sicherung derselben Sekunde wäre
+  beim Aufräumen zuerst gefallen. Mein Test hatte dieselbe Sortierung
+  nachgerechnet statt die richtige Reihenfolge zu verlangen. Jetzt nach Zeit
+  und Zähler, und der Test schreibt die Reihenfolge aus.
+- **`load_backup` hieß zuerst mit dem Feld `id`.** Das ist im Websocket-
+  Protokoll die Nummer der Nachricht selbst — die Antwort kam nie an, eine
+  Zeitüberschreitung statt eines Fehlers. Jetzt `backup`.
+
+An der Testmaschine mit einer Wegwerf-Theme durchgespielt (danach gelöscht):
+neu angelegt ohne Sicherung, derselbe Text ohne Sicherung, überschrieben mit
+einer Sicherung der alten Fassung, `../../secrets` und `../x` abgewiesen, im
+Themes-Ordner keine Hilfsdatei. `tests/hats-datei.test.js`: zehn Prüfungen mit
+python3 gegen ein echtes Verzeichnis, fünf Mutationen gegengeprüft, darunter
+ein abgebrochenes `os.replace`.
+
+**`werkzeuge/sync-liste-bauen.sh` nähme inzwischen die glaswerk-Dateien in die
+Liste** — ein volles Einspielen überschriebe dann die Theme auf der Maschine,
+an der jemand gerade mit den Reglern arbeitet. `datei.py` ist deshalb von Hand
+eingetragen, nicht durch das Skript.
+
 ## Der Aufbau der Oberfläche
 
 Am 13.10.2026 festgelegt und noch am selben Tag nachgeschärft: **alles oben,

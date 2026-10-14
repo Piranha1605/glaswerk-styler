@@ -5,6 +5,7 @@
 __init__.py
 config_flow.py
 const.py
+datei.py
 karte.py
 manifest.json
 translations/de.json

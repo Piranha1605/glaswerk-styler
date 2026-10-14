@@ -270,6 +270,14 @@ Integration unter Einstellungen → Geräte & Dienste hinzufügen.
 
 Voraussetzung: Home Assistant 2026.10.0 oder neuer.
 
+## Sicherungen
+
+Bevor HATS eine Theme-Datei überschreibt — aus dem Panel oder aus der
+Steuerkarte —, legt es die bisherige Fassung unter
+`config/hats/sicherungen/<name>/` ab, mit Datum und Uhrzeit im Namen. Je Theme
+bleiben die letzten zehn. Geschrieben wird erst in eine Hilfsdatei und dann in
+einem Schritt umbenannt; bricht etwas ab, steht die alte Datei unverändert da.
+
 ## Lizenz
 
 MIT

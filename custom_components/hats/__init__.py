@@ -41,11 +41,13 @@ from .const import (
     PANEL_TAG,
     PANEL_TITLE,
     PANEL_URL,
+    SICHERUNGEN_SUBDIR,
     STATIC_PATH,
     THEMES_SUBDIR,
     VERSION,
     WWW_SUBDIR,
 )
+from .datei import sicherungen_von, theme_schreiben
 from .karte import ressource_abgleichen, ressource_entfernen
 
 _LOGGER = logging.getLogger(__name__)
@@ -263,17 +265,14 @@ async def ws_save_theme(hass: HomeAssistant, connection, msg) -> None:
         return
 
     themes_dir = Path(hass.config.path(THEMES_SUBDIR))
-    pfad = themes_dir / f"{name}.yaml"
+    sicherungen = Path(hass.config.path(SICHERUNGEN_SUBDIR))
 
+    # In einem Schritt und mit Sicherung der Fassung davor - siehe datei.py.
     def _schreibe() -> str | None:
         try:
-            themes_dir.mkdir(parents=True, exist_ok=True)
-            if pfad.exists() and not msg["overwrite"]:
-                return "exists"
-            pfad.write_text(msg["yaml"], encoding="utf-8")
+            return theme_schreiben(themes_dir, sicherungen, name, msg["yaml"], msg["overwrite"])
         except OSError as err:
             return f"write_failed: {err}"
-        return None
 
     fehler = await hass.async_add_executor_job(_schreibe)
     if fehler == "exists":
@@ -392,6 +391,57 @@ async def ws_delete_image(hass: HomeAssistant, connection, msg) -> None:
     connection.send_result(msg["id"], {"deleted": True, "name": name})
 
 
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/list_backups", vol.Required("name"): str}
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_list_backups(hass: HomeAssistant, connection, msg) -> None:
+    """Die Sicherungen einer Theme, die neueste zuerst."""
+    name = msg["name"]
+    if not _ist_sicherer_name(name):
+        connection.send_error(msg["id"], "invalid_name", "Ungueltiger Theme-Name.")
+        return
+    sicherungen = Path(hass.config.path(SICHERUNGEN_SUBDIR))
+
+    def _liste() -> list[dict]:
+        return [{"backup": p.stem, "size": p.stat().st_size} for p in sicherungen_von(sicherungen, name)]
+
+    connection.send_result(msg["id"], {"backups": await hass.async_add_executor_job(_liste)})
+
+
+@websocket_api.websocket_command(
+    # "backup", nicht "id": id ist im Websocket-Protokoll die Nummer der
+    # Nachricht selbst. So hiess das Feld zuerst - und die Antwort kam nie an
+    # (am 14.10.2026 an der Testmaschine, Zeitueberschreitung statt Fehler).
+    {vol.Required("type"): f"{DOMAIN}/load_backup", vol.Required("name"): str, vol.Required("backup"): str}
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_load_backup(hass: HomeAssistant, connection, msg) -> None:
+    """Eine Sicherung im Klartext. Zurueckgeschrieben wird ueber save_theme -
+    das sichert dabei die Fassung, die gerade gilt, und nichts geht verloren."""
+    name, kennung = msg["name"], msg["backup"]
+    # Die Kennung ist der Zeitstempel aus list_backups, nichts sonst: kein
+    # Pfad, kein Punkt, keine Endung.
+    if not _ist_sicherer_name(name) or not re.fullmatch(r"\d{8}-\d{6}(-\d+)?", kennung):
+        connection.send_error(msg["id"], "invalid_name", "Ungueltige Sicherung.")
+        return
+    pfad = Path(hass.config.path(SICHERUNGEN_SUBDIR)) / name / f"{kennung}.yaml"
+
+    def _lies() -> str | None:
+        try:
+            return pfad.read_text(encoding="utf-8")
+        except OSError:
+            return None
+
+    inhalt = await hass.async_add_executor_job(_lies)
+    if inhalt is None:
+        connection.send_error(msg["id"], "read_failed", "Sicherung nicht lesbar.")
+        return
+    connection.send_result(msg["id"], {"content": inhalt})
+
+
 def _registriere_websocket(hass: HomeAssistant) -> None:
     """Die Befehle anmelden - bei jedem Setup neu.
 
@@ -409,6 +459,8 @@ def _registriere_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_list_themes)
     websocket_api.async_register_command(hass, ws_load_theme_file)
     websocket_api.async_register_command(hass, ws_save_theme)
+    websocket_api.async_register_command(hass, ws_list_backups)
+    websocket_api.async_register_command(hass, ws_load_backup)
     websocket_api.async_register_command(hass, ws_list_images)
     websocket_api.async_register_command(hass, ws_upload_image)
     websocket_api.async_register_command(hass, ws_delete_image)
