@@ -2847,7 +2847,26 @@ class HatsPanel extends HTMLElement {
         --s-kante: rgba(255,255,255,.75);
         --s-linie: rgba(27,36,48,.10);
         --s-schatten: 0 24px 60px rgba(26,44,74,.22);
-        --s-schatten-klein: 0 2px 6px rgba(26,44,74,.08);
+        /* DREI Schatten, nicht einer - auf Ansage vom 14.10.2026 ueber das
+           ganze Design gezogen, nachdem es an den Farbkacheln getaugt hat:
+             innen oben hell   das Licht auf der Kante
+             kurz und hart     die Kante selbst
+             weit und weich    der Wurf auf die Flaeche
+           Einer allein sieht aus wie ein Aufkleber, drei wie ein Stueck.
+           Es steht hier und nicht an den Regeln, damit es EINE Stelle bleibt:
+           Jede Flaeche, die schon var(--s-schatten-klein) las, bekommt die
+           Plastik mit, ohne dass jemand sie einzeln nachzieht. */
+        --s-saum: inset 0 1px 0 rgba(255,255,255,.9);
+        --s-schatten-klein: inset 0 1px 0 rgba(255,255,255,.9),
+                            0 1px 2px rgba(26,44,74,.10),
+                            0 6px 14px rgba(26,44,74,.10);
+        /* Dieselbe Flaeche, angehoben - fuer Ueberfahren und Gewaehltes. */
+        --s-schatten-hoch: inset 0 1px 0 rgba(255,255,255,.9),
+                           0 2px 4px rgba(26,44,74,.12),
+                           0 12px 24px rgba(26,44,74,.16);
+        /* Eine Karte ist nicht flach weiss: oben etwas heller als unten.
+           Zwei Prozent Unterschied reichen - mehr sieht nach Verlauf aus. */
+        --s-flaeche: linear-gradient(180deg, #ffffff 0%, #f4f7fc 100%);
         --s-r-gross: 22px;
         --s-r: 14px;
         --s-r-klein: 10px;
@@ -3227,12 +3246,13 @@ class HatsPanel extends HTMLElement {
          durchsichtigem Grund schrieb. flex: none, sonst zieht der Titel es schmal. */
       .dsymbol { display: flex; align-items: center; justify-content: center; flex: none;
                  width: 38px; height: 38px; border-radius: 11px;
-                 background: rgba(27,36,48,.06); }
+                 background: rgba(27,36,48,.06); box-shadow: var(--s-saum); }
       .dsymbol ha-icon { --mdc-icon-size: 21px; color: var(--s-tinte-leise); }
       .dkopf h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
       .dkopf p { margin: 3px 0 0; color: var(--s-tinte-leise); font-size: 13px; }
       .zu { width: 34px; height: 34px; border: 0; border-radius: 50%; cursor: pointer; font-size: 15px;
-            background: rgba(27,36,48,.06); color: var(--s-tinte-leise); }
+            background: rgba(27,36,48,.06); color: var(--s-tinte-leise);
+            box-shadow: var(--s-saum); }
       .zu:hover { background: rgba(27,36,48,.12); }
 
       /* --- Baukasten --------------------------------------------------
@@ -3263,8 +3283,7 @@ class HatsPanel extends HTMLElement {
          Markup: order plus margin-top auto, und die min-height sorgt dafuer,
          dass die Leiste bei allen fuenfzehn auf derselben Linie sitzt, auch
          wenn ein Name umbricht. */
-      .bk-teile.mini .bk-teil { gap: 7px; padding: 12px 12px 11px; min-height: 86px;
-                                background: linear-gradient(180deg, #ffffff 0%, #f4f7fc 100%); }
+      .bk-teile.mini .bk-teil { gap: 7px; padding: 12px 12px 11px; min-height: 86px; }
       .bk-teile.mini .bk-name { order: 1; font-size: 13.5px; }
       .bk-teile.mini .bk-tupfer { order: 2; margin: auto 0 0; gap: 0;
                                   justify-content: space-between; }
@@ -3283,24 +3302,17 @@ class HatsPanel extends HTMLElement {
                  display: flex; flex-direction: column; gap: 4px;
                  background: var(--s-karte); color: var(--s-tinte);
                  border: 1px solid rgba(27,36,48,.08); border-radius: var(--s-r);
-                 padding: 13px 15px;
-                 box-shadow: inset 0 1px 0 rgba(255,255,255,.9),
-                             0 1px 2px rgba(26,44,74,.10),
-                             0 6px 14px rgba(26,44,74,.10);
+                 padding: 13px 15px; background-image: var(--s-flaeche);
+                 box-shadow: var(--s-schatten-klein);
                  transition: border-color .15s, box-shadow .15s, transform .15s; }
       .bk-teil:hover:not([disabled]) { border-color: var(--s-akzent); transform: translateY(-2px);
-                 box-shadow: inset 0 1px 0 rgba(255,255,255,.9),
-                             0 2px 4px rgba(26,44,74,.12),
-                             0 12px 24px rgba(26,44,74,.16); }
+                 box-shadow: var(--s-schatten-hoch); }
       .bk-teil[disabled] { opacity: .45; cursor: default; }
       /* Das gewaehlte Teil traegt die Akzentfarbe als Rahmen, nicht als
          Flaeche: Eine gefuellte Kachel wuerde den Zwecktext darauf erschlagen,
          und genau der ist die Entscheidungshilfe. */
       .bk-teil.an { border-color: var(--s-akzent);
-                    box-shadow: inset 0 0 0 1px var(--s-akzent),
-                                inset 0 1px 0 rgba(255,255,255,.9),
-                                0 1px 2px rgba(26,44,74,.10),
-                                0 6px 14px rgba(26,44,74,.12); }
+                    box-shadow: inset 0 0 0 1px var(--s-akzent), var(--s-schatten-klein); }
       /* Der Farbstreifen eines Hintergrunds. Er sitzt UEBER dem Namen, nicht
          als Flaeche hinter ihm: Vier Farben hinter Text machen beides
          unlesbar. Der Haken steht rechts daneben, deshalb endet er bei 70 %. */
@@ -3345,11 +3357,13 @@ class HatsPanel extends HTMLElement {
                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
       .startweg { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
                   text-align: left; cursor: pointer; font: inherit; color: var(--s-tinte);
-                  background: var(--s-karte); border: 1px solid rgba(27,36,48,.08);
+                  background: var(--s-karte); background-image: var(--s-flaeche);
+                  border: 1px solid rgba(27,36,48,.08);
                   border-radius: var(--s-r); padding: 20px 20px 18px;
                   box-shadow: var(--s-schatten-klein);
-                  transition: border-color .15s, transform .15s; }
-      .startweg:hover { border-color: var(--s-akzent); transform: translateY(-1px); }
+                  transition: border-color .15s, box-shadow .15s, transform .15s; }
+      .startweg:hover { border-color: var(--s-akzent); transform: translateY(-2px);
+                        box-shadow: var(--s-schatten-hoch); }
       .startweg ha-icon { --mdc-icon-size: 26px; color: var(--s-akzent); margin-bottom: 2px; }
       .startweg b { font-size: 15.5px; font-weight: 500; }
       .startweg span { font-size: 12.5px; line-height: 1.45; color: var(--s-tinte-leise); }
@@ -3383,9 +3397,13 @@ class HatsPanel extends HTMLElement {
       .bk-tweak { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;
                   align-items: start; cursor: pointer; padding: 11px 13px;
                   border-radius: var(--s-r); background: var(--s-karte);
-                  border: 1px solid rgba(27,36,48,.08); transition: border-color .15s; }
-      .bk-tweak:hover { border-color: var(--s-akzent); }
-      .bk-tweak.an { border-color: var(--s-akzent); box-shadow: inset 0 0 0 1px var(--s-akzent); }
+                  background-image: var(--s-flaeche);
+                  border: 1px solid rgba(27,36,48,.08); box-shadow: var(--s-schatten-klein);
+                  transition: border-color .15s, box-shadow .15s, transform .15s; }
+      .bk-tweak:hover { border-color: var(--s-akzent); transform: translateY(-2px);
+                        box-shadow: var(--s-schatten-hoch); }
+      .bk-tweak.an { border-color: var(--s-akzent);
+                     box-shadow: inset 0 0 0 1px var(--s-akzent), var(--s-schatten-klein); }
       .bk-tweak input { grid-row: span 2; margin: 2px 0 0; accent-color: var(--s-akzent); }
       .bk-tweak .bk-zweck { grid-column: 2; }
 
@@ -3423,7 +3441,7 @@ class HatsPanel extends HTMLElement {
 
       /* Kacheln und Zeilen sind Menuepunkte - das muss man ihnen ansehen. */
       .karte[data-feld], .feld[data-feld] { cursor: pointer; }
-      .karte[data-feld]:hover { box-shadow: 0 4px 14px rgba(26,44,74,.14); transform: translateY(-1px); }
+      .karte[data-feld]:hover { box-shadow: var(--s-schatten-hoch); transform: translateY(-2px); }
       .karte[data-feld] { transition: box-shadow .15s ease, transform .15s ease; }
       .karte[data-feld]:focus-visible, .feld[data-feld]:focus-visible {
         outline: 2px solid var(--s-tinte); outline-offset: 2px; }
