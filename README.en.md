@@ -192,7 +192,7 @@ Settings — sections on the left, choices on the right:
 |---|---|
 | Appearance | mode, card style, colour palette, card transparency and blur |
 | Background | the kit's gradients and your own images from `config/www/hats` |
-| Text and size | size, typeface, corners, density |
+| Text and size | size, typeface, corners |
 | Motion | drift, colour dots, colour shift, range |
 | Display | fullscreen, edit dashboard, theme choice, earlier versions |
 

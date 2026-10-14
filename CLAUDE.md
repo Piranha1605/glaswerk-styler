@@ -1664,6 +1664,21 @@ Gruppe sieht aus wie eine Karte der Theme (`--ha-card-background`, Rundung,
 Rahmen). Alle drei setzt HA nicht selbst, sie kommen aus der Theme, mit
 Rückfall auf `--card-background-color`.
 
+**Die Dichte ist aus dem Fenster genommen.** Gemeldet: *„das zerstört uns die
+seitenleiste die icons verutschen."* Die Dichten des Baukastens setzen
+`--ha-space-1` bis `-20` global; HAs Seitenleiste liest davon `-1`, `-2`, `-3`,
+`-4`, `-6`, `-10`, `-12` (aus ihren `elementStyles`). Vorübergehend am `html`
+gesetzt und gemessen, Menüknopf oben gegen die Symbole darunter:
+
+    eng          15 / 19     Zeilen 33 px
+    Home Assist. 16 / 16     Zeilen 44 px    die einzige in einer Linie
+    weit         17 / 13     Zeilen 55 px
+    sehr weit    18 / 10     Zeilen 66 px
+
+Der Fehler steckt in den Teilen, nicht im Fenster — das Panel bietet sie
+genauso an. Gemeldet an HATS Aufbau. Zurück ins Fenster, sobald die Dichte nur
+das Dashboard trifft.
+
 **Bearbeiten und Vollbild stehen oben im Fenster**, neben dem Schliessen —
 auf Ansage, mit einem Bild der Kopfzeile: *„bekommen wir die dashboard
 bearbeiten und vollbild da hinein"*. Sie gehören zu keinem Bereich. Den Stift

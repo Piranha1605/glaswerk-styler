@@ -2539,7 +2539,13 @@ class Steuerung extends Basis {
         teile.push(this._gruppe(tf.groesse, ...schrift));
         teile.push(this._gruppe(tf.schriftart, this._baukastenKacheln(t, "schrift")));
         teile.push(this._gruppe(tf.rundung, this._baukastenKacheln(t, "rundung")));
-        teile.push(this._gruppe(tf.dichte, this._baukastenKacheln(t, "dichte")));
+        // Die Dichte steht hier NICHT, obwohl der Baukasten sie hat. Am
+        // 14.10.2026 gemeldet: "das zerstoert uns die seitenleiste die icons
+        // verutschen." Gemessen: Die Dichten setzen --ha-space-1 bis -20
+        // global, und HAs Seitenleiste liest sieben davon. Nur bei "Home
+        // Assistant" stehen ihre Symbole in einer Linie mit dem Menueknopf
+        // (x 16/16); weit 17/13, sehr weit 18/10, eng 15/19. Zurueck ins
+        // Fenster, sobald die Dichte nur das Dashboard trifft.
       }
     } else if (seite === "bewegung") {
       teile.push(r.sperre ? gesperrt() : this._gruppe("", ...this._baueGruppe(t, "bewegung", false)));

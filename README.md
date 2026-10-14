@@ -195,7 +195,7 @@ Systemeinstellungen am Mac — links die Bereiche, rechts die Auswahl:
 |---|---|
 | Erscheinungsbild | Modus, Kartenstil, Farbpalette, Transparenz und Weichzeichnung der Karten |
 | Hintergrund | die Farbverläufe des Baukastens und eigene Bilder aus `config/www/hats` |
-| Schrift und Größe | Größe, Schriftart, Rundung, Dichte |
+| Schrift und Größe | Größe, Schriftart, Rundung |
 | Bewegung | Treiben, Farbpunkte, Farbwechsel, Ausschlag |
 | Anzeige | Vollbild, Dashboard bearbeiten, Wahl der Theme, frühere Fassungen |
 
