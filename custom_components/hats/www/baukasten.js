@@ -31,6 +31,49 @@
 // 53 %. Wer hier eine sechste Farbe vermisst: Die Farbvielfalt fuer Mushroom
 // und Bubbles Zustaende kommt aus den 22 klassischen Toenen, nicht von hier.
 
+// Die Farben, die eine Palette auf der Kachel zeigt.
+//
+// Gemeldet am 14.10.2026: "ich habe keine farben zum auswaehlen." Die
+// Hintergruende trugen einen Farbstreifen, die Paletten nur Text - und eine
+// Farbe waehlt man nicht nach Beschreibung.
+//
+// Gezeigt wird die GERECHNETE Stufe, nicht der Basiston. Das ist kein Detail:
+// rampe() nimmt vom Basiston nur Farbton und Saettigung, die Helligkeit kommt
+// vollstaendig aus HAs Profil. Nords Neutral steht als #4c566a in den Daten,
+// auf dem Bildschirm wird daraus ein Grau in HAs Helligkeit - ein Schwatz des
+// Basiswerts waere also gelogen.
+//
+// Stufe 60, nicht 40: 40 ist HAs kraeftige Flaeche im Hellen, aber Gruen liegt
+// dort bei #036730 und Orange bei #9d3800 - als Farbtupfer nebeneinander sieht
+// das nach vier Brauntoenen aus. 60 ist dieselbe Rampe eine Stufe heller und
+// zeigt, welche Farbe gemeint ist.
+const HA_TOENE = {
+  // Was ha_blanko stehen laesst, am 14.10.2026 am laufenden Stylesheet
+  // ausgelesen (--ha-color-<rolle>-60). Noetig fuer die beiden Teile mit
+  // farben: null - die rechnen nichts, also gibt es auch nichts zu rechnen.
+  primary: "#37c8fd", red: "#f3676c", green: "#00ac49", orange: "#f36d00",
+};
+// OHNE neutral, und das ist kein Versehen: rampe() setzt fuer diese Rolle die
+// Saettigung auf 0 (rolle === "neutral" ? 0 : s * faktor), damit auch den
+// Farbton ausser Kraft. Jede Palette bekommt deshalb dasselbe #989898 - ein
+// Schwatz, der bei allen fuenfzehn gleich aussieht, sagt nichts.
+//
+// Das heisst zugleich: Der Wert neutral in farben wird zwar uebergeben, wirkt
+// aber nicht. Das gehoert entschieden, nicht weggeschwiegen - siehe CLAUDE.md.
+const VORSCHAU_ROLLEN = ["primary", "red", "green", "orange"];
+
+export function palettenVorschau(teil, dunkel = false) {
+  const aus = [];
+  if (teil.akzent) aus.push({ rolle: "akzent", hex: teil.akzent[dunkel ? "dark" : "light"] });
+  for (const rolle of VORSCHAU_ROLLEN) {
+    const basis = teil.farben?.[rolle];
+    if (!basis) { aus.push({ rolle, hex: HA_TOENE[rolle] }); continue; }
+    const r = rampe(basis, rolle);
+    aus.push({ rolle, hex: r ? r[`ha-color-${rolle}-60`] : basis });
+  }
+  return aus;
+}
+
 export const PALETTEN = [
   {
     id: "ha",

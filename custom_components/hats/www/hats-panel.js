@@ -27,7 +27,7 @@ import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teile
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
-import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE,
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
@@ -1252,10 +1252,17 @@ class HatsPanel extends HTMLElement {
               // im Modus, in dem der Nutzer gerade sitzt, sonst waere er eine
               // Auskunft ueber den anderen.
               const v = teil.vorschau && teil.vorschau[dunkel ? "dark" : "light"];
+              // Eine Palette zeigt ihre Farben als Tupfer, nicht als Streifen:
+              // Sie ist ein SATZ einzelner Toene, kein Verlauf. Gemeldet am
+              // 14.10.2026 - "ich habe keine farben zum auswaehlen", und zu
+              // Recht: Da stand nur Text.
+              const tupfer = schluessel === "palette" ? palettenVorschau(teil, dunkel) : null;
               return kopf + `
               <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}>
                 ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
+                ${tupfer ? `<span class="bk-tupfer">${tupfer.map((f) =>
+                    `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")}</span>` : ""}
                 <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
                 <span class="bk-zweck">${this.spr === "en" ? teil.zweckEn : teil.zweckDe}</span>
                 ${an ? `<span class="bk-haken"><ha-icon icon="mdi:check"></ha-icon></span>` : ""}
@@ -3239,6 +3246,13 @@ class HatsPanel extends HTMLElement {
          unlesbar. Der Haken steht rechts daneben, deshalb endet er bei 70 %. */
       .bk-streifen { display: block; height: 10px; width: 70%; border-radius: 999px;
                      margin-bottom: 4px; border: 1px solid rgba(27,36,48,.10); }
+      /* Die Farbtupfer einer Palette. Der erste ist der Akzent - die einzige
+         Farbe, die je Modus verschieden ist, und die, die man am haeufigsten
+         sieht. Deshalb steht er vorn und ist etwas groesser. */
+      .bk-tupfer { display: flex; gap: 5px; align-items: center; margin-bottom: 7px; }
+      .bk-tupfer i { display: block; width: 14px; height: 14px; border-radius: 50%;
+                     box-shadow: inset 0 0 0 1px rgba(27,36,48,.14); }
+      .bk-tupfer i:first-child { width: 20px; height: 20px; }
       .bk-name { font-size: 14px; font-weight: 500; }
       .bk-zweck { font-size: 12px; line-height: 1.45; color: var(--s-tinte-leise); }
       .bk-haken { position: absolute; top: 10px; right: 10px; color: var(--s-akzent);

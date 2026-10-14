@@ -5,7 +5,8 @@
 // das geschrieben wird, obwohl Home Assistant es selbst ableitet.
 
 import assert from "node:assert";
-import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE,
+import { rampe } from "../custom_components/hats/www/palette.js";
+import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau,
          KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN } from "../custom_components/hats/www/baukasten.js";
 import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
 
@@ -288,6 +289,42 @@ pruefe("Ein Klick auf das gewaehlte Teil wendet NICHT neu an", () => {
   assert.ok(i > 0, "der Fall wird nicht abgefangen");
   // Und der Ausstieg muss VOR dem Anwenden kommen.
   assert.ok(i < b.indexOf("teilAnwenden("), "die Pruefung steht nach dem Anwenden");
+});
+
+pruefe("Jede Palette zeigt Farben, und zwar die gerechneten", () => {
+  // Gemeldet am 14.10.2026: "ich habe keine farben zum auswaehlen."
+  for (const p of PALETTEN) {
+    for (const dunkel of [false, true]) {
+      const f = palettenVorschau(p, dunkel);
+      assert.strictEqual(f.length, 5, `${p.id}: ${f.length} Tupfer statt 5`);
+      assert.deepStrictEqual(f.map((x) => x.rolle),
+        ["akzent", "primary", "red", "green", "orange"], p.id);
+      for (const x of f) assert.match(x.hex, /^#[0-9a-f]{3,6}$/i, `${p.id}/${x.rolle}: ${x.hex}`);
+    }
+    // Der Akzent ist die einzige Groesse je Modus - er MUSS sich unterscheiden,
+    // sonst steht in den Daten eine Fassung, die niemand sieht.
+    assert.notStrictEqual(palettenVorschau(p, false)[0].hex, palettenVorschau(p, true)[0].hex,
+      `${p.id}: hell und dunkel tragen denselben Akzent`);
+  }
+});
+
+pruefe("Der Tupfer zeigt die gerechnete Stufe, nicht den Basiston", () => {
+  // rampe() nimmt vom Basiston nur Farbton und Saettigung - die Helligkeit
+  // kommt aus HAs Profil. Ein Schwatz des Basiswerts waere gelogen.
+  const nord = PALETTEN.find((p) => p.id === "nord");
+  const primaer = palettenVorschau(nord, false).find((f) => f.rolle === "primary").hex;
+  assert.notStrictEqual(primaer.toLowerCase(), nord.farben.primary.toLowerCase(),
+    "der Tupfer ist der Basiston - dann stimmt die Rechnung nicht");
+  assert.strictEqual(primaer.toLowerCase(), rampe(nord.farben.primary, "primary")["ha-color-primary-60"].toLowerCase());
+  // Gegenprobe: Die beiden Teile OHNE eigene Farben zeigen HAs Toene, nicht
+  // eine Rampe aus nichts.
+  for (const id of ["ha", "liquid"]) {
+    const f = palettenVorschau(PALETTEN.find((p) => p.id === id), false);
+    assert.strictEqual(f.find((x) => x.rolle === "primary").hex, "#37c8fd", id);
+  }
+  // Und: neutral steht NICHT dabei. rampe() setzt dort die Saettigung auf 0,
+  // also saehe der Tupfer bei allen fuenfzehn gleich aus.
+  assert.ok(!palettenVorschau(PALETTEN[0], false).some((f) => f.rolle === "neutral"));
 });
 
 console.log(`\n${n} Pruefungen`);
