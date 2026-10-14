@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:09:01
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:19:35
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -6,7 +6,7 @@
 # Funktionen.
 # 
 # Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk, Schrift
-# system, Rundung rund, Dichte weit, Karten liquid, Hintergrund glaswerk.
+# system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk.
 # Wer die Theme im Panel oeffnet, sieht sie dort alle sechs angehakt und
 # kann eines austauschen, ohne den Rest zu verlieren.
 # 
@@ -118,8 +118,8 @@ glaswerk:
   ha-border-width-lg: "3px"
   ha-border-width-md: "2px"
   ha-border-width-sm: "1px"
-  ha-card-backdrop-filter: "blur(34px) saturate(200%)"
-  ha-card-border-radius: "26px"
+  ha-card-backdrop-filter: "blur(26px) saturate(180%)"
+  ha-card-border-radius: "20px"
   ha-card-border-width: "0"
   ha-color-black: "#000"
   ha-color-green-05: "#07120f"
@@ -897,7 +897,7 @@ glaswerk:
   modes:
     light:
       accent-color: "#7b5cf0"
-      app-header-background-color: "rgba(255,255,255,.34)"
+      app-header-background-color: "rgba(255, 255, 255, 0.3)"
       app-header-text-color: "#121a2b"
       card-background-color: "#ffffff"
       clear-background-color: "#fff"
@@ -908,13 +908,13 @@ glaswerk:
       ha-box-shadow-l: "0 18px 44px rgba(26, 40, 72, .18)"
       ha-box-shadow-m: "0 6px 16px rgba(26, 40, 72, .14)"
       ha-box-shadow-s: "0 1px 2px rgba(26, 40, 72, .10)"
-      ha-card-background: "linear-gradient(150deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.32) 32%, rgba(255,255,255,.16) 58%, rgba(255,255,255,.42) 100%), linear-gradient(0deg, rgba(186,202,234,.24), rgba(186,202,234,.24))"
-      ha-card-box-shadow: "inset 0 1.5px 0 rgba(255,255,255,1), inset 0 0 0 1px rgba(255,255,255,.72), inset 0 -1px 0 rgba(255,255,255,.50), 0 1px 2px rgba(26,40,72,.08), 0 10px 24px rgba(26,40,72,.13), 0 28px 60px rgba(26,40,72,.15)"
+      ha-card-background: "rgba(255, 255, 255, 0.42)"
+      ha-card-box-shadow: "inset 0 1.5px 0 0 rgba(255, 255, 255, .72), inset 0 -1.5px 0 0 rgba(10, 20, 45, .1), 0 18px 46px rgba(22, 40, 78, .16), 0 2px 6px rgba(22, 40, 78, .08)"
       ha-color-border-neutral-normal: "rgba(16, 30, 60, .18)"
       ha-color-border-neutral-quiet: "rgba(16, 30, 60, .10)"
       ha-color-text-primary: "#121a2b"
       ha-color-text-secondary: "#4b5873"
-      ha-dialog-surface-background: "rgba(255,255,255,.88)"
+      ha-dialog-surface-background: "rgba(255, 255, 255, 0.86)"
       input-disabled-fill-color: "#fafafa"
       input-disabled-ink-color: "#0000005e"
       input-disabled-line-color: "#0000000f"
@@ -928,7 +928,7 @@ glaswerk:
       input-outlined-hover-border-color: "#000000de"
       input-outlined-idle-border-color: "#00000061"
       lovelace-background: "linear-gradient(118deg, rgba(255,255,255,.50) 0 5%, rgba(255,255,255,0) 15%), linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.30) 22%, rgba(255,255,255,0) 29%), repeating-linear-gradient(45deg, rgba(255,255,255,.34) 0 2px, rgba(255,255,255,0) 2px 84px), repeating-linear-gradient(-45deg, rgba(255,255,255,.24) 0 2px, rgba(255,255,255,0) 2px 84px), radial-gradient(closest-side, rgba(96,150,220,.45), transparent) left -260px top -200px / 900px 640px no-repeat, radial-gradient(closest-side, rgba(140,190,236,.38), transparent) right -200px top -120px / 820px 600px no-repeat, radial-gradient(closest-side, rgba(78,122,186,.34), transparent) right -160px bottom -260px / 860px 700px no-repeat, linear-gradient(145deg, #a8c0da 0%, #cbdaec 42%, #9db6d2 100%) fixed"
-      mdc-dialog-scrim-color: "rgba(16,24,44,.30)"
+      mdc-dialog-scrim-color: "rgba(16, 24, 44, 0.32)"
       outline-color: "#0000001f"
       outline-hover-color: "#0000003d"
       primary-background-color: "#dbe6f3"
@@ -937,16 +937,16 @@ glaswerk:
       secondary-background-color: "#e5e5e5"
       secondary-text-color: "#4b5873"
       shadow-color: "#00000029"
-      sidebar-background-color: "rgba(255,255,255,.42)"
+      sidebar-background-color: "rgba(255, 255, 255, 0.4)"
       sidebar-icon-color: "#4b5873"
       sidebar-text-color: "#121a2b"
 
     dark:
       accent-color: "#9b84f8"
-      app-header-background-color: "rgba(18,20,32,.36)"
+      app-header-background-color: "rgba(20, 25, 40, 0.34)"
       app-header-text-color: "#e8edf7"
       bar-box-shadow: "0 2px 12px var(--shadow-color)"
-      card-background-color: "#1a1d2b"
+      card-background-color: "#1c2234"
       clear-background-color: "#111111"
       codemirror-atom: "#f78c6c"
       codemirror-attribute: "#c792ea"
@@ -977,8 +977,8 @@ glaswerk:
       ha-button-neutral-light-color: "#6a7081"
       ha-button-primary-light-color: "#4082a040"
       ha-button-warning-light-color: "#917b54c1"
-      ha-card-background: "linear-gradient(150deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.055) 34%, rgba(255,255,255,.02) 58%, rgba(255,255,255,.075) 100%), linear-gradient(0deg, rgba(20,26,46,.44), rgba(20,26,46,.44))"
-      ha-card-box-shadow: "inset 0 1.5px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(255,255,255,.15), inset 0 -1px 0 rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.35), 0 10px 26px rgba(0,0,0,.45), 0 30px 64px rgba(0,0,0,.50)"
+      ha-card-background: "rgba(22, 28, 46, 0.46)"
+      ha-card-box-shadow: "inset 0 1.5px 0 0 rgba(255, 255, 255, .16), inset 0 -1.5px 0 0 rgba(0, 0, 0, .35), 0 20px 52px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3)"
       ha-color-border-danger-loud: "var(--ha-color-red-50)"
       ha-color-border-danger-normal: "var(--ha-color-red-50)"
       ha-color-border-neutral-loud: "var(--ha-color-neutral-70)"
@@ -1067,7 +1067,7 @@ glaswerk:
       ha-color-text-primary-inverted: "var(--ha-color-black)"
       ha-color-text-secondary: "#a6b1c8"
       ha-color-text-secondary-inverted: "var(--ha-color-neutral-40)"
-      ha-dialog-surface-background: "rgba(26,29,43,.90)"
+      ha-dialog-surface-background: "rgba(26, 31, 48, 0.9)"
       input-disabled-fill-color: "rgba(255, 255, 255, 0.02)"
       input-disabled-ink-color: "rgba(255, 255, 255, 0.37)"
       input-disabled-line-color: "rgba(255, 255, 255, 0.06)"
@@ -1082,7 +1082,7 @@ glaswerk:
       input-outlined-idle-border-color: "rgba(255, 255, 255, 0.38)"
       lovelace-background: "linear-gradient(118deg, rgba(255,255,255,.12) 0 5%, rgba(255,255,255,0) 15%), linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.08) 22%, rgba(255,255,255,0) 29%), repeating-linear-gradient(45deg, rgba(255,255,255,.085) 0 2px, rgba(255,255,255,0) 2px 84px), repeating-linear-gradient(-45deg, rgba(255,255,255,.06) 0 2px, rgba(255,255,255,0) 2px 84px), radial-gradient(closest-side, rgba(46,92,168,.52), transparent) left -260px top -200px / 900px 640px no-repeat, radial-gradient(closest-side, rgba(62,114,190,.40), transparent) right -200px top -120px / 820px 600px no-repeat, radial-gradient(closest-side, rgba(26,54,110,.46), transparent) right -160px bottom -260px / 860px 700px no-repeat, linear-gradient(145deg, #0d141f 0%, #16202f 42%, #0a111a 100%) fixed"
       map-filter: "invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3)"
-      mdc-dialog-scrim-color: "rgba(0,0,0,.54)"
+      mdc-dialog-scrim-color: "rgba(0, 0, 0, 0.52)"
       mdc-linear-progress-buffer-color: "rgba(255, 255, 255, 0.1)"
       mdc-ripple-color: "#aaaaaa"
       outline-color: "rgba(225, 225, 225, 0.12)"
@@ -1093,6 +1093,6 @@ glaswerk:
       secondary-background-color: "#282828"
       secondary-text-color: "#a6b1c8"
       shadow-color: "rgba(0, 0, 0, 0.48)"
-      sidebar-background-color: "rgba(18,20,32,.46)"
+      sidebar-background-color: "rgba(20, 25, 40, 0.42)"
       sidebar-icon-color: "#a6b1c8"
       sidebar-text-color: "#e8edf7"

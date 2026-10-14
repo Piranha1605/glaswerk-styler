@@ -17,7 +17,7 @@
 //
 //     Farben       glaswerk     Azur mit violettem Akzent
 //     Hintergrund  glaswerk     das diagonale Raster, hell und dunkel
-//     Karten       liquid       Liquid Glass - dicke Scheibe, Saum rundum
+//     Karten       glas         Lichtkante oben, Schattenkante unten
 //     Rundung      rund         die Leiter, grosszuegig
 //     Dichte       weit         fuenf Pixel je Stufe
 //     Schrift      system       die Schrift des Geraets
@@ -85,14 +85,20 @@ const teil = (sorte, id) => {
 // --- Die sechs Teile, in der Reihenfolge des Baukastens ---------------------
 //
 // Die Reihenfolge ist nicht beliebig: Der Kartenstil kommt NACH der Rundung,
-// weil beide --ha-card-border-radius schreiben. Liquid Glass setzt 26px, und
-// das soll stehen bleiben - die Leiter darunter bleibt trotzdem die von
-// "rund", fuer Knoepfe, Felder und Dialoge.
+// weil beide --ha-card-border-radius schreiben. "Glas" setzt 20px, und das
+// soll stehen bleiben - die Leiter darunter bleibt trotzdem die von "rund",
+// fuer Knoepfe, Felder und Dialoge.
+//
+// Hier stand bis zum 14.10.2026 "liquid". Der Maintainer hat beide auf
+// demselben Grund verglichen, hell und dunkel, und sich fuer die Kante von
+// "Glas" entschieden: Lichtkante oben, Schattenkante unten, Seiten offen,
+// kein Rahmen - die Karte wirkt gewoelbt statt umrandet. Liquid Glass liegt
+// weiter im Baukasten, es ist nur nicht die Wahl fuer diese Theme.
 teilAnwenden("palette", teil("palette", "glaswerk"), schreibe);
 teilAnwenden("schrift", teil("schrift", "system"), schreibe);
 teilAnwenden("rundung", teil("rundung", "rund"), schreibe);
 teilAnwenden("dichte", teil("dichte", "weit"), schreibe);
-teilAnwenden("karten", teil("karten", "liquid"), schreibe);
+teilAnwenden("karten", teil("karten", "glas"), schreibe);
 teilAnwenden("hintergrund", teil("hintergrund", "glaswerk"), schreibe);
 
 // --- Schrift auf kuehlem Grund ---------------------------------------------
@@ -188,7 +194,7 @@ m.kopf = [
   "Funktionen.",
   "",
   "Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk, Schrift",
-  "system, Rundung rund, Dichte weit, Karten liquid, Hintergrund glaswerk.",
+  "system, Rundung rund, Dichte weit, Karten glas, Hintergrund glaswerk.",
   "Wer die Theme im Panel oeffnet, sieht sie dort alle sechs angehakt und",
   "kann eines austauschen, ohne den Rest zu verlieren.",
   "",
@@ -219,7 +225,7 @@ const lies = (name, ebene) => {
   return ebene === "beide" ? zurueckM.flach[k] : (zurueckM[ebene]?.[k] ?? zurueckM.flach[k]);
 };
 const soll = { palette: "glaswerk", schrift: "system", rundung: "rund",
-               dichte: "weit", karten: "liquid", hintergrund: "glaswerk" };
+               dichte: "weit", karten: "glas", hintergrund: "glaswerk" };
 const treffer = Object.fromEntries(
   Object.keys(soll).map((s) => [s, erkenneTeil(s, lies)]));
 const erkannt = Object.entries(soll).every(([s, id]) => treffer[s] === id);
