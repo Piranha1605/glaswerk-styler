@@ -132,7 +132,7 @@ Without `buttons` it shows mode and fullscreen — the short form:
 | `tap_action` | any Home Assistant action; it wins over `link` and over toggling |
 | `state_background` | default `true`: a button that is on is filled |
 | `light_background` | default `true`: in the lamp's colour, otherwise in Home Assistant's state colour |
-| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion` |
+| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion`, `appearance` |
 | `temperature`, `temperature_source` | `weather` only: a sensor of your own, and whether the value comes from it (`sensor`) or from the weather entity (`weather`) |
 | `align_end`, `separator_before` | at the end of the bar; a thin line before it |
 
@@ -167,6 +167,21 @@ The values are permanent: on release the card writes them into the file of the
 active theme, using the same functions as the panel. This works for
 administrators only, and only for a theme created with HATS; otherwise the
 slider says why not.
+
+**Transparency and text size** are set by a button with `function: appearance`,
+the same way and under the same conditions:
+
+![The sliders for transparency and text size](docs/bilder/steuerleiste-darstellung.jpg)
+
+- **Transparency** (0 to 80 %) changes the card surface. If the theme keeps it
+  apart for light and dark, the slider applies to the mode currently shown. If
+  the surface is not a plain colour — the "Liquid Glass" card style stores two
+  gradients — the slider stays locked.
+- **Text size** (90 to 120 %) sets the factor Home Assistant uses for all font
+  sizes. Tiles and Mushroom grow with it; the names in Bubble Card stay as they
+  are. Above 100 %, tiles cut long names short sooner.
+
+Only the value you moved is written.
 
 The editor lets you add, sort and edit the buttons:
 

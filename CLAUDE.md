@@ -1274,6 +1274,85 @@ PyYAML: Was die Karte schreibt, liest Home Assistant.
 
 **Nur in der Karte.** Das Badge bleibt, wie es ist.
 
+### Transparenz und Schrift: gewöhnliche Felder, und nur das gezogene
+
+Auf Ansage vom 14.10.2026, weitergegeben von „HATS Aufbau": *„er soll die
+hintergrundtransparenz und und die schriftgröße als slieder darstellen"*.
+
+```yaml
+  - function: appearance    # ein Knopf, zwei Regler
+    align_end: true
+```
+
+Dieselbe Strecke wie beim Bewegungsregler — dieselben Sperren, frisch lesen,
+schreiben, `frontend.reload_themes` —, mit einem Unterschied, der alles
+andere bestimmt: **Die beiden Felder stehen auch im Panel.** Der Bewegungsblock
+gehört HATS allein; `--ha-card-background` und `--ha-font-size-scale` stellt
+der Nutzer auch dort ein. Daraus folgen zwei Regeln:
+
+- **Geschrieben wird nur das Feld, an dem gezogen wurde.** Wer an der Schrift
+  zieht, schreibt die Kartenfläche nicht mit — sonst setzte er zurück, was das
+  Panel inzwischen geändert hat. Ein Test fährt genau diesen Fall.
+- **Geschrieben wird dort, wo der Wert steht.** Je Modus: nur der geltende
+  (`hass.themes.darkMode`, beim Öffnen festgehalten). Flach: bleibt flach,
+  gilt also für beide. Flach oder je Modus ist eine Wahl im Panel, die Karte
+  trifft sie nicht neu — kein `teileAuf` aus der Karte heraus.
+
+**Transparenz** ist Deckkraft rückwärts, 0 bis 80 % (Deckkraft 1,00 bis
+0,20). Bearbeitet wird nur eine einfache Farbe — `rgb()`, `rgba()`, `#rgb`,
+`#rrggbb`. Der Kartenstil „Liquid Glass" legt **zwei Verläufe** ab; die vierte
+Zahl darin zu ersetzen zerlegte ihn. Dann ist der Regler gesperrt, mit dem
+Grund als Satz darunter (nicht nur als `title` — auf dem Tablett sieht man
+keinen). Hex wird beim ersten Schreiben zu `rgba(R, G, B, A)`, danach ist die
+Datei stabil. Fehlt `--ha-card-backdrop-filter` oder steht auf `none`, sagt
+der Regler, dass die Karten nur blasser werden, nicht milchig.
+
+**Schrift: Mushroom bekommt einen Verweis, keine Zahl.** `--ha-font-size-scale`
+multipliziert HAs ganze Leiter; Mushroom rechnet mit eigenen 14px und 12px.
+Die Karte schreibt deshalb **einmal**
+
+    mush-card-primary-font-size:   var(--ha-font-size-m)    # 14px * scale
+    mush-card-secondary-font-size: var(--ha-font-size-s)    # 12px * scale
+
+— bei Skala 1 genau Mushrooms Vorgaben, danach wachsen sie mit. Feste Pixel je
+Regler-Stellung wären drei Orte für dieselbe Zahl gewesen. Steht schon ein
+Wert, bleibt er; hängt er nicht an der Leiter (`15px`), sagt der Regler das.
+Die beiden Felder hat HATS Aufbau vorher ins Panel gelegt (`304c37a`), und
+ein Test liest die Feldliste **aus dem Panel**, nicht aus der Karte: Schreibt
+die Karte ein Feld, das dort fehlt, wird er rot.
+
+Gemessen an der Testmaschine, Theme `glaswerk`, 1024 × 768:
+
+    Regler öffnen          hell 58 % / 100 %, dunkel 54 % / 100 %
+    Transparenz 58 -> 70   EINE Zeile anders: 0.42 -> 0.3, am <html> rgba(255, 255, 255, 0.3)
+    Schrift 100 -> 110     die Skala-Zeile und zwei Mushroom-Zeilen; die Fläche blieb 0.3
+    bei 1,1 / 1,2          Kachel 15,4 / 16,8 px, Mushroom 15,4 / 16,8 px und 13,2 / 14,4 px
+    Bubble                 Namen 13 px (Knopf), 16 px (Trenner) - bei 1,0 wie bei 1,2
+    zurück                 Sicherung eingespielt, dieselbe Prüfsumme
+
+**Bubbles Namen wachsen nicht mit.** HATS Aufbau hatte „14 → 16,8" gemessen;
+an `.bubble-name` sind es feste 13 und 16 px. Der Hinweis in der Doku sagt
+deshalb nur „Kacheln und Mushroom". Was Bubble dafür liest, ist nicht
+nachgesehen.
+
+**Eine Schwelle für abgeschnittene Kachelnamen gibt es nicht.** Vorgeschlagen
+war „ab 1,15". An 161 px breiten Kacheln war „Living Room Fan" schon bei 90 %
+gekürzt, „Ceiling Lights" ab 110 %. Es hängt an Breite und Name; der Hinweis
+sagt deshalb nur „früher", sobald es über 100 % geht.
+
+**Dabei gefunden:** `aria-expanded` blieb beim Öffnen auf `false`, auch beim
+Bewegungsregler — gesetzt wurde es nur beim nächsten Zeichnen. Jetzt beim
+Öffnen und beim Schließen.
+
+**Die Leiste des Nutzers rollt jetzt.** Mit dem neunten Knopf ist die Reihe auf
+`/hats-test/eigene` bei 1024 px um 52 px breiter als die Karte; der neue Knopf
+liegt hinter dem Rand. Eingeklappt wird erst unter 500 px Kartenbreite.
+
+`tests/hats-steuerkarte-darstellung.test.js`: 22 Prüfungen mit dem echten
+`theme.js` und `glaswerk.yaml`. Die Erwartungen sind Textersetzungen in der
+Datei, keine Aufrufe der Module. Vier Mutationen gegengeprüft, dazu eine für
+die Feldliste des Panels. Am Ende PyYAML.
+
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 
 Beim Zusammenfügen legte der Kartenwähler dem Badge eine knappe Stunde lang

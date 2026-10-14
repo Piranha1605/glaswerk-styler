@@ -76,7 +76,7 @@ export const BEDIENTEILE = ["mode", "fullscreen"];
 
 // Was ein Knopf im Browser tut statt in Home Assistant. Ein solcher Knopf hat
 // weder Ziel noch Schalter.
-export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion"];
+export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion", "appearance"];
 export const GROESSEN = ["small", "normal", "large"];
 export const FORMEN = ["theme", "pill"];
 export const EINKLAPPEN = ["never", "narrow", "always"];
@@ -120,9 +120,17 @@ const TEXTE = {
       align_end: "Ans Ende der Leiste", separator_before: "Trennstrich davor",
     },
     funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter",
-                motion: "Bewegung des Hintergrunds" },
+                motion: "Bewegung des Hintergrunds", appearance: "Transparenz und Schrift" },
     teil: { mode: "Modus", fullscreen: "Vollbild" },
     bewegung: "Bewegung des Hintergrunds",
+    darstellung: "Transparenz und Schrift",
+    transparenz: "Transparenz",
+    schrift: "Schrift",
+    deckend: "deckend",
+    nurHier: (modus) => `Gilt im ${modus === "dark" ? "Dunkel" : "Hell"}modus - die Theme trennt die beiden.`,
+    ohneUnschaerfe: "Die Theme zeichnet nicht weich (--ha-card-backdrop-filter). Die Karten werden nur blasser, nicht milchig.",
+    kachelnKurz: "Über 100 % kürzen Home Assistants Kacheln lange Namen früher ab.",
+    mushFest: (wert) => `Mushroom steht fest auf ${wert} und wächst nicht mit.`,
     regler: { drift: "Treiben", punkte: "Farbpunkte", farbe: "Farbwechsel", weite: "Ausschlag" },
     aus: "aus",
     kreis: "im Kreis",
@@ -133,12 +141,16 @@ const TEXTE = {
     punkteNur: "Nur bei einem Hintergrund aus Farbpunkten.",
     weiteNur: "Nur mit Farbwechsel.",
     grund: {
-      admin: () => "Die Bewegung steht in der Theme-Datei. Schreiben darf sie nur ein Administrator.",
+      admin: () => "Der Regler schreibt in die Theme-Datei. Das darf nur ein Administrator.",
       ohneDatei: (name) => `Zur Theme „${name}“ gibt es keine Datei ${name}.yaml im Themes-Ordner.`,
       unlesbar: (was) => `Die Theme-Datei ist nicht lesbar: ${was}`,
       unklar: (n) => `${n} Zeile(n) der Theme-Datei sind nicht einzuordnen. Schreiben hieße, sie zu verlieren.`,
       name: (name) => `In der Datei steht die Theme „${name}“, nicht die wirksame.`,
       fremd: () => "Die Theme ist nicht mit HATS erzeugt. Eine Theme gehört einem Werkzeug.",
+      keineFlaeche: () => "Die Theme setzt keine Kartenfläche (--ha-card-background).",
+      form: (wert) => `Die Kartenfläche ist keine einfache Farbe: ${wert}`,
+      skala: (wert) => `Die Schriftskala (--ha-font-size-scale) ist keine Zahl: ${wert}`,
+      wechsel: (name) => `Inzwischen gilt die Theme „${name}“. Bitte neu öffnen.`,
     },
     nurKurzform: "Das Badge kennt nur `controls` - Ziele und Schalter gehören in die Karte.",
     wahl: {
@@ -180,9 +192,17 @@ const TEXTE = {
       align_end: "At the end of the bar", separator_before: "Separator before",
     },
     funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather",
-                motion: "Background motion" },
+                motion: "Background motion", appearance: "Transparency and text" },
     teil: { mode: "Mode", fullscreen: "Fullscreen" },
     bewegung: "Background motion",
+    darstellung: "Transparency and text",
+    transparenz: "Transparency",
+    schrift: "Text size",
+    deckend: "opaque",
+    nurHier: (modus) => `Applies in ${modus === "dark" ? "dark" : "light"} mode - the theme keeps the two apart.`,
+    ohneUnschaerfe: "The theme has no blur (--ha-card-backdrop-filter). The cards only get paler, not frosted.",
+    kachelnKurz: "Above 100 %, Home Assistant's tiles cut long names short sooner.",
+    mushFest: (wert) => `Mushroom is fixed at ${wert} and does not grow with it.`,
     regler: { drift: "Drift", punkte: "Colour dots", farbe: "Colour shift", weite: "Range" },
     aus: "off",
     kreis: "full circle",
@@ -193,12 +213,16 @@ const TEXTE = {
     punkteNur: "Only with a background made of colour dots.",
     weiteNur: "Only with colour shift.",
     grund: {
-      admin: () => "The motion lives in the theme file. Only an administrator may write it.",
+      admin: () => "The slider writes the theme file. Only an administrator may do that.",
       ohneDatei: (name) => `There is no file ${name}.yaml in the themes folder for the theme "${name}".`,
       unlesbar: (was) => `The theme file cannot be read: ${was}`,
       unklar: (n) => `${n} line(s) of the theme file cannot be placed. Writing would lose them.`,
       name: (name) => `The file holds the theme "${name}", not the active one.`,
       fremd: () => "The theme was not created with HATS. A theme belongs to one tool.",
+      keineFlaeche: () => "The theme sets no card surface (--ha-card-background).",
+      form: (wert) => `The card surface is not a plain colour: ${wert}`,
+      skala: (wert) => `The font scale (--ha-font-size-scale) is not a number: ${wert}`,
+      wechsel: (name) => `The theme "${name}" is active now. Please open again.`,
     },
     nurKurzform: "The badge only takes `controls` - targets and switches belong in the card.",
     wahl: {
@@ -220,7 +244,12 @@ const SYMBOL = {
   menue: "mdi:menu",
   pfeil: "mdi:chevron-down",
   bewegung: "mdi:motion-play-outline",
+  darstellung: "mdi:tune-variant",
 };
+
+// Die Funktionen, die Regler aufklappen, und unter welchem Namen das Feld
+// dann offen ist. Beide nur in der Karte - das Badge bleibt die kleine Form.
+const REGLER = { motion: "bewegung", appearance: "darstellung" };
 
 export function sprache(hass) {
   const s = String(
@@ -587,13 +616,21 @@ function ladeWerkzeug() {
 //
 //   zurueck  { grund, detail }               nicht anfassen
 //            { modell, werte, punktebild }   lesbar und schreibbar
-export function leseBewegungAusDatei(text, themeName, w) {
+// Was fuer jeden Regler gilt, bevor er die Datei anfasst.
+function pruefeDatei(text, themeName, w) {
   const m = w.leseTheme(text);
   if (m.fehler) return { grund: "unlesbar", detail: m.fehler };
   // Eine Zeile, die der Leser nicht einordnen kann, fehlte nach dem Schreiben.
   if (m.unklar?.length) return { grund: "unklar", detail: m.unklar.length };
   if (m.name !== themeName) return { grund: "name", detail: m.name };
   if (!m.kopf?.some((zeile) => zeile.startsWith(HATS_MARKE))) return { grund: "fremd" };
+  return { modell: m };
+}
+
+export function leseBewegungAusDatei(text, themeName, w) {
+  const stand = pruefeDatei(text, themeName, w);
+  if (stand.grund) return stand;
+  const m = stand.modell;
 
   // Die Punkte einzeln zu bewegen geht nur auf einem Bild aus Farbpunkten - in
   // JEDEM Modus, in dem ein Hintergrund gesetzt ist. Dieselbe Frage stellt
@@ -637,6 +674,150 @@ export function ausschlagStelle(grad) {
     if (Math.abs(g - grad) < Math.abs(AUSSCHLAEGE[beste] - grad)) beste = i;
   });
   return beste;
+}
+
+// ---- Transparenz und Schrift ----------------------------------------------
+//
+// Zwei gewoehnliche Theme-Felder statt eines Blocks, der HATS gehoert:
+// --ha-card-background und --ha-font-size-scale. Beide stehen auch im Panel.
+// Daraus folgen die zwei Regeln hier:
+//
+// - Geschrieben wird NUR das Feld, an dem gezogen wurde. Was das Panel am
+//   anderen inzwischen geaendert hat, bleibt.
+// - Geschrieben wird dort, wo der Wert schon steht. Flach oder je Modus ist
+//   eine Wahl im Panel; die Karte trifft sie nicht neu. Steht die Kartenflaeche
+//   je Modus, aendert der Regler den geltenden - hell und dunkel brauchen
+//   verschiedene Deckkraft (glaswerk: 0,42 und 0,46).
+
+// Prozent. Transparenz 80 heisst Deckkraft 0,20; die Schrift ist der Faktor
+// der Skala.
+//
+// Eine Schwelle, ab der HAs Kacheln Namen abschneiden, gibt es nicht. Am
+// 14.10.2026 an 161 px breiten Kacheln gemessen: "Living Room Fan" war schon
+// bei 90 % gekuerzt, "Ceiling Lights" ab 110 %. Es haengt an Breite und Name;
+// der Hinweis sagt deshalb nur "frueher", sobald es ueber 100 % geht.
+export const TRANSPARENZ = { min: 0, max: 80, schritt: 2 };
+export const SCHRIFT = { min: 90, max: 120, schritt: 5 };
+
+const FLAECHE = "ha-card-background";
+const UNSCHAERFE = "ha-card-backdrop-filter";
+const SKALA = "ha-font-size-scale";
+
+// --ha-font-size-scale multipliziert HAs ganze Leiter; Kachel und Bubble
+// folgen, Mushroom nicht - es rechnet mit eigenen 14px und 12px
+// (mushroom-light-card, am 14.10.2026 aus elementStyles gelesen). Diese zwei
+// Stufen der Leiter SIND bei Skala 1 genau diese Werte und wachsen danach mit.
+// Einmal geschrieben, folgt Mushroom dem einen Feld; ein Wert, der schon
+// steht, bleibt stehen.
+export const MUSHROOM_SCHRIFT = {
+  "mush-card-primary-font-size": "var(--ha-font-size-m)",
+  "mush-card-secondary-font-size": "var(--ha-font-size-s)",
+};
+
+const zahlText = (x) => String(Math.round(x * 100) / 100);
+
+// Eine einfache Farbe als Rot, Gruen, Blau und Deckkraft - oder null. Den
+// Kartenstil "Liquid Glass" legt HATS als zwei Verlaeufe ab; die vierte Zahl
+// darin zu ersetzen zerlegte ihn. Ein var() oder ein Farbname laesst sich
+// genauso wenig durchsichtiger machen, ohne zu raten.
+export function leseFarbe(wert) {
+  const s = String(wert ?? "").trim().toLowerCase();
+  const hex = s.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/);
+  if (hex) {
+    const h = hex[1].length === 3 ? [...hex[1]].map((c) => c + c).join("") : hex[1];
+    return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: 1 };
+  }
+  const zahl = "(\\d{1,3}(?:\\.\\d+)?)";
+  const alpha = "(\\d*\\.?\\d+%?)";
+  const m = s.match(new RegExp(`^rgba?\\(\\s*${zahl}\\s*,\\s*${zahl}\\s*,\\s*${zahl}\\s*(?:,\\s*${alpha}\\s*)?\\)$`))
+    || s.match(new RegExp(`^rgba?\\(\\s*${zahl}\\s+${zahl}\\s+${zahl}\\s*(?:\\/\\s*${alpha}\\s*)?\\)$`));
+  if (!m) return null;
+  const [r, g, b] = [m[1], m[2], m[3]].map(Number);
+  if ([r, g, b].some((x) => x > 255)) return null;
+  const a = m[4] === undefined ? 1 : m[4].endsWith("%") ? parseFloat(m[4]) / 100 : parseFloat(m[4]);
+  if (!(a >= 0 && a <= 1)) return null;
+  return { r, g, b, a };
+}
+
+// Immer in der Form, in der Panel und Baukasten sie schreiben. Aus #rrggbb
+// wird beim ersten Mal ein rgba() - danach bleibt die Datei stabil.
+export function mitDeckkraft(farbe, a) {
+  return `rgba(${farbe.r}, ${farbe.g}, ${farbe.b}, ${zahlText(a)})`;
+}
+
+// Woher ein Feld im geltenden Modus kommt: aus dem Block des Modus, sonst flach.
+function ebeneVon(m, name, modus) {
+  if (m[modus]?.[name] !== undefined) return modus;
+  if (m.flach[name] !== undefined) return "flach";
+  return null;
+}
+
+const blockVon = (m, ebene) => (ebene === "flach" ? m.flach : m[ebene]);
+
+// Was die zwei Regler zeigen, und ob sie sich ziehen lassen. Gesperrt wird je
+// Regler: Eine Kartenflaeche aus Verlaeufen sperrt die Transparenz, die
+// Schrift bleibt frei.
+//
+//   zurueck  { grund, detail }                    die Datei nicht anfassen
+//            { modell, karte, schrift, werte }    werte in Prozent, wie die Regler
+export function leseDarstellungAusDatei(text, themeName, modus, w) {
+  const stand = pruefeDatei(text, themeName, w);
+  if (stand.grund) return stand;
+  const m = stand.modell;
+  const gilt = w.wirksam(m, modus);
+
+  const karte = { ebene: ebeneVon(m, FLAECHE, modus) };
+  const farbe = leseFarbe(gilt[FLAECHE]);
+  if (!karte.ebene) karte.grund = "keineFlaeche";
+  else if (!farbe) Object.assign(karte, { grund: "form", detail: gilt[FLAECHE] });
+  else karte.deckkraft = farbe.a;
+  // Ohne Weichzeichnung wird eine durchscheinende Karte nur blasser. HA setzt
+  // das Feld selbst nirgends - fehlt es in der Theme, zeichnet nichts weich.
+  const weich = String(gilt[UNSCHAERFE] ?? "").trim();
+  karte.weich = weich !== "" && weich !== "none";
+
+  const schrift = { ebene: ebeneVon(m, SKALA, modus) ?? "flach", faktor: 1 };
+  if (gilt[SKALA] !== undefined) {
+    const f = Number(String(gilt[SKALA]).trim());
+    if (Number.isFinite(f) && f > 0) schrift.faktor = f;
+    else Object.assign(schrift, { grund: "skala", detail: gilt[SKALA] });
+  }
+  // Ein Mushroom-Feld, das nicht an der Leiter haengt, waechst nicht mit.
+  schrift.mushFest = Object.keys(MUSHROOM_SCHRIFT).map((n) => gilt[n])
+    .find((v) => v !== undefined && !/--ha-font-size-/.test(v)) ?? null;
+
+  return {
+    modell: m, karte, schrift,
+    werte: {
+      transparenz: karte.deckkraft === undefined ? null : Math.round((1 - karte.deckkraft) * 100),
+      schrift: Math.round(schrift.faktor * 100),
+    },
+  };
+}
+
+// Der neue Text der Datei. werte traegt nur, was geschrieben werden soll -
+// { transparenz } oder { schrift } oder beides, in Prozent.
+//
+//   zurueck  { grund, detail }   wie oben
+//            { yaml }
+export function schreibeDarstellungInDatei(text, themeName, modus, werte, w) {
+  const stand = leseDarstellungAusDatei(text, themeName, modus, w);
+  if (stand.grund) return stand;
+  const m = stand.modell;
+  if (werte.transparenz !== undefined) {
+    if (stand.karte.grund) return { grund: stand.karte.grund, detail: stand.karte.detail };
+    const block = blockVon(m, stand.karte.ebene);
+    block[FLAECHE] = mitDeckkraft(leseFarbe(block[FLAECHE]), 1 - werte.transparenz / 100);
+  }
+  if (werte.schrift !== undefined) {
+    if (stand.schrift.grund) return { grund: stand.schrift.grund, detail: stand.schrift.detail };
+    blockVon(m, stand.schrift.ebene)[SKALA] = zahlText(werte.schrift / 100);
+    const gilt = w.wirksam(m, modus);
+    for (const [name, wert] of Object.entries(MUSHROOM_SCHRIFT)) {
+      if (gilt[name] === undefined) m.flach[name] = wert;
+    }
+  }
+  return { yaml: w.schreibeTheme(m) };
 }
 
 // ---- Vollbild ------------------------------------------------------------
@@ -956,10 +1137,10 @@ const STIL_KARTE = `
   .liste .knopf.nur-symbol { padding: 0 var(--_polster); }
   .liste .trenner { width: auto; height: 1px; margin: var(--ha-space-1, 4px) 0; }
 
-  /* Die Regler fuer die Bewegung des Hintergrunds. Der Schieber ist der des
-     Browsers, gefaerbt mit accent-color - wie die Knoepfe aus button gebaut
-     sind statt aus einem Bauteil, das vielleicht nicht angemeldet ist. */
-  :host([offen="bewegung"]) .regler {
+  /* Die Regler fuer Bewegung, Transparenz und Schrift. Der Schieber ist der
+     des Browsers, gefaerbt mit accent-color - wie die Knoepfe aus button
+     gebaut sind statt aus einem Bauteil, das vielleicht nicht angemeldet ist. */
+  :host([offen="bewegung"]) .regler, :host([offen="darstellung"]) .regler {
     display: flex; flex-direction: column; gap: var(--ha-space-2, 8px);
     position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
     width: min(340px, 100%); box-sizing: border-box; padding: var(--ha-space-3, 12px);
@@ -976,11 +1157,12 @@ const STIL_KARTE = `
   }
   .rzeile input { width: 100%; margin: 0; accent-color: var(--primary-color); }
   .rzeile:has(input:disabled) { color: var(--disabled-text-color); }
-  .rwert, .rstatus {
+  .rwert, .rstatus, .rhinweis {
     color: var(--secondary-text-color); font-size: var(--ha-font-size-s, 12px);
   }
   .rwert { text-align: end; white-space: nowrap; }
-  .rstatus:empty { display: none; }
+  .rhinweis { display: flex; flex-direction: column; gap: var(--ha-space-1, 4px); }
+  .rstatus:empty, .rhinweis:empty { display: none; }
 `;
 
 // Das Badge. Die Flaeche zeichnet ha-badge selbst - Hoehe, Rundung, Rand,
@@ -1264,10 +1446,11 @@ class Steuerung extends Basis {
         continue;
       }
 
-      if (k.function === "motion") {
-        this._beschrifte(e, k.icon || SYMBOL.bewegung, k.name, t.bewegung);
+      if (REGLER[k.function]) {
+        const art = REGLER[k.function];
+        this._beschrifte(e, k.icon || SYMBOL[art], k.name, t[art]);
         e.setAttribute("aria-haspopup", "true");
-        e.setAttribute("aria-expanded", String(this.getAttribute("offen") === "bewegung"));
+        e.setAttribute("aria-expanded", String(this.getAttribute("offen") === art));
         continue;
       }
 
@@ -1403,19 +1586,28 @@ class Steuerung extends Basis {
     if (!this.hasAttribute?.("offen")) return;
     this.removeAttribute("offen");
     this._menueknopf?.setAttribute("aria-expanded", "false");
+    for (const b of this.shadowRoot?.querySelectorAll("button[aria-haspopup]") ?? []) {
+      b.setAttribute("aria-expanded", "false");
+    }
     document.removeEventListener("click", this._beiAussen, true);
     document.removeEventListener("keydown", this._beiTaste);
   }
 
-  // ---- Die Regler der Bewegung ----
+  // ---- Die Regler: Bewegung, Transparenz und Schrift ----
+  //
+  // Ein Feld unter der Leiste, zwei Belegungen. this._regler haelt, was beim
+  // Oeffnen gelesen wurde - welche Belegung, aus welcher Theme, in welchem
+  // Modus. Geschrieben wird genau dorthin, auch wenn inzwischen ein anderer
+  // Modus gilt: Die Regler zeigen DIESEN Stand.
 
-  async _reglerAuf(knopf) {
+  async _reglerAuf(knopf, art) {
     const feld = this.shadowRoot.querySelector(".regler");
     if (!feld) return;
     const t = TEXTE[sprache(this._hass)];
-    this._oeffne("bewegung");
-    this._bewegung = null;
-    this._reglerMeldung(t.laedt);
+    this._oeffne(art);
+    knopf.setAttribute("aria-expanded", "true");
+    this._regler = null;
+    this._reglerMeldung(art, t.laedt);
     // Unter den Knopf, aber nie ueber den Rand der Leiste hinaus.
     const platz = feld.parentElement.clientWidth - feld.offsetWidth;
     const links = knopf._inListe ? 0 : knopf.offsetLeft;
@@ -1423,24 +1615,23 @@ class Steuerung extends Basis {
 
     let stand;
     try {
-      stand = await this._bewegungLesen();
+      stand = await this._themeLesen(art);
     } catch (fehler) {
       stand = { grund: "unlesbar", detail: fehler?.message || fehler?.code || String(fehler) };
     }
     // Inzwischen wieder geschlossen? Dann nichts mehr hineinzeichnen.
-    if (this.getAttribute("offen") !== "bewegung") return;
+    if (this.getAttribute("offen") !== art) return;
     if (stand.grund) {
-      this._reglerMeldung(t.grund[stand.grund](stand.detail));
+      this._reglerMeldung(art, t.grund[stand.grund](stand.detail));
       return;
     }
-    this._bewegung = { ...stand.werte };
-    this._punktebild = stand.punktebild;
+    this._regler = { art, ...stand, werte: { ...stand.werte }, geaendert: new Set() };
     this._reglerBaue(t);
   }
 
   // Wer nicht schreiben darf oder wessen Theme keine Datei hat, erfaehrt es,
   // BEVOR er an einem Regler zieht - nicht erst beim Speichern.
-  async _bewegungLesen() {
+  async _themeLesen(art) {
     const hass = this._hass;
     if (!hass.user?.is_admin) return { grund: "admin" };
     const name = hass.themes?.theme;
@@ -1448,6 +1639,7 @@ class Steuerung extends Basis {
     if (!name || name === "default" || !/^[A-Za-z0-9_-]{1,64}$/.test(name)) {
       return { grund: "ohneDatei", detail: name || "default" };
     }
+    const modus = hass.themes?.darkMode ? "dark" : "light";
     this._w = await ladeWerkzeug();
     let text;
     try {
@@ -1456,13 +1648,16 @@ class Steuerung extends Basis {
     } catch {
       return { grund: "ohneDatei", detail: name };
     }
-    return leseBewegungAusDatei(text, name, this._w);
+    const stand = art === "bewegung"
+      ? leseBewegungAusDatei(text, name, this._w)
+      : leseDarstellungAusDatei(text, name, modus, this._w);
+    return stand.grund ? stand : { ...stand, name, modus };
   }
 
-  _reglerMeldung(text) {
+  _reglerMeldung(art, text) {
     const feld = this.shadowRoot.querySelector(".regler");
     const titel = neu("div", "rtitel");
-    titel.textContent = TEXTE[sprache(this._hass)].bewegung;
+    titel.textContent = TEXTE[sprache(this._hass)][art];
     const meldung = neu("div", "rstatus");
     meldung.textContent = text;
     feld.replaceChildren(titel, meldung);
@@ -1475,30 +1670,47 @@ class Steuerung extends Basis {
 
   _reglerBaue(t) {
     const feld = this.shadowRoot.querySelector(".regler");
+    const art = this._regler.art;
     const titel = neu("div", "rtitel");
-    titel.textContent = t.bewegung;
-    const zeilen = ["drift", "punkte", "farbe", "weite"].map((was) => {
+    titel.textContent = t[art];
+    const stufen = this._w.BEWEGUNG_STUFEN ?? 10;
+    const spannen = art === "bewegung"
+      ? {
+        drift: [0, stufen, 1], punkte: [0, stufen, 1], farbe: [0, stufen, 1],
+        weite: [0, AUSSCHLAEGE.length - 1, 1],
+      }
+      : {
+        transparenz: [TRANSPARENZ.min, TRANSPARENZ.max, TRANSPARENZ.schritt],
+        schrift: [SCHRIFT.min, SCHRIFT.max, SCHRIFT.schritt],
+      };
+    const zeilen = Object.entries(spannen).map(([was, [min, max, schritt]]) => {
       const zeile = neu("label", "rzeile");
       const name = neu("span", "rname");
-      name.textContent = t.regler[was];
+      name.textContent = art === "bewegung" ? t.regler[was] : t[was];
       const regler = neu("input");
       regler.type = "range";
-      regler.min = "0";
-      regler.step = "1";
-      regler.max = String(was === "weite" ? AUSSCHLAEGE.length - 1 : (this._w.BEWEGUNG_STUFEN ?? 10));
+      regler.min = String(min);
+      regler.max = String(max);
+      regler.step = String(schritt);
       regler.dataset.was = was;
       zeile.append(name, regler, neu("span", "rwert"));
       return zeile;
     });
-    feld.replaceChildren(titel, ...zeilen, neu("div", "rstatus"));
+    const hinweis = art === "bewegung" ? [] : [neu("div", "rhinweis")];
+    feld.replaceChildren(titel, ...zeilen, ...hinweis, neu("div", "rstatus"));
     this._reglerStelle(t);
+  }
+
+  _reglerStelle(t) {
+    if (this._regler.art === "bewegung") this._stelleBewegung(t);
+    else this._stelleDarstellung(t);
   }
 
   // Die Sperren sind die des Panels: Punkte nur auf einem Punktebild, der
   // Ausschlag nur mit Farbwechsel. Gesperrt heisst auch hier leiser, mit dem
   // Grund als title - und die Dauer daneben sagt, was die Stufe bedeutet.
-  _reglerStelle(t) {
-    const b = this._bewegung;
+  _stelleBewegung(t) {
+    const { werte: b, punktebild } = this._regler;
     const dauer = { drift: this._w.driftDauer, punkte: this._w.punkteDauer, farbe: this._w.farbDauer };
     for (const regler of this.shadowRoot.querySelectorAll(".regler input")) {
       const was = regler.dataset.was;
@@ -1512,50 +1724,96 @@ class Steuerung extends Basis {
         zeile.title = b.farbe ? "" : t.weiteNur;
       } else {
         regler.value = String(b[was]);
-        regler.disabled = was === "punkte" && !this._punktebild;
+        regler.disabled = was === "punkte" && !punktebild;
         wert.textContent = b[was] ? `${b[was]} · ${dauer[was](b[was])} s` : t.aus;
         zeile.title = regler.disabled ? t.punkteNur : "";
       }
     }
   }
 
+  // Eine Sperre steht hier als Satz unter den Reglern, nicht nur als title:
+  // Wer mit dem Finger auf einem Tablett zieht, sieht keinen title.
+  _stelleDarstellung(t) {
+    const { werte, karte, schrift, modus } = this._regler;
+    const hinweise = [];
+    for (const regler of this.shadowRoot.querySelectorAll(".regler input")) {
+      const was = regler.dataset.was;
+      const zeile = regler.parentElement;
+      const wert = zeile.querySelector(".rwert");
+      const grund = was === "transparenz" ? karte.grund : schrift.grund;
+      const satz = grund ? t.grund[grund](was === "transparenz" ? karte.detail : schrift.detail) : "";
+      regler.disabled = Boolean(grund);
+      zeile.title = satz;
+      if (satz) hinweise.push(satz);
+      if (was === "transparenz") {
+        regler.value = String(werte.transparenz ?? 0);
+        wert.textContent = grund ? "" : werte.transparenz ? `${werte.transparenz} %` : t.deckend;
+        if (!grund && karte.ebene === modus) hinweise.push(t.nurHier(modus));
+        if (!grund && werte.transparenz > 0 && !karte.weich) hinweise.push(t.ohneUnschaerfe);
+      } else {
+        regler.value = String(werte.schrift);
+        wert.textContent = grund ? "" : `${werte.schrift} %`;
+        if (!grund && werte.schrift > 100) hinweise.push(t.kachelnKurz);
+        if (!grund && schrift.mushFest) hinweise.push(t.mushFest(schrift.mushFest));
+      }
+    }
+    this.shadowRoot.querySelector(".regler .rhinweis")?.replaceChildren(...hinweise.map((satz) => {
+      const zeile = neu("div");
+      zeile.textContent = satz;
+      return zeile;
+    }));
+  }
+
   _beiRegler(ev, losgelassen) {
     const regler = ev.target;
     const was = regler?.dataset?.was;
-    if (!was || !this._bewegung) return;
-    this._bewegung[was] = was === "weite" ? AUSSCHLAEGE[Number(regler.value)] : Number(regler.value);
+    const r = this._regler;
+    if (!was || !r) return;
+    r.werte[was] = was === "weite" ? AUSSCHLAEGE[Number(regler.value)] : Number(regler.value);
+    r.geaendert.add(was);
     this._reglerStelle(TEXTE[sprache(this._hass)]);
-    if (losgelassen) this._bewegungSpeichern();
+    if (losgelassen) this._reglerSpeichern();
   }
 
   // Ein Speichern nach dem anderen. Kommt waehrenddessen ein neuer Wert,
   // laeuft danach genau EIN weiteres - mit dem letzten Stand, nicht mit jedem
   // Zwischenschritt.
-  async _bewegungSpeichern() {
+  async _reglerSpeichern() {
     if (this._speichert) { this._nochmal = true; return; }
     this._speichert = true;
     const t = TEXTE[sprache(this._hass)];
     try {
       do {
         this._nochmal = false;
+        const r = this._regler;
+        if (!r) return;
         this._reglerStatus(t.speichert);
         const hass = this._hass;
-        const name = hass.themes.theme;
+        // Gilt inzwischen eine andere Theme, gehoeren die Werte nicht in
+        // deren Datei - sie stammen aus dieser.
+        if (hass.themes?.theme !== r.name) {
+          this._reglerStatus(t.grund.wechsel(hass.themes?.theme || "default"));
+          return;
+        }
         // Frisch gelesen, jedes Mal: Was das Panel oder ein zweiter Browser
         // inzwischen gespeichert hat, soll mit.
         const text = (await hass.connection.sendMessagePromise({
-          type: "hats/load_theme_file", filename: `${name}.yaml` })).content;
-        const stand = schreibeBewegungInDatei(text, name, this._bewegung, this._w);
+          type: "hats/load_theme_file", filename: `${r.name}.yaml` })).content;
+        const stand = r.art === "bewegung"
+          ? schreibeBewegungInDatei(text, r.name, r.werte, this._w)
+          // Nur, woran gezogen wurde - der andere Wert steht vielleicht nicht mehr.
+          : schreibeDarstellungInDatei(text, r.name, r.modus,
+            Object.fromEntries([...r.geaendert].map((was) => [was, r.werte[was]])), this._w);
         if (stand.grund) {
           this._reglerStatus(t.grund[stand.grund](stand.detail));
           return;
         }
         if (stand.yaml !== text) {
           await hass.connection.sendMessagePromise({
-            type: "hats/save_theme", name, yaml: stand.yaml, overwrite: true });
+            type: "hats/save_theme", name: r.name, yaml: stand.yaml, overwrite: true });
           await hass.callService("frontend", "reload_themes");
         }
-        this._reglerStatus(t.gespeichert(name));
+        this._reglerStatus(t.gespeichert(r.name));
       } while (this._nochmal);
     } catch (fehler) {
       // Der Server prueft mit PyYAML, bevor er schreibt. Seine Meldung
@@ -1604,9 +1862,9 @@ class Steuerung extends Basis {
       }
       return;
     }
-    if (k.function === "motion") {
-      if (this.getAttribute("offen") === "bewegung") this._zu();
-      else this._reglerAuf(knopf);
+    if (REGLER[k.function]) {
+      if (this.getAttribute("offen") === REGLER[k.function]) this._zu();
+      else this._reglerAuf(knopf, REGLER[k.function]);
       return;
     }
     if (k.function === "weather") {

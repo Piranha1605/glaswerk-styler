@@ -212,7 +212,10 @@ pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
   // Diese beiden legt die Leiste nicht an. Sie SUCHT sie, von sich aus nach
   // oben, um die Kopfzeile im Vollbild wegzunehmen.
   const gesucht = ["ha-top-app-bar-fixed", "hui-root"];
-  assert.deepStrictEqual(tags, [...angelegt, ...gesucht].sort());
+  // Und diese drei sind keine Bauteile, sondern Theme-Felder: Die Regler fuer
+  // Transparenz und Schrift lesen und schreiben sie in der Datei.
+  const felder = ["ha-card-backdrop-filter", "ha-card-background", "ha-font-size-scale"];
+  assert.deepStrictEqual(tags, [...angelegt, ...gesucht, ...felder].sort());
 });
 
 pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {

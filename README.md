@@ -135,7 +135,7 @@ Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form:
 | `tap_action` | jede Aktion von Home Assistant; sie schlägt `link` und das Umschalten |
 | `state_background` | Vorgabe `true`: ein eingeschalteter Knopf wird gefüllt |
 | `light_background` | Vorgabe `true`: in der Farbe der Lampe, sonst in Home Assistants Zustandsfarbe |
-| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion` |
+| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion`, `appearance` |
 | `temperature`, `temperature_source` | nur bei `weather`: eigener Sensor, und ob der Wert von dort (`sensor`) oder aus der Wetterentität (`weather`) kommt |
 | `align_end`, `separator_before` | ans Ende der Leiste; dünner Strich davor |
 
@@ -170,6 +170,21 @@ Die Werte gelten dauerhaft: Die Karte schreibt sie beim Loslassen in die Datei
 der wirksamen Theme, mit denselben Funktionen wie das Panel. Das geht nur als
 Administrator und nur bei einer Theme, die mit HATS erzeugt wurde; sonst sagt
 der Regler, warum nicht.
+
+**Transparenz und Schrift** stellt ein Knopf mit `function: appearance`, auf
+dieselbe Weise und mit denselben Bedingungen:
+
+![Die Regler für Transparenz und Schrift](docs/bilder/steuerleiste-darstellung.jpg)
+
+- **Transparenz** (0 bis 80 %) ändert die Kartenfläche. Steht sie in der Theme
+  für hell und dunkel getrennt, gilt der Regler für den Modus, der gerade
+  angezeigt wird. Ist die Fläche keine einfache Farbe — der Kartenstil „Liquid
+  Glass" legt zwei Verläufe ab —, bleibt der Regler gesperrt.
+- **Schrift** (90 bis 120 %) setzt den Faktor, mit dem Home Assistant alle
+  Schriftgrößen rechnet. Kacheln und Mushroom wachsen mit; die Namen in Bubble
+  Card bleiben, wie sie sind. Über 100 % kürzen Kacheln lange Namen früher ab.
+
+Geschrieben wird nur der Wert, an dem gezogen wurde.
 
 Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten:
 
