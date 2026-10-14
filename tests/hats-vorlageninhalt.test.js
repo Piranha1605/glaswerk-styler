@@ -342,4 +342,37 @@ pruefe("Der Verlauf der Seitenleiste haengt am Akzent, nicht an festen Farben", 
     "ohne color-mix bliebe die Pille leer");
 });
 
+pruefe("Der Grund ausserhalb des Dashboards liegt UNTER dem bewegten", () => {
+  // Gemeldet am 14.10.2026 von der Sitzung an der Steuerkarte: Die
+  // Hintergrundbewegung lief nur im Vollbild. Sie lief in Wahrheit immer -
+  // sie war verdeckt.
+  //
+  // hui-view-background traegt z-index: -1, und ein Element mit negativem
+  // z-index wird VOR den Flaechen der gewoehnlichen Bloecke desselben Stapels
+  // gemalt. Ein Hintergrund direkt auf .layout (static, z-index auto) liegt
+  // also DARUEBER. Weil es dasselbe Bild ist, faellt es nur dadurch auf, dass
+  // nichts sich bewegt - die teuerste Sorte Fehler.
+  const g = VORLAGEN.find((v) => v.id === "grund-ueberall");
+  assert.ok(g, "grund-ueberall gibt es nicht mehr");
+
+  // Der Grund gehoert in eine eigene feste Ebene mit negativem z-index.
+  const ab = g.css.indexOf(".layout::before");
+  assert.ok(ab > -1, "keine eigene Ebene - der Grund liegt wieder auf .layout");
+  const block = g.css.slice(ab, g.css.indexOf("}", ab));
+  assert.match(block, /position:\s*fixed/, "die Ebene ist nicht fest");
+  assert.match(block, /pointer-events:\s*none/, "die Ebene faengt Klicks ab");
+  const z = /z-index:\s*(-?\d+)/.exec(block);
+  assert.ok(z, "kein z-index auf der Ebene");
+  assert.ok(Number(z[1]) < -1,
+    `z-index ${z[1]} liegt nicht unter hui-view-background (-1)`);
+  assert.match(block, /var\(--lovelace-background/, "die Ebene liest das Feld nicht");
+
+  // Und .layout selbst traegt keinen Hintergrund mehr. Die Variable darf dort
+  // stehen bleiben - sie ist etwas anderes als eine Flaeche.
+  const rest = g.css.slice(0, ab) + g.css.slice(g.css.indexOf("}", ab));
+  const layout = rest.slice(rest.indexOf("\n.layout {"));
+  assert.doesNotMatch(layout.slice(0, layout.indexOf("}")), /\n\s*background(-image)?:/,
+    "auf .layout liegt wieder eine Flaeche - sie verdeckt den bewegten Grund");
+});
+
 console.log(`\n${n} Pruefungen`);

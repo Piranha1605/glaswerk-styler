@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 21:38:04
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 22:04:17
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -780,20 +780,49 @@ glaswerk:
        einen, und sein .layout liegt UNTER allen Seiten - Dashboard, Einstellungen,
        Profil, Medien. Eine Regel deckt damit alles ab, statt je Panel eine.
 
-       Auf einem Dashboard verdeckt hui-view-background diese Schicht vollstaendig
-       (position: fixed, z-index: -1, ganze Fensterbreite). Doppelt gemalt wird
-       also nichts Sichtbares; die Schicht wartet nur dort, wo es die andere nicht
-       gibt.
+       DIE SCHICHT GEHOERT IN EIN ::before, NICHT AN .layout SELBST. Hier stand
+       bis zum 14.10.2026 das Gegenteil - "auf einem Dashboard verdeckt
+       hui-view-background diese Schicht vollstaendig" -, und es war genau falsch
+       herum. Gemeldet hat es die Sitzung an der Steuerkarte, nachdem der
+       Maintainer fragte, warum die Hintergrundbewegung nur im Vollbild laeuft:
+
+           hui-view-background    position: fixed, z-index: -1, Animation laeuft
+           .layout                position: static, z-index: auto, mit Bild
+
+       Ein Element mit negativem z-index wird VOR den Flaechen der gewoehnlichen
+       Bloecke desselben Stapels gemalt (CSS 2.1, Anhang E: Schritt 2 vor Schritt
+       4). Das stehende Bild auf .layout lag also UEBER dem bewegten - und weil es
+       dasselbe Bild ist, sah alles richtig aus, nur bewegte sich nichts. Im
+       Vollbild lief es, weil ha-drawer dort ohne .layout zeichnet.
+
+       Gegengeprueft an der Instanz, indem die Schicht kurz grell gefaerbt wurde:
+
+           an .layout      Dashboard ganz gruen      verdeckt den bewegten Grund
+           als ::before    Dashboard normal          liegt darunter
+                           Einstellungen gruen       dort gibt es den anderen nicht
+
+       z-index: -2 malt vor -1, liegt also unter hui-view-background. Beide haengen
+       am selben Stapel: Auf dem ganzen Weg nach oben bildet nur <html> einen
+       Stapelkontext (gemessen - kein transform, filter, opacity, isolation,
+       contain).
 
        --lovelace-background und nicht ein eigenes Feld: Sonst stuende derselbe
        Hintergrund an zwei Orten, und wer den einen aendert, bekommt den anderen
        nicht mit. */
-    .layout {
+    .layout::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      /* Die Schicht liegt unter allem und faengt nichts ab. */
+      pointer-events: none;
       background: var(--lovelace-background, var(--primary-background-color));
       /* Fuer ALLE Ebenen, nicht nur die letzte: Der Wert aus dem Feld traegt
          "fixed" am Ende, das gilt dort aber nur fuer die unterste. */
       background-attachment: fixed;
+    }
 
+    .layout {
       /* Und hier wird das Feld fuer ALLES DARUNTER durchsichtig gestellt.
          Gemeldet am 14.10.2026 mit einem Bild der Integrationsseite: "hier fehlt
          der hintergrund". Die Ursache ist eine Zeile in hass-tabs-subpage:
