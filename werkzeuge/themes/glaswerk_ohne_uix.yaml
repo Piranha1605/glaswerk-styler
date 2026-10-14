@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 19:07:03
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 19:57:54
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # OHNE UI eXtension. Dieselbe Theme wie glaswerk, aber ohne ein einziges
@@ -247,7 +247,6 @@ glaswerk_ohne_uix:
   red-color: "#f44336"
   rgb-primary-color: "33, 144, 233"
   sidebar-selected-icon-color: "#2196f3"
-  sidebar-selected-text-color: "#2196f3"
   state-cover-active-color: "#2196f3"
   state-icon-color: "#2196f3"
   state-weather-snowy-color: "#c0e0ff"

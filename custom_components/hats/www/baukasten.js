@@ -910,7 +910,7 @@ export const SORTEN_VORLAGEN = {
   karten: ["glas-karten", "glas-bubble", "glas-lichtkante", "glas-symbolkachel",
            "sync-bedienelemente", "glas-knoepfe", "regler-gluehen", "regler-schlank"],
   hintergrund: ["abschnitte-trennen"],
-  oberflaeche: ["glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
+  oberflaeche: ["grund-ueberall", "glas-leistenknoepfe", "glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
                 "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast"],
   palette: [],
   schrift: [],

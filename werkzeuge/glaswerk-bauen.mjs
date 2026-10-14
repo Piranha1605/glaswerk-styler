@@ -238,8 +238,12 @@ const NOCH_OHNE_KACHEL = {
   //
   // Diese drei Felder setzen den Ton deshalb direkt - sie gehen NICHT ueber
   // die Rampe:
+  // Nur das Symbolfeld. --sidebar-selected-text-color sah aus wie das
+  // Gegenstueck und ist keines: ha-sidebar liest es nicht, die Schrift des
+  // gewaehlten Eintrags nimmt dasselbe Feld wie das Symbol. Am 14.10.2026 aus
+  // den elementStyles gelesen, nachdem es einen halben Tag mitgeschrieben
+  // wurde, ohne etwas zu tun.
   "--sidebar-selected-icon-color": "#2196f3",
-  "--sidebar-selected-text-color": "#2196f3",
   // Die Zustandsfarbe des Rollladens, damit HAs Kachel nicht als einzige
   // violett bleibt.
   "--state-cover-active-color": "#2196f3",

@@ -823,6 +823,94 @@ ha-card {
 }`,
   },
   {
+    id: "glas-leistenknoepfe",
+    gruppe: "glas",
+    ziel: "root",
+    de: "Ein Hauch Glas auf den Leistenknoepfen",
+    en: "A touch of glass on the bar buttons",
+    zweckDe: "Die Symbolknoepfe in der Kopfleiste bekommen eine durchscheinende Flaeche statt gar keiner - sichtbar erst, wenn man sie sucht.",
+    zweckEn: "The icon buttons in the header get a translucent surface instead of none - visible only once you look for them.",
+    css: `/* Am 14.10.2026 gemessen, auf Ansage ("unsere knoepfe brauchen noch einen
+   hauch von glas"): HAs Symbolknoepfe tragen im Ruhezustand GAR KEINE
+   Flaeche - rgba(0,0,0,0), keine Weichzeichnung, nur das Symbol.
+
+   WELCHE KNOEPFE HIER ERREICHBAR SIND, und das ist die halbe Antwort:
+
+       ha-sidebar    1   der Menueknopf        -> uix-sidebar
+       hui-root      4   Suche, Assist, Stift  -> HIER
+       ha-entity-toggle  die in den Zeilen     -> NICHT erreichbar
+
+   Die in den Zeilen liegen in ha-entity-toggle, und UIX haengt seinen Knoten
+   eine Ebene darueber in hui-toggle-entity-row ein. Eine Grenze zu weit, und
+   es gibt keine Variable fuer Flaeche oder Weichzeichnung - da faengt
+   card-mod an.
+
+   Die Flaeche ist bewusst schwach. Ein Symbolknopf ist kein Knopf mit Rand;
+   wer ihm eine deutliche Flaeche gibt, baut eine Werkzeugleiste aus den
+   Neunzigern. Zehn Prozent und eine Lichtkante reichen, damit er auf Glas
+   nicht verschwindet. */
+ha-icon-button {
+  /* color-mix auf die SCHRIFTFARBE, nicht auf eine feste Farbe oder ein
+     Fuellfeld. Zwei Gruende, beide am 14.10.2026 bezahlt:
+
+     --ha-color-fill-neutral-quiet-resting stand hier zuerst - das ist eine
+     DECKENDE Fuellung (#141414 im Dunkeln). Die Knoepfe sahen aus wie eine
+     Werkzeugleiste aus den Neunzigern, genau das, wovor der Absatz darunter
+     warnt.
+
+     Und ein uix-Feld gilt fuer Hell und Dunkel zugleich. Weiss bei 10 % waere
+     im Hellen unsichtbar, Schwarz im Dunkeln. Die Schriftfarbe dreht sich mit
+     dem Modus, also dreht sich der Schleier mit. */
+  background: color-mix(in srgb, var(--primary-text-color) 9%, transparent);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  /* Dieselbe Rundung wie innen - ha-button steht auf 14px, gemessen. Ohne
+     das zeichnete die Flaeche ein Rechteck um einen runden Knopf. */
+  border-radius: var(--ha-border-radius-md, 14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+`,
+  },
+  {
+    id: "grund-ueberall",
+    gruppe: "glas",
+    ziel: "drawer",
+    de: "Der Grund auch ausserhalb des Dashboards",
+    en: "The ground beyond the dashboard",
+    zweckDe: "Traegt den Hintergrund der Theme auch hinter die Einstellungen, das Profil und jede andere Seite - sonst stehen die Glaskarten dort vor einer leeren Flaeche.",
+    zweckEn: "Carries the theme's background behind settings, profile and every other page - otherwise the glass cards there sit on a blank surface.",
+    css: `/* Am 14.10.2026 gemessen, auf Ansage ("die ansichten unter einstellungen").
+   Auf /config/dashboard stand der Befund so:
+
+       hui-view-background   gibt es NICHT
+       Grundflaeche          <html>, rgb(11,16,24) - eine Farbe, kein Bild
+       Karten                rgba(22,28,46,.46) + blur(26px)
+
+   Die Karten tragen also ihr Glas, und dahinter ist nichts. Glas vor einer
+   einfarbigen Wand sieht aus wie eine etwas hellere Wand - genau der Satz,
+   der beim Kartenstil als braucht.hintergrund steht.
+
+   WARUM HIER UND NICHT AM PANEL: ha-panel-config hat gar keinen Shadow Root
+   (gemessen), uix-config koennte dort also nichts einhaengen. ha-drawer hat
+   einen, und sein .layout liegt UNTER allen Seiten - Dashboard, Einstellungen,
+   Profil, Medien. Eine Regel deckt damit alles ab, statt je Panel eine.
+
+   Auf einem Dashboard verdeckt hui-view-background diese Schicht vollstaendig
+   (position: fixed, z-index: -1, ganze Fensterbreite). Doppelt gemalt wird
+   also nichts Sichtbares; die Schicht wartet nur dort, wo es die andere nicht
+   gibt.
+
+   --lovelace-background und nicht ein eigenes Feld: Sonst stuende derselbe
+   Hintergrund an zwei Orten, und wer den einen aendert, bekommt den anderen
+   nicht mit. */
+.layout {
+  background: var(--lovelace-background, var(--primary-background-color));
+  /* Fuer ALLE Ebenen, nicht nur die letzte: Der Wert aus dem Feld traegt
+     "fixed" am Ende, das gilt dort aber nur fuer die unterste. */
+  background-attachment: fixed;
+}`,
+  },
+  {
     id: "regler-gluehen",
     gruppe: "sync",
     ziel: "card",

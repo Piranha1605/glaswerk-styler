@@ -280,6 +280,28 @@ const STUFEN = [
       // die Ebene daraus, ob das Feld unter modes steht. Bei dieser Menge ist
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
+      // Die Seitenleiste. Am 14.10.2026 aus ha-sidebar gelesen, nicht geraten -
+      // sie liest genau diese sechs Namen plus die beiden Breiten.
+      //
+      // --sidebar-selected-text-color steht NICHT dabei, obwohl der Name
+      // naheliegt und die Theme es bis heute schrieb: ha-sidebar liest es
+      // nicht. Die Schrift des gewaehlten Eintrags nimmt
+      // --sidebar-selected-icon-color, aus der Regel
+      //
+      //     ha-list-item-button.selected::part(headline) { color: ... }
+      //
+      // Ein Feld, das niemand liest, ist schlimmer als keines: Es sieht nach
+      // einer Stellschraube aus und ist keine.
+      { name: "Seitenleiste", felder: [
+        { t: "Symbole", art: "farbe", v: "--sidebar-icon-color", ebene: "getrennt" },
+        { t: "Schrift", art: "farbe", v: "--sidebar-text-color", ebene: "getrennt" },
+        // Faerbt Symbol UND Schrift des gewaehlten Eintrags, und fuellt
+        // ausserdem seine Pille - dort mit --dark-divider-opacity.
+        { t: "Gewaehlt", art: "farbe", v: "--sidebar-selected-icon-color", ebene: "getrennt" },
+        { t: "Menueknopf Schrift", art: "farbe", v: "--sidebar-menu-button-text-color", ebene: "getrennt" },
+        { t: "Menueknopf Flaeche", art: "farbe", v: "--sidebar-menu-button-background-color", ebene: "getrennt" },
+        { t: "Breite ausgeklappt", art: "mass", v: "--ha-sidebar-expanded-width", ebene: "beide", min: 180, max: 400 },
+        { t: "Breite Eintrag", art: "mass", v: "--ha-sidebar-expanded-item-width", ebene: "beide", min: 160, max: 380 } ] },
       { name: "Schatten und Leisten", felder: [
         { t: "Leiste Schatten", art: "text", v: "--bar-box-shadow", ebene: "getrennt" },
         { t: "Rollschatten", art: "farbe", v: "--ha-color-shadow-scrollable-fade", ebene: "beide" },
@@ -827,6 +849,7 @@ const ZWECK = {
   "Kanten": "Trennlinien und Rahmen, je Rolle und Lautstaerke",
   "Eingabefelder": "Flaechen und Rahmen von Eingaben - die alten input-Namen liest HA 2026 nicht mehr",
   "Schrift invertiert": "Schrift auf umgekehrtem Grund, etwa in einem Hinweisbalken",
+  "Seitenleiste": "Was die Seitenleiste liest - sechs Farben und zwei Breiten",
   "Schalter": "Spur, Daumen und Groesse der Kippschalter - an und aus getrennt",
   "Knoepfe": "Die vier Knopffarben, die HA ausserhalb der Rollen fuehrt",
   "Deckkraft": "Wie stark Deaktiviertes und Trennlinien durchscheinen, je Modus",
