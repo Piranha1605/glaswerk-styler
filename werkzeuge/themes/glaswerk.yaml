@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 20:27:50
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 20:40:43
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -934,6 +934,23 @@ glaswerk:
          das zeichnete die Flaeche ein Rechteck um einen runden Knopf. */
       border-radius: var(--ha-border-radius-md, 14px);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+
+      /* Luft dazwischen. Gemeldet am 14.10.2026 mit einem Kaestchen um die vier
+         Knoepfe: Solange sie keine Flaeche hatten, fiel es nicht auf - mit Flaeche
+         stossen sie aneinander und sehen aus wie EIN Block. Gemessen: 48x48,
+         Luecke 0.
+
+         margin und nicht padding. Zwei Versuche vorher, beide gemessen:
+
+             padding 4px                      Knopf wird 56 breit, die Reihe waechst
+             padding + box-sizing: border-box  bleibt 58 - die Groesse kommt nicht
+                                               aus --ha-icon-button-size (leer),
+                                               sondern aus dem ha-button darin
+
+         Mit margin bleibt die Trefferflaeche bei 48 und nur der Abstand kommt
+         dazu. Drei Pixel je Seite, also sechs dazwischen - gerade genug, dass man
+         vier Knoepfe sieht statt einer Leiste. */
+      margin-inline: 3px;
     }
     /* HATS:glas-leistenknoepfe:ENDE */
     /* HATS:hintergrund-bewegung:START */
