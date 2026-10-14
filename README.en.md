@@ -66,8 +66,9 @@ picture before it.
 ## The kit
 
 If you would rather not start from nothing, you assemble a theme from
-ready-made parts: colours, type, card style, background. The fifteen palettes
-show their colours as beads — the large one at the front is the accent.
+ready-made parts: colours, type, corners, density, card style, background. The
+fifteen palettes show their colours as beads — the large one at the front is
+the accent.
 
 ![The kit in the panel, with fifteen colour palettes](docs/bilder/baukasten-farben.jpg)
 
@@ -76,6 +77,15 @@ Solarized, Catppuccin and Gruvbox. Apple's values are read from the system
 rather than copied from documentation — `werkzeuge/test/macos-farben.swift`
 pulls them out of AppKit, and several of the well-known ones have not been
 correct since macOS 26.
+
+**Corners** and **Density** set the ladders Home Assistant computes its edges
+and spacing from — nine steps from `sm` to `6xl`, twenty from `--ha-space-1` to
+`-20`. Four parts each, with Home Assistant's own values as one of them. **Card
+style** has seven: Glass, macOS, Embossed, Outline, Flat, Raised, Paper.
+
+The parts recognise themselves in a finished file even when it was not built
+with the kit: `werkzeuge/themes/macos.yaml` comes out of a script and still
+matches in all six categories.
 
 ## The control card
 

@@ -68,8 +68,9 @@ davor.
 ## Der Baukasten
 
 Wer nicht bei null anfangen will, steckt eine Theme aus fertigen Teilen
-zusammen: Farben, Schrift, Kartenaufbau, Hintergrund. Die fünfzehn Paletten
-zeigen ihre Farben als Tupfer — der große vorn ist der Akzent.
+zusammen: Farben, Schrift, Rundung, Dichte, Kartenaufbau, Hintergrund. Die
+fünfzehn Paletten zeigen ihre Farben als Tupfer — der große vorn ist der
+Akzent.
 
 ![Der Baukasten im Panel, mit fünfzehn Farbpaletten](docs/bilder/baukasten-farben.jpg)
 
@@ -77,6 +78,16 @@ Fünf davon sind **übernommen** und nachprüfbar: macOS und Android, dazu Nord,
 Solarized, Catppuccin und Gruvbox. Apples Werte sind am System ausgelesen, nicht
 abgeschrieben — `werkzeuge/test/macos-farben.swift` holt sie aus AppKit, und
 mehrere der bekannten stimmen seit macOS 26 nicht mehr.
+
+**Rundung** und **Dichte** setzen die Leitern, aus denen Home Assistant seine
+Ecken und Abstände rechnet — neun Stufen von `sm` bis `6xl`, zwanzig von
+`--ha-space-1` bis `-20`. Je vier Teile, Home Assistants eigene Werte als eines
+davon. **Kartenaufbau** hat sieben: Glas, macOS, Geprägt, Kontur, Flach,
+Erhaben, Papier.
+
+Die Teile erkennen sich in einer fertigen Datei wieder, auch wenn sie nicht mit
+dem Baukasten gebaut wurde: `werkzeuge/themes/macos.yaml` entsteht aus einem
+Skript und trifft trotzdem in allen sechs Sorten.
 
 ## Die Steuerkarte
 
