@@ -1812,6 +1812,80 @@ ist die richtige Form.
 `div.bubble-main-icon-container[data-entity^="fan."]` — der Container trägt die
 volle Entitäts-ID als `data-entity`.
 
+## Wie weit UIX in Mushroom hineinreicht — und wo es aufhört
+
+Am 14.10.2026 gemessen, nachdem der Maintainer den
+[card-mod-Leitfaden](https://community.home-assistant.io/t/mushroom-cards-card-mod-styling-config-guide/600472)
+geschickt hat. Der arbeitet mit `$`, pierct also durch jede Shadow-Grenze.
+**Das kann HATS nicht** — UIX hängt sein `<style>` in den Shadow Root des
+Karten-Elements, und dort endet jeder Selektor an der nächsten Grenze.
+
+Was trotzdem geht, und zwar überraschend viel: **CSS-Variablen erben durch
+jede Grenze.** Man erreicht also nicht das innere Element, aber den Wert, den
+es liest.
+
+    uix-card erreicht per SELEKTOR    alles im Shadow Root der Karte
+    uix-card erreicht per VARIABLE    beliebig tief, solange die Kette aus
+                                      Variablen besteht
+
+An `mushroom-light-card` durchgemessen, drei Stufen:
+
+```
+mushroom-light-card
+└── mushroom-light-brightness-control     ← im Shadow Root der KARTE
+    └── mushroom-slider                   ← eine Grenze tiefer
+        └── .slider-track-active          ← noch eine tiefer
+```
+
+Die Karte setzt die Farbe **inline** auf den Regler-Wirt:
+
+    style="--slider-color:rgb(255,164,82);--slider-bg-color:rgba(255,164,82,0.2)"
+
+Dessen Stylesheet reicht sie weiter:
+
+```css
+mushroom-slider { --main-color: var(--slider-color);
+                  --bg-color: var(--slider-bg-color); }
+```
+
+und der Regler malt daraus `.slider-track-active` und
+`.slider-track-background`.
+
+**Der Hebel ist die oberste Stufe, mit `!important`:**
+
+```css
+mushroom-light-brightness-control {
+  --slider-color: <farbe> !important;
+  --slider-bg-color: <farbe> !important;
+}
+```
+
+Gemessen: `rgb(236,152,76)` kam unten an. **Ohne `!important` nicht** — der
+Wert steht inline, und inline schlägt jede Regel. Dieselbe Falle wie bei
+Bubbles Slider im Abschnitt darunter, nur eine Ebene tiefer.
+
+**Vier Versuche, bis es saß, und jeder falsche sagt etwas:**
+
+| Versuch | Ergebnis | warum |
+|---|---|---|
+| `mushroom-slider { --main-color }` ohne `!important` | nichts | der Regler liegt gar nicht im Karten-Root, der Selektor trifft nie |
+| `mushroom-slider { --main-color !important }` | nichts | derselbe Grund — nicht die Spezifität war das Problem |
+| `mushroom-light-brightness-control { --slider-color }` | nichts | richtiges Element, aber inline schlägt die Regel |
+| dasselbe mit `!important` | **greift** | |
+
+**Was daraus folgt: Erst den Wirt suchen, dann die Variable, dann
+`!important`.** Wer mit der Spezifität anfängt, dreht an der falschen
+Schraube — zwei der vier Versuche oben waren genau das.
+
+**Die Gegenprobe, die den Unterschied zeigt:** `mushroom-shape-icon` liegt
+direkt im Shadow Root der Karte. Dort greift `--shape-color !important`
+sofort, und `.shape` eine Grenze tiefer nimmt den Wert an. Dieselbe Mechanik,
+ein Element weniger dazwischen.
+
+**Was HATS damit NICHT kann:** alles, was kein Variablenende hat. Der
+Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
+gibt es keine Variable, und dafür braucht man card-mod oder HATG.
+
 ## Bubbles Slider: `--bubble-slider-color` gibt es nicht
 
 Am 13.10.2026 im Stylesheet der laufenden Karte gezählt: **null** Vorkommen von
