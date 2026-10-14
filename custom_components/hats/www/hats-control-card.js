@@ -1471,7 +1471,14 @@ const STIL_KARTE = `
     width: min(880px, calc(100vw - 32px)); height: min(680px, calc(100vh - 32px));
     max-width: none; max-height: none;
     border-radius: var(--ha-card-border-radius, 12px);
-    background: var(--card-background-color); color: var(--primary-text-color);
+    /* Die Flaeche, die die Theme fuer Dialoge vorgibt, mit ihrer
+       Weichzeichnung - glaswerk: ein Blau bei 90 Prozent und blur(26px), am
+       14.10.2026 gemessen. Auf Ansage: "kannst du da auch die theme farben
+       uebernehmen". */
+    background: var(--ha-dialog-surface-background, var(--card-background-color));
+    backdrop-filter: var(--ha-card-backdrop-filter, none);
+    -webkit-backdrop-filter: var(--ha-card-backdrop-filter, none);
+    color: var(--primary-text-color);
     box-shadow: var(--ha-card-box-shadow, none);
     font-size: var(--ha-font-size-m, 14px);
   }
@@ -1504,10 +1511,15 @@ const STIL_KARTE = `
     display: flex; flex-direction: column; gap: var(--ha-space-3, 12px);
   }
   .fseite > .rtitel { font-size: var(--ha-font-size-l, 16px); }
+  /* Jede Gruppe sieht aus wie eine Karte der Theme. Vorher stand hier HAs
+     neutrales --secondary-background-color, ein festes Grau, auf dem Blau von
+     glaswerk, die Farbe keiner Theme. */
   .fgruppe {
     display: flex; flex-direction: column; gap: var(--ha-space-3, 12px);
     padding: var(--ha-space-3, 12px) var(--ha-space-4, 16px);
-    border-radius: var(--ha-border-radius-lg, 12px); background: var(--secondary-background-color);
+    border-radius: var(--ha-card-border-radius, 12px);
+    background: var(--ha-card-background, var(--card-background-color));
+    border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color));
   }
   .fgtitel { font-weight: var(--ha-font-weight-medium, 500); }
   .fspalte { display: flex; flex-direction: column; gap: var(--ha-space-2, 8px); }

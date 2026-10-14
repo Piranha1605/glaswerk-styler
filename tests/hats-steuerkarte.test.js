@@ -241,7 +241,7 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     "--card-background-color", "--ha-card-border-radius", "--ha-card-box-shadow",
     // mit dem Einstellungsfenster dazugekommen, am 14.10.2026 in HAs eigenen
     // Stylesheets gefunden (nicht in der Theme)
-    "--ha-space-4", "--ha-font-size-l", "--primary-background-color", "--secondary-background-color",
+    "--ha-space-4", "--ha-font-size-l", "--primary-background-color",
   ];
   // Theme-Felder, die Home Assistant NICHT selbst setzt - gemessen: Mit
   // glaswerk standen sie inline auf html, in HAs Stylesheets nirgends,
@@ -249,7 +249,7 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
   // lesen sie mit eigenem Rueckfall, und so liest sie auch das Fenster: die
   // Probe einer Karte und der Schleier, jeder mit Rueckfall.
   const ausDerTheme = ["--ha-card-background", "--ha-card-border-width", "--ha-card-border-color",
-    "--ha-card-backdrop-filter", "--mdc-dialog-scrim-color"];
+    "--ha-card-backdrop-filter", "--mdc-dialog-scrim-color", "--ha-dialog-surface-background"];
   // Home Assistant liest die Namen (hui-card-features, ha-badge, hui-root),
   // belegt sie aber nicht - oder nur auf Geraeten mit Aussparung.
   const nurGelesen = ["--ha-card-features-border-radius", "--ha-badge-icon-size",

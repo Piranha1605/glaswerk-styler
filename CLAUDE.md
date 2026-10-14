@@ -1655,6 +1655,20 @@ Theme, und frühere Fassungen aus `hats/list_backups` — zurückgeholt wird üb
 - **Die Prüfung „keine Farbe außer HAs Weiß" liest auch Kommentare.** Ein
   Hexwert in einem Kommentar des Stilblatts zählte als Farbe.
 
+**Die Farben der Theme, nicht HAs Grau.** Auf Ansage: *„kannst du da auch die
+theme farben übernehmen"*. Die Gruppen standen zuerst auf
+`--secondary-background-color` — HAs festes Grau, auf glaswerk ein grauer
+Fleck im Blau. Jetzt nimmt das Fenster `--ha-dialog-surface-background` mit
+`--ha-card-backdrop-filter` (gemessen: 0,9 Deckkraft, blur 26 px), und jede
+Gruppe sieht aus wie eine Karte der Theme (`--ha-card-background`, Rundung,
+Rahmen). Alle drei setzt HA nicht selbst, sie kommen aus der Theme, mit
+Rückfall auf `--card-background-color`.
+
+**Beim Einspielen einmal rot durchgerutscht:** `pruefen.sh … | grep -E "ROT|gruen"
+&& einspielen` — grep findet die Zeile „ROT" und meldet Erfolg, also lief das
+Einspielen. Seitdem: `pruefen.sh` in eine Datei, Exit-Code prüfen, nur bei 0
+einspielen.
+
 `tests/hats-steuerkarte-fenster.test.js`: 17 Prüfungen, darunter die sechs
 Teile von glaswerk — die Erwartung steht im Kopf der Datei selbst —, Teil,
 Bild und Weichzeichnung durch PyYAML. Vier Mutationen gegengeprüft; eine
