@@ -135,7 +135,7 @@ Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form:
 | `tap_action` | jede Aktion von Home Assistant; sie schlägt `link` und das Umschalten |
 | `state_background` | Vorgabe `true`: ein eingeschalteter Knopf wird gefüllt |
 | `light_background` | Vorgabe `true`: in der Farbe der Lampe, sonst in Home Assistants Zustandsfarbe |
-| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion`, `appearance`, `settings` |
+| `function` | `mode` (automatisch/hell/dunkel), `theme` (ein Knopf, hin und her), `fullscreen`, `weather`, `motion`, `appearance`, `settings`, `sidebar`, `assist`, `edit` |
 | `temperature`, `temperature_source` | nur bei `weather`: eigener Sensor, und ob der Wert von dort (`sensor`) oder aus der Wetterentität (`weather`) kommt |
 | `align_end`, `separator_before` | ans Ende der Leiste; dünner Strich davor |
 
@@ -159,6 +159,7 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 | `menu_size` | `normal` | `small`, `normal`, `large` |
 | `show_highlight` | `true` | die Kapsel auf der aktuellen Ansicht |
 | `kiosk_only` | `false` | `true`: Vollbild nur in Home Assistant, das Browserfenster bleibt |
+| `replace_header` | `false` | `true`: die Leiste ersetzt auf diesem Dashboard die Kopfzeile von Home Assistant |
 | `controls` | `[mode, fullscreen]` | die kurze Form, wenn es keine `buttons` gibt |
 
 **Die Bewegung des Hintergrunds** stellt ein Knopf mit `function: motion`. Er
@@ -195,6 +196,23 @@ Fenster, zeigt die Transparenz gleich den Wert des anderen Modus.
 
 Die einzelnen Funktionen bleiben, für eine Leiste, die sie lieber einzeln
 zeigt.
+
+**An Stelle der Kopfzeile** steht die Leiste mit `replace_header: true`. Home
+Assistants Kopfzeile verschwindet auf dem Dashboard, die Leiste bleibt beim
+Rollen oben, und sie bringt mit, was die Kopfzeile hatte: einen Knopf für die
+Seitenleiste und — wenn kein Einstellungsfenster da ist — den Stift zum
+Bearbeiten. Im Einstellungsfenster steht der Stift neben dem Vollbild. Assist
+gibt es als `function: assist`.
+
+![Die Leiste an Stelle der Kopfzeile](docs/bilder/steuerleiste-kopfzeile.jpg)
+
+Zu wissen:
+
+- Die Leiste gehört auf **jede** Ansicht des Dashboards. Auf einer Ansicht
+  ohne sie ist Home Assistants Kopfzeile wieder da, damit niemand festsitzt.
+- Im Bearbeitungsmodus ist die Kopfzeile immer da.
+- Einstellungen, Energie, Karte und die übrigen Seiten behalten ihre eigene
+  Kopfzeile.
 
 Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten. Jede Zeile
 nennt den Knopf beim Namen, und ohne Namen beim Ziel, der Entität oder der

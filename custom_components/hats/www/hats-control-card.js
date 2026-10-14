@@ -77,7 +77,8 @@ export const BEDIENTEILE = ["mode", "fullscreen"];
 
 // Was ein Knopf im Browser tut statt in Home Assistant. Ein solcher Knopf hat
 // weder Ziel noch Schalter.
-export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion", "appearance", "settings"];
+export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion", "appearance", "settings",
+  "sidebar", "assist", "edit"];
 export const GROESSEN = ["small", "normal", "large"];
 export const FORMEN = ["theme", "pill"];
 export const EINKLAPPEN = ["never", "narrow", "always"];
@@ -106,6 +107,7 @@ export const TEXTE = {
     leer: "Kein Knopf eingerichtet.",
     feld: {
       buttons: "Knöpfe", controls: "Bedienteile", kiosk_only: "Vollbild nur in Home Assistant",
+      replace_header: "Kopfzeile von Home Assistant ersetzen",
       menu_shape: "Form", menu_size: "Größe", collapse: "Ziele einklappen",
       collapse_width: "Einklappen unter dieser Kartenbreite", show_highlight: "Kapsel auf der aktuellen Ansicht",
     },
@@ -113,6 +115,8 @@ export const TEXTE = {
       buttons: "Ein Ziel, ein Schalter oder eine Funktion - in dieser Reihenfolge.",
       controls: "Angezeigt in dieser Reihenfolge.",
       kiosk_only: "Blendet nur Seitenleiste und Kopfzeile aus. Das Browserfenster bleibt, wie es ist.",
+      replace_header: "Auf diesem Dashboard steht die Leiste an Stelle der Kopfzeile und bleibt beim Rollen oben. "
+        + "Ein Knopf für die Seitenleiste kommt dazu. Im Bearbeitungsmodus ist die Kopfzeile wieder da.",
       collapse_width: "Gemessen wird die Karte, nicht das Fenster.",
     },
     knopffeld: {
@@ -123,11 +127,15 @@ export const TEXTE = {
     },
     funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter",
                 motion: "Bewegung des Hintergrunds", appearance: "Transparenz und Schrift",
-                settings: "Einstellungen (alles in einem Fenster)" },
+                settings: "Einstellungen (alles in einem Fenster)",
+                sidebar: "Seitenleiste", assist: "Assist", edit: "Dashboard bearbeiten" },
     teil: { mode: "Modus", fullscreen: "Vollbild" },
     bewegung: "Bewegung des Hintergrunds",
     darstellung: "Transparenz und Schrift",
     alles: "Einstellungen",
+    seitenleiste: "Seitenleiste",
+    assist: "Assist",
+    bearbeiten: "Dashboard bearbeiten",
     transparenz: "Transparenz",
     schrift: "Schrift",
     deckend: "deckend",
@@ -182,6 +190,7 @@ export const TEXTE = {
     leer: "No button set up.",
     feld: {
       buttons: "Buttons", controls: "Controls", kiosk_only: "Fullscreen in Home Assistant only",
+      replace_header: "Replace Home Assistant's header",
       menu_shape: "Shape", menu_size: "Size", collapse: "Collapse targets",
       collapse_width: "Collapse below this card width", show_highlight: "Pill on the current view",
     },
@@ -189,6 +198,8 @@ export const TEXTE = {
       buttons: "A target, a switch or a function - in this order.",
       controls: "Shown in this order.",
       kiosk_only: "Only hides the sidebar and the header. The browser window stays as it is.",
+      replace_header: "On this dashboard the bar takes the header's place and stays at the top while scrolling. "
+        + "A sidebar button is added. In edit mode the header is back.",
       collapse_width: "The card is measured, not the window.",
     },
     knopffeld: {
@@ -199,11 +210,15 @@ export const TEXTE = {
     },
     funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather",
                 motion: "Background motion", appearance: "Transparency and text",
-                settings: "Settings (everything in one window)" },
+                settings: "Settings (everything in one window)",
+                sidebar: "Sidebar", assist: "Assist", edit: "Edit dashboard" },
     teil: { mode: "Mode", fullscreen: "Fullscreen" },
     bewegung: "Background motion",
     darstellung: "Transparency and text",
     alles: "Settings",
+    seitenleiste: "Sidebar",
+    assist: "Assist",
+    bearbeiten: "Edit dashboard",
     transparenz: "Transparency",
     schrift: "Text size",
     deckend: "opaque",
@@ -255,6 +270,10 @@ const SYMBOL = {
   bewegung: "mdi:motion-play-outline",
   darstellung: "mdi:tune-variant",
   alles: "mdi:cog-outline",
+  // Dieselben Symbole wie in HAs Kopfzeile.
+  seitenleiste: "mdi:menu",
+  assist: "mdi:comment-processing-outline",
+  bearbeiten: "mdi:pencil",
 };
 
 // Die Funktionen, die ein Fenster aufklappen, und unter welchem Namen das Feld
@@ -410,17 +429,19 @@ export function eingeklappt(einstellung, breite) {
 export function mehrInDieListe(plan, einstellung, einklappbar) {
   if (!einklappbar || einstellung.einklappen === "never") return null;
   const kn = einstellung.knoepfe;
-  if (!plan.zu && kn.some((k) => !k.align_end)) return { zu: true, weg: plan.weg };
+  if (!plan.zu && kn.some((k) => !k.align_end && k.function !== "sidebar")) return { zu: true, weg: plan.weg };
   if (plan.weg < kn.filter((k) => k.align_end).length) return { zu: true, weg: plan.weg + 1 };
   return null;
 }
 
 // Welche Knoepfe in der Liste stehen: eingeklappt die Ziele, dazu die letzten
-// `weg` am Rand.
+// `weg` am Rand. Der Knopf der Seitenleiste nie - er ersetzt HAs Menueknopf
+// und muss immer zu sehen sein.
 export function inDieListe(knoepfe, zu, weg) {
   if (!zu) return new Set();
   const amEnde = geordnet(knoepfe).filter((k) => k.align_end);
-  return new Set([...knoepfe.filter((k) => !k.align_end), ...amEnde.slice(amEnde.length - weg)]);
+  return new Set([...knoepfe.filter((k) => !k.align_end && k.function !== "sidebar"),
+    ...amEnde.slice(amEnde.length - weg)]);
 }
 
 // Das Badge liest NUR die Kurzform. Was hier herauskommt, geht an
@@ -453,9 +474,29 @@ export function badgeKurzform(config) {
   return { controls, kiosk_only: config?.kiosk_only };
 }
 
+// Wer HAs Kopfzeile ersetzt, nimmt ihren Menueknopf und ihren Stift mit weg.
+// Am Telefon ist der Menueknopf der einzige Weg in die Seitenleiste und damit
+// zu den Einstellungen; ohne Stift kaeme niemand mehr in den
+// Bearbeitungsmodus. Beide kommen deshalb von selbst dazu, wenn die Leiste sie
+// nicht schon hat. Der Stift entfaellt mit dem Einstellungsfenster: Dort steht
+// er.
+export function mitKopfKnoepfen(knoepfe, kopf) {
+  if (!kopf) return knoepfe;
+  const hat = (f) => knoepfe.some((k) => k.function === f);
+  const vorn = hat("sidebar") ? [] : [{ ...einKnopf({ function: "sidebar" }, -1), auto: true }];
+  const hinten = hat("edit") || hat("settings")
+    ? [] : [{ ...einKnopf({ function: "edit", align_end: true }, -1), auto: true }];
+  // Neu gezaehlt: Die Kapsel findet ihren Knopf ueber index, und index ist
+  // die Stelle in DIESER Liste. Ohne das sass sie am 14.10.2026 einen Knopf
+  // zu weit rechts - auf dem Zahnrad statt auf "Eigene".
+  return [...vorn, ...knoepfe, ...hinten].map((k, index) => ({ ...k, index }));
+}
+
 export function pruefeConfig(config) {
+  const kopf = config?.replace_header === true;
   return {
-    knoepfe: leseKnoepfe(config),
+    knoepfe: mitKopfKnoepfen(leseKnoepfe(config), kopf),
+    kopf,
     kiosk_only: config?.kiosk_only === true,
     einklappen: einklappArt(config),
     einklappbreite: Number(config?.collapse_width) || EINKLAPPBREITE,
@@ -1048,10 +1089,25 @@ function wirdBearbeitet() {
   }
 }
 
+// Mehrere Leisten auf einer Ansicht: Jede sagt nur fuer sich, ob die
+// Kopfzeile weg soll, und weg ist sie, solange EINE es will. Am 14.10.2026 so
+// gesehen: Auf /hats-test/eigene stand neben der Leiste mit replace_header
+// eine kleine Steuerkarte mit Vollbild - und die blendete die Kopfzeile bei
+// jedem Durchlauf wieder ein, weil bei IHR kein Vollbild an war.
+const KOPF_WUENSCHE = new WeakMap();
+
+// Das Ziel wird gemerkt: Ausgehaengt findet der Weg nach oben nichts mehr, und
+// genau dann muss eine Leiste ihren Wunsch zuruecknehmen.
 function kopfzeile(leiste, verstecken) {
-  const ziel = kopfWirt(leiste);
+  const ziel = kopfWirt(leiste) ?? leiste._kopfZiel;
   if (!ziel) return;
-  const soll = verstecken && !wirdBearbeitet();
+  leiste._kopfZiel = ziel;
+  let wuensche = KOPF_WUENSCHE.get(ziel.wurzel);
+  if (!wuensche) KOPF_WUENSCHE.set(ziel.wurzel, (wuensche = new Set()));
+  if (verstecken && leiste.isConnected !== false) wuensche.add(leiste);
+  else wuensche.delete(leiste);
+  for (const l of wuensche) if (l.isConnected === false) wuensche.delete(l);
+  const soll = wuensche.size > 0 && !wirdBearbeitet();
   const da = ziel.wurzel.querySelector("style[data-hats-vollbild]");
   if (soll && !da) {
     const stil = document.createElement("style");
@@ -1158,6 +1214,7 @@ const STIL_GEMEINSAM = `
   .modus[aria-disabled="true"] .wahl[aria-pressed="true"] { color: var(--primary-text-color); }
 
   .liste, .regler { display: none; }
+  [hidden] { display: none !important; }
   .leer { color: var(--secondary-text-color); font-size: var(--ha-font-size-m, 14px);
           padding: 0 var(--ha-space-2, 8px); white-space: nowrap; }
 `;
@@ -1198,6 +1255,17 @@ const STIL_KARTE = `
   .nur-steuerung .modus { flex: 1; min-width: 0; }
   .nur-steuerung .wahl { flex: 1; min-width: 0; width: auto; }
   .nur-steuerung .knopf::before { background-color: var(--disabled-color); opacity: .2; }
+
+  /* Ersetzt die Leiste HAs Kopfzeile, wird ha-card fest, sobald der Wirt oben
+     hinausrollt - an derselben Stelle und in derselben Ebene wie die
+     Kopfzeile (z-index 4, gemessen). Der Wirt bleibt im Raster. */
+  :host([fest]) ha-card {
+    position: fixed; z-index: 4; box-sizing: border-box;
+    top: var(--safe-area-inset-top, 0px); left: var(--_fest-links); width: var(--_fest-breite);
+    /* ha-card nimmt sonst height: 100% - fest heisst das: des Fensters. Am
+       14.10.2026 so gesehen, eine Glasflaeche ueber dem ganzen Bildschirm. */
+    height: auto;
+  }
 
   /* Eingeklappt: die Ziele haengen als Liste unter dem Menueknopf. Offen
      braucht die Karte Luft nach unten und muss ueber den Karten danach liegen. */
@@ -1362,6 +1430,50 @@ class Steuerung extends Basis {
     this._knopfbeobachter?.disconnect();
     this._knopfbeobachter = null;
     this._zu();
+    // Eine Ansicht ohne die Leiste haette sonst weder Kopfzeile noch Leiste -
+    // und keinen Weg mehr hinaus.
+    this._klebe(false);
+    kopfzeile(this, false);
+  }
+
+  // HAs Kopfzeile steht fest oben; wer sie ersetzt, muss das auch. CSS sticky
+  // geht nicht: Ein klebendes Element bleibt in seinem Eltern-Element, und das
+  // ist hier eine Rasterzelle. Am 14.10.2026 gemessen: Die Seite rollt im
+  // Fenster, und ueber der Karte faengt nichts ein position: fixed ab - kein
+  // transform, kein filter, kein contain. Also bleibt der Wirt im Raster und
+  // haelt den Platz, und nur ha-card wird fest, sobald er oben hinausrollt.
+  _klebe(an) {
+    if (an && !this._beimRollen) {
+      this._beimRollen = () => {
+        if (this._rollBild) return;
+        this._rollBild = requestAnimationFrame(() => {
+          this._rollBild = 0;
+          this._kleben();
+        });
+      };
+      window.addEventListener("scroll", this._beimRollen, { passive: true });
+      window.addEventListener("resize", this._beimRollen, { passive: true });
+    } else if (!an && this._beimRollen) {
+      window.removeEventListener("scroll", this._beimRollen);
+      window.removeEventListener("resize", this._beimRollen);
+      this._beimRollen = null;
+    }
+    this._kleben();
+  }
+
+  _kleben() {
+    if (!this.getBoundingClientRect) return;
+    const r = this.getBoundingClientRect();
+    const fest = Boolean(this._beimRollen) && r.height > 0 && r.top < 0;
+    if (fest) {
+      // Der Wirt behaelt seine Hoehe, sonst rueckte alles darunter nach.
+      if (!this.hasAttribute("fest")) this.style.minHeight = `${r.height}px`;
+      this.style.setProperty("--_fest-links", `${r.left}px`);
+      this.style.setProperty("--_fest-breite", `${r.width}px`);
+    } else if (this.hasAttribute("fest")) {
+      this.style.minHeight = "";
+    }
+    this.toggleAttribute("fest", fest);
   }
 
   setConfig(config) {
@@ -1483,14 +1595,12 @@ class Steuerung extends Basis {
       return;
     }
 
-    // Eingeklappt fuehrt der Menueknopf die Reihe an. Es sind DIESELBEN
-    // Knopfelemente, die in die Liste wandern, kein zweiter Satz: Aktionen,
-    // Zustand und Lampenfarbe arbeiten dort weiter, ohne zu wissen, dass sie
-    // umgezogen sind. Was ans Ende geschoben ist, bleibt in der Reihe.
-    if (this._eingeklappt) {
-      this._menueknopf = this._baueMenueknopf();
-      this._reihe.append(this._menueknopf);
-    }
+    // Eingeklappt fuehrt der Menueknopf die Reihe an - nach dem Knopf der
+    // Seitenleiste, wie in HAs Kopfzeile. Es sind DIESELBEN Knopfelemente, die
+    // in die Liste wandern, kein zweiter Satz: Aktionen, Zustand und
+    // Lampenfarbe arbeiten dort weiter, ohne zu wissen, dass sie umgezogen
+    // sind. Was ans Ende geschoben ist, bleibt in der Reihe.
+    let menueDa = !this._eingeklappt;
 
     const reihenfolge = geordnet(c.knoepfe);
     const liste = inDieListe(c.knoepfe, this._eingeklappt, this._weg || 0);
@@ -1498,6 +1608,11 @@ class Steuerung extends Basis {
     let fueller = false;
     let davor = null;
     for (const k of reihenfolge) {
+      if (!menueDa && k.function !== "sidebar") {
+        this._menueknopf = this._baueMenueknopf();
+        this._reihe.append(this._menueknopf);
+        menueDa = true;
+      }
       const inListe = liste.has(k);
       const ziel = inListe ? this._liste : this._reihe;
       if (!inListe && k.align_end && !fueller) {
@@ -1586,6 +1701,21 @@ class Steuerung extends Basis {
         continue;
       }
 
+      if (k.function === "sidebar") {
+        this._beschrifte(e, k.icon || SYMBOL.seitenleiste, k.name, t.seitenleiste);
+        continue;
+      }
+      if (k.function === "assist") {
+        this._beschrifte(e, k.icon || SYMBOL.assist, k.name, t.assist);
+        continue;
+      }
+      // Den Stift zeigt HA nur Administratoren - die Leiste auch.
+      if (k.function === "edit") {
+        e.hidden = !hass.user?.is_admin;
+        this._beschrifte(e, k.icon || SYMBOL.bearbeiten, k.name, t.bearbeiten);
+        continue;
+      }
+
       if (k.function === "theme") {
         // Faerbt sich nicht: Er schaltet den Browser, kein Geraet im Haus, und
         // im dunklen Modus staende er sonst dauerhaft in der Auswahlfarbe.
@@ -1640,10 +1770,12 @@ class Steuerung extends Basis {
     // jedem Panelwechsel neu.
     // Das Fenster hinter settings traegt das Vollbild auch - eine Leiste mit
     // ihm muss es beim Neuladen genauso wiederherstellen.
-    if (hatVollbild || this._config.knoepfe.some((k) => k.function === "settings")) {
-      gleicheVollbildAb(hass);
-      kopfzeile(this, hass.kioskMode === true);
+    const mitVollbild = hatVollbild || this._config.knoepfe.some((k) => k.function === "settings");
+    if (mitVollbild) gleicheVollbildAb(hass);
+    if (mitVollbild || this._config.kopf) {
+      kopfzeile(this, (mitVollbild && hass.kioskMode === true) || this._config.kopf);
     }
+    this._klebe(this._config.kopf && !wirdBearbeitet());
 
     if (this.getAttribute?.("offen") === "alles" && this._regler?.art === "alles") this._stelleFensterkopf(t);
     this._folgeModus();
@@ -1736,8 +1868,10 @@ class Steuerung extends Basis {
     const gezeigt = aktiv && !aktiv.align_end ? aktiv : kn.find((k) => !k.align_end);
     // Ein Menuesymbol sagt "dahinter ist eine Liste" besser als das Symbol der
     // Seite, auf der man zufaellig ist. Der Name sagt weiter, welche das ist.
-    const symbol = this._config.einklappsymbol === ""
-      ? (gezeigt?.icon ?? "") : (this._config.einklappsymbol || SYMBOL.menue);
+    // Neben dem Knopf der Seitenleiste stuende sonst ein zweites mdi:menu.
+    const eigenes = this._config.einklappsymbol === ""
+      || (this._config.einklappsymbol === undefined && this._config.knoepfe.some((k) => k.function === "sidebar"));
+    const symbol = eigenes ? (gezeigt?.icon ?? "") : (this._config.einklappsymbol || SYMBOL.menue);
     this._beschrifte(b, symbol, gezeigt?.name ?? "", gezeigt?.name || t.menue);
   }
 
@@ -1875,7 +2009,19 @@ class Steuerung extends Basis {
     voll._symbol = neu("ha-icon");
     voll._name = neu("span", "name");
     voll.append(voll._symbol, voll._name, neu("ha-ripple"));
-    kopf.append(modus, neu("span", "fueller"), voll);
+    kopf.append(modus, neu("span", "fueller"));
+    // Ersetzt die Leiste HAs Kopfzeile, steht deren Stift hier.
+    if (this._config.kopf && this._hass.user?.is_admin) {
+      const stift = neu("button", "knopf");
+      stift.type = "button";
+      stift.dataset.bearbeiten = "";
+      stift._symbol = neu("ha-icon");
+      stift._name = neu("span", "name");
+      stift.append(stift._symbol, stift._name, neu("ha-ripple"));
+      this._beschrifte(stift, SYMBOL.bearbeiten, "", t.bearbeiten);
+      kopf.append(stift);
+    }
+    kopf.append(voll);
     return kopf;
   }
 
@@ -2091,6 +2237,10 @@ class Steuerung extends Basis {
       return;
     }
 
+    if (knopf.dataset.bearbeiten !== undefined) {
+      this._bearbeiten();
+      return;
+    }
     // Der Vollbildknopf im Fenster: derselbe Weg wie der in der Leiste.
     if (knopf.dataset.vollbild !== undefined) {
       schalteVollbild(this._hass.kioskMode !== true, this._config.kiosk_only);
@@ -2116,6 +2266,23 @@ class Steuerung extends Basis {
       else this._reglerAuf(knopf, REGLER[k.function]);
       return;
     }
+    // Die drei Knoepfe aus HAs Kopfzeile, auf HAs eigenen Wegen - am
+    // 14.10.2026 an der Testmaschine ausgeloest: hass-toggle-menu klappt die
+    // Seitenleiste (255 -> 55 -> 255 px), die Aktion assist oeffnet den
+    // Sprachdialog, ?edit=1 ueber navigate den Bearbeitungsmodus.
+    if (k.function === "sidebar") {
+      this._sende("hass-toggle-menu");
+      return;
+    }
+    if (k.function === "assist") {
+      if (knopf._inListe) this._zu();
+      this._sende("hass-action", { config: { tap_action: { action: "assist" } }, action: "tap" });
+      return;
+    }
+    if (k.function === "edit") {
+      this._bearbeiten();
+      return;
+    }
     if (k.function === "weather") {
       // Ein Tippen oeffnet, was hinter dem Wert steht. Die Kapsel wandert
       // nicht dorthin: Der Knopf zeigt etwas, er fuehrt nirgends hin.
@@ -2135,6 +2302,13 @@ class Steuerung extends Basis {
     // Den Rest macht Home Assistant: navigieren, umschalten, Dienst rufen,
     // nachfragen - alles, was eine tap_action kann.
     this._sende("hass-action", { config: knopfAktion(k), action: "tap" });
+  }
+
+  // Bearbeiten heisst in Home Assistant: dieselbe Adresse mit ?edit=1.
+  _bearbeiten() {
+    this._zu();
+    this._sende("hass-action", { config: { tap_action: { action: "navigate",
+      navigation_path: `${globalThis.location.pathname}?edit=1` } }, action: "tap" });
   }
 
   _modusGesperrt() {
@@ -2245,6 +2419,7 @@ export function kartenFormular(t, mitAnzeige) {
             ...(mitAnzeige ? { [ZEILE]: anzeige, [ZEILE_UNTER]: anzeige } : {}),
           } } } },
       { name: "kiosk_only", selector: { boolean: {} } },
+      { name: "replace_header", selector: { boolean: {} } },
       { name: "menu_shape", selector: wahl(FORMEN) },
       { name: "menu_size", selector: wahl(GROESSEN) },
       { name: "collapse", selector: wahl(EINKLAPPEN) },

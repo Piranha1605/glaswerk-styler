@@ -132,7 +132,7 @@ Without `buttons` it shows mode and fullscreen — the short form:
 | `tap_action` | any Home Assistant action; it wins over `link` and over toggling |
 | `state_background` | default `true`: a button that is on is filled |
 | `light_background` | default `true`: in the lamp's colour, otherwise in Home Assistant's state colour |
-| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion`, `appearance`, `settings` |
+| `function` | `mode` (auto/light/dark), `theme` (one button, back and forth), `fullscreen`, `weather`, `motion`, `appearance`, `settings`, `sidebar`, `assist`, `edit` |
 | `temperature`, `temperature_source` | `weather` only: a sensor of your own, and whether the value comes from it (`sensor`) or from the weather entity (`weather`) |
 | `align_end`, `separator_before` | at the end of the bar; a thin line before it |
 
@@ -156,6 +156,7 @@ by hand; the log shows the line.
 | `menu_size` | `normal` | `small`, `normal`, `large` |
 | `show_highlight` | `true` | the pill on the current view |
 | `kiosk_only` | `false` | `true`: fullscreen in Home Assistant only, the browser window stays |
+| `replace_header` | `false` | `true`: on this dashboard the bar replaces Home Assistant's header |
 | `controls` | `[mode, fullscreen]` | the short form, when there are no `buttons` |
 
 **The background motion** is set by a button with `function: motion`. It
@@ -191,6 +192,21 @@ in the window, the transparency shows the other mode's value right away.
 ![The window behind the settings button](docs/bilder/steuerleiste-einstellungen.jpg)
 
 The single functions stay, for a bar that prefers to show them one by one.
+
+**In place of the header** the bar stands with `replace_header: true`. Home
+Assistant's header disappears on the dashboard, the bar stays at the top while
+scrolling, and it brings what the header had: a sidebar button and — if there
+is no settings window — the pencil for editing. In the settings window the
+pencil sits next to fullscreen. Assist is available as `function: assist`.
+
+![The bar in place of the header](docs/bilder/steuerleiste-kopfzeile.jpg)
+
+Good to know:
+
+- The bar belongs on **every** view of the dashboard. On a view without it,
+  Home Assistant's header is back, so nobody gets stuck.
+- In edit mode the header is always there.
+- Settings, energy, map and the other pages keep their own header.
 
 The editor lets you add, sort and edit the buttons. Each row shows the
 button's name, or without one its target, entity or function:

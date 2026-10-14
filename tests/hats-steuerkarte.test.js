@@ -245,7 +245,10 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
   // --mdc-icon-size ist der Name, aus dem Home Assistants Symbol seine Groesse
   // liest (gemessen: 20 und 18 Pixel folgten ihm). Die Leiste SETZT ihn in
   // ihren Stilblaettern und liest ihn fuer den Kasten des Symbols zurueck.
-  const eigen = ["--_rund", "--_knopfrund", "--_h", "--_polster", "--state-", "--mdc-icon-size"];
+  // --_fest-links und --_fest-breite setzt die Leiste selbst an ihren Wirt,
+  // wenn sie an Stelle der Kopfzeile oben festklebt.
+  const eigen = ["--_rund", "--_knopfrund", "--_h", "--_polster", "--state-", "--mdc-icon-size",
+    "--_fest-links", "--_fest-breite"];
 
   const gelesen = [...new Set([...quelle.matchAll(/var\(\s*(--[a-z0-9_-]+)/g)].map((m) => m[1]))];
   assert.ok(gelesen.length >= 8, `nur ${gelesen.length} Variablen gefunden - der Ausdruck greift nicht`);
@@ -271,16 +274,17 @@ pruefe("Keine eigene Farbe ausser HAs Weiss auf der Auswahl", () => {
   assert.ok(/var\(--ha-color-on-primary-loud, #fff\)/.test(stil[1]));
 });
 
-pruefe("Genau die sechs Ereignisse von Home Assistant, und die richtigen steigen auf", () => {
-  // Vier gehen ueber _sende, eins haengt an window, und eins schickt der
+pruefe("Genau die sieben Ereignisse von Home Assistant, und die richtigen steigen auf", () => {
+  // Fuenf gehen ueber _sende, eins haengt an window, und eins schickt der
   // Editor: config-changed, an dem hui-element-editor die neue Konfiguration
-  // abholt.
+  // abholt. hass-toggle-menu hoert home-assistant-main - damit oeffnet HAs
+  // eigener Menueknopf die Seitenleiste.
   const ueberSende = [...new Set([...quelle.matchAll(/this\._sende\("([^"]+)"/g)].map((m) => m[1]))].sort();
-  assert.deepStrictEqual(ueberSende, ["hass-action", "hass-more-info", "hass-notification", "settheme"]);
+  assert.deepStrictEqual(ueberSende, ["hass-action", "hass-more-info", "hass-notification", "hass-toggle-menu", "settheme"]);
   const direkt = [...new Set([...quelle.matchAll(/new CustomEvent\("([^"]+)"/g)].map((m) => m[1]))].sort();
   assert.deepStrictEqual(direkt, ["config-changed", "hass-kiosk-mode"]);
 
-  // Home Assistant hoert die vier am Element <home-assistant>. Ohne composed
+  // Home Assistant hoert die fuenf ueber den Elementen der Leiste. Ohne composed
   // bleiben sie im Shadow Root der Leiste stecken - und nichts passiert, ohne
   // Meldung. _sende ist die eine Stelle, an der das stimmen muss.
   const sende = /_sende\(name, detail\) \{([\s\S]*?)\n  \}/.exec(quelle);

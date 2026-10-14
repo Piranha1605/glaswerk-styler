@@ -929,6 +929,7 @@ buttons:
   - entity: light.kueche          # ein Schalter - leuchtet, solange sie an ist
     align_end: true
   - function: weather             # mode | theme | fullscreen | weather | motion | appearance | settings
+                                  # sidebar | assist | edit
     entity: weather.forecast_home
     align_end: true
 collapse: narrow                  # never | narrow | always
@@ -1486,6 +1487,66 @@ An der Testmaschine, auf der Leiste des Maintainers (vorher gesichert als
 und bei 375 px, Modus hin und zurück, Vollbild an und aus, danach alles wie
 vorher. `tests/hats-steuerkarte-fenster.test.js`: neun Prüfungen mit
 `glaswerk.yaml`, drei Mutationen gegengeprüft.
+
+### An Stelle von Home Assistants Kopfzeile: `replace_header`
+
+Auf Ansage vom 14.10.2026: *„ja mach mal. wenn das geht bauen wir unser
+eigenes HA."* Auf die Frage, ob die Leiste HAs Kopfzeile ganz ersetzen kann.
+
+```yaml
+type: custom:hats-control-card
+replace_header: true
+```
+
+**Was die Kopfzeile tut, und auf welchem Weg die Leiste es tut** — jeder Weg
+an der Testmaschine ausgelöst, nicht nur gelesen:
+
+| Kopfzeile | Leiste | gemessen |
+|---|---|---|
+| Reiter der Ansichten | Ziele mit Kapsel | schon da |
+| Menüknopf | `function: sidebar` → Ereignis `hass-toggle-menu` | 255 → 55 → 255 px; am Telefon 0 → 256 |
+| Assist | `function: assist` → Aktion `assist` | Sprachdialog geht auf |
+| Stift | `function: edit` oder im Fenster → `navigate` auf `?edit=1` | Bearbeitungsmodus an |
+| Suche | — | nur über ein internes Ereignis, weggelassen |
+
+**Sidebar und Stift kommen von selbst dazu** (`mitKopfKnoepfen`): Am Telefon
+ist der Menüknopf der einzige Weg in die Seitenleiste und damit zu den
+Einstellungen, und ohne Stift käme niemand mehr in den Bearbeitungsmodus. Der
+Stift entfällt, wenn `settings` da ist — dort steht er. Die Seitenleiste wandert
+nie ins Menü.
+
+**Oben bleiben geht nicht mit CSS sticky.** Ein klebendes Element bleibt in
+seinem Eltern-Element, und das ist eine Rasterzelle. Gemessen: Die Seite rollt
+im Fenster, HAs Kopfzeile ist `position: fixed`, 56 px, `z-index: 4`, und über
+der Karte fängt nichts ein `position: fixed` ab. Also bleibt der Wirt im Raster
+und hält den Platz, und nur `ha-card` wird fest, sobald er oben hinausrollt.
+
+**Drei Fehler beim ersten Einspielen, alle an der Instanz gesehen:**
+
+- **Eine zweite Leiste blendete die Kopfzeile wieder ein.** Auf `eigene` steht
+  daneben eine kleine Steuerkarte mit Vollbild; sie rief bei jedem Durchlauf
+  „Kopfzeile zeigen", weil bei ihr kein Vollbild an war. Jetzt sagt jede Leiste
+  nur für sich, ob sie weg soll (`KOPF_WUENSCHE`), und weg ist sie, solange
+  eine es will.
+- **Die feste Leiste füllte den Bildschirm.** `ha-card` trägt `height: 100%`,
+  fest heißt das: des Fensters. `height: auto` im festen Zustand.
+- **Die Kapsel saß auf dem Zahnrad.** Die Kapsel findet ihren Knopf über
+  `index`, und der vorangestellte Seitenleisten-Knopf verschob die Stellen.
+  `mitKopfKnoepfen` zählt neu.
+
+**Wann HAs Kopfzeile zurückkommt:** im Bearbeitungsmodus (gemessen: über den
+Stift hinein, Kopfzeile da; „Fertig", Leiste wieder oben), und auf jeder
+Ansicht ohne Leiste (gemessen: `vergleich` hat keine, dort war sie da; zurück
+auf `eigene` wieder weg). Eine Leiste nimmt ihren Wunsch beim Aushängen zurück
+— sonst stünde eine Ansicht ohne Leiste ohne jede Kopfzeile da.
+
+**Was das Ersetzen nicht kann:** die Kopfzeile der übrigen Seiten
+(Einstellungen, Energie, Karte) — dort gibt es keine Leiste. Und die Regel, die
+die Kopfzeile ausblendet, ist ein `<style>` in `hui-root`; baut Home Assistant
+die Kopfzeile um, muss `KOPF_REGELN` nachziehen.
+
+`tests/hats-steuerkarte-kopfzeile.test.js`: neun Prüfungen, darunter die
+Kapsel mit dem Knopf davor, mit Mutation gegengeprüft.
 
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 
