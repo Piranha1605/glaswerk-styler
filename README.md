@@ -4,8 +4,9 @@ Grafisches Panel für die Seitenleiste von Home Assistant, mit dem sich ein
 komplettes Theme visuell bauen lässt — aufgesetzt auf die Farbebene von
 HA 2026, nicht auf die klassischen Einzelvariablen.
 
-**Stand: früher Aufbau.** Dieser Stand liest nur. Er zeigt das Gerüst, auf dem
-alles weitere aufsetzt.
+**Stand: 0.2.0b5, in Arbeit.** HATS liest und schreibt Themes, bringt einen
+Baukasten mit fertigen Teilen mit und eine Steuerkarte für Dashboards.
+Veröffentlicht ist es noch nicht.
 
 ## Worum es geht
 
@@ -39,6 +40,43 @@ beiden bearbeiten.
 Das gemessene Wissen über Home Assistant, Bubble Card und Mushroom liegt in
 HATGs `CLAUDE.md` und in `docs/uebergabe-neues-projekt.md`. HATS baut darauf auf,
 statt es neu zu erarbeiten.
+
+## Was dabei herauskommt
+
+Dieselbe Ansicht, dieselbe Fenstergröße, dieselben Karten — nur die Theme
+wechselt. Drei Bilder, nicht zwei: Ohne das mittlere schreibt man den
+UIX-Vorlagen zu, was die Felder getan haben.
+
+**Home Assistant, wie es ausgeliefert wird.**
+
+![Dasselbe Dashboard ohne Theme, im dunklen Modus](docs/bilder/vergleich-1-vorher.jpg)
+
+**Mit einer HATS-Theme — nur die Felder.** Apples Systemfarben, Glas auf den
+Karten, Rundungen, Schatten, ein Hintergrund aus vier Farbinseln. Das ist eine
+gewöhnliche Theme-Datei: kein UI eXtension, keine CSS-Regel, kein
+Shadow-DOM-Pfad.
+
+![Dasselbe Dashboard mit der Theme macos, ohne UIX](docs/bilder/vergleich-2-nur-felder.jpg)
+
+**Dieselbe Theme mit UI eXtension.** Die Seitenleiste wird durchscheinend und
+die aktive Zeile zur Pille im Akzent; dazu Trennlinien zwischen den
+Abschnitten. UIX ist der Feinschliff — der größere Teil steht schon im Bild
+davor.
+
+![Dasselbe Dashboard mit der Theme macos und UIX](docs/bilder/vergleich-3-mit-uix.jpg)
+
+## Der Baukasten
+
+Wer nicht bei null anfangen will, steckt eine Theme aus fertigen Teilen
+zusammen: Farben, Schrift, Kartenaufbau, Hintergrund. Die fünfzehn Paletten
+zeigen ihre Farben als Tupfer — der große vorn ist der Akzent.
+
+![Der Baukasten im Panel, mit fünfzehn Farbpaletten](docs/bilder/baukasten-farben.jpg)
+
+Fünf davon sind **übernommen** und nachprüfbar: macOS und Android, dazu Nord,
+Solarized, Catppuccin und Gruvbox. Apples Werte sind am System ausgelesen, nicht
+abgeschrieben — `werkzeuge/test/macos-farben.swift` holt sie aus AppKit, und
+mehrere der bekannten stimmen seit macOS 26 nicht mehr.
 
 ## Die Steuerkarte
 

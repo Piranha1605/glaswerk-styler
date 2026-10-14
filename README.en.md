@@ -4,8 +4,9 @@ A panel for the Home Assistant sidebar for building a complete theme visually �
 built on the colour layer of HA 2026 rather than on the classic individual
 variables.
 
-**Status: early build.** This build only reads. It shows the framework
-everything else will sit on.
+**Status: 0.2.0b5, work in progress.** HATS reads and writes themes, ships a
+kit of ready-made parts and a control card for dashboards. It is not released
+yet.
 
 ## What this is about
 
@@ -38,6 +39,43 @@ its own defaults. Don't edit the same file in both.
 The measured knowledge about Home Assistant, Bubble Card and Mushroom lives in
 HATG's `CLAUDE.md` and in `docs/uebergabe-neues-projekt.md`. HATS builds on it
 instead of working it out again.
+
+## What comes out of it
+
+The same view, the same window size, the same cards — only the theme changes.
+Three pictures, not two: without the middle one you credit the UIX templates
+with what the fields did.
+
+**Home Assistant as shipped.**
+
+![The same dashboard without a theme, in dark mode](docs/bilder/vergleich-1-vorher.jpg)
+
+**With a HATS theme — the fields alone.** Apple's system colours, glass on the
+cards, corner radii, shadows, a background of four colour islands. This is an
+ordinary theme file: no UI eXtension, no CSS rule, no shadow DOM path.
+
+![The same dashboard with the macos theme, without UIX](docs/bilder/vergleich-2-nur-felder.jpg)
+
+**The same theme with UI eXtension.** The sidebar turns translucent and the
+active row into a pill in the accent colour; plus divider lines between the
+sections. UIX is the finishing touch — the larger part is already in the
+picture before it.
+
+![The same dashboard with the macos theme and UIX](docs/bilder/vergleich-3-mit-uix.jpg)
+
+## The kit
+
+If you would rather not start from nothing, you assemble a theme from
+ready-made parts: colours, type, card style, background. The fifteen palettes
+show their colours as beads — the large one at the front is the accent.
+
+![The kit in the panel, with fifteen colour palettes](docs/bilder/baukasten-farben.jpg)
+
+Five of them are **adopted** and verifiable: macOS and Android, plus Nord,
+Solarized, Catppuccin and Gruvbox. Apple's values are read from the system
+rather than copied from documentation — `werkzeuge/test/macos-farben.swift`
+pulls them out of AppKit, and several of the well-known ones have not been
+correct since macOS 26.
 
 ## The control card
 

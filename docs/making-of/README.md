@@ -42,3 +42,5 @@ schwarz.
 | [`2026-10-14-vergleich-1-vorher.jpg`](2026-10-14-vergleich-1-vorher.jpg) | Home Assistant pur, dunkel - dieselben Karten und dieselbe Seitenleiste, ohne Theme |
 | [`2026-10-14-vergleich-2-nur-felder.jpg`](2026-10-14-vergleich-2-nur-felder.jpg) | Theme macos, nur die Felder - Apples Farben, Glas, Rundungen, Schatten. Die Seitenleiste bleibt HAs eigene. |
 | [`2026-10-14-vergleich-3-mit-uix.jpg`](2026-10-14-vergleich-3-mit-uix.jpg) | Dieselbe Theme mit UI eXtension - die Seitenleiste wird zu Glas, die aktive Zeile zur Pille, dazu Trennlinien und Glas auf den Karten |
+| [`2026-10-14-baukasten-farben.jpg`](2026-10-14-baukasten-farben.jpg) | Der Baukasten: fuenfzehn Paletten als kleine Auswahl, darunter Schrift, Karten, Hintergrund |
+| [`2026-10-14-vergleich-1-vorher.jpg`](2026-10-14-vergleich-1-vorher.jpg) | Home Assistant pur, dunkel - dieselben Karten und dieselbe Seitenleiste, ohne Theme |
