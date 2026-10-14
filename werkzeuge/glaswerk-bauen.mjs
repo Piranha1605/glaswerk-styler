@@ -155,6 +155,42 @@ for (const quelle of [SCHRIFT, SCHATTEN]) {
   }
 }
 
+// --- NOCH NICHT IM PANEL ---------------------------------------------------
+//
+// Ab hier stehen Felder, die HATS noch nicht anbietet. Normalerweise ist das
+// verboten (CLAUDE.md: "Nie ein Feld schreiben, das HATS nicht anbietet") -
+// wer sie von Hand einträgt, bekommt sie im Panel nie wieder heraus.
+//
+// Auf Ansage vom 14.10.2026 gilt hier eine Ausnahme fuer die Bauphase: "du
+// arbeitest erst einmal nur in der Theme ist schneller". Die Theme ist der
+// Entwurf; wenn sie steht, wissen wir, was ins Panel gehoert. Diese Liste IST
+// der Uebergabezettel - was hier steht, braucht am Ende eine Kachel.
+//
+//     --mush-control-border-radius   Stufe 6, Gruppe Mushroom Masse
+//     --bubble-border-radius         Stufe 6, Gruppe Bubble Flaechen
+//
+const NOCH_OHNE_KACHEL = {
+  // Am 14.10.2026 an der Vergleichsseite gemessen, auf Ansage ("wir gehen
+  // jetzt an die slider"), mit zwei Kaestchen im Bild: HA-Kachel und
+  // Mushroom, beide mit demselben Schieber, beide anders gerundet.
+  //
+  //     HA .slider             20px   = --ha-border-radius-lg, aus der Leiter
+  //     HA .slider-track-bar   14px   = --ha-border-radius-md
+  //     Mushroom .slider       12px   Mushrooms eigene Vorgabe, nicht die Leiter
+  //
+  // Beide sind 42px hoch, es ist WIRKLICH nur die Rundung. Mushroom liest
+  // --mush-control-border-radius (Vorgabe 12px) - aus mushroom-light-card
+  // gelesen, nicht geraten. Auf 20px gesetzt sitzt der Schieber genau auf HAs.
+  "--mush-control-border-radius": "20px",
+
+  // Dieselbe Sorte Abweichung eine Ebene hoeher, davor gemessen: Bubbles
+  // .bubble-container stand auf 28px, waehrend Karte und Kachel auf 20 lagen.
+  // Die allgemeine Stufe ist die richtige - sie erreicht alle Kartentypen und
+  // laesst Bubbles Typlogik in Ruhe (CLAUDE.md, "die Kette ist dreistufig").
+  "--bubble-border-radius": "20px",
+};
+for (const [name, wert] of Object.entries(NOCH_OHNE_KACHEL)) schreibe(name, wert, "beide");
+
 // --- Vorlagen --------------------------------------------------------------
 //
 // glas-lichtkante bleibt aus, wie bei macos: Sie legt einen zweiten Saum mit

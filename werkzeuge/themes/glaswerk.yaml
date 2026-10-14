@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:19:35
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:30:04
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
@@ -21,6 +21,7 @@ glaswerk:
   blue-color: "#2196f3"
   blue-grey-color: "#607d8b"
   brown-color: "#795548"
+  bubble-border-radius: "20px"
   color-1: "#4269d0"
   color-10: "#094bad"
   color-11: "#c99000"
@@ -229,6 +230,7 @@ glaswerk:
   lime-color: "#cddc39"
   margin-title-ltr: "0 0 0 24px"
   margin-title-rtl: "0 24px 0 0"
+  mush-control-border-radius: "20px"
   orange-color: "#ff9800"
   pink-color: "#e91e63"
   purple-color: "#926bc7"
