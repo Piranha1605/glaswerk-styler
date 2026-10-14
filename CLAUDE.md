@@ -1886,6 +1886,56 @@ ein Element weniger dazwischen.
 Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
 gibt es keine Variable, und dafür braucht man card-mod oder HATG.
 
+## Rezepte aus dem Netz zielen auf MDC — das gibt es in 2026 nicht mehr
+
+Am 14.10.2026 an der Testmaschine nachgesehen, nachdem vier Sammlungen von
+card-mod-Rezepten hereinkamen. Drei der vier zielen auf Klassennamen, die Home
+Assistant nicht mehr hat:
+
+    ha-switch                 mdc-switch   nein      --ha-switch-*   ja (20+)
+    ha-control-switch         mdc-switch   nein
+    ha-select                 mdc-select   nein
+    ha-radio                  gar nicht mehr angemeldet
+
+Ein Rezept auf `.mdc-switch__track` trifft also nichts — und zwar **lautlos**,
+wie jede CSS-Regel, die ins Leere geht. Wer so ein Rezept einbaut und keine
+Wirkung sieht, sucht den Fehler bei sich.
+
+**Vor jedem übernommenen Rezept: `customElements.get(tag).elementStyles`
+lesen.** Steht der Klassenname nicht drin, ist das Rezept älter als die
+Oberfläche.
+
+### Der Schalter ist in 2026 reine Variablensache
+
+Und das ist die gute Nachricht: `ha-switch` hat über zwanzig eigene Felder —
+Größe, Breite, Daumengröße, Mindest-Trefferfläche, Fläche und Rahmen je
+Zustand, Daumenfarbe, Daumenschatten, jeweils mit Überfahr-Variante:
+
+    --ha-switch-size  -width  -thumb-size  -min-touch-size
+    --ha-switch-background-color          -border-color
+    --ha-switch-checked-background-color  -checked-border-color
+    --ha-switch-thumb-background-color    -thumb-border-color  -thumb-box-shadow
+    --ha-switch-checked-thumb-background-color
+    --ha-switch-disabled-opacity
+
+Was card-mod dort mühsam durch zwei Shadow-Grenzen bohrt — schlanke Spur,
+größerer Daumen, Glühen im Ein-Zustand —, sind **gewöhnliche Theme-Felder**.
+Kein UIX, kein card-mod.
+
+**Die Ausweichwerte sind HAs neue Farbebene**, also genau HATS' Grundlage:
+
+    --ha-switch-checked-background-color  ->  --ha-color-fill-primary-normal-resting
+    --ha-switch-checked-border-color      ->  --ha-color-border-primary-loud
+    --ha-switch-checked-thumb-background  ->  --ha-color-on-primary-normal
+
+Gemessen an glaswerk: keines der `--ha-switch-*` ist gesetzt, und der Schalter
+trägt trotzdem die Farben der Theme (`#dfeafc` aus der Rolle primary). Eine
+HATS-Theme steuert ihn also schon heute — über die Rolle, nicht über das Feld.
+
+**Keines der dreizehn Felder bietet das Panel an.** Und: **Mushroom und Bubble
+benutzen `ha-switch` nicht** (gemessen, beide false) — sie zeichnen ihre
+Schalter selbst. Der Schalter ist damit eine Sache für Home Assistant allein.
+
 ## Die Regler der drei Familien: was von HATS aus geht
 
 Am 14.10.2026 an der Vergleichsseite durchgemessen, nachdem der Maintainer
