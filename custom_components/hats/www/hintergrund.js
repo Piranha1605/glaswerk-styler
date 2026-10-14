@@ -290,6 +290,35 @@ export const FARBVERLAEUFE = VERLAUF_LISTE.map(([id, de, en, zweckDe, zweckEn, t
   };
 });
 
+// Der Grund fuer "Glaswerk". Steht hier und nicht in der Liste, weil acht
+// Ebenen in einer Zeile niemand mehr liest.
+// Der Grund fuer "Glaswerk". Steht hier und nicht in der Liste, weil acht
+// Ebenen in einer Zeile niemand mehr liest.
+//
+// Die Zahlen sind am 14.10.2026 an der Testmaschine gegen die Vorlage
+// gestellt worden, nicht geschaetzt. Der erste Versuch war zu hell: Grund
+// #dbe6f3, Raster 1.5px bei .22 - auf dem Schirm sah das aus wie Weiss,
+// und von den Kacheln war nichts zu sehen. Jetzt traegt der Grund
+// erkennbar Blau, und die Fugen sind 2px bei .34.
+const GLASWERK_HELL =
+  "linear-gradient(118deg, rgba(255,255,255,.50) 0 5%, rgba(255,255,255,0) 15%), " +
+  "linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.30) 22%, rgba(255,255,255,0) 29%), " +
+  "repeating-linear-gradient(45deg, rgba(255,255,255,.34) 0 2px, rgba(255,255,255,0) 2px 84px), " +
+  "repeating-linear-gradient(-45deg, rgba(255,255,255,.24) 0 2px, rgba(255,255,255,0) 2px 84px), " +
+  "radial-gradient(closest-side, rgba(96,150,220,.45), transparent) left -260px top -200px / 900px 640px no-repeat, " +
+  "radial-gradient(closest-side, rgba(140,190,236,.38), transparent) right -200px top -120px / 820px 600px no-repeat, " +
+  "radial-gradient(closest-side, rgba(78,122,186,.34), transparent) right -160px bottom -260px / 860px 700px no-repeat, " +
+  "linear-gradient(145deg, #a8c0da 0%, #cbdaec 42%, #9db6d2 100%)";
+const GLASWERK_DUNKEL =
+  "linear-gradient(118deg, rgba(255,255,255,.12) 0 5%, rgba(255,255,255,0) 15%), " +
+  "linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.08) 22%, rgba(255,255,255,0) 29%), " +
+  "repeating-linear-gradient(45deg, rgba(255,255,255,.085) 0 2px, rgba(255,255,255,0) 2px 84px), " +
+  "repeating-linear-gradient(-45deg, rgba(255,255,255,.06) 0 2px, rgba(255,255,255,0) 2px 84px), " +
+  "radial-gradient(closest-side, rgba(46,92,168,.52), transparent) left -260px top -200px / 900px 640px no-repeat, " +
+  "radial-gradient(closest-side, rgba(62,114,190,.40), transparent) right -200px top -120px / 820px 600px no-repeat, " +
+  "radial-gradient(closest-side, rgba(26,54,110,.46), transparent) right -160px bottom -260px / 860px 700px no-repeat, " +
+  "linear-gradient(145deg, #0d141f 0%, #16202f 42%, #0a111a 100%)";
+
 export const HINTERGRUENDE = [
   {
     id: "keiner",
@@ -306,6 +335,33 @@ export const HINTERGRUENDE = [
     zweckEn: "One diagonal gradient, two tones. Enough for glass, calmer than the dots.",
     light: { "--lovelace-background": stelleFest("linear-gradient(155deg, #e9eef7 0%, #f4f1f8 55%, #eaf4f2 100%)", true) },
     dark:  { "--lovelace-background": stelleFest("linear-gradient(155deg, #0e1220 0%, #151225 55%, #0c1d1f 100%)", true) },
+  },
+  {
+    id: "glaswerk",
+    de: "Glaswerk", en: "Glasswork",
+    zweckDe: "Diagonal verlegte Kacheln unter zwei Lichtbaendern. Gemacht fuer Glas - das Raster ist das, was durchscheint.",
+    zweckEn: "Diagonally laid tiles under two bands of light. Made for glass - the grid is what shows through.",
+    // Am 14.10.2026 nach einer Vorlage des Maintainers gebaut. Vier Sorten
+    // Ebene, von oben nach unten:
+    //
+    //   zwei Lichtbaender   schraeg von oben links, weich auslaufend
+    //   das Raster          zwei Scharen Linien, 90 Grad zueinander, 96px
+    //   drei Farbflecken    wie bei den Farbverlaeufen, nur groesser
+    //   Grundverlauf        kuehles Blaugrau
+    //
+    // KEIN Punktebild: istPunkteBild() erkennt ihn nicht, und das ist richtig
+    // so. Punktbewegung wuerde die erste Ebene verschieben, und das sind hier
+    // die Lichtbaender - sie wuerden aus dem Rahmen laufen. Die passende
+    // Bewegung ist das Treiben der ganzen Flaeche; dabei wandert das Raster,
+    // und genau das soll man sehen.
+    light: { "--lovelace-background": stelleFest(GLASWERK_HELL, true) },
+    dark:  { "--lovelace-background": stelleFest(GLASWERK_DUNKEL, true) },
+    // Vier Toene aus dem Grund, damit die Kachel im Baukasten zeigt, was
+    // sie waehlt - wie bei den Farbverlaeufen.
+    vorschau: {
+      light: "linear-gradient(90deg, #c7d7ea, #76a8e4, #96c6f0, #dbe6f3)",
+      dark:  "linear-gradient(90deg, #0b1018, #2c569e, #3a6ab4, #121a28)",
+    },
   },
 ];
 

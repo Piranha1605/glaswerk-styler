@@ -247,7 +247,7 @@ pruefe("Elf Farbverlaeufe, jeder mit eigenem Namen und eigenen Farben", () => {
   }
   // Im Baukasten stehen sie zwischen "keiner" und dem ruhigen Verlauf.
   assert.deepStrictEqual(HINTERGRUENDE.map((h) => h.id),
-    ["keiner", "inseln", "nordlicht", "abendrot", "ozean", "wald", "lavendel", "glut", "pastell", "sand", "graphit", "macos", "verlauf"]);
+    ["keiner", "inseln", "nordlicht", "abendrot", "ozean", "wald", "lavendel", "glut", "pastell", "sand", "graphit", "macos", "verlauf", "glaswerk"]);
   // Der erste traegt weiter die Farben der Werkbank, woertlich.
   assert.deepStrictEqual(farbenIm(FARBVERLAEUFE[0].light[feld]).slice(0, 4), ["#7db5ff", "#ff9ec7", "#5ee0d0", "#c08cff"]);
   assert.deepStrictEqual(farbenIm(FARBVERLAEUFE[0].dark[feld]).slice(0, 4), ["#1f4d9e", "#7a2a5c", "#0d6b63", "#4b2a86"]);

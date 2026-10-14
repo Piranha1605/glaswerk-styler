@@ -313,6 +313,22 @@ export const PALETTEN = [
     akzent: { light: "#5e81ac", dark: "#88c0d0" },
   },
   {
+    id: "glaswerk",
+    de: "Glaswerk", en: "Glasswork",
+    zweckDe: "Kuehles Azur mit violettem Akzent, dazu Minze, Koralle und Bernstein.",
+    zweckEn: "Cool azure with a violet accent, plus mint, coral and amber.",
+    // Am 14.10.2026 aus der Vorlage des Maintainers abgenommen - die Toene
+    // der Farbfelder darin. ENTSCHIEDEN, nicht gemessen: Ein Bild hat keine
+    // Palette, es hat Pixel; was hier steht, ist mein Lesen davon.
+    //
+    // Der Akzent ist violett und nicht azur. In der Vorlage steht beides
+    // nebeneinander, und der Akzent ist das, was auf Reglern und aktiven
+    // Zustaenden liegt - gleiche Farbe wie die Primaerfarbe waere dort
+    // unsichtbar.
+    farben: { primary: "#2b7fff", neutral: "#5a6880", red: "#f4674f", green: "#44c9a0", orange: "#e08a2b" },
+    akzent: { light: "#7b5cf0", dark: "#9b84f8" },
+  },
+  {
     id: "solarized",
     de: "Solarized", en: "Solarized",
     zweckDe: "Der Klassiker von 2011 - als Paar aus Hell und Dunkel entworfen.",

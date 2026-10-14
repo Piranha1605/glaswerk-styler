@@ -43,8 +43,17 @@ export const VORLAGEN = [
    des Wirts zusammen - gemessen: Hoehe 0 statt 742. */
 :host(ha-card),
 ha-card {
-  background-color: var(--ha-card-background, var(--card-background-color)) !important;
-  background-image: none !important;
+  /* Die KURZFORM, nicht background-color. Am 14.10.2026 gemessen: Der
+     Kartenstil "Liquid Glass" legt zwei Verlaeufe in --ha-card-background,
+     und background-color nimmt nur Farben - die Zeile fiel still weg. Das
+     background-image: none darunter loeschte dann auch noch den Verlauf, den
+     ha-card selbst gesetzt hatte. Ergebnis: eine Karte ganz ohne Fuellung,
+     rgba(0,0,0,0), die nur noch von der Weichzeichnung lebte.
+
+     Die Kurzform nimmt beides - Farbe wie Verlauf - und setzt
+     background-image von sich aus zurueck. Das none darunter ist damit nicht
+     nur ueberfluessig, sondern genau der Fehler. */
+  background: var(--ha-card-background, var(--card-background-color)) !important;
   backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
   -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
   /* Ohne eigenen Radius zeichnet der Rand ein eckiges Rechteck um die runde Karte. */

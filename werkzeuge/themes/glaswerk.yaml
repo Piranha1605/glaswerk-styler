@@ -1,0 +1,1098 @@
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 16:09:01
+# Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
+# 
+# Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
+# gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit HATS' eigenen
+# Funktionen.
+# 
+# Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk, Schrift
+# system, Rundung rund, Dichte weit, Karten liquid, Hintergrund glaswerk.
+# Wer die Theme im Panel oeffnet, sieht sie dort alle sechs angehakt und
+# kann eines austauschen, ohne den Rest zu verlieren.
+# 
+# Entschieden und nicht aus einem Teil: die Schriftfarben auf dem kuehlen
+# Grund (gegengerechnet, 14.1:1 hell und 16.6:1 dunkel) und die drei
+# Schattenstufen. Die Begruendung je Zahl steht im Build-Skript.
+
+glaswerk:
+  amber-color: "#ffc107"
+  app-header-backdrop-filter: "blur(22px) saturate(170%)"
+  black-color: "#000"
+  blue-color: "#2196f3"
+  blue-grey-color: "#607d8b"
+  brown-color: "#795548"
+  color-1: "#4269d0"
+  color-10: "#094bad"
+  color-11: "#c99000"
+  color-12: "#d84f3e"
+  color-13: "#49a28f"
+  color-14: "#048732"
+  color-15: "#d96895"
+  color-16: "#8043ce"
+  color-17: "#7599d1"
+  color-18: "#7a4c31"
+  color-19: "#6989f4"
+  color-2: "#f4bd4a"
+  color-20: "#ffd444"
+  color-21: "#ff957c"
+  color-22: "#8fe9d3"
+  color-23: "#62cc71"
+  color-24: "#ffadda"
+  color-25: "#c884ff"
+  color-26: "#badeff"
+  color-27: "#bf8b6d"
+  color-28: "#927acc"
+  color-29: "#97ee3f"
+  color-3: "#ff725c"
+  color-30: "#bf3947"
+  color-31: "#9f5b00"
+  color-32: "#f48758"
+  color-33: "#8caed6"
+  color-34: "#f2b94f"
+  color-35: "#eff26e"
+  color-36: "#e43872"
+  color-37: "#d9b100"
+  color-38: "#9d7a00"
+  color-39: "#698cff"
+  color-4: "#6cc5b0"
+  color-40: "#00d27e"
+  color-41: "#d06800"
+  color-42: "#009f82"
+  color-43: "#c49200"
+  color-44: "#cbe8ff"
+  color-45: "#fecddf"
+  color-46: "#c27eb6"
+  color-47: "#8cd2ce"
+  color-48: "#c4b8d9"
+  color-49: "#f883b0"
+  color-5: "#a463f2"
+  color-50: "#a49100"
+  color-51: "#f48800"
+  color-52: "#27d0df"
+  color-53: "#a04a9b"
+  color-54: "#4269d0"
+  color-6: "#ff8ab7"
+  color-7: "#9c6b4e"
+  color-8: "#97bbf5"
+  color-9: "#01ab63"
+  cyan-color: "#00bcd4"
+  dark-disabled-opacity: ".38"
+  dark-divider-opacity: ".12"
+  dark-grey-color: "#606060"
+  dark-primary-color: "#003587"
+  dark-primary-opacity: ".87"
+  dark-secondary-opacity: ".54"
+  darker-primary-color: "#002256"
+  deep-orange-color: "#ff6f22"
+  deep-purple-color: "#6e41ab"
+  direction: "ltr"
+  energy-battery-in-color: "#f06292"
+  energy-battery-out-color: "#4db6ac"
+  energy-gas-color: "#8e021b"
+  energy-grid-consumption-color: "#488fc2"
+  energy-non-fossil-color: "#0f9d58"
+  energy-solar-color: "#ff9800"
+  energy-water-color: "#00bcd4"
+  error-color: "#db4437"
+  float-end: "right"
+  float-start: "left"
+  green-color: "#4caf50"
+  grey-color: "#9e9e9e"
+  ha-animation-duration-fast: ".15s"
+  ha-animation-duration-instant: "75ms"
+  ha-animation-duration-none: "1ms"
+  ha-animation-duration-normal: ".25s"
+  ha-animation-duration-slow: ".35s"
+  ha-border-radius-2xl: "32px"
+  ha-border-radius-3xl: "38px"
+  ha-border-radius-4xl: "44px"
+  ha-border-radius-5xl: "50px"
+  ha-border-radius-6xl: "56px"
+  ha-border-radius-circle: "50%"
+  ha-border-radius-lg: "20px"
+  ha-border-radius-md: "14px"
+  ha-border-radius-pill: "9999px"
+  ha-border-radius-sm: "10px"
+  ha-border-radius-square: "0"
+  ha-border-radius-xl: "26px"
+  ha-border-width-lg: "3px"
+  ha-border-width-md: "2px"
+  ha-border-width-sm: "1px"
+  ha-card-backdrop-filter: "blur(34px) saturate(200%)"
+  ha-card-border-radius: "26px"
+  ha-card-border-width: "0"
+  ha-color-black: "#000"
+  ha-color-green-05: "#07120f"
+  ha-color-green-10: "#0c1c17"
+  ha-color-green-20: "#152f27"
+  ha-color-green-30: "#1a4034"
+  ha-color-green-40: "#195140"
+  ha-color-green-50: "#1e6a52"
+  ha-color-green-60: "#278568"
+  ha-color-green-70: "#74ac9b"
+  ha-color-green-80: "#a3cabe"
+  ha-color-green-90: "#cce7df"
+  ha-color-green-95: "#e8f4f0"
+  ha-color-neutral-05: "#141414"
+  ha-color-neutral-10: "#202020"
+  ha-color-neutral-20: "#363636"
+  ha-color-neutral-30: "#4a4a4a"
+  ha-color-neutral-40: "#5e5e5e"
+  ha-color-neutral-50: "#7a7a7a"
+  ha-color-neutral-60: "#989898"
+  ha-color-neutral-70: "#b1b1b1"
+  ha-color-neutral-80: "#cccccc"
+  ha-color-neutral-90: "#e6e6e6"
+  ha-color-neutral-95: "#f3f3f3"
+  ha-color-orange-05: "#231505"
+  ha-color-orange-10: "#331f08"
+  ha-color-orange-20: "#52310c"
+  ha-color-orange-30: "#6e4110"
+  ha-color-orange-40: "#895114"
+  ha-color-orange-50: "#af681a"
+  ha-color-orange-60: "#d47e1f"
+  ha-color-orange-70: "#e7a45a"
+  ha-color-orange-80: "#f0c698"
+  ha-color-orange-90: "#f8e5cf"
+  ha-color-orange-95: "#fcf2e7"
+  ha-color-primary-05: "#000d21"
+  ha-color-primary-10: "#00193e"
+  ha-color-primary-20: "#002256"
+  ha-color-primary-30: "#003587"
+  ha-color-primary-40: "#004fc7"
+  ha-color-primary-50: "#166ef4"
+  ha-color-primary-60: "#3585ff"
+  ha-color-primary-70: "#7aadfc"
+  ha-color-primary-80: "#b8d3fd"
+  ha-color-primary-90: "#dfeafc"
+  ha-color-primary-95: "#eff5fe"
+  ha-color-red-05: "#2b0903"
+  ha-color-red-10: "#3f1008"
+  ha-color-red-20: "#641e12"
+  ha-color-red-30: "#8c2311"
+  ha-color-red-40: "#b61c02"
+  ha-color-red-50: "#df482e"
+  ha-color-red-60: "#f57a65"
+  ha-color-red-70: "#ff9e8d"
+  ha-color-red-80: "#ffc1b6"
+  ha-color-red-90: "#ffe1dc"
+  ha-color-red-95: "#fff1ef"
+  ha-color-shadow-scrollable-fade: "#00000014"
+  ha-color-white: "#fff"
+  ha-dialog-scrim-backdrop-filter: "brightness(68%)"
+  ha-font-family-body: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+  ha-font-family-code: "monospace"
+  ha-font-family-longform: "ui-sans-serif, system-ui, sans-serif"
+  ha-font-size-scale: "1"
+  ha-font-smoothing: "antialiased"
+  ha-font-weight-bold: "700"
+  ha-font-weight-light: "300"
+  ha-font-weight-medium: "500"
+  ha-font-weight-normal: "400"
+  ha-line-height-condensed: "1.2"
+  ha-line-height-expanded: "2"
+  ha-line-height-normal: "1.6"
+  ha-moz-osx-font-smoothing: "grayscale"
+  ha-space-1: "5px"
+  ha-space-10: "50px"
+  ha-space-11: "55px"
+  ha-space-12: "60px"
+  ha-space-13: "65px"
+  ha-space-14: "70px"
+  ha-space-15: "75px"
+  ha-space-16: "80px"
+  ha-space-17: "85px"
+  ha-space-18: "90px"
+  ha-space-19: "95px"
+  ha-space-2: "10px"
+  ha-space-20: "100px"
+  ha-space-3: "15px"
+  ha-space-4: "20px"
+  ha-space-5: "25px"
+  ha-space-6: "30px"
+  ha-space-7: "35px"
+  ha-space-8: "40px"
+  ha-space-9: "45px"
+  header-height: "56px"
+  history-unavailable-color: "transparent"
+  indigo-color: "#3f51b5"
+  info-color: "#039be5"
+  label-badge-grey: "#9e9e9e"
+  light-blue-color: "#03a9f4"
+  light-disabled-opacity: ".3"
+  light-divider-opacity: ".12"
+  light-green-color: "#8bc34a"
+  light-grey-color: "#bdbdbd"
+  light-primary-color: "#b8d3fd"
+  light-primary-opacity: "1"
+  light-secondary-opacity: ".7"
+  lime-color: "#cddc39"
+  margin-title-ltr: "0 0 0 24px"
+  margin-title-rtl: "0 24px 0 0"
+  orange-color: "#ff9800"
+  pink-color: "#e91e63"
+  purple-color: "#926bc7"
+  red-color: "#f44336"
+  rgb-primary-color: "0, 79, 199"
+  state-icon-color: "#004fc7"
+  state-weather-snowy-color: "#c0e0ff"
+  success-color: "#43a047"
+  teal-color: "#009688"
+  text-light-primary-color: "#212121"
+  text-primary-color: "#fff"
+  uix-badge: |-
+    /* HATS:glas-badges:START */
+    :host,
+    .badge {
+      backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
+    }
+    /* HATS:glas-badges:ENDE */
+  uix-card: |-
+    /* HATS:glas-karten:START */
+    /* Nur die Karte selbst, nicht ihr Wirt.
+
+       Auf einem Dashboard haengt eine Karte unter hui-card, und UIX patcht dann
+       das KARTEN-Element - :host ist dieses Element, ha-card die Karte darin. Ein
+       Selektor ":host, ha-card" bemalt deshalb beide: Fuellung, Glanz und
+       Weichzeichnung liegen doppelt uebereinander und wirken ausgewaschen.
+
+       Und ein backdrop-filter auf dem Wirt macht ihn zum Bezugsrahmen fuer
+       position: fixed. Bubble-Pop-ups sind fixed und fallen dann auf die Groesse
+       des Wirts zusammen - gemessen: Hoehe 0 statt 742. */
+    :host(ha-card),
+    ha-card {
+      /* Die KURZFORM, nicht background-color. Am 14.10.2026 gemessen: Der
+         Kartenstil "Liquid Glass" legt zwei Verlaeufe in --ha-card-background,
+         und background-color nimmt nur Farben - die Zeile fiel still weg. Das
+         background-image: none darunter loeschte dann auch noch den Verlauf, den
+         ha-card selbst gesetzt hatte. Ergebnis: eine Karte ganz ohne Fuellung,
+         rgba(0,0,0,0), die nur noch von der Weichzeichnung lebte.
+
+         Die Kurzform nimmt beides - Farbe wie Verlauf - und setzt
+         background-image von sich aus zurueck. Das none darunter ist damit nicht
+         nur ueberfluessig, sondern genau der Fehler. */
+      background: var(--ha-card-background, var(--card-background-color)) !important;
+      backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+      /* Ohne eigenen Radius zeichnet der Rand ein eckiges Rechteck um die runde Karte. */
+      border-radius: var(--ha-card-border-radius, 22px) !important;
+      /* Der Rand liegt als innerer Ring IM Schatten. Ein echtes border verschiebt
+         das Layout um seine Breite - bei eigenen Panels rutscht damit der ganze
+         Inhalt nach unten. */
+      box-shadow: var(--ha-card-box-shadow) !important;
+      border: 0 !important;
+    }
+
+    /* Bubble-Karten haben im Shadow Root ebenfalls eine ha-card. Die zeichnet die
+       Bubble-Vorlage schon - ohne Ausnahme laege darunter ein zweites Glas.
+       Ueberschriften und reine Textkarten brauchen gar keine Flaeche. */
+    :host(.type-custom-bubble-card) ha-card,
+    :host(hui-heading-card) ha-card,
+    :host(mushroom-title-card) ha-card,
+    :host(mushroom-chips-card) ha-card,
+    :host(.text-only),
+    ha-card.text-only {
+      background: none !important;
+      background-image: none !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* Auswahlfelder und Menues bleiben deckend - durchscheinend sind sie
+       unlesbar, weil der Text der Karte darunter durchschlaegt. */
+    ha-dropdown,
+    ha-combo-box,
+    ha-select,
+    vaadin-combo-box-overlay,
+    .menu-surface,
+    .mdc-menu-surface,
+    mwc-menu-surface {
+      --ha-card-background: var(--card-background-color) !important;
+      background-color: var(--card-background-color) !important;
+      background-image: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* Bubble legt ein unsichtbares ha-select als Klickflaeche ueber runde
+       Auswahl-Sub-Buttons. Mit deckender Farbe wird daraus ein eckiges dunkles
+       Quadrat mitten auf dem Knopf. */
+    ha-select.bubble-dropdown-select {
+      background-color: transparent !important;
+    }
+    /* HATS:glas-karten:ENDE */
+    /* HATS:glas-bubble:START */
+    /* Bubble braucht BEIDES: Variablen und eine Regel.
+
+       Flaeche, Rand und Schatten liest Bubble aus eigenen --bubble-*-Werten.
+       CSS-Regeln kommen nicht ueber Shadow-Grenzen, Variablen schon.
+
+       Die Weichzeichnung dagegen geht NUR ueber eine Regel. Am 13.10.2026 in
+       bubble-card.js 3.4.1 nachgesehen: Es gibt genau drei Namen mit "backdrop",
+       und alle drei gehoeren zum Abdunkel-Schleier HINTER einem Pop-up
+       (.bubble-backdrop, position: fixed) - nicht zur Kartenflaeche.
+       .bubble-container traegt ueberhaupt kein backdrop-filter. Eine Variable
+       dafuer gibt es also nicht.
+
+       Die Regel steht auf .bubble-container und ausdruecklich NICHT auf :host.
+       Ein backdrop-filter auf dem Wirt macht ihn zum Bezugsrahmen fuer
+       position: fixed - und Bubble-Pop-ups sind fixed. Sie fielen dann auf die
+       Groesse des Wirts zusammen; in HATG gemessen: Hoehe 0 statt 742, nur die
+       Kopfzeile schwebte ueber dem Dashboard.
+
+       WELCHE Variablenstufe, das ist die zweite Frage. Jede Eigenschaft loest
+       Bubble ueber eine dreistufige Kette auf:
+
+           var(--bubble-card-type-X, var(--bubble-X, <vorgabe>))
+
+       Am 13.10.2026 an acht Karten durchprobiert, je Variable einzeln gesetzt,
+       abgelesen am .bubble-container:
+
+           --bubble-card-type-border-radius       0 von 8   wirkungslos
+           --bubble-border-radius                 8 von 8
+           --bubble-button-border-radius          3 von 8   genau die button-Karten
+           --bubble-separator-border-radius       3 von 8   genau die Separatoren
+           --bubble-climate-border-radius         1 von 8   genau die Klimakarte
+           --bubble-media-player-border-radius    1 von 8   genau der Player
+
+       Die card-type-Stufe setzt Bubble selbst - ein Wert von aussen kommt dort
+       nie an. Deshalb hier die ALLGEMEINE Stufe: Sie erreicht jeden Kartentyp und
+       laesst Bubbles Typlogik in Ruhe. */
+    :host,
+    ha-card {
+      /* Flaeche aus demselben Feld wie die HA-Karten - damit zieht Bubble mit,
+         wenn der Regler bewegt wird. */
+      --bubble-main-background-color: var(--ha-card-background, var(--card-background-color));
+      --bubble-secondary-background-color: var(--ha-card-background, var(--card-background-color));
+
+      /* Die Lichtkante steckt IM Schatten, nicht in --bubble-border.
+         --bubble-border ist ein echtes border und verschiebt das Layout um seine
+         Breite - bei einer 56px hohen Bubble-Zeile sieht man das sofort. Ein
+         inset-Schatten liegt dagegen in der Flaeche.
+
+         Die Kanten kommen aus --ha-card-box-shadow, nicht als feste Werte hierher.
+         Hier standen bis zum 13.10.2026 rgba(255,255,255,.6) und
+         rgba(10,20,45,.08) - Hell-Werte. Ein uix-Feld gilt aber fuer Hell und
+         Dunkel zugleich, und im Dunkelmodus war die obere Kante damit ein greller
+         Strich und die untere unsichtbar. Das Theme-Feld traegt je Modus die
+         richtigen vier Schatten; Bubble bekommt damit genau das Bild der
+         HA-Karten. */
+      --bubble-border: none;
+      --bubble-box-shadow: var(--ha-card-box-shadow,
+        0 10px 30px rgba(22, 40, 78, .14));
+    }
+
+    /* Die Weichzeichnung auf den Container, nicht auf den Wirt. */
+    .bubble-container {
+      backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(20px) saturate(160%));
+    }
+
+    /* Eine eingeschaltete Karte legt ihre Zustandsfarbe als Schicht ueber die
+       ganze Flaeche - und deckt damit das Glas zu.
+
+       Am 13.10.2026 an fuenf Karten gemessen: Nur die trifft es, die wirklich eine
+       Farbe traegt. Bubble setzt die Deckkraft INLINE, deshalb braucht es hier
+       !important:
+
+           Keller, Licht an    rgb(209, 209, 195)   opacity 0.7   <- deckt zu
+           Buero, Slider       transparent          opacity 0.5
+           Buero, Climate      transparent          opacity 1
+           Garage, aus         transparent          opacity 0.5
+
+       55 % ist die Wahl des Nutzers, zwischen zwei Nachteilen: Deckend sieht man
+       den Zustand klar und das Glas nicht; zu schwach getoent bleibt das Glas, und
+       bei einer blassen Lichtfarbe (warmweiss, beige) sieht man kaum noch, dass
+       etwas an ist.
+
+       Der AUS-Zustand bleibt unberuehrt. Dort ist die Schicht ohnehin farblos -
+       den Unterschied macht die Farbe, nicht die Deckkraft. */
+    ha-card.is-on .bubble-background {
+      opacity: .55 !important;
+    }
+
+    /* Die Klimakarte ist der Sonderfall - und der einzige.
+
+       Am 13.10.2026 an sechs Bubble-Karten gezaehlt: Nur EINE traegt auf
+       .bubble-background wirklich eine Farbe, naemlich die Klimakarte. Bei
+       Button-, Cover- und Media-Player-Karten ist die Schicht farblos
+       (rgba(0,0,0,0)) - die Deckkraft oben laeuft dort also ins Leere.
+
+       Bubble setzt die Zustandsfarbe bei Klima inline und markiert die Schicht
+       mit einer eigenen Klasse:
+
+           button / cover / media-player   .bubble-background .bubble-*-background
+           climate                         .bubble-background .bubble-color-background
+
+       Mit 55 % deckt das volle Orange die ganze Karte zu - gemeldet: "die Bubble
+       heizungskarte braucht anpassung". HA und Mushroom faerben beim selben Geraet
+       nur das Symbol und lassen die Flaeche Glas. 22 % bringt die Klimakarte auf
+       dasselbe Bild: getoent statt gedeckt, der Zustand bleibt auf einen Blick
+       erkennbar.
+
+       Der Selektor braucht ha-card.is-on davor. Eine nackte Klasse verliert gegen
+       die Regel darueber - gemessen: .bubble-color-background allein liess die
+       Deckkraft auf .55, erst mit dem Vorsatz griff sie. */
+    ha-card.is-on .bubble-color-background {
+      opacity: .22 !important;
+    }
+
+    /* Ein Separator ist eine Ueberschriftenzeile, keine Kachel. Bubble laesst ihn
+       schon ohne Flaeche; ohne diese Ausnahme laegen trotzdem Weichzeichnung und
+       Lichtkante darauf - ein verschwommener Balken mit heller Oberkante hinter
+       jedem Gruppentitel.
+
+       Die Klassen am Container, am 13.10.2026 an acht Karten abgelesen - jeder
+       Kartentyp traegt neben .bubble-container noch einen eigenen Namen:
+
+           separator      bubble-container bubble-separator separator-container
+           button         bubble-button-container bubble-container …
+           climate        bubble-climate-container bubble-container
+           media-player   bubble-media-player-container bubble-container
+
+       Damit laesst sich jeder Typ einzeln ansprechen, ohne die Variablenkette zu
+       bemuehen. Ein erster Versuch zielte auf .bubble-separator-container - den
+       Namen gibt es nicht, und die Ausnahme traf nichts. */
+    .bubble-separator,
+    .separator-container {
+      background: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    /* HATS:glas-bubble:ENDE */
+    /* HATS:glas-symbolkachel:START */
+    /* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
+       Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
+       Kacheln, Mushroom, Zeilen und Glance auf einmal.
+
+       Bei Mushroom muss es --mush-icon-border-radius sein, nicht
+       --icon-border-radius: Mushroom setzt letzteres selbst weiter unten im Baum
+       (--icon-border-radius: var(--mush-icon-border-radius, 50%)), ein Wert von
+       aussen traegt dort nicht.
+
+       UND BEI BUBBLE: nur die allgemeine Stufe, nicht die typspezifische.
+
+       Bubble loest den Radius ueber eine dreistufige Kette auf:
+
+           var(--bubble-card-type-icon-border-radius,
+               var(--bubble-icon-border-radius,
+                   var(--bubble-border-radius, 50%)))
+
+       Am 13.10.2026 an fuenf Bubble-Karten durchprobiert, je Variable einzeln
+       gesetzt und der berechnete Radius gemessen:
+
+           --bubble-card-type-icon-border-radius   0 von 5   wirkungslos
+           --bubble-icon-border-radius             5 von 5
+           --bubble-button-icon-border-radius      3 von 5   nur card_type: button
+           --bubble-border-radius                  5 von 5   faerbt aber auch Flaechen
+
+       Die ERSTE Stufe setzt Bubble selbst, je Kartentyp - ein Wert von aussen
+       kommt dort nie an. Die typspezifischen Namen wie
+       --bubble-button-icon-border-radius treffen genau ihren Kartentyp; climate
+       und media-player bleiben davon unberuehrt. Deshalb steht hier die
+       ALLGEMEINE Stufe, und nur sie: Sie erreicht alle fuenf und laesst Bubbles
+       eigene Typlogik in Ruhe.
+
+       (Eine frühere Fassung setzte zusaetzlich die card-type-Stufe. Das war aus
+       einer Messung geschlossen, bei der die aktive Theme des Nutzers genau diese
+       Stufe belegt hatte - gemessen wurde also deren Wirkung, nicht die eigene.
+       Wer bei Bubble misst, legt die laufende Theme vorher stumm.) */
+    :host,
+    ha-card {
+      --ha-tile-icon-border-radius: 28%;
+      --state-badge-border-radius: 28%;
+      --mush-icon-border-radius: 28%;
+      --bubble-icon-border-radius: 28%;
+    }
+    /* HATS:glas-symbolkachel:ENDE */
+    /* HATS:sync-bedienelemente:START */
+    /* Alle drei Familien zeigen dieselbe Lampe verschieden. Am 13.10.2026 an
+       einer Lampe in rgb(129,173,255) gemessen, bevor etwas angefasst wurde:
+
+           Slider         HA #81adff   Mushroom #81adff   Bubble rgb(119,160,237)
+           Symbolflaeche  HA  20 %     Mushroom  25 %     Bubble  Weiss 32 %
+           Symbolgroesse  HA  36 px    Mushroom  36 px    Bubble  42 px
+
+       Bubble rechnet die Lichtfarbe selbst ab - rgb(119,160,237) ist dieselbe
+       Farbe, um den Faktor .925 abgedunkelt. Dieser Block zieht die anderen
+       beiden dorthin nach, statt Bubble aufzuhellen: Der dunklere Ton steht
+       besser auf Glas.
+
+       DER FAKTOR .925 IST GEMESSEN, NICHT GEWAEHLT. color-mix(... 92.5%, black)
+       ergibt rgb(119,160,236) - Bubbles Wert auf eine Einheit genau. Er bleibt
+       als Zahl stehen, weil er Bubbles interne Rechnung nachbildet; ein
+       Theme-Feld dafuer waere ein zweiter Ort fuer dieselbe Entscheidung.
+
+       --- Home Assistant ---------------------------------------------------
+       Der Slider liegt zwei Shadow-Grenzen tiefer als dieser Block, eine Regel
+       erreicht ihn also nie. Der Weg fuehrt ueber die Variablenkette:
+
+           hui-tile-card      setzt  --feature-color: var(--tile-color)
+           hui-card-features  setzt  --control-slider-color: var(--feature-color)
+
+       --tile-color steht inline an der ha-card und traegt die Lichtfarbe. Gezielt
+       wird auf hui-card-features, weil das Element IN diesem Shadow Root liegt -
+       ein Wert an der ha-card wird dort ueberschrieben und kommt nie an. Das
+       !important ist noetig, weil die Regel des Bauteils aus adoptedStyleSheets
+       kommt und bei Gleichstand immer zuletzt gilt. */
+    hui-card-features {
+      --feature-color: color-mix(in srgb, var(--tile-color, var(--primary-color)) 92.5%, black) !important;
+    }
+
+    /* --- Mushroom ----------------------------------------------------------
+       Hier geht der Variablenweg NICHT. Mushroom schreibt die Lichtfarbe inline
+       als --slider-color an mushroom-light-brightness-control - also an genau das
+       Element, das ueberschrieben werden muesste. Eine Ableitung daraus waere ein
+       Zyklus (--slider-color aus --slider-color), und CSS verwirft dann beide
+       Deklarationen stillschweigend. Ein Umweg ueber eine Hilfsvariable am selben
+       Element schliesst den Zyklus genauso.
+
+       Deshalb filter statt Farbe: brightness(.925) multipliziert jeden Kanal mit
+       .925 und ist damit rechnerisch dasselbe wie color-mix(... 92.5%, black) -
+       nur greift es an der gemalten Flaeche an und braucht keine Quelle. Es
+       faerbt Fuellung und Spur gemeinsam, was hier richtig ist: beide tragen
+       dieselbe Farbe.
+
+       ACHTUNG, falls weitere Steuerelemente dazukommen: Ein filter macht sein
+       Element zum Bezugsrahmen fuer position: fixed. Diese drei sind geprueft -
+       kein fixed-Kind darin. Ein Pop-up-Traeger duerfte hier nicht stehen. */
+    mushroom-light-brightness-control,
+    mushroom-cover-position-control,
+    mushroom-fan-percentage-control {
+      filter: brightness(.925);
+    }
+
+    /* --- Bubble ------------------------------------------------------------
+       Die Farbe bringt Bubble schon mit. Was stoert, ist die Deckkraft: Bubble
+       legt .7 ueber die Fuellung, waehrend HA und Mushroom voll deckend malen.
+
+           .slider-use-light-color { background-color: ...; opacity: 0.7 }
+
+       Nebenbei: --bubble-slider-color gibt es NICHT. Bubble 3.2.0 nennt den Namen
+       kein einziges Mal; gelesen wird --bubble-slider-fill-color, und das setzt
+       Bubble inline. Wer in einer Kartenkonfiguration var(--bubble-slider-color,
+       var(--accent-color)) schreibt, trifft also immer nur den Ausweichwert. */
+    .bubble-range-fill.slider-use-light-color {
+      opacity: 1 !important;
+    }
+
+    /* --- Symbolflaeche: ueberall die Zustandsfarbe bei 25 % ----------------
+       HA zeichnet sie als ::before auf .background, mit opacity .2 aus
+       --tile-icon-opacity. Mushroom steht bereits auf 25 %, bleibt also
+       unberuehrt. --tile-icon-opacity setzt das Bauteil in seinem eigenen :host,
+       deshalb !important. */
+    ha-tile-icon {
+      --tile-icon-opacity: .25 !important;
+    }
+
+    /* Bubble haelt keine Zustandsfarbe als Variable bereit - alle naheliegenden
+       Namen (--bubble-light-color, --bubble-accent-color, --bubble-state-color)
+       sind leer. Die Farbe steht als color am Container, also ist currentColor
+       die Quelle.
+
+       Die Groesse kommt aus min-width/min-height (42 px), nicht aus einer
+       Variablen: Bubbles Stylesheet kennt ueberhaupt keinen --bubble-*-size-Namen
+       fuer den Symbolbehaelter. Darum eine Regel - und damit 36 px wie bei den
+       anderen beiden. */
+    .bubble-icon-container {
+      background-color: color-mix(in srgb, currentColor 25%, transparent) !important;
+      min-width: 36px !important;
+      min-height: 36px !important;
+    }
+    /* HATS:sync-bedienelemente:ENDE */
+    /* HATS:glas-knoepfe:START */
+    /* Nur Variablen, keine Regeln auf das Innere des Knopfes.
+
+       Der naheliegende Weg waere ha-icon-button::part(base) - das innere .button
+       von ha-button. Am 13.10.2026 an der Instanz gemessen: Er funktioniert NICHT
+       von hier aus. ::part reicht genau EINE Shadow-Grenze durch, und ha-button
+       traegt kein exportparts; von der Karte aus liegen aber zwei Grenzen
+       dazwischen (Karte -> ha-icon-button -> ha-button). Die Regel kam an und traf
+       nichts:
+
+           ha-icon-button ha-button::part(base) { background-color: … !important }
+           -> gemessen: rgba(0, 0, 0, 0), also unveraendert
+
+       In HATG geht das, weil dort eine Pfadangabe das CSS direkt in den Shadow
+       Root von ha-icon-button legt (uix-card-yaml mit "ha-icon-button $"). HATS
+       kennt diese Pfadform bewusst nicht - ein -yaml-Feld verdeckt sein einfaches
+       Feld vollstaendig, und das ist eine Falle, die HATS sich nicht einhandelt.
+
+       Was ohne Pfad geht, sind Variablen: Die erben durch jede Shadow-Grenze.
+       Die Fuellung des Knopfes gehoert nicht dazu - ha-button steht auf
+       appearance="plain" und setzt dort ein hartes background-color ohne Variable
+       davor. Groesse, Form und Rueckmeldung dagegen schon. */
+    :host,
+    ha-card {
+      --ha-icon-button-size: 40px;
+      --ha-button-border-radius: 14px;
+      /* Die Klick-Welle in der Akzentfarbe statt in Grau - das ist die einzige
+         Farbe am Knopf, die von aussen erreichbar ist. */
+      --ha-ripple-color: var(--accent-color);
+      --ha-ripple-hover-opacity: 0.1;
+      --ha-ripple-pressed-opacity: 0.16;
+    }
+    /* HATS:glas-knoepfe:ENDE */
+  uix-dialog: |-
+    /* HATS:glas-dialoge:START */
+    /* KEIN backdrop-filter auf der Dialogflaeche.
+
+       Ein Filter macht den Dialog zum Bezugsrahmen fuer position: fixed. Die
+       Auswahllisten darin sind fixed: Sie landen neben dem sichtbaren Bereich,
+       und die Liste bleibt leer. An der Versionsauswahl von HACS und am
+       Info-Dialog von HA gemessen. Ein Filter auf einem ::before hilft nicht.
+
+       Welcher Selektor unter HA 2026 traegt, ist am 13.10.2026 an einem offenen
+       Info-Dialog gemessen: In keinem der Dialog-Bauteile kommt noch eine einzige
+       mdc-Klasse vor. Der Dialog ist eine wa-dialog von Web Awesome, und sie gibt
+       ihre Flaeche als CSS-Teil nach aussen - ein Teil reicht durch die
+       Shadow-Grenze, deshalb greift wa-dialog::part(dialog) von hier aus.
+       Nachgemessen: Radius 26px, Schatten gesetzt.
+
+       Die mdc-Zeile bleibt trotzdem stehen. Sie ist unter HA 2026 tot, aber wer
+       eine aeltere Instanz faehrt, braucht sie - und eine tote Zeile kostet
+       nichts. Die Korrektur gehoert als ZUSAETZLICHER Selektor geschrieben, nicht
+       als Ersatz. */
+    .mdc-dialog__surface,
+    wa-dialog::part(dialog),
+    wa-drawer::part(dialog) {
+      border-radius: var(--ha-dialog-border-radius, 26px) !important;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, .28),
+        inset 0 1px 0 rgba(255, 255, 255, .5) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    /* HATS:glas-dialoge:ENDE */
+  uix-grid-section: |-
+    /* HATS:abschnitte-trennen:START */
+    /* Auf einem Sections-Dashboard stehen die Abschnitte in einem Raster und
+       brechen um. Wo zwei Reihen aufeinandertreffen, laeuft der letzte Inhalt der
+       oberen direkt in die Ueberschrift der unteren - gemeldet am 13.10.2026:
+       "kannst du hier eine trennlienie ziehen das die reihen optisch getrennt
+       sind."
+
+       Als ::before, nicht als border-top: Ein echtes border verschiebt den
+       Abschnitt um seine Breite nach unten, und bei sechs Abschnitten summiert
+       sich das sichtbar. Ein absolut gesetztes ::before liegt ausserhalb des
+       Flusses und kostet keinen Platz.
+
+       :host steht im Normalfall auf position: static - an der laufenden Instanz
+       nachgemessen. Ohne das relative Hostelement bezoege sich das ::before auf
+       das naechste positionierte Element weiter oben und liefe quer ueber die
+       Seite.
+
+       JEDER Abschnitt bekommt die Linie, auch der erste. Eine Ausnahme fuer den
+       ersten geht nicht: Jede hui-grid-section ist das einzige Kind ihrer eigenen
+       hui-section, :first-of-type trifft also auf alle zu. Ueber der ersten Reihe
+       steht die Linie unter der Kopfleiste und liest sich dort als Abschluss. */
+    :host {
+      position: relative;
+    }
+
+    :host::before {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      inset-block-start: -14px;
+      height: 1px;
+      /* Dieselbe Farbe wie jede andere Trennlinie in Home Assistant, und je Modus
+         im Theme gesetzt - im Hellen dunkel, im Dunkeln hell. */
+      background: var(--divider-color);
+      /* Die Linie liegt ueber der Flaeche und darf keine Klicks abfangen. */
+      pointer-events: none;
+    }
+    /* HATS:abschnitte-trennen:ENDE */
+  uix-more-info: |-
+    /* HATS:glas-more-info:START */
+    /* :host ist hier ha-more-info-dialog. Auch hier keine Weichzeichnung auf
+       der Flaeche - aus demselben Grund wie bei den uebrigen Dialogen. */
+    wa-dialog::part(dialog),
+    wa-drawer::part(dialog),
+    .mdc-dialog__surface {
+      border-radius: var(--ha-dialog-border-radius, 26px) !important;
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, .3),
+        inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+    }
+    /* HATS:glas-more-info:ENDE */
+  uix-root: |-
+    /* HATS:glas-kopfleiste:START */
+    /* Das Ziel ist uix-root, NICHT uix-top-app-bar-fixed.
+
+       Am 13.10.2026 an einem Dashboard gemessen: ha-top-app-bar-fixed existiert
+       dort ueberhaupt nicht - null Elemente. Die Kopfleiste eines Dashboards sind
+       zwei divs im Shadow Root von hui-root:
+
+           div.header    56px hoch
+           div.toolbar   56px hoch
+
+       ha-top-app-bar-fixed traegt die Leiste auf den EINSTELLUNGSSEITEN; dafuer
+       gibt es die Vorlage daneben.
+
+       Dieselbe Vorlage war in HATG eine Weile tot, ohne dass es auffiel: Der
+       UIX-Knoten kam an, der Selektor traf nichts, und die Leiste SAH trotzdem
+       richtig aus - weil die Farbe aus --app-header-background-color kommt, das
+       die Leiste selbst liest. Nur verschwommen war nichts. Das ist der Grund,
+       warum hier jeder Selektor nachgemessen ist. */
+    .header,
+    .toolbar {
+      backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+      -webkit-backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+      box-shadow: none !important;
+    }
+    .header {
+      border-bottom: 1px solid rgba(255, 255, 255, .16);
+    }
+    /* HATS:glas-kopfleiste:ENDE */
+    /* HATS:hintergrund-bewegung:START */
+    /* Treiben und Farbwechsel bewegen die Flaeche selbst, mit transform und
+       filter - beides rechnet die Grafikkarte, ohne dass neu gemalt wird. */
+    hui-view-background {
+      /* Fest am Fenster und rundum 14 % groesser, damit beim Verschieben kein
+         Rand ins Bild laeuft. Home Assistant deckelt die Breite sonst auf 100 %. */
+      position: fixed !important;
+      inset: -14% !important;
+      width: 128% !important;
+      height: 128% !important;
+      max-width: none !important;
+      max-height: none !important;
+      animation: hats-hintergrund-drift 20s ease-in-out infinite alternate, hats-hintergrund-farbe 150s ease-in-out infinite alternate;
+      will-change: transform, filter;
+    }
+    @keyframes hats-hintergrund-drift {
+      0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+      33% { transform: translate3d(-7%, 4%, 0) scale(1.08) rotate(-3deg); }
+      66% { transform: translate3d(6%, -4%, 0) scale(1.04) rotate(2deg); }
+      100% { transform: translate3d(-3%, 7%, 0) scale(1.12) rotate(-1.5deg); }
+    }
+    @keyframes hats-hintergrund-farbe {
+      from { filter: hue-rotate(-2.5deg); }
+      to { filter: hue-rotate(2.5deg); }
+    }
+    /* Wer am Geraet "Bewegung reduzieren" eingestellt hat, bekommt keine. */
+    @media (prefers-reduced-motion: reduce) {
+      hui-view-background { animation: none !important; }
+    }
+    /* HATS:hintergrund-bewegung:ENDE */
+  uix-sidebar: |-
+    /* HATS:glas-seitenleiste:START */
+    /* Die Flaechenfarbe kommt aus dem Theme-Feld sidebar-background-color.
+       Die Weichzeichnung bietet HA als Feld nicht an, sie steht deshalb als
+       fester Wert hier - mit var() davor, falls es das Feld doch einmal gibt. */
+    :host {
+      backdrop-filter: var(--sidebar-backdrop-filter, blur(24px) saturate(170%));
+      -webkit-backdrop-filter: var(--sidebar-backdrop-filter, blur(24px) saturate(170%));
+    }
+
+    /* Der aktive Eintrag als Pille.
+
+       Am 13.10.2026 an der laufenden Instanz nachgesehen, welcher Selektor ihn
+       wirklich trifft - die drei naheliegenden trafen NULL Elemente:
+
+           .iron-selected                            0   (Polymer, lange her)
+           a[role="option"][aria-selected="true"]    0
+           ha-md-list-item[selected]                 0
+           .selected                                 1   <- dieser
+
+       Der aktive Eintrag ist ein ha-list-item-button.selected in einer
+       ha-list-nav. Die drei alten bleiben als zusaetzliche Selektoren stehen: Wer
+       eine aeltere HA faehrt, braucht sie, und eine tote Zeile kostet nichts.
+
+       DIE FLAECHE LIEGT IM ::before, NICHT AM ELEMENT. Gemeldet am 13.10.2026,
+       der Eintrag sah aus wie ein abgeschnittener Rahmen. Gemessen:
+
+           Element      background rgba(0,0,0,0)   border-radius 999px
+           ::before     background --sidebar-selected-icon-color
+                        border-radius var(--ha-border-radius-sm)   also 4px
+                        opacity      var(--dark-divider-opacity)   also .12
+
+       Das Element nur zu runden rundet also nichts Sichtbares: Die runde Linie
+       kam vom inset-Schatten und gehoerte zu einer Flaeche, die darunter als
+       4px-Rechteck mit 12 Prozent Deckkraft lag. Die Rundung muss ans ::before. */
+    ha-list-item-button.selected,
+    .selected,
+    .iron-selected,
+    a[role="option"][aria-selected="true"],
+    ha-md-list-item[selected] {
+      border-radius: 999px !important;
+      /* Nur ein INNERER Schatten. Ein Aussenschatten wird von ha-list-nav
+         abgeschnitten (overflow: hidden auto) und steht dann als dunkles Rechteck
+         um die runde Pille. */
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2) !important;
+    }
+
+    /* Die Flaeche selbst: rund, in der Akzentfarbe, voll deckend.
+
+       opacity bleibt bei 1 statt bei HAs .12 - sonst traegt die Pille keine
+       Farbe, und genau das war der gemeldete Fehler. Die Akzentfarbe ist je Modus
+       im Theme gesetzt, der Block gilt also fuer beide. */
+    ha-list-item-button.selected::before,
+    .selected::before {
+      border-radius: 999px !important;
+      background-color: var(--accent-color) !important;
+      opacity: 1 !important;
+    }
+
+    /* Schrift und Symbol auf der Akzentflaeche. HA faerbt beide mit
+       --sidebar-selected-icon-color, und das ist jetzt die FLAECHE - ohne diesen
+       Block stuende der Text in seiner eigenen Hintergrundfarbe.
+
+       --text-accent-color ist HAs Name fuer "Schrift auf einer Akzentflaeche";
+       faellt sie aus, traegt --text-primary-color. */
+    ha-list-item-button.selected::part(headline),
+    ha-list-item-button.selected ha-svg-icon[slot="start"],
+    ha-list-item-button.selected ha-icon[slot="start"] {
+      color: var(--text-accent-color, var(--text-primary-color)) !important;
+    }
+    /* HATS:glas-seitenleiste:ENDE */
+  uix-theme: "glaswerk"
+  uix-toast: |-
+    /* HATS:glas-toast:START */
+    :host,
+    .toast,
+    ha-toast {
+      backdrop-filter: blur(20px) saturate(170%);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      border-radius: 18px;
+      box-shadow:
+        0 12px 36px rgba(0, 0, 0, .22),
+        inset 0 1px 0 rgba(255, 255, 255, .4);
+    }
+    /* HATS:glas-toast:ENDE */
+  uix-top-app-bar-fixed: |-
+    /* HATS:glas-kopfleiste-einstellungen:START */
+    /* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
+       .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
+       nimmt aelteren Instanzen die Vorlage weg. In 629 Elementen einer
+       Einstellungsseite kommt unter HA 2026 keine einzige mdc-Klasse mehr vor. */
+    .mdc-top-app-bar,
+    .top-app-bar,
+    header.top-app-bar {
+      backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+      -webkit-backdrop-filter: var(--app-header-backdrop-filter, blur(22px) saturate(170%));
+      box-shadow: none !important;
+      border-bottom: 1px solid rgba(255, 255, 255, .16);
+    }
+    /* HATS:glas-kopfleiste-einstellungen:ENDE */
+  wa-border-style: "solid"
+  wa-focus-ring-offset: "2px"
+  wa-focus-ring-style: "solid"
+  wa-focus-ring-width: "2px"
+  wa-form-control-height: "40px"
+  wa-form-control-padding-block: ".75em"
+  wa-panel-border-style: "solid"
+  wa-panel-border-width: "1px"
+  wa-transition-easing: "ease"
+  warning-color: "#ffa600"
+  white-color: "#fff"
+  yellow-color: "#ffeb3b"
+
+  modes:
+    light:
+      accent-color: "#7b5cf0"
+      app-header-background-color: "rgba(255,255,255,.34)"
+      app-header-text-color: "#121a2b"
+      card-background-color: "#ffffff"
+      clear-background-color: "#fff"
+      disabled-color: "#bdbdbd"
+      disabled-text-color: "#bdbdbd"
+      divider-color: "rgba(16, 30, 60, .12)"
+      energy-grid-return-color: "#8353d1"
+      ha-box-shadow-l: "0 18px 44px rgba(26, 40, 72, .18)"
+      ha-box-shadow-m: "0 6px 16px rgba(26, 40, 72, .14)"
+      ha-box-shadow-s: "0 1px 2px rgba(26, 40, 72, .10)"
+      ha-card-background: "linear-gradient(150deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.32) 32%, rgba(255,255,255,.16) 58%, rgba(255,255,255,.42) 100%), linear-gradient(0deg, rgba(186,202,234,.24), rgba(186,202,234,.24))"
+      ha-card-box-shadow: "inset 0 1.5px 0 rgba(255,255,255,1), inset 0 0 0 1px rgba(255,255,255,.72), inset 0 -1px 0 rgba(255,255,255,.50), 0 1px 2px rgba(26,40,72,.08), 0 10px 24px rgba(26,40,72,.13), 0 28px 60px rgba(26,40,72,.15)"
+      ha-color-border-neutral-normal: "rgba(16, 30, 60, .18)"
+      ha-color-border-neutral-quiet: "rgba(16, 30, 60, .10)"
+      ha-color-text-primary: "#121a2b"
+      ha-color-text-secondary: "#4b5873"
+      ha-dialog-surface-background: "rgba(255,255,255,.88)"
+      input-disabled-fill-color: "#fafafa"
+      input-disabled-ink-color: "#0000005e"
+      input-disabled-line-color: "#0000000f"
+      input-dropdown-icon-color: "#0000008a"
+      input-fill-color: "#f5f5f5"
+      input-hover-line-color: "#000000de"
+      input-idle-line-color: "#0000006b"
+      input-ink-color: "#000000de"
+      input-label-ink-color: "#0009"
+      input-outlined-disabled-border-color: "#0000000f"
+      input-outlined-hover-border-color: "#000000de"
+      input-outlined-idle-border-color: "#00000061"
+      lovelace-background: "linear-gradient(118deg, rgba(255,255,255,.50) 0 5%, rgba(255,255,255,0) 15%), linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.30) 22%, rgba(255,255,255,0) 29%), repeating-linear-gradient(45deg, rgba(255,255,255,.34) 0 2px, rgba(255,255,255,0) 2px 84px), repeating-linear-gradient(-45deg, rgba(255,255,255,.24) 0 2px, rgba(255,255,255,0) 2px 84px), radial-gradient(closest-side, rgba(96,150,220,.45), transparent) left -260px top -200px / 900px 640px no-repeat, radial-gradient(closest-side, rgba(140,190,236,.38), transparent) right -200px top -120px / 820px 600px no-repeat, radial-gradient(closest-side, rgba(78,122,186,.34), transparent) right -160px bottom -260px / 860px 700px no-repeat, linear-gradient(145deg, #a8c0da 0%, #cbdaec 42%, #9db6d2 100%) fixed"
+      mdc-dialog-scrim-color: "rgba(16,24,44,.30)"
+      outline-color: "#0000001f"
+      outline-hover-color: "#0000003d"
+      primary-background-color: "#dbe6f3"
+      primary-text-color: "#121a2b"
+      scrollbar-thumb-color: "#c2c2c2"
+      secondary-background-color: "#e5e5e5"
+      secondary-text-color: "#4b5873"
+      shadow-color: "#00000029"
+      sidebar-background-color: "rgba(255,255,255,.42)"
+      sidebar-icon-color: "#4b5873"
+      sidebar-text-color: "#121a2b"
+
+    dark:
+      accent-color: "#9b84f8"
+      app-header-background-color: "rgba(18,20,32,.36)"
+      app-header-text-color: "#e8edf7"
+      bar-box-shadow: "0 2px 12px var(--shadow-color)"
+      card-background-color: "#1a1d2b"
+      clear-background-color: "#111111"
+      codemirror-atom: "#f78c6c"
+      codemirror-attribute: "#c792ea"
+      codemirror-builtin: "#ffcb6b"
+      codemirror-comment: "#545454"
+      codemirror-def: "#82aaff"
+      codemirror-keyword: "#c792ea"
+      codemirror-meta: "#ffcb6b"
+      codemirror-number: "#ff5370"
+      codemirror-operator: "#89ddff"
+      codemirror-property: "#c792ea"
+      codemirror-qualifier: "#decb6b"
+      codemirror-string: "#c3e88d"
+      codemirror-string-2: "#f07178"
+      codemirror-tag: "#ff5370"
+      codemirror-type: "#decb6b"
+      codemirror-variable: "#f07178"
+      codemirror-variable-2: "#eeffff"
+      codemirror-variable-3: "#decb6b"
+      disabled-color: "#464646"
+      disabled-text-color: "#6f6f6f"
+      divider-color: "rgba(255, 255, 255, .12)"
+      energy-grid-return-color: "#a280db"
+      ha-box-shadow-l: "0 20px 50px rgba(0, 0, 0, .60)"
+      ha-box-shadow-m: "0 6px 18px rgba(0, 0, 0, .52)"
+      ha-box-shadow-s: "0 1px 2px rgba(0, 0, 0, .45)"
+      ha-button-neutral-color: "#d9dae0"
+      ha-button-neutral-light-color: "#6a7081"
+      ha-button-primary-light-color: "#4082a040"
+      ha-button-warning-light-color: "#917b54c1"
+      ha-card-background: "linear-gradient(150deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.055) 34%, rgba(255,255,255,.02) 58%, rgba(255,255,255,.075) 100%), linear-gradient(0deg, rgba(20,26,46,.44), rgba(20,26,46,.44))"
+      ha-card-box-shadow: "inset 0 1.5px 0 rgba(255,255,255,.32), inset 0 0 0 1px rgba(255,255,255,.15), inset 0 -1px 0 rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.35), 0 10px 26px rgba(0,0,0,.45), 0 30px 64px rgba(0,0,0,.50)"
+      ha-color-border-danger-loud: "var(--ha-color-red-50)"
+      ha-color-border-danger-normal: "var(--ha-color-red-50)"
+      ha-color-border-neutral-loud: "var(--ha-color-neutral-70)"
+      ha-color-border-neutral-normal: "rgba(255, 255, 255, .18)"
+      ha-color-border-neutral-quiet: "rgba(255, 255, 255, .10)"
+      ha-color-border-normal: "var(--ha-color-primary-50)"
+      ha-color-border-warning-loud: "var(--ha-color-orange-50)"
+      ha-color-border-warning-normal: "var(--ha-color-orange-50)"
+      ha-color-fill-danger-loud-active: "var(--ha-color-red-40)"
+      ha-color-fill-danger-loud-hover: "var(--ha-color-red-30)"
+      ha-color-fill-danger-loud-resting: "var(--ha-color-red-40)"
+      ha-color-fill-danger-normal-active: "var(--ha-color-red-10)"
+      ha-color-fill-danger-normal-hover: "var(--ha-color-red-20)"
+      ha-color-fill-danger-normal-resting: "var(--ha-color-red-10)"
+      ha-color-fill-danger-quiet-active: "var(--ha-color-red-05)"
+      ha-color-fill-danger-quiet-hover: "var(--ha-color-red-10)"
+      ha-color-fill-danger-quiet-resting: "var(--ha-color-red-05)"
+      ha-color-fill-disabled-loud-hover: "var(--ha-color-neutral-40)"
+      ha-color-fill-disabled-loud-resting: "var(--ha-color-neutral-30)"
+      ha-color-fill-disabled-normal-hover: "var(--ha-color-neutral-30)"
+      ha-color-fill-disabled-normal-resting: "var(--ha-color-neutral-20)"
+      ha-color-fill-disabled-quiet-hover: "var(--ha-color-neutral-20)"
+      ha-color-fill-disabled-quiet-resting: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-loud-active: "var(--ha-color-neutral-60)"
+      ha-color-fill-neutral-loud-hover: "var(--ha-color-neutral-70)"
+      ha-color-fill-neutral-loud-resting: "var(--ha-color-neutral-60)"
+      ha-color-fill-neutral-normal-active: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-normal-hover: "var(--ha-color-neutral-20)"
+      ha-color-fill-neutral-normal-resting: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-quiet-active: "var(--ha-color-neutral-05)"
+      ha-color-fill-neutral-quiet-hover: "var(--ha-color-neutral-10)"
+      ha-color-fill-neutral-quiet-resting: "var(--ha-color-neutral-05)"
+      ha-color-fill-primary-normal-active: "var(--ha-color-primary-10)"
+      ha-color-fill-primary-normal-hover: "var(--ha-color-primary-20)"
+      ha-color-fill-primary-normal-resting: "var(--ha-color-primary-10)"
+      ha-color-fill-primary-quiet-active: "var(--ha-color-primary-05)"
+      ha-color-fill-primary-quiet-hover: "var(--ha-color-primary-10)"
+      ha-color-fill-primary-quiet-resting: "var(--ha-color-primary-05)"
+      ha-color-fill-success-loud-active: "var(--ha-color-green-40)"
+      ha-color-fill-success-loud-hover: "var(--ha-color-green-30)"
+      ha-color-fill-success-loud-resting: "var(--ha-color-green-40)"
+      ha-color-fill-success-normal-active: "var(--ha-color-green-10)"
+      ha-color-fill-success-normal-hover: "var(--ha-color-green-20)"
+      ha-color-fill-success-normal-resting: "var(--ha-color-green-10)"
+      ha-color-fill-success-quiet-active: "var(--ha-color-green-05)"
+      ha-color-fill-success-quiet-hover: "var(--ha-color-green-10)"
+      ha-color-fill-success-quiet-resting: "var(--ha-color-green-05)"
+      ha-color-fill-warning-loud-active: "var(--ha-color-orange-40)"
+      ha-color-fill-warning-loud-hover: "var(--ha-color-orange-30)"
+      ha-color-fill-warning-loud-resting: "var(--ha-color-orange-40)"
+      ha-color-fill-warning-normal-active: "var(--ha-color-orange-10)"
+      ha-color-fill-warning-normal-hover: "var(--ha-color-orange-20)"
+      ha-color-fill-warning-normal-resting: "var(--ha-color-orange-10)"
+      ha-color-fill-warning-quiet-active: "var(--ha-color-orange-05)"
+      ha-color-fill-warning-quiet-hover: "var(--ha-color-orange-10)"
+      ha-color-fill-warning-quiet-resting: "var(--ha-color-orange-05)"
+      ha-color-form-background: "var(--ha-color-neutral-20)"
+      ha-color-form-background-disabled: "var(--ha-color-neutral-20)"
+      ha-color-form-background-hover: "var(--ha-color-neutral-30)"
+      ha-color-on-danger-loud: "var(--white-color)"
+      ha-color-on-danger-normal: "var(--ha-color-red-60)"
+      ha-color-on-danger-quiet: "var(--ha-color-red-70)"
+      ha-color-on-disabled-loud: "var(--ha-color-neutral-50)"
+      ha-color-on-disabled-normal: "var(--ha-color-neutral-50)"
+      ha-color-on-disabled-quiet: "var(--ha-color-neutral-40)"
+      ha-color-on-neutral-loud: "var(--white-color)"
+      ha-color-on-neutral-normal: "var(--ha-color-neutral-60)"
+      ha-color-on-neutral-quiet: "var(--ha-color-neutral-70)"
+      ha-color-on-primary-normal: "var(--ha-color-primary-60)"
+      ha-color-on-primary-quiet: "var(--ha-color-primary-70)"
+      ha-color-on-success-loud: "var(--white-color)"
+      ha-color-on-success-normal: "var(--ha-color-green-60)"
+      ha-color-on-success-quiet: "var(--ha-color-green-70)"
+      ha-color-on-surface-default: "var(--ha-color-neutral-95)"
+      ha-color-on-warning-loud: "var(--white-color)"
+      ha-color-on-warning-normal: "var(--ha-color-orange-60)"
+      ha-color-on-warning-quiet: "var(--ha-color-orange-70)"
+      ha-color-surface-default: "var(--ha-color-neutral-10)"
+      ha-color-surface-default-inverted: "var(--ha-color-white)"
+      ha-color-surface-low: "var(--ha-color-neutral-05)"
+      ha-color-surface-low-inverted: "var(--ha-color-neutral-95)"
+      ha-color-surface-lower: "var(--ha-color-black)"
+      ha-color-surface-lower-inverted: "var(--ha-color-neutral-90)"
+      ha-color-text-link: "var(--ha-color-primary-60)"
+      ha-color-text-primary: "#e8edf7"
+      ha-color-text-primary-inverted: "var(--ha-color-black)"
+      ha-color-text-secondary: "#a6b1c8"
+      ha-color-text-secondary-inverted: "var(--ha-color-neutral-40)"
+      ha-dialog-surface-background: "rgba(26,29,43,.90)"
+      input-disabled-fill-color: "rgba(255, 255, 255, 0.02)"
+      input-disabled-ink-color: "rgba(255, 255, 255, 0.37)"
+      input-disabled-line-color: "rgba(255, 255, 255, 0.06)"
+      input-dropdown-icon-color: "rgba(255, 255, 255, 0.54)"
+      input-fill-color: "rgba(255, 255, 255, 0.05)"
+      input-hover-line-color: "rgba(255, 255, 255, 0.87)"
+      input-idle-line-color: "rgba(255, 255, 255, 0.42)"
+      input-ink-color: "rgba(255, 255, 255, 0.87)"
+      input-label-ink-color: "rgba(255, 255, 255, 0.6)"
+      input-outlined-disabled-border-color: "rgba(255, 255, 255, 0.06)"
+      input-outlined-hover-border-color: "rgba(255, 255, 255, 0.87)"
+      input-outlined-idle-border-color: "rgba(255, 255, 255, 0.38)"
+      lovelace-background: "linear-gradient(118deg, rgba(255,255,255,.12) 0 5%, rgba(255,255,255,0) 15%), linear-gradient(118deg, rgba(255,255,255,0) 18%, rgba(255,255,255,.08) 22%, rgba(255,255,255,0) 29%), repeating-linear-gradient(45deg, rgba(255,255,255,.085) 0 2px, rgba(255,255,255,0) 2px 84px), repeating-linear-gradient(-45deg, rgba(255,255,255,.06) 0 2px, rgba(255,255,255,0) 2px 84px), radial-gradient(closest-side, rgba(46,92,168,.52), transparent) left -260px top -200px / 900px 640px no-repeat, radial-gradient(closest-side, rgba(62,114,190,.40), transparent) right -200px top -120px / 820px 600px no-repeat, radial-gradient(closest-side, rgba(26,54,110,.46), transparent) right -160px bottom -260px / 860px 700px no-repeat, linear-gradient(145deg, #0d141f 0%, #16202f 42%, #0a111a 100%) fixed"
+      map-filter: "invert(0.9) hue-rotate(170deg) brightness(1.5) contrast(1.2) saturate(0.3)"
+      mdc-dialog-scrim-color: "rgba(0,0,0,.54)"
+      mdc-linear-progress-buffer-color: "rgba(255, 255, 255, 0.1)"
+      mdc-ripple-color: "#aaaaaa"
+      outline-color: "rgba(225, 225, 225, 0.12)"
+      outline-hover-color: "rgba(225, 225, 225, 0.24)"
+      primary-background-color: "#0b1018"
+      primary-text-color: "#e8edf7"
+      scrollbar-thumb-color: "rgb(110, 110, 110)"
+      secondary-background-color: "#282828"
+      secondary-text-color: "#a6b1c8"
+      shadow-color: "rgba(0, 0, 0, 0.48)"
+      sidebar-background-color: "rgba(18,20,32,.46)"
+      sidebar-icon-color: "#a6b1c8"
+      sidebar-text-color: "#e8edf7"

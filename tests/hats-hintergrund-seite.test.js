@@ -57,11 +57,12 @@ function wendeLose(m, h) {
 pruefe("Der Baukasten fuehrt genau die Hintergruende aus hintergrund.js", () => {
   assert.strictEqual(AUS_BAUKASTEN, HINTERGRUENDE, "baukasten.js haelt eine eigene Liste");
   assert.strictEqual(BAUKASTEN.hintergrund.teile, HINTERGRUENDE);
-  // Vorn "keiner", hinten der ruhige Verlauf, dazwischen die Farbverlaeufe -
-  // seit dem 14.10.2026 elf statt zehn (macOS ist dazugekommen).
-  assert.strictEqual(HINTERGRUENDE.length, 13);
-  assert.deepStrictEqual([HINTERGRUENDE[0].id, HINTERGRUENDE[1].id, HINTERGRUENDE.at(-1).id], ["keiner", "inseln", "verlauf"]);
-  assert.strictEqual(new Set(HINTERGRUENDE.map((h) => h.id)).size, 13, "eine Kennung ist doppelt");
+  // Vorn "keiner", dann die Farbverlaeufe - seit dem 14.10.2026 elf statt
+  // zehn (macOS ist dazugekommen) -, danach die beiden, die keine Punkte
+  // tragen: der ruhige Verlauf und "Glaswerk", das diagonale Raster.
+  assert.strictEqual(HINTERGRUENDE.length, 14);
+  assert.deepStrictEqual([HINTERGRUENDE[0].id, HINTERGRUENDE[1].id, HINTERGRUENDE.at(-1).id], ["keiner", "inseln", "glaswerk"]);
+  assert.strictEqual(new Set(HINTERGRUENDE.map((h) => h.id)).size, 14, "eine Kennung ist doppelt");
   for (const h of HINTERGRUENDE) {
     for (const modus of ["light", "dark"]) assert.deepStrictEqual(Object.keys(h[modus]), ["--" + FELD], `${h.id}/${modus}`);
     for (const k of ["de", "en", "zweckDe", "zweckEn"]) assert.ok(h[k], `${h.id} ohne ${k}`);
@@ -524,11 +525,16 @@ pruefe("Das Panel zieht die Bewegung nach und zeigt die Farben auf der Kachel", 
   assert.match(klick, /ZUSTAND\.geaendert\.add\(f\)/, "die Felder kommen nicht in die Buchfuehrung");
   // Gegenprobe: nicht fuer jede Sorte.
   assert.doesNotMatch(klick, /sorte === "karten"[\s\S]{0,120}hintergrundGewaehlt/);
-  // Der Streifen: die zehn Verlaeufe tragen eine Vorschau, und das Panel malt sie.
+  // Der Streifen: die Verlaeufe tragen eine Vorschau, und das Panel malt sie.
   assert.match(panel, /class="bk-streifen"/);
   assert.match(panel, /teil\.vorschau && teil\.vorschau\[dunkel \? "dark" : "light"\]/);
   const mitVorschau = HINTERGRUENDE.filter((h) => h.vorschau && h.vorschau.light && h.vorschau.dark);
-  assert.strictEqual(mitVorschau.length, 11, "nicht elf Verlaeufe mit Vorschau");
+  assert.strictEqual(mitVorschau.length, 12, "nicht zwoelf Teile mit Vorschau");
+  // Wer KEINE hat, hat auch keine Farben zu zeigen - oder es fehlt wirklich.
+  // "verlauf" steht hier als Schuld: zwei Toene haette er, der Streifen fehlt
+  // trotzdem. Gemeldet am 14.10.2026 an die Sitzung, der die Datei gehoert.
+  assert.deepStrictEqual(HINTERGRUENDE.filter((h) => !h.vorschau).map((h) => h.id),
+    ["keiner", "verlauf"], "ein Teil ohne Streifen, der keiner sein sollte");
   for (const h of mitVorschau) assert.match(h.vorschau.dark, /^linear-gradient\(90deg,/);
   // Gegenprobe: "Keiner" und der ruhige Verlauf haben keine - sie sind keine
   // Farbpunkte, und ein Streifen aus vier Farben waere dort gelogen.

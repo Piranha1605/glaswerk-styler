@@ -224,7 +224,54 @@ pruefe("Gegenprobe: ein verschachteltes ::part wuerde auffallen", () => {
   assert.match(boese, /[a-z-]+\s+[a-z-]+::part\(/, "die Pruefung oben findet nichts");
 });
 
-console.log(`\n${n} Pruefungen`);
+pruefe("Kein Feld, das ein Verlauf sein darf, landet in background-color", () => {
+  // Am 14.10.2026 gemessen, als der Kartenstil "Liquid Glass" dazukam: Er
+  // legt ZWEI Verlaeufe in --ha-card-background, weil ha-card die Kurzform
+  // background liest und dort alles erlaubt ist, was CSS als Hintergrund
+  // kennt. glas-karten schrieb den Wert aber in background-color - und das
+  // nimmt nur Farben. Die Zeile fiel still weg, das background-image: none
+  // darunter loeschte auch noch ha-cards eigenen Verlauf, und die Karte stand
+  // auf rgba(0, 0, 0, 0): keine Fuellung, nur Weichzeichnung.
+  //
+  // Still ist das Entscheidende. Eine ungueltige Deklaration meldet nichts,
+  // und die Karte sah mit Saum und Schatten immer noch nach Glas aus.
+  const DUERFEN_VERLAUF_SEIN = ["--ha-card-background", "--lovelace-background",
+                                "--ha-dialog-surface-background", "--popup-custom-wallpaper"];
+  const schlecht = [];
+  for (const v of VORLAGEN)
+    for (const feld of DUERFEN_VERLAUF_SEIN) {
+      // Nicht hinter einem Bindestrich: --bubble-main-background-color ist
+      // eine eigene Variable, keine Deklaration. Sie DARF den Wert tragen -
+      // ob Bubble damit umgehen kann, steht auf einem anderen Blatt und
+      // haengt an Bubbles Code, nicht an unserem.
+      const re = new RegExp("(?<![-\\w])background-color\\s*:[^;]*var\\(\\s*" + feld.replace(/-/g, "\\-"), "g");
+      for (const m of v.css.matchAll(re)) schlecht.push(`${v.id}: ${m[0].slice(0, 60)}`);
+    }
+  assert.deepStrictEqual(schlecht, [], "ein Verlauf in background-color faellt still weg");
+
+  // Gegenprobe 1: Der Ausdruck trifft die alte Fassung wirklich.
+  const alt = "  background-color: var(--ha-card-background, var(--card-background-color)) !important;";
+  assert.match(alt, /background-color\s*:[^;]*var\(\s*--ha-card-background/);
+
+  // Gegenprobe 2: glas-karten setzt die Fuellung ueberhaupt noch - sonst
+  // waere die Pruefung gruen, weil die Zeile ganz fehlt.
+  const karten = VORLAGEN.find((v) => v.id === "glas-karten");
+  assert.ok(karten, "glas-karten gibt es nicht mehr");
+  assert.match(karten.css, /\n\s*background:\s*var\(--ha-card-background/,
+    "glas-karten fuellt die Karte gar nicht mehr");
+  // Und im SELBEN Regelblock steht kein background-image: none mehr - das war
+  // der zweite Teil des Fehlers. Anderswo in der Vorlage ist die Zeile
+  // richtig: Reine Textkarten und Auswahllisten sollen gar keine Flaeche
+  // haben, und dort steht sie hinter einem "background: none".
+  const ab = karten.css.indexOf("background: var(--ha-card-background");
+  const block = karten.css.slice(ab, karten.css.indexOf("}", ab));
+  assert.doesNotMatch(block, /background-image:\s*none/,
+    "background-image: none loescht den Verlauf gleich wieder");
+  // Gegenprobe: Anderswo steht sie noch, die Pruefung ist also nicht blind.
+  assert.match(karten.css, /background-image:\s*none/,
+    "die Zeile ist ueberall weg - dann raeumt nichts mehr auf");
+});
+
 if (n < 15) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
 
 pruefe("Keine Jinja-Zeichen in einer Vorlage", () => {
@@ -247,3 +294,5 @@ pruefe("Keine Jinja-Zeichen in einer Vorlage", () => {
     }
   }
 });
+
+console.log(`\n${n} Pruefungen`);
