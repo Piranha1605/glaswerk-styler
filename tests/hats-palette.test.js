@@ -94,22 +94,43 @@ assert.ok(n >= 9, `nur ${n} Pruefungen gelaufen - der Test prueft nichts`);
 console.log(`\n${n} Pruefungen`);
 
 // --- Nachtrag: die klassischen Begleiter ---
-import { begleiter } from "../custom_components/hats/www/palette.js";
+import { begleiter, alsTripel } from "../custom_components/hats/www/palette.js";
 
 pruefe("Die Begleiter folgen der Rampe, nicht dem alten Blau", () => {
   const b = begleiter("#cc3388");
   const r = rampe("#cc3388", "primary");
   assert.strictEqual(b["dark-primary-color"], r["ha-color-primary-30"]);
   assert.strictEqual(b["light-primary-color"], r["ha-color-primary-80"]);
-  assert.strictEqual(b["state-icon-color"], r["ha-color-primary-40"]);
+  // Stufe 50, nicht 40: siehe die Begruendung in palette.js.
+  assert.strictEqual(b["state-icon-color"], r["ha-color-primary-50"]);
+  assert.strictEqual(b["primary-color"], r["ha-color-primary-50"]);
+  // Symbol und Kapsel duerfen nicht zwei verschiedene Blau sein.
+  assert.strictEqual(b["state-icon-color"], b["primary-color"]);
   // Gegenprobe: nichts davon ist noch HAs Blau
   for (const v of Object.values(b)) assert.notStrictEqual(v, "#0288d1");
 });
 
-pruefe("primary-color ist NICHT dabei - HA leitet es selbst ab", () => {
-  // --primary-color: var(--ha-color-primary-40). Wer es trotzdem schreibt,
-  // friert es ein und nimmt HA die Ableitung weg.
-  assert.strictEqual(begleiter("#cc3388")["primary-color"], undefined);
+pruefe("primary-color wird mitgeschrieben - und bleibt dadurch in Takt", () => {
+  // Hier stand bis zum 14.10.2026 das Gegenteil: "primary-color ist NICHT
+  // dabei - HA leitet es selbst ab". Das stimmte, solange niemand es anfasste.
+  //
+  // Gemessen hat sich aber gezeigt, dass HAs eigene Ableitung
+  // (var(--ha-color-primary-40)) den dunkelsten der vier Blautoene liefert,
+  // die auf einer Seite nebeneinander stehen. Stufe 50 trifft die anderen.
+  //
+  // Die alte Sorge bleibt berechtigt - ein VON HAND gesetzter Wert friert die
+  // Rampe ein. Sie ist nur nicht mehr der Fall: Wer die Palette wechselt,
+  // bekommt das Feld neu, weil begleiter() es mitschreibt.
+  const b = begleiter("#cc3388");
+  assert.ok("primary-color" in b, "primary-color fehlt bei den Begleitern");
+  // Die Gegenprobe zur alten Sorge: zwei Paletten, zwei Werte. Bliebe es
+  // stehen, waeren sie gleich.
+  assert.notStrictEqual(begleiter("#cc3388")["primary-color"],
+                        begleiter("#2196f3")["primary-color"]);
+  // Und das Tripel haengt an DERSELBEN Stufe - sonst laeuft es der Farbe
+  // davon, wie rgb-accent-color am 12.10.2026.
+  const r = rampe("#cc3388", "primary");
+  assert.strictEqual(b["rgb-primary-color"], alsTripel(r["ha-color-primary-50"]));
 });
 
 console.log(`\n${n} Pruefungen (mit Begleitern)`);
@@ -122,8 +143,10 @@ pruefe("darker-primary-color und rgb-primary-color folgen mit", () => {
   const r = rampe("#2e9e4f", "primary");
   assert.strictEqual(b["darker-primary-color"], r["ha-color-primary-20"]);
   assert.match(b["rgb-primary-color"], /^\d{1,3}, \d{1,3}, \d{1,3}$/);
-  // und das Tripel gehoert zu Stufe 40, denn --primary-color ist var(--ha-color-primary-40)
-  const h = r["ha-color-primary-40"];
+  // Das Tripel gehoert zu Stufe 50 - seit dem 14.10.2026 schreibt der
+  // Baukasten --primary-color selbst, und zwar aus dieser Stufe. Vorher war
+  // es die 40, weil HA das Feld von sich aus so ableitete.
+  const h = r["ha-color-primary-50"];
   const soll = [1, 2, 3].map((i) => parseInt(h.slice(1 + (i - 1) * 2, 1 + i * 2), 16)).join(", ");
   assert.strictEqual(b["rgb-primary-color"], soll);
   // Gegenprobe: nichts davon ist noch HAs Blau

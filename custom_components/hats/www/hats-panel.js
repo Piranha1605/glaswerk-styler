@@ -27,7 +27,7 @@ import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teile
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
-import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, seiteHatInhalt,
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, seiteHatInhalt, FREIE_ROLLEN,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
@@ -123,6 +123,13 @@ const STUFEN = [
       // das der einzige Weg ohne Tippfehler - der Generator liegt im
       // Scratchpad, die Pruefung in tests/hats-stufen.test.js.
       { name: "Palette", felder: [
+        // --primary-color hat seit dem 14.10.2026 eine Kachel, und das war
+        // lange ausdruecklich verboten. Der Grund fuer das Verbot war, dass
+        // ein von Hand gesetzter Wert die Rampe einfriert. Er gilt weiter -
+        // nur schreibt der Baukasten das Feld jetzt selbst mit (Stufe 50),
+        // also folgt es jeder Palette. Ohne Kachel bekaeme es niemand wieder
+        // heraus, und genau das verbietet die andere Regel.
+        { t: "Primaerfarbe klassisch", art: "farbe", v: "--primary-color", ebene: "beide" },
         { t: "Primaer dunkel", art: "farbe", v: "--dark-primary-color", ebene: "beide" },
         { t: "Primaer dunkler", art: "farbe", v: "--darker-primary-color", ebene: "beide" },
         { t: "Black", art: "farbe", v: "--ha-color-black", ebene: "beide" },
@@ -637,6 +644,17 @@ const STUFEN = [
         { t: "Blau", art: "text", v: "--mush-rgb-blue", ebene: "beide", platzhalter: "var(--rgb-ha-color-primary-60)" } ] },
       { name: "Mushroom Masse", felder: [
         { t: "Symbol", art: "mass", v: "--mush-icon-size", ebene: "beide", min: 16, max: 56 },
+        // Von der Sitzung Steuerkarte am 14.10.2026 angefordert: Ihr
+        // Schriftregler braucht sie, weil Mushroom --ha-font-size-scale NICHT
+        // folgt (gemessen: Kachel und Bubble gehen bei Faktor 1,2 von 14 auf
+        // 16,8 px, Mushroom bleibt auf 14).
+        //
+        // Als Verweis auf HAs Leiter gedacht, nicht als feste Pixel -
+        // var(--ha-font-size-m) ist 14px mal Faktor, also genau Mushrooms
+        // Vorgabe bei Faktor 1. Dann folgt Mushroom dem einen Feld wie die
+        // anderen beiden, statt eine dritte Stelle fuer dieselbe Zahl zu sein.
+        { t: "Schrift Name", art: "text", v: "--mush-card-primary-font-size", ebene: "beide" },
+        { t: "Schrift Zustand", art: "text", v: "--mush-card-secondary-font-size", ebene: "beide" },
         { t: "Chip", art: "mass", v: "--mush-chip-height", ebene: "beide", min: 20, max: 64 },
         { t: "Abstand", art: "mass", v: "--mush-spacing", ebene: "beide", min: 0, max: 32 } ] },
     ] },
@@ -1433,8 +1451,67 @@ class HatsPanel extends HTMLElement {
             }).join("")}
           </div>
         </section>` : ""}
+        ${schluessel === "palette" ? this.farbwahlHtml(lies, T) : ""}
         ${schluessel === "hintergrund" ? hintergrundSeiteHtml({ modell: m, spr: this.spr, wetter: wetterEntitaeten(this._hass) }) : ""}
       </div>`;
+  }
+
+  // Freie Farbwahl auf der Seite der Sorte "Farben"
+  //
+  // Auf Ansage vom 14.10.2026. Vorher konnte man nur eine der fuenfzehn
+  // Paletten nehmen; wer seine eigene Farbe wollte, musste 55 Stufen von Hand
+  // setzen.
+  //
+  // WAS DER WAEHLER ZEIGT, ist Stufe 50 der jeweiligen Rolle - nicht die
+  // Basis, aus der die Rampe einmal entstand. Die laesst sich naemlich nicht
+  // zurueckrechnen: rampe() nimmt nur Farbton und Saettigung, und beim Weg
+  // durch Hex geht davon so viel verloren, dass eine zweite Runde eine andere
+  // Rampe ergibt (am 14.10.2026 an vier Farben gegengeprobt, keine kam
+  // identisch zurueck).
+  //
+  // Das ist aber kein Problem, sondern genauer: Stufe 50 ist der Ton, den man
+  // auf dem Schirm SIEHT. Und gedreht wird nur, was der Nutzer anfasst - aus
+  // seiner Farbe entsteht dann eine saubere neue Rampe. Ohne Anfassen wird
+  // nichts neu gerechnet, also driftet auch nichts.
+  farbwahlHtml(lies, T) {
+    const modus = this._hass?.themes?.darkMode ? "dark" : "light";
+    // Der Waehler haelt die GEWAEHLTE Farbe, die Zeile darunter zeigt, was
+    // daraus wird. Beides, weil beides stimmt und keines allein genuegt:
+    //
+    // Zeigte der Waehler Stufe 50, spraenge er nach jedem Drehen weg - wer
+    // #1db954 waehlt, saehe danach #127635 im Feld und hielte es fuer kaputt
+    // (am 14.10.2026 genau so gemessen). Zeigte nur er die Wahl, wuesste
+    // niemand, welcher Ton tatsaechlich auf dem Schirm landet.
+    //
+    // Gemerkt wird die Wahl NUR fuer diese Sitzung. Ein eigenes Feld in der
+    // Theme waere ein Hilfsfeld, und die bleiben beim Abschalten als Verweis
+    // ins Leere stehen. Nach dem Neuladen steht im Waehler wieder, was die
+    // Theme hergibt - das ist die Wahrheit, nur weniger bequem.
+    this._freieFarben ??= {};
+    const felder = FREIE_ROLLEN.map((r) => {
+      const wert = lies(`--ha-color-${r.rolle}-50`, "beide") || "";
+      const wahl = this._freieFarben[r.rolle] || wert;
+      return `
+        <label class="bk-farbe">
+          <input type="color" data-bk-rolle="${r.rolle}" value="${/^#[0-9a-f]{6}$/i.test(wahl) ? wahl : "#888888"}">
+          <span>${this.spr === "en" ? r.en : r.de}</span>
+          <b title="${T("Stufe 50 der Rampe - der Ton, der auf dem Schirm landet")}">${wert || "–"}</b>
+        </label>`;
+    }).join("");
+    const akzent = lies("--accent-color", modus) || "";
+    return `
+      <section class="bk-sorte">
+        <h3>${T("Eigene Farben")}</h3>
+        <p class="bk-zweck">${T("Jede Farbe erzeugt elf Stufen. Neutral fehlt mit Absicht - HA rechnet die Rolle grau, egal welcher Ton hineingeht.")}</p>
+        <div class="bk-farben">
+          ${felder}
+          <label class="bk-farbe">
+            <input type="color" data-bk-akzent="1" value="${/^#[0-9a-f]{6}$/i.test(akzent) ? akzent : "#888888"}">
+            <span>${T("Akzent")}</span>
+            <b>${akzent || "–"}</b>
+          </label>
+        </div>
+      </section>`;
   }
 
   bindeBkSeite(wurzel) {
@@ -1458,6 +1535,48 @@ class HatsPanel extends HTMLElement {
         this.zeichneZaehler();
       });
     });
+
+    // Die freie Farbwahl. change und nicht input: Ein Farbwaehler feuert
+    // waehrend des Ziehens, und jede Runde rechnet elf Stufen plus Begleiter.
+    wurzel.querySelectorAll("[data-bk-rolle]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const r = rampe(el.value, el.dataset.bkRolle);
+        if (!r) return;
+        // Die Wahl merken, damit der Waehler nicht wegspringt.
+        (this._freieFarben ??= {})[el.dataset.bkRolle] = el.value;
+        for (const [k, v] of Object.entries(r)) {
+          setze(ZUSTAND.modell, k, v, "beide");
+          ZUSTAND.geaendert.add(k);
+        }
+        // Die Begleiter haengen an der Primaerfarbe - inklusive
+        // --primary-color und seinem Tripel, die sonst auf der alten stehen
+        // blieben.
+        if (el.dataset.bkRolle === "primary") {
+          const b = begleiter(el.value);
+          if (b) for (const [k, v] of Object.entries(b)) {
+            setze(ZUSTAND.modell, k, v, "beide");
+            ZUSTAND.geaendert.add(k);
+          }
+        }
+        this.zeichneBaukasten();
+        this.zeichneZaehler();
+      })
+    );
+
+    // Der Akzent ist das Einzige der Palette, das je Modus verschieden ist -
+    // geschrieben wird deshalb nur der Modus, den der Nutzer gerade sieht.
+    // Beide zugleich zu setzen hiesse, den anderen blind zu ueberschreiben.
+    wurzel.querySelectorAll("[data-bk-akzent]").forEach((el) =>
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const modus = this._hass?.themes?.darkMode ? "dark" : "light";
+        setze(ZUSTAND.modell, "accent-color", el.value, modus);
+        ZUSTAND.geaendert.add("accent-color");
+        this.zeichneBaukasten();
+        this.zeichneZaehler();
+      })
+    );
 
     wurzel.querySelectorAll("[data-bk-vorlage]").forEach((el) =>
       el.addEventListener("change", () => {
@@ -3542,6 +3661,16 @@ class HatsPanel extends HTMLElement {
 
       /* Tweaks als anklickbare Zeilen, nicht als nackte Haken: Der Zwecktext
          ist die Entscheidungshilfe und gehoert mit in die Klickflaeche. */
+      /* Die freie Farbwahl: vier Rollen und der Akzent, nebeneinander. */
+      .bk-farben { display: flex; flex-wrap: wrap; gap: 14px; }
+      .bk-farbe { display: flex; flex-direction: column; align-items: center; gap: 5px;
+                  font-size: 12px; color: var(--t-leise); }
+      .bk-farbe input[type="color"] { width: 46px; height: 34px; padding: 0; cursor: pointer;
+                  border: 0; border-radius: 9px; background: none; }
+      .bk-farbe input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 9px;
+                  box-shadow: var(--s-schatten-klein); }
+      .bk-farbe b { font: 500 11px ui-monospace, Menlo, monospace; color: var(--t-stark); }
+
       .bk-tweaks { display: grid; gap: 8px;
                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
       .bk-tweak { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;

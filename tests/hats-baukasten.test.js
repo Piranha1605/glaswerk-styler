@@ -9,7 +9,7 @@ import { rampe } from "../custom_components/hats/www/palette.js";
 import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau, seiteHatInhalt,
          SORTEN_FELDER,
          KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN,
-         RUNDUNGEN, DICHTEN } from "../custom_components/hats/www/baukasten.js";
+         RUNDUNGEN, DICHTEN, FREIE_ROLLEN } from "../custom_components/hats/www/baukasten.js";
 import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
 import { leseTheme } from "../custom_components/hats/www/theme.js";
 
@@ -115,14 +115,25 @@ pruefe("Home Assistant und Liquid Glass ruehren die Palette NICHT an", () => {
   }
 });
 
-pruefe("primary-color wird NICHT geschrieben", () => {
-  // Home Assistant deklariert es selbst als var(--ha-color-primary-40) und
-  // folgt der Rampe von allein. Wer es schreibt, friert es ein - dieselbe
-  // Falle, an der bei HATG gefuellte Knoepfe trotz grauem Akzent blau blieben.
+pruefe("primary-color wird mitgeschrieben und folgt der Palette", () => {
+  // Bis zum 14.10.2026 stand hier das Gegenteil, mit der Begruendung: HA
+  // deklariert es als var(--ha-color-primary-40) und folgt der Rampe von
+  // allein; wer es schreibt, friert es ein.
+  //
+  // Der zweite Halbsatz stimmt weiter - aber nur fuer einen Wert, den jemand
+  // VON HAND setzt. Schreibt der Baukasten ihn mit, bewegt er sich mit jeder
+  // Palette, und eingefroren ist nichts. Der erste Halbsatz war der Anlass:
+  // HAs eigene Ableitung nimmt Stufe 40, und die ist dunkler als alles, was
+  // daneben liegt (gemessen am 14.10.2026 an vier Blautoenen auf einer Seite).
   const m = leer();
   teilAnwenden("palette", PALETTEN.find((p) => p.id === "warm"), schreiberFuer(m));
   const alle = [...Object.keys(m.beide), ...Object.keys(m.light), ...Object.keys(m.dark)];
-  assert.ok(!alle.includes("--primary-color"), "--primary-color darf nicht gesetzt werden");
+  assert.ok(alle.includes("--primary-color"), "--primary-color fehlt");
+  // Die Gegenprobe zur alten Sorge: eine andere Palette, ein anderer Wert.
+  const m2 = leer();
+  teilAnwenden("palette", PALETTEN.find((p) => p.id === "gruen"), schreiberFuer(m2));
+  assert.notStrictEqual(m.beide["--primary-color"], m2.beide["--primary-color"],
+    "der Wert bleibt stehen - genau das waere das Einfrieren");
   // rgb-primary-color dagegen MUSS dabei sein: HA rechnet Tripel nur aus
   // Feldern, die im Theme stehen - primary-color steht nach obigem gerade
   // nicht drin, also bliebe das Tripel auf HAs altem Cyan.
@@ -349,19 +360,35 @@ pruefe("Eine Sorte ohne Inhalt bekommt keine Unterseite", () => {
   // Gemeldet am 14.10.2026: "die farbauswahl muss in das popup von
   // Farben/Richtung der rest ist doppelt." Ein Klick auf eine Palette oeffnete
   // eine Seite, auf der nur dieselbe Kachel noch einmal stand.
-  assert.strictEqual(seiteHatInhalt("palette"), false, "die Farben haben eine leere Unterseite");
+  //
+  // Seit demselben Tag, spaeter, haben die Farben doch eine Seite - aber nicht
+  // mit derselben Kachel darauf, sondern mit der freien Farbwahl. Auf Ansage:
+  // "dann brauchen wir bei den Farben ein Feld wo der User seine farben frei
+  // waehlen kann". Der Grund von damals bleibt gueltig: Eine Seite, die nur
+  // wiederholt, worauf man geklickt hat, ist ein Klick zu viel.
+  assert.strictEqual(seiteHatInhalt("palette"), true, "die freie Farbwahl ist weg");
+  assert.ok(FREIE_ROLLEN.length >= 3, "zu wenige Rollen zur Wahl");
+  // neutral steht NICHT dabei - rampe() zwingt die Saettigung dort auf 0,
+  // der Regler haette keine Wirkung.
+  assert.ok(!FREIE_ROLLEN.some((r) => r.rolle === "neutral"),
+    "neutral ist waehlbar, obwohl es nichts tut");
   for (const k of ["schrift", "karten", "hintergrund", "oberflaeche"])
     assert.strictEqual(seiteHatInhalt(k), true, `${k} hat nichts zu zeigen`);
 
   // Gegenprobe gegen eine haendisch gepflegte Liste: Die Antwort kommt aus den
-  // Daten, nicht aus einer zweiten Aufzaehlung.
+  // Daten, nicht aus einer zweiten Aufzaehlung. "palette" ist die eine
+  // Ausnahme, und sie steht als Ausnahme da statt still mitzulaufen - ihre
+  // Seite traegt die freie Farbwahl, die weder Vorlage noch Feld ist.
   for (const k of Object.keys(BAUKASTEN)) {
-    const hat = (SORTEN_VORLAGEN[k] || []).length > 0 || (SORTEN_FELDER[k] || []).length > 0;
+    const hat = k === "palette"
+      || (SORTEN_VORLAGEN[k] || []).length > 0 || (SORTEN_FELDER[k] || []).length > 0;
     assert.strictEqual(seiteHatInhalt(k), hat, k);
   }
 
   // Und das Panel fragt wirklich, statt immer zu oeffnen.
   const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
+  assert.match(panel, /schluessel === "palette" \? this\.farbwahlHtml/,
+    "die Seite der Farben zeigt die freie Wahl nicht");
   const klick = panel.slice(panel.indexOf('wurzel.querySelectorAll("[data-bk-teil]")'), panel.indexOf("oeffneUix() {"));
   assert.match(klick, /if \(!seiteHatInhalt\(sorte\)\) return;/, "ein Klick auf das gesetzte Teil oeffnet weiter");
   assert.match(klick, /if \(seiteHatInhalt\(sorte\)\) this\._bkSeite = sorte;/, "nach dem Anwenden wird weiter immer geoeffnet");

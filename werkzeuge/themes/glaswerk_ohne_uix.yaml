@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 18:10:40
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 18:23:23
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # OHNE UI eXtension. Dieselbe Theme wie glaswerk, aber ohne ein einziges
@@ -242,9 +242,10 @@ glaswerk_ohne_uix:
   mush-control-border-radius: "20px"
   orange-color: "#ff9800"
   pink-color: "#e91e63"
+  primary-color: "#2190e9"
   purple-color: "#926bc7"
   red-color: "#f44336"
-  rgb-primary-color: "8, 110, 191"
+  rgb-primary-color: "33, 144, 233"
   sidebar-selected-icon-color: "#2196f3"
   sidebar-selected-text-color: "#2196f3"
   state-cover-active-color: "#2196f3"

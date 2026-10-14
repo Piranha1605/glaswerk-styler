@@ -1000,9 +1000,27 @@ import { rampe, begleiter } from "./palette.js";
 // Also nur die Farben. Die Wahl selbst steht in der Liste, und eine Seite, die
 // nur wiederholt, worauf man gerade geklickt hat, ist ein Klick zu viel.
 export function seiteHatInhalt(schluessel) {
+  // Die Farben haben seit dem 14.10.2026 eine Seite, obwohl sie weder
+  // Vorlagen noch Felder tragen: Dort steht die freie Farbwahl. Auf Ansage -
+  // "dann brauchen wir bei den Farben ein Feld wo der User seine farben frei
+  // waehlen kann".
+  if (schluessel === "palette") return true;
   return (SORTEN_VORLAGEN[schluessel] || []).length > 0
       || (SORTEN_FELDER[schluessel] || []).length > 0;
 }
+
+// Die Rollen, die der Nutzer frei waehlen kann.
+//
+// NEUTRAL steht nicht dabei, und das ist kein Vergessen: rampe() zwingt die
+// Saettigung der Rolle neutral auf 0. Am 14.10.2026 gegengeprobt - Nords
+// #4c566a, Gruvboxs #928374 und reines Rot ergeben dieselbe graue Rampe. Ein
+// Regler dafuer waere ein Regler ohne Wirkung.
+export const FREIE_ROLLEN = [
+  { rolle: "primary", de: "Primaer", en: "Primary" },
+  { rolle: "red", de: "Rot", en: "Red" },
+  { rolle: "green", de: "Gruen", en: "Green" },
+  { rolle: "orange", de: "Orange", en: "Orange" },
+];
 
 export function teilAnwenden(sorte, teil, schreibe) {
   if (!teil || typeof schreibe !== "function") return { gesetzt: 0, felder: [] };

@@ -134,10 +134,15 @@ export const MUSHROOM = {
   "mush-title-spacing": "var(--ha-space-2)",
   "mush-chip-avatar-padding": "var(--ha-space-1)",
   "mush-chip-border-width": "var(--ha-border-width-sm)",
-  "mush-card-primary-font-size": "var(--ha-font-size-l)",
+  // -m und nicht -l, und -s statt -m darunter. Am 14.10.2026 von der Sitzung
+  // Steuerkarte gemeldet und nachgemessen: Mushrooms eigene Vorgaben sind
+  // 14px und 12px (mushroom-light-card), HAs Kachel steht auf --ha-font-size-m
+  // = 14px. Mit -l waere Mushroom als einzige Familie eine Stufe groesser -
+  // und zwar durch die Zuordnung, deren ganzer Zweck das Angleichen ist.
+  "mush-card-primary-font-size": "var(--ha-font-size-m)",
   "mush-card-primary-font-weight": "var(--ha-font-weight-medium)",
   "mush-card-primary-line-height": "var(--ha-line-height-condensed)",
-  "mush-card-secondary-font-size": "var(--ha-font-size-m)",
+  "mush-card-secondary-font-size": "var(--ha-font-size-s)",
   "mush-card-secondary-font-weight": "var(--ha-font-weight-body)",
   "mush-card-secondary-line-height": "var(--ha-line-height-normal)",
   "mush-chip-font-size": "var(--ha-font-size-s)",

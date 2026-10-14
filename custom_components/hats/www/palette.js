@@ -83,9 +83,24 @@ export function rampe(basisHex, rolle) {
 export function begleiter(basisHex) {
   const r = rampe(basisHex, "primary");
   if (!r) return null;
-  // primary-color selbst steht NICHT dabei: Home Assistant deklariert es als
-  // var(--ha-color-primary-40) und folgt der Rampe von allein. Wer es schreibt,
-  // friert es ein.
+  // primary-color steht seit dem 14.10.2026 DOCH dabei, und der Satz, der
+  // hier stand ("wer es schreibt, friert es ein"), gilt nur noch halb.
+  //
+  // Eingefroren wird es, wenn es jemand VON HAND schreibt - dann bleibt es
+  // stehen, waehrend die Rampe sich bewegt. Schreibt der Baukasten es mit,
+  // folgt es jeder Palette, und die Sackgasse entsteht gar nicht erst.
+  //
+  // Warum Stufe 50 und nicht 40: Home Assistant nimmt von sich aus die 40.
+  // Am 14.10.2026 gemessen, was das heisst - mit einer azurblauen Palette
+  // landet --primary-color auf #086ebf, waehrend Mushrooms Regler und HAs
+  // --blue-color auf #2196f3 stehen. Vier Blautoene auf einer Seite, und der
+  // dunkelste war der der Theme. Stufe 50 (#2190e9) liegt dort, wo die
+  // uebrigen liegen.
+  //
+  // Es bewegt wenig: Von 1753 Elementen auf der Vergleichsseite reagierten
+  // VIERZEHN auf eine Aenderung von --primary-color. Home Assistant selbst
+  // liest es kaum noch; was daran haengt, sind Auswahlkapseln und einzelne
+  // aktive Symbolknoepfe.
   //
   // rgb-primary-color dagegen MUSS mitgeschrieben werden, und zwar aus einem
   // anderen Grund als lange hier stand. Home Assistant rechnet --rgb-<name>
@@ -103,8 +118,14 @@ export function begleiter(basisHex) {
     "dark-primary-color": r["ha-color-primary-30"],
     "darker-primary-color": r["ha-color-primary-20"],
     "light-primary-color": r["ha-color-primary-80"],
-    "state-icon-color": r["ha-color-primary-40"],
-    "rgb-primary-color": alsTripel(r["ha-color-primary-40"]),
+    // Dieselbe Stufe wie primary-color: Das Zeilensymbol und die Kapsel
+    // sollen nicht zwei verschiedene Blau sein.
+    "state-icon-color": r["ha-color-primary-50"],
+    "primary-color": r["ha-color-primary-50"],
+    // Und das Tripel dazu, aus DERSELBEN Stufe. Lieft es der Farbe davon,
+    // waere es genau der Fehler vom 12.10.2026: rgb-accent-color stand auf
+    // 255,152,0, waehrend --accent-color laengst #e8833a war.
+    "rgb-primary-color": alsTripel(r["ha-color-primary-50"]),
   };
 }
 
