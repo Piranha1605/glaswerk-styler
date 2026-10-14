@@ -77,7 +77,6 @@ export function palettenVorschau(teil, dunkel = false) {
 export const PALETTEN = [
   {
     id: "ha",
-    gruppe: "richtung",
     de: "Home Assistant", en: "Home Assistant",
     zweckDe: "HAs eigene Toene, unveraendert. Der Ausgangspunkt, wenn nichts auffallen soll.",
     zweckEn: "Home Assistant's own tones, unchanged. The starting point when nothing should stand out.",
@@ -104,7 +103,6 @@ export const PALETTEN = [
   },
   {
     id: "liquid",
-    gruppe: "richtung",
     de: "Liquid Glass", en: "Liquid Glass",
     zweckDe: "HAs Palette, violetter Akzent. Der Ton der Projektwerkbank.",
     zweckEn: "Home Assistant's palette, violet accent. The tone of the project workbench.",
@@ -133,7 +131,6 @@ export const PALETTEN = [
   },
   {
     id: "warm",
-    gruppe: "richtung",
     de: "Warm", en: "Warm",
     zweckDe: "Bernstein und Terrakotta. Fuer Wohnraeume, in denen Blau kalt wirkt.",
     zweckEn: "Amber and terracotta. For living spaces where blue feels cold.",
@@ -145,7 +142,6 @@ export const PALETTEN = [
   },
   {
     id: "kuehl",
-    gruppe: "richtung",
     de: "Kuehl", en: "Cool",
     zweckDe: "Teal auf grauem Neutral. Ruhig, ohne das Blau von Home Assistant.",
     zweckEn: "Teal on grey neutral. Calm, without Home Assistant's blue.",
@@ -154,7 +150,6 @@ export const PALETTEN = [
   },
   {
     id: "blau",
-    gruppe: "richtung",
     de: "Blau", en: "Blue",
     zweckDe: "Ein klares Blau. Naeher an Material als HAs eigenes Cyan.",
     zweckEn: "A clear blue. Closer to Material than Home Assistant's own cyan.",
@@ -163,7 +158,6 @@ export const PALETTEN = [
   },
   {
     id: "gruen",
-    gruppe: "richtung",
     de: "Gruen", en: "Green",
     zweckDe: "Gruen als Marke. Die Zustandsfarben bleiben davon unberuehrt.",
     zweckEn: "Green as the brand colour. State colours stay as they are.",
@@ -175,7 +169,6 @@ export const PALETTEN = [
   },
   {
     id: "orange",
-    gruppe: "richtung",
     de: "Orange", en: "Orange",
     zweckDe: "HAs eigenes Orange als Marke - heller und klarer als Warm.",
     zweckEn: "Home Assistant's own orange as the brand colour - brighter and cleaner than Warm.",
@@ -186,7 +179,6 @@ export const PALETTEN = [
   },
   {
     id: "grau",
-    gruppe: "richtung",
     de: "Grau", en: "Grey",
     zweckDe: "Blaugrau als Marke. Ruhig, aber nicht farblos wie Monochrom.",
     zweckEn: "Blue-grey as the brand colour. Calm, but not colourless like Monochrome.",
@@ -198,7 +190,6 @@ export const PALETTEN = [
   },
   {
     id: "mono",
-    gruppe: "richtung",
     de: "Monochrom", en: "Monochrome",
     zweckDe: "Nur Graustufen als Akzent. Die Farbe kommt dann allein aus den Geraeten.",
     zweckEn: "Greyscale accent only. Colour then comes from the devices alone.",
@@ -224,7 +215,6 @@ export const PALETTEN = [
   //     dort stehen deshalb die beiden Fassungen der Palette, wo es sie gibt.
   {
     id: "macos",
-    gruppe: "uebernommen",
     de: "macOS", en: "macOS",
     zweckDe: "Apples Systemfarben, an macOS 26 und iOS ausgelesen. Beide tragen dieselben.",
     zweckEn: "Apple's system colours, read from macOS 26 and iOS. Both carry the same ones.",
@@ -290,7 +280,6 @@ export const PALETTEN = [
   // durchgehend eingefaerbtes Schema macht genau das unmoeglich.
   {
     id: "android",
-    gruppe: "uebernommen",
     de: "Android", en: "Android",
     zweckDe: "Material 3, die Grundfarben von Google. Violett auf gedecktem Neutral.",
     zweckEn: "Material 3 baseline from Google. Violet on a muted neutral.",
@@ -309,7 +298,6 @@ export const PALETTEN = [
   },
   {
     id: "nord",
-    gruppe: "uebernommen",
     de: "Nord", en: "Nord",
     zweckDe: "Arktisches Blaugrau. Gedeckt, kuehl, sehr ruhig.",
     zweckEn: "Arctic blue-grey. Muted, cool, very calm.",
@@ -326,7 +314,6 @@ export const PALETTEN = [
   },
   {
     id: "solarized",
-    gruppe: "uebernommen",
     de: "Solarized", en: "Solarized",
     zweckDe: "Der Klassiker von 2011 - als Paar aus Hell und Dunkel entworfen.",
     zweckEn: "The 2011 classic - designed as a light and dark pair from the start.",
@@ -340,7 +327,6 @@ export const PALETTEN = [
   },
   {
     id: "catppuccin",
-    gruppe: "uebernommen",
     de: "Catppuccin", en: "Catppuccin",
     zweckDe: "Pastellig, violett getoent. Die heute meistgenutzte Entwicklerpalette.",
     zweckEn: "Pastel, violet-tinted. Today's most widely used developer palette.",
@@ -356,7 +342,6 @@ export const PALETTEN = [
   },
   {
     id: "gruvbox",
-    gruppe: "uebernommen",
     de: "Gruvbox", en: "Gruvbox",
     zweckDe: "Warm, retro, erdig. Senf und Terrakotta auf Braun.",
     zweckEn: "Warm, retro, earthy. Mustard and terracotta on brown.",

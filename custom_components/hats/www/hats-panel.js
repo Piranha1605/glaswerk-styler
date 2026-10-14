@@ -813,10 +813,9 @@ function ansichtSchreiben(v) {
 
 const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 
-// Wie die Untergruppen einer Baukasten-Sorte heissen. Steht hier und nicht in
-// baukasten.js, weil es eine Sache der Oberflaeche ist - die Daten tragen nur
-// die Kennung.
-const GRUPPEN_TITEL = { richtung: "Richtung", uebernommen: "Uebernommen" };
+// Fuer Attribute. Die Texte sind zwar eigene Daten und keine Eingabe, aber ein
+// Anfuehrungszeichen in einem Zwecktext zerlegte sonst das title-Attribut.
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
 const felderZahl = (st) => st.gruppen.reduce((n, g) => n + g.felder.length, 0);
 const felderGesamt = STUFEN.reduce((n, st) => n + felderZahl(st), 0);
@@ -952,7 +951,6 @@ const TEXTE = {
     "Beide Modi": "Both modes", "Alle anbinden": "Wire up all",
     "Zuordnungen eingetragen": "mappings written", "Toene": "tones", "Aenderungen": "changes", "Speichern": "Save",
     "bietet das Panel an": "the panel offers",
-    "Richtung": "Direction", "Uebernommen": "Adopted",
     "Grundlage nicht geladen: ": "Base not loaded: ",
     "Voriges Feld": "Previous field", "Naechstes Feld": "Next field",
     "Geaendert wird im Fenster, geschrieben noch nicht.": "Changes stay in the window; writing comes next.",
@@ -1233,20 +1231,9 @@ class HatsPanel extends HTMLElement {
       return `
         <section class="bk-sorte">
           <h3>${name}${vorlagen ? ` <span class="bk-zahl">${anV}/${vorlagen} ${T("Tweaks")}</span>` : ""}</h3>
-          <div class="bk-teile">
-            ${s.teile.map((teil, i) => {
+          <div class="bk-teile ${schluessel === "palette" ? "mini" : ""}">
+            ${s.teile.map((teil) => {
               const an = sitzt[schluessel] === teil.id;
-              // Eine Zwischenueberschrift, sobald die Gruppe wechselt. Seit dem
-              // 14.10.2026 stehen bei den Farben zwei Sorten in einer Liste:
-              // eine RICHTUNG (Warm, Blau, Monochrom - eine Stimmung) und eine
-              // UEBERNOMMENE (macOS, Nord, Solarized - eine Herkunft). Ohne die
-              // Trennung sucht man "Nord" zwischen "Warm" und "Kuehl".
-              //
-              // Nur die Sorten, die Gruppen tragen, bekommen eine - Schrift,
-              // Karten und Hintergrund haben keine.
-              const vorher = i ? s.teile[i - 1].gruppe : null;
-              const kopf = teil.gruppe && teil.gruppe !== vorher
-                ? `<h4 class="bk-untertitel">${T(GRUPPEN_TITEL[teil.gruppe] || teil.gruppe)}</h4>` : "";
               // Zehn Hintergruende mit Namen allein sind nicht zu
               // unterscheiden. Der Streifen zeigt die vier Farben des Teils -
               // im Modus, in dem der Nutzer gerade sitzt, sonst waere er eine
@@ -1257,14 +1244,16 @@ class HatsPanel extends HTMLElement {
               // 14.10.2026 - "ich habe keine farben zum auswaehlen", und zu
               // Recht: Da stand nur Text.
               const tupfer = schluessel === "palette" ? palettenVorschau(teil, dunkel) : null;
-              return kopf + `
+              const zweck = this.spr === "en" ? teil.zweckEn : teil.zweckDe;
+              return `
               <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
-                      data-bk-teil="${teil.id}" ${m ? "" : "disabled"}>
+                      data-bk-teil="${teil.id}" ${m ? "" : "disabled"}
+                      ${tupfer ? `title="${esc(zweck)}"` : ""}>
                 ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
                 ${tupfer ? `<span class="bk-tupfer">${tupfer.map((f) =>
                     `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")}</span>` : ""}
                 <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
-                <span class="bk-zweck">${this.spr === "en" ? teil.zweckEn : teil.zweckDe}</span>
+                ${tupfer ? "" : `<span class="bk-zweck">${zweck}</span>`}
                 ${an ? `<span class="bk-haken"><ha-icon icon="mdi:check"></ha-icon></span>` : ""}
               </button>`;
             }).join("")}
@@ -3259,13 +3248,19 @@ class HatsPanel extends HTMLElement {
       .bk-sorte + .bk-sorte { border-top: 1px solid var(--s-linie); padding-top: 22px; }
       .bk-teile { display: grid; gap: 10px;
                   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-      /* Die Zwischenueberschrift laeuft ueber alle Spalten - ohne
-         grid-column stuende sie als schmale Kachel in der ersten. Die erste
-         braucht keinen Abstand nach oben, die folgenden schon. */
-      .bk-untertitel { grid-column: 1 / -1; margin: 14px 0 0 4px; font-size: 11.5px;
-                       font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
-                       color: var(--s-tinte-leise); }
-      .bk-untertitel:first-child { margin-top: 0; }
+      /* Die Farben in klein: Tupfer und Name, kein Zwecktext.
+         Am 14.10.2026 auf Ansage - "nur den haupttext in den karten lassen
+         dafuer kleiner das wir eine art mini auswahlpallette haben". Und
+         wirklich: Bei einer Palette SIND die Tupfer die Auskunft; der Satz
+         darunter wiederholt sie in Worten und macht aus fuenfzehn Kacheln vier
+         Bildschirme. Der Zweck steht als title, also beim Verweilen.
+         Zugleich ist die Trennung in "Richtung" und "Uebernommen" gefallen:
+         Bei kleinen Kacheln sieht man alle auf einmal, und dann trennt die
+         Zwischenueberschrift mehr, als sie ordnet. */
+      .bk-teile.mini { grid-template-columns: repeat(auto-fill, minmax(144px, 1fr)); gap: 8px; }
+      .bk-teile.mini .bk-teil { gap: 7px; padding: 11px 12px 12px; }
+      .bk-teile.mini .bk-name { font-size: 13.5px; }
+      .bk-teile.mini .bk-haken { top: 7px; right: 8px; --mdc-icon-size: 15px; }
       /* Dieselbe Karte wie auf dem Startbild (.startweg): weiche Flaeche,
          Haarlinie, kleiner Schatten, und beim Ueberfahren hebt sie sich einen
          Pixel. Vorher fehlten Schatten und Bewegung - die Kacheln lagen flach
