@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 22:04:17
+# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 22:16:22
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # FASSUNG 1 - eingefroren, damit man sie gegen die naechste stellen kann.
@@ -1180,6 +1180,11 @@ glaswerk_v1:
     }
     /* HATS:glas-kopfleiste-einstellungen:ENDE */
   wa-border-style: "solid"
+  wa-color-brand-fill-loud: "color-mix(in srgb, var(--ha-color-fill-primary-loud-resting) 62%, transparent)"
+  wa-color-brand-fill-normal: "color-mix(in srgb, var(--ha-color-fill-primary-normal-resting) 55%, transparent)"
+  wa-color-brand-fill-quiet: "color-mix(in srgb, var(--ha-color-fill-primary-normal-resting) 40%, transparent)"
+  wa-color-neutral-fill-normal: "color-mix(in srgb, var(--ha-color-fill-neutral-normal-resting) 45%, transparent)"
+  wa-color-neutral-fill-quiet: "color-mix(in srgb, var(--ha-color-fill-neutral-normal-resting) 35%, transparent)"
   wa-focus-ring-offset: "2px"
   wa-focus-ring-style: "solid"
   wa-focus-ring-width: "2px"

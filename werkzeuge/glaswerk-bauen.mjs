@@ -151,6 +151,50 @@ teilAnwenden("hintergrund", teil("hintergrund", "glaswerk"), schreibe);
 // dafuer ist der zweite Durchgang da: Der Baukasten laedt zum Drehen ein.
 schreibe("--ha-section-grid-row-height", "48px", "beide");
 
+// --- Glas auf den Knoepfen --------------------------------------------------
+//
+// Auf Ansage vom 14.10.2026, mit einem Bild des Knopfs "Integration
+// hinzufuegen": "kannst du all den buttons im system auch einen glastouch
+// verpassen" - und gleich danach "ich dem menues" und "und schaltern".
+//
+// WAS GEMESSEN IST. HAs Knoepfe sind seit 2026 Web-Awesome-Bauteile. Ihre
+// Flaeche kommt aus --wa-color-*, je nach appearance:
+//
+//     appearance=accent   --wa-color-brand-fill-loud     der schwebende Knopf
+//     appearance=filled   --wa-color-brand-fill-normal   "Hinzufuegen" in Karten
+//     appearance=plain    durchsichtig, ueberfahren -fill-quiet
+//
+// Drei der Namen traegt HA exakt aus seiner eigenen Farbebene (am Element
+// gegengelesen), die beiden "quiet" zeigen auf die NORMAL-Stufe. Deshalb
+// stehen hier Verweise statt Farben: Wer die Palette aendert, bekommt die
+// Knoepfe mit.
+//
+// WARUM NUR DURCHSCHEINEND UND KEIN FILTER. Kein einziges der Bauteile liest
+// backdrop-filter - ha-button, wa-dropdown und ha-switch alle ohne, gemessen.
+// Und erreichbar waeren sie auch nicht: Auf den Einstellungsseiten haengt UIX
+// nur in ha-drawer, ha-sidebar und home-assistant-main ein (drei Knoten
+// gezaehlt), die Knoepfe liegen tiefer in ha-config-flow-card. Eine Variable
+// erbt dagegen durch jede Grenze.
+//
+// Das reicht trotzdem: Ein durchscheinender Knopf auf einer Glaskarte zeigt
+// deren Weichzeichnung durch. Das Glas kommt von unten, nicht vom Knopf.
+//
+// Die Prozente sind eine Entscheidung, keine Messung - der Akzent bleibt am
+// dichtesten, weil er der einzige Knopf ist, der Weiss traegt.
+for (const [feld, quelle, anteil] of [
+  ["--wa-color-brand-fill-loud",     "--ha-color-fill-primary-loud-resting",   62],
+  ["--wa-color-brand-fill-normal",   "--ha-color-fill-primary-normal-resting", 55],
+  ["--wa-color-brand-fill-quiet",    "--ha-color-fill-primary-normal-resting", 40],
+  ["--wa-color-neutral-fill-normal", "--ha-color-fill-neutral-normal-resting", 45],
+  ["--wa-color-neutral-fill-quiet",  "--ha-color-fill-neutral-normal-resting", 35],
+]) schreibe(feld, `color-mix(in srgb, var(${quelle}) ${anteil}%, transparent)`, "beide");
+
+// Menues und Schalter bleiben, wie sie sind. Gemessen stehen ihre Flaechen
+// schon auf rgba(26, 31, 48, .9) - durchscheinend genug. Weiter aufzumachen
+// kostet mehr, als es bringt: Ein Aufklappmenue ohne Weichzeichnung laesst den
+// Text darunter durchscheinen, und lesbar bleiben muss es. Die Felder stehen
+// im Panel, zum Drehen fuer den, der es anders will.
+
 // --- Schrift auf kuehlem Grund ---------------------------------------------
 //
 // ENTSCHEIDUNG. ha_blanko bringt HAs eigene Schriftfarben mit, und die sind

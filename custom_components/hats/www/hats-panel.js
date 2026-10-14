@@ -471,7 +471,60 @@ const STUFEN = [
         { t: "Hoehe", art: "mass", v: "--wa-form-control-height", ebene: "beide", min: 0, max: 120 },
         { t: "Polster oben und unten", art: "mass", v: "--wa-form-control-padding-block", ebene: "beide", einheit: "em", min: 0, max: 48 },
       ] },
-      
+      // Die Flaechen der Knoepfe. Am 14.10.2026 gemessen, auf Ansage ("kannst
+      // du all den buttons im system auch einen glastouch verpassen"):
+      //
+      // HAs Knoepfe sind seit 2026 Web-Awesome-Bauteile mit einer
+      // appearance-Variante, und die Flaeche kommt NICHT aus --ha-button-*:
+      //
+      //     appearance=accent     --wa-color-<variante>-fill-loud
+      //     appearance=filled     --wa-color-<variante>-fill-normal
+      //     appearance=plain      durchsichtig, beim Ueberfahren -fill-quiet
+      //     appearance=outlined   durchsichtig mit Rahmen
+      //
+      // Die vier --ha-button-*-Felder darueber sind etwas anderes und bleiben.
+      //
+      // Drei der Namen traegt HA EXAKT aus seiner eigenen Farbebene, am
+      // Element gegengelesen:
+      //
+      //     wa-color-brand-fill-loud     = ha-color-fill-primary-loud-resting
+      //     wa-color-brand-fill-normal   = ha-color-fill-primary-normal-resting
+      //     wa-color-neutral-fill-normal = ha-color-fill-neutral-normal-resting
+      //
+      // Die beiden "quiet" zeigen dagegen auf die NORMAL-Stufe, nicht auf die
+      // leise - gemessen, nicht gelesen: brand-fill-quiet stand auf #03223b
+      // wie -normal, waehrend fill-primary-quiet-resting #011220 war.
+      //
+      // Wer hier nichts setzt, verliert nichts: HA rechnet sie aus der Rolle.
+      // Gesetzt werden sie, um die Flaeche durchscheinend zu machen - das ist
+      // der ganze Glastouch, denn ein backdrop-filter liest keines der
+      // Bauteile (gemessen: ha-button, wa-dropdown, ha-switch - alle ohne).
+      // Durchscheinend genuegt trotzdem, solange darunter schon Glas liegt.
+      { name: "Knopfflaechen", felder: [
+        { t: "Akzent", art: "text", v: "--wa-color-brand-fill-loud", ebene: "beide" },
+        { t: "Gefuellt", art: "text", v: "--wa-color-brand-fill-normal", ebene: "beide" },
+        { t: "Ueberfahren", art: "text", v: "--wa-color-brand-fill-quiet", ebene: "beide" },
+        { t: "Neutral gefuellt", art: "text", v: "--wa-color-neutral-fill-normal", ebene: "beide" },
+        { t: "Neutral ueberfahren", art: "text", v: "--wa-color-neutral-fill-quiet", ebene: "beide" } ] },
+      // Menues und Schalter nehmen ihre Flaeche aus denselben wa-Namen.
+      //
+      //     wa-dropdown #menu   background-color: var(--wa-color-surface-raised)
+      //                         border: ... var(--wa-color-surface-border)
+      //     ha-switch .switch   background-color: var(--wa-form-control-background-color)
+      //             .thumb      background-color: var(--wa-form-control-border-color)
+      //     .checked .switch    background-color: var(--wa-form-control-activated-color)
+      //
+      // Gemessen stehen die beiden Flaechen schon auf rgba(26, 31, 48, .9) -
+      // sie sind also bereits durchscheinend. Weiter aufzumachen kostet hier
+      // mehr, als es bringt: Ein Menue ohne Weichzeichnung laesst den Text
+      // darunter durchscheinen, und lesbar bleiben muss es.
+      { name: "Menues und Schalter", felder: [
+        { t: "Menueflaeche", art: "text", v: "--wa-color-surface-raised", ebene: "beide" },
+        { t: "Menuerahmen", art: "text", v: "--wa-color-surface-border", ebene: "beide" },
+        { t: "Schalterspur", art: "text", v: "--wa-form-control-background-color", ebene: "beide" },
+        { t: "Schalterdaumen", art: "text", v: "--wa-form-control-border-color", ebene: "beide" },
+        { t: "Schalter an", art: "text", v: "--wa-form-control-activated-color", ebene: "beide" } ] },
+
     ] },
 
   { n: 4, titel: "Zustaende", symbol: "mdi:gesture-tap-button", kurz: "Lautstaerken, Ueberfahren, Druecken, Deckkraft, Fokus",
@@ -878,6 +931,8 @@ const ZWECK = {
   "Kanten": "Trennlinien und Rahmen, je Rolle und Lautstaerke",
   "Eingabefelder": "Flaechen und Rahmen von Eingaben - die alten input-Namen liest HA 2026 nicht mehr",
   "Schrift invertiert": "Schrift auf umgekehrtem Grund, etwa in einem Hinweisbalken",
+  "Knopfflaechen": "Woraus HAs Knoepfe ihre Flaeche nehmen - durchscheinend macht das Glas",
+  "Menues und Schalter": "Dieselben wa-Namen fuer Aufklappmenues und Kippschalter",
   "Seitenleiste": "Was die Seitenleiste liest - sechs Farben und zwei Breiten",
   "Schalter": "Spur, Daumen und Groesse der Kippschalter - an und aus getrennt",
   "Knoepfe": "Die vier Knopffarben, die HA ausserhalb der Rollen fuehrt",
