@@ -140,7 +140,7 @@ export const TEXTE = {
     fenster: {
       titel: "Einstellungen", zu: "Schließen",
       seiten: { aussehen: "Erscheinungsbild", hintergrund: "Hintergrund", schrift: "Schrift und Größe",
-                bewegung: "Bewegung", anzeige: "Anzeige" },
+                bewegung: "Bewegung", uix: "UIX-Vorlagen", anzeige: "Anzeige" },
       modus: "Modus", karten: "Karten", farbe: "Farbe", flaeche: "Kartenfläche",
       verlaeufe: "Farbverläufe", bilder: "Eigene Bilder",
       keineBilder: "Eigene Bilder lädst du im Panel hoch. Sie liegen dann in config/www/hats.",
@@ -149,6 +149,8 @@ export const TEXTE = {
       sicherungen: "Frühere Fassungen", keineSicherungen: "Noch keine. HATS sichert vor jedem Überschreiben.",
       zurueck: "Zurückholen", zurueckGeholt: (zeit) => `Die Fassung von ${zeit} gilt wieder.`,
       eigene: "Keine der Vorgaben - im Panel angepasst.",
+      vorlagen: { karten: "Karten", oberflaeche: "Oberfläche", hintergrund: "Hintergrund", weitere: "Weitere" },
+      uixHinweis: "Wirkt nur mit UI eXtension, und jede Vorlage gilt für hell und dunkel zugleich. Eigenes CSS im selben Stilziel bleibt beim Schalten stehen.",
       // Mit Sekunden: Ein Regler legt mehrere Fassungen in derselben Minute an,
       // und ohne sie standen fuenf gleiche Zeilen untereinander.
       zeit: (k) => `${k.slice(6, 8)}.${k.slice(4, 6)}. ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
@@ -243,7 +245,7 @@ export const TEXTE = {
     fenster: {
       titel: "Settings", zu: "Close",
       seiten: { aussehen: "Appearance", hintergrund: "Background", schrift: "Text and size",
-                bewegung: "Motion", anzeige: "Display" },
+                bewegung: "Motion", uix: "UIX templates", anzeige: "Display" },
       modus: "Mode", karten: "Cards", farbe: "Colour", flaeche: "Card surface",
       verlaeufe: "Gradients", bilder: "Your images",
       keineBilder: "You upload your own images in the panel. They live in config/www/hats.",
@@ -252,6 +254,8 @@ export const TEXTE = {
       sicherungen: "Earlier versions", keineSicherungen: "None yet. HATS keeps one before every overwrite.",
       zurueck: "Restore", zurueckGeholt: (zeit) => `The version from ${zeit} is back.`,
       eigene: "None of the presets - adjusted in the panel.",
+      vorlagen: { karten: "Cards", oberflaeche: "Interface", hintergrund: "Background", weitere: "More" },
+      uixHinweis: "Works only with UI eXtension, and each template applies to light and dark alike. Your own CSS in the same style target stays when you switch.",
       zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
     },
     transparenz: "Transparency",
@@ -316,6 +320,7 @@ const SYMBOL = {
   aussehen: "mdi:palette-swatch-outline",
   hintergrund: "mdi:image-outline",
   schrift: "mdi:format-size",
+  uix: "mdi:auto-fix",
   anzeige: "mdi:monitor",
 };
 
@@ -723,6 +728,7 @@ function ladeWerkzeug() {
     import(new URL("./hintergrund.js", import.meta.url).href),
     import(new URL("./baukasten.js", import.meta.url).href),
     import(new URL("./hintergrund-seite.js", import.meta.url).href),
+    import(new URL("./vorlagen.js", import.meta.url).href),
   ]).then((module) => Object.assign({}, ...module), (fehler) => {
     // Ein gescheitertes Laden nicht merken - der naechste Versuch darf gelingen.
     werkzeugLaden = null;
@@ -1039,7 +1045,9 @@ export function leseFensterAusDatei(text, themeName, modus, w) {
     return ebene === "beide" ? m.flach[k] : m[ebene]?.[k];
   };
   const sitzt = Object.fromEntries(FENSTER_SORTEN.map((s) => [s, w.erkenneTeil(s, lies)]));
-  return { ...alles, sitzt, bild: w.wirksam(m, modus)["lovelace-background"] ?? "" };
+  // Welche UIX-Vorlagen im Theme stehen - am Marker erkannt, wie im Panel.
+  const vorlagen = Object.fromEntries((w.VORLAGEN ?? []).map((v) => [v.id, w.vorlageIstAn(m, v)]));
+  return { ...alles, sitzt, vorlagen, bild: w.wirksam(m, modus)["lovelace-background"] ?? "" };
 }
 
 // Ein Teil setzen - so, wie das Panel es tut: ein leerer Wert nimmt das Feld
@@ -1081,6 +1089,45 @@ export function schreibeBildInDatei(text, themeName, url, w) {
   w.setze(m, "lovelace-background", wert, "light");
   w.setze(m, "lovelace-background", wert, "dark");
   w.hintergrundGewaehlt(m);
+  return { yaml: w.schreibeTheme(m) };
+}
+
+// Die UIX-Vorlagen im Fenster. Auf Ansage vom 15.10.2026: "koennten wir hier
+// auch die uix tweaks einbinden".
+//
+// Gegliedert nach den Sorten des Baukastens (SORTEN_VORLAGEN), nicht nach den
+// Gruppen der Vorlagen: "Karten", "Oberflaeche" und "Hintergrund" sagen auf
+// dem Tablett, WO etwas wirkt; "Liquid Glass" und "Gleichziehen" nicht. Eine
+// Vorlage ohne Sorte faellt nicht weg, sie steht unter "weitere" - sonst
+// verschwaende sie still, sobald vorlagen.js eine neue bekommt.
+export const FENSTER_VORLAGEN_SORTEN = ["karten", "oberflaeche", "hintergrund"];
+
+export function vorlagenFuersFenster(w) {
+  const alle = w.VORLAGEN ?? [];
+  const sorten = w.SORTEN_VORLAGEN ?? {};
+  const vergeben = new Set(FENSTER_VORLAGEN_SORTEN.flatMap((s) => sorten[s] ?? []));
+  const gruppen = FENSTER_VORLAGEN_SORTEN.map((sorte) => ({
+    sorte, vorlagen: (sorten[sorte] ?? []).map((id) => alle.find((v) => v.id === id)).filter(Boolean),
+  }));
+  gruppen.push({ sorte: "weitere", vorlagen: alle.filter((v) => !vergeben.has(v.id)) });
+  return gruppen.filter((g) => g.vorlagen.length);
+}
+
+// Eine Vorlage an- oder abschalten, mit dem Code des Panels: vorlageAn haengt
+// den Block an (eigenes CSS daneben bleibt), vorlageAus nimmt nur ihn heraus.
+// Geschrieben wird ueber schreibeTheme - nur so setzt uixSchalterSetzen das
+// Feld uix-theme, ohne das UIX keine einzige Vorlage anwendet.
+export function schreibeVorlageInDatei(text, themeName, id, an, w) {
+  const vorlage = (w.VORLAGEN ?? []).find((v) => v.id === id);
+  if (!vorlage) return { grund: "teil", detail: `uix/${id}` };
+  const stand = pruefeDatei(text, themeName, w);
+  if (stand.grund) return stand;
+  const m = stand.modell;
+  // Schon so, wie gewuenscht: nichts schreiben. Ein erneutes vorlageAn wuerde
+  // den Block ans Ende des Felds ruecken und die Datei aendern.
+  if (w.vorlageIstAn(m, vorlage) === Boolean(an)) return { yaml: text };
+  if (an) w.vorlageAn(m, vorlage);
+  else w.vorlageAus(m, vorlage);
   return { yaml: w.schreibeTheme(m) };
 }
 
@@ -1574,6 +1621,30 @@ const STIL_KARTE = `
     font-weight: var(--ha-font-weight-medium, 500);
   }
   .rstatus:empty, .rhinweis:empty { display: none; }
+  /* Die UIX-Vorlagen: Zeilen mit Schalter, durch Linien getrennt. */
+  .vliste { display: flex; flex-direction: column; }
+  .vzeile {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--ha-space-3, 12px);
+    width: 100%; padding: var(--ha-space-2, 8px) 0; text-align: start;
+    color: var(--primary-text-color); font-size: var(--ha-font-size-m, 14px);
+  }
+  .vzeile + .vzeile { border-top: 1px solid var(--divider-color); }
+  .vtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .vzweck { color: var(--secondary-text-color); font-size: var(--ha-font-size-s, 12px); }
+  .vschalter {
+    position: relative; flex: none; width: 40px; height: 24px; box-sizing: border-box;
+    border-radius: var(--ha-border-radius-pill, 999px);
+    background: color-mix(in srgb, var(--disabled-color) 45%, transparent);
+    transition: background-color .15s;
+  }
+  .vschalter::after {
+    content: ""; position: absolute; top: 3px; inset-inline-start: 3px; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--white-color);
+    transition: transform .15s;
+  }
+  .vzeile[aria-checked="true"] .vschalter { background: var(--primary-color); }
+  .vzeile[aria-checked="true"] .vschalter::after { transform: translateX(16px); }
+  .vzeile:focus-visible .vschalter { outline: 2px solid var(--secondary-text-color); outline-offset: 2px; }
 `;
 
 // Das Badge. Die Flaeche zeichnet ha-badge selbst - Hoehe, Rundung, Rand,
@@ -2549,6 +2620,16 @@ class Steuerung extends Basis {
       }
     } else if (seite === "bewegung") {
       teile.push(r.sperre ? gesperrt() : this._gruppe("", ...this._baueGruppe(t, "bewegung", false)));
+    } else if (seite === "uix") {
+      if (r.sperre) teile.push(gesperrt());
+      else {
+        const hinweis = neu("div", "rhinweis");
+        hinweis.textContent = tf.uixHinweis;
+        teile.push(hinweis);
+        for (const g of vorlagenFuersFenster(this._w)) {
+          teile.push(this._gruppe(tf.vorlagen[g.sorte], this._vorlagenListe(g.vorlagen)));
+        }
+      }
     } else if (seite === "anzeige") {
       teile.push(this._gruppe(tf.theme, this._themeWahl(t)));
       if (!r.sperre) teile.push(this._gruppe(tf.sicherungen, this._sicherungsListe(t)));
@@ -2556,6 +2637,31 @@ class Steuerung extends Basis {
     teile.push(neu("div", "rstatus"));
     this._feld.replaceChildren(...teile);
     this._reglerStelle(t);
+  }
+
+  // Vorlagen als Zeilen mit Schalter, wie die Schalter am Mac: Name, darunter
+  // wozu sie da ist. Kein Bild - eine Kachel braucht eines, und fuer die
+  // meisten Vorlagen gibt es noch keins; der Zweck sagt mehr als der Name.
+  _vorlagenListe(vorlagen) {
+    const en = sprache(this._hass) === "en";
+    const an = this._regler?.vorlagen ?? {};
+    const liste = neu("div", "vliste");
+    liste.append(...vorlagen.map((v) => {
+      const b = neu("button", "vzeile");
+      b.type = "button";
+      b.dataset.vorlage = v.id;
+      b.setAttribute("role", "switch");
+      b.setAttribute("aria-checked", String(an[v.id] === true));
+      const text = neu("span", "vtext");
+      const name = neu("span", "vname");
+      name.textContent = en ? v.en : v.de;
+      const zweck = neu("span", "vzweck");
+      zweck.textContent = en ? v.zweckEn : v.zweckDe;
+      text.append(name, zweck);
+      b.append(text, neu("span", "vschalter"));
+      return b;
+    }));
+    return liste;
   }
 
   _gruppe(titel, ...kinder) {
@@ -2768,6 +2874,11 @@ class Steuerung extends Basis {
       // noch einmal an - sonst ginge jede Feinjustierung im Panel verloren.
       if (knopf.getAttribute("aria-pressed") === "true") return true;
       this._fensterSchreiben((text, r) => schreibeTeilInDatei(text, r.name, d.sorte, d.teil, this._w));
+      return true;
+    }
+    if (d.vorlage) {
+      const an = knopf.getAttribute("aria-checked") !== "true";
+      this._fensterSchreiben((text, r) => schreibeVorlageInDatei(text, r.name, d.vorlage, an, this._w));
       return true;
     }
     if (d.bild) {

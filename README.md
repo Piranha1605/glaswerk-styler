@@ -197,6 +197,7 @@ Systemeinstellungen am Mac — links die Bereiche, rechts die Auswahl:
 | Hintergrund | die Farbverläufe des Baukastens und eigene Bilder aus `config/www/hats` |
 | Schrift und Größe | Größe, Schriftart, Rundung |
 | Bewegung | Treiben, Farbpunkte, Farbwechsel, Ausschlag |
+| UIX-Vorlagen | jede Vorlage aus dem Panel mit Schalter, nach Karten, Oberfläche und Hintergrund — wirkt nur mit UI eXtension |
 | Anzeige | Vollbild, Dashboard bearbeiten, Wahl der Theme, frühere Fassungen |
 
 ![Das Einstellungsfenster](docs/bilder/steuerkarte-einstellungsfenster.jpg)

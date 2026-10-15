@@ -1695,6 +1695,39 @@ Bild und Weichzeichnung durch PyYAML. Vier Mutationen gegengeprüft; eine
 fünfte (leerer Wert geschrieben statt entfernt) ist gleichwertig, weil
 `schreibeTheme` leere Werte ohnehin weglässt.
 
+### Die UIX-Vorlagen im Fenster
+
+Auf Ansage vom 15.10.2026, mit einem Bild des Fensters: *„könnten wir hier
+auch die uix tweaks einbinden"*. Ein eigener Bereich „UIX-Vorlagen" zwischen
+Bewegung und Anzeige: jede Vorlage aus `vorlagen.js` als Zeile mit Name, Zweck
+und Schalter.
+
+![Die UIX-Vorlagen im Einstellungsfenster](docs/bilder/steuerkarte-uix-vorlagen.jpg)
+
+**Gegliedert nach den Sorten des Baukastens**, nicht nach den Gruppen der
+Vorlagen: `SORTEN_VORLAGEN` sagt „Karten", „Oberfläche", „Hintergrund" — also
+wo etwas wirkt. „Liquid Glass" und „Gleichziehen" sagen das nicht. Eine
+Vorlage ohne Sorte steht unter „Weitere", statt still zu fehlen.
+
+**Geschrieben wird mit dem Code des Panels.** `vorlageAn` hängt den Block an,
+eigenes CSS daneben bleibt; `vorlageAus` nimmt nur ihn heraus. Ausgegeben wird
+über `schreibeTheme`, und nur so setzt `uixSchalterSetzen` das Feld
+`uix-theme`, ohne das UIX keine einzige Vorlage anwendet. Steht die Vorlage
+schon so, wie gewünscht, wird nichts geschrieben: Ein zweites `vorlageAn`
+rückte den Block ans Ende des Felds und änderte die Datei.
+
+Gemessen an der Testmaschine, `glaswerk` im Dunkelmodus:
+
+    Bereich öffnen         19 Zeilen, 18 an, aus nur glas-lichtkante
+    Lichtkante an          74 Zeilen dazu, keine weg, uix-theme steht,
+                           UIX hängt den Block in 21 Knoten ein
+    Lichtkante aus         die Datei Byte für Byte die von vorher
+    Telefon 375 px         Zeilen umbrechen, Schalter bleiben rechts
+
+`tests/hats-steuerkarte-fenster.test.js`: sieben Prüfungen dazu. Das Orakel
+sind die Marker im Text der Datei, nicht `vorlageIstAn`. Vier Mutationen
+gegengeprüft, am Ende PyYAML.
+
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 
 Beim Zusammenfügen legte der Kartenwähler dem Badge eine knappe Stunde lang

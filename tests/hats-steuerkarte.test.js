@@ -186,7 +186,7 @@ pruefe("Die Datei steht allein - bis jemand den Regler der Bewegung oeffnet", ()
   // zweiten. Nichts von aussen, und nichts ausserhalb von ladeWerkzeug.
   const code = quelle.split("\n").filter((z) => !/^\s*\/\//.test(z)).join("\n");
   const nach = [...code.matchAll(/\bimport\s*\(([^)]*\))/g)].map((m) => m[1]);
-  const MODULE = ["theme.js", "hintergrund.js", "baukasten.js", "hintergrund-seite.js"];
+  const MODULE = ["theme.js", "hintergrund.js", "baukasten.js", "hintergrund-seite.js", "vorlagen.js"];
   assert.deepStrictEqual(nach, MODULE.map((m) => `new URL("./${m}", import.meta.url)`));
   const lader = /function ladeWerkzeug\(\) \{([\s\S]*?)\n\}/.exec(quelle);
   assert.ok(lader && (lader[1].match(/\bimport\s*\(/g) || []).length === MODULE.length, "ein import ausserhalb von ladeWerkzeug");

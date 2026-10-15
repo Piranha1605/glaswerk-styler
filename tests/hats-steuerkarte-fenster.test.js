@@ -14,16 +14,17 @@ import * as theme from "../custom_components/hats/www/theme.js";
 import * as hintergrund from "../custom_components/hats/www/hintergrund.js";
 import * as baukasten from "../custom_components/hats/www/baukasten.js";
 import * as hintergrundSeite from "../custom_components/hats/www/hintergrund-seite.js";
+import * as vorlagen from "../custom_components/hats/www/vorlagen.js";
 import { execFileSync } from "node:child_process";
 import {
   leseReglerAusDatei, schreibeReglerInDatei, leseBewegungAusDatei, leseDarstellungAusDatei, schreibeDarstellungInDatei,
   aktuellerModus, knopfZeile, badgeKurzform, FUNKTIONEN, TEXTE, BEWEGUNG_REGLER, DARSTELLUNG_REGLER,
   leseFensterAusDatei, schreibeTeilInDatei, schreibeBildInDatei, leseUnschaerfe, mitUnschaerfe, FENSTER_SORTEN,
-  BILD_ADRESSE,
+  BILD_ADRESSE, FENSTER_VORLAGEN_SORTEN, vorlagenFuersFenster, schreibeVorlageInDatei,
 } from "../custom_components/hats/www/hats-control-card.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
-const w = { ...theme, ...hintergrund, ...baukasten, ...hintergrundSeite };
+const w = { ...theme, ...hintergrund, ...baukasten, ...hintergrundSeite, ...vorlagen };
 const DATEI = readFileSync(path.join(hier, "../werkzeuge/themes/glaswerk.yaml"), "utf8");
 const NAME = "glaswerk";
 const HELL = '      ha-card-background: "rgba(255, 255, 255, 0.42)"';
@@ -240,5 +241,91 @@ pruefe("Gegenprobe mit PyYAML: Teil, Bild und Weichzeichnung liest Home Assistan
   assert.strictEqual(akzent, baukasten.PALETTEN.find((p) => p.id === "catppuccin").akzent.light);
 });
 
+// ---- UIX-Vorlagen im Fenster (15.10.2026) --------------------------------
+//
+// Das Orakel ist der Text der Datei: Welche Vorlage an ist, steht als Marker
+// "/* HATS:<id>:START */" darin. Gezaehlt wird mit einem eigenen Ausdruck,
+// nicht mit vorlageIstAn.
+const marken = (yaml) => [...yaml.matchAll(/\/\* [A-Z][A-Z0-9]{2,15}:([a-z0-9-]+):START \*\//g)].map((m) => m[1]).sort();
+const AUS_IN_GLASWERK = "glas-lichtkante";
+
+pruefe("Das Fenster liest, welche Vorlagen im Theme stehen - dieselben wie die Marker in der Datei", () => {
+  const stand = leseFensterAusDatei(DATEI, NAME, "light", w);
+  const an = Object.entries(stand.vorlagen).filter(([, a]) => a).map(([id]) => id).sort();
+  assert.ok(an.length > 5, "zu wenige an: " + an.length);
+  assert.deepStrictEqual(an, [...new Set(marken(DATEI))].filter((id) => vorlagen.VORLAGEN.some((v) => v.id === id)));
+  // Gegenprobe: Die eine, die glaswerk nicht traegt, steht auf aus.
+  assert.strictEqual(stand.vorlagen[AUS_IN_GLASWERK], false);
+  assert.ok(!marken(DATEI).includes(AUS_IN_GLASWERK));
+});
+
+pruefe("Jede Vorlage steht genau einmal im Fenster, nach den Sorten des Baukastens", () => {
+  const gruppen = vorlagenFuersFenster(w);
+  const ids = gruppen.flatMap((g) => g.vorlagen.map((v) => v.id));
+  assert.deepStrictEqual([...ids].sort(), vorlagen.VORLAGEN.map((v) => v.id).sort());
+  assert.strictEqual(new Set(ids).size, ids.length, "doppelt");
+  assert.deepStrictEqual(gruppen.map((g) => g.sorte), FENSTER_VORLAGEN_SORTEN.filter((s) =>
+    (baukasten.SORTEN_VORLAGEN[s] ?? []).length));
+  // Gegenprobe: Eine neue Vorlage ohne Sorte faellt nicht still weg.
+  const neu = { id: "probe-neu", ziel: "card", de: "Probe", en: "Probe", css: "a {}" };
+  const mit = vorlagenFuersFenster({ ...w, VORLAGEN: [...vorlagen.VORLAGEN, neu] });
+  assert.deepStrictEqual(mit.at(-1), { sorte: "weitere", vorlagen: [neu] });
+  for (const spr of ["de", "en"]) {
+    assert.ok(TEXTE[spr].fenster.seiten.uix && TEXTE[spr].fenster.uixHinweis, spr);
+    for (const s of [...FENSTER_VORLAGEN_SORTEN, "weitere"]) assert.ok(TEXTE[spr].fenster.vorlagen[s], `${spr}/${s}`);
+  }
+});
+
+pruefe("Einschalten haengt den Block an - alles andere in der Datei bleibt", () => {
+  const { yaml, grund } = schreibeVorlageInDatei(DATEI, NAME, AUS_IN_GLASWERK, true, w);
+  assert.strictEqual(grund, undefined);
+  assert.deepStrictEqual(marken(yaml), [...marken(DATEI), AUS_IN_GLASWERK].sort());
+  // Kein Feld ausserhalb der uix-Bloecke hat sich bewegt.
+  const ohneUix = (t) => t.split("\n").filter((z) => /^ {2}[a-z-]+: /.test(z) && !/^ {2}uix-/.test(z)).join("\n");
+  assert.strictEqual(ohneUix(yaml), ohneUix(DATEI));
+  assert.match(yaml, /^ {2}uix-theme: "glaswerk"$/m, "ohne uix-theme wendet UIX nichts an");
+});
+
+pruefe("An und wieder aus ergibt die Datei Byte fuer Byte", () => {
+  const an = schreibeVorlageInDatei(DATEI, NAME, AUS_IN_GLASWERK, true, w).yaml;
+  const aus = schreibeVorlageInDatei(an, NAME, AUS_IN_GLASWERK, false, w).yaml;
+  assert.notStrictEqual(an, DATEI);
+  assert.strictEqual(aus, DATEI);
+});
+
+pruefe("Abschalten nimmt nur den eigenen Block - die Nachbarn im selben Stilziel bleiben", () => {
+  const { yaml } = schreibeVorlageInDatei(DATEI, NAME, "glas-karten", false, w);
+  const erwartet = marken(DATEI).filter((id) => id !== "glas-karten");
+  assert.deepStrictEqual(marken(yaml), erwartet);
+  assert.ok(marken(yaml).includes("glas-bubble"), "glas-bubble steht im selben uix-card");
+});
+
+pruefe("Was schon so steht, schreibt nichts; Fremdes und Unbekanntes wird abgewiesen", () => {
+  assert.strictEqual(schreibeVorlageInDatei(DATEI, NAME, "glas-karten", true, w).yaml, DATEI);
+  assert.strictEqual(schreibeVorlageInDatei(DATEI, NAME, AUS_IN_GLASWERK, false, w).yaml, DATEI);
+  assert.strictEqual(schreibeVorlageInDatei(DATEI, NAME, "gibt-es-nicht", true, w).grund, "teil");
+  assert.strictEqual(schreibeVorlageInDatei(DATEI, "andere", "glas-karten", false, w).grund, "name");
+  const fremd = DATEI.split("\n").filter((z) => !z.startsWith("# ")).join("\n");
+  assert.strictEqual(schreibeVorlageInDatei(fremd, NAME, "glas-karten", false, w).grund, "fremd");
+});
+
+pruefe("Gegenprobe mit PyYAML: die eingeschaltete Vorlage liest Home Assistant", () => {
+  const { yaml } = schreibeVorlageInDatei(DATEI, NAME, AUS_IN_GLASWERK, true, w);
+  const ziel = vorlagen.VORLAGEN.find((v) => v.id === AUS_IN_GLASWERK).ziel;
+  let aus;
+  try {
+    aus = execFileSync("python3", ["-c",
+      "import sys, yaml, json\nt = yaml.safe_load(sys.stdin.read())['glaswerk']\n"
+      + `print(json.dumps([t['uix-${ziel}'], t['uix-theme']]))`],
+      { input: yaml, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+  } catch (e) {
+    assert.fail("PyYAML liest die Datei nicht: " + String(e.stderr || e.message).trim().split("\n").slice(-3).join(" | "));
+  }
+  const [feld, schalter] = JSON.parse(aus);
+  assert.ok(feld.includes(`/* HATS:${AUS_IN_GLASWERK}:START */`) && feld.includes(`/* HATS:${AUS_IN_GLASWERK}:ENDE */`));
+  assert.ok(feld.includes("/* HATS:glas-karten:START */"), "der Nachbar ist weg");
+  assert.strictEqual(schalter, "glaswerk");
+});
+
 console.log(`\n${n} Pruefungen`);
-if (n < 17) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 24) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }

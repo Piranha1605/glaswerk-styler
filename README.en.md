@@ -194,6 +194,7 @@ Settings — sections on the left, choices on the right:
 | Background | the kit's gradients and your own images from `config/www/hats` |
 | Text and size | size, typeface, corners |
 | Motion | drift, colour dots, colour shift, range |
+| UIX templates | every template from the panel with a switch, grouped by cards, interface and background — works only with UI eXtension |
 | Display | fullscreen, edit dashboard, theme choice, earlier versions |
 
 ![The settings window](docs/bilder/steuerkarte-einstellungsfenster.jpg)
