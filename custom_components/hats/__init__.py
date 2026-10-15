@@ -32,7 +32,9 @@ from homeassistant.core import HomeAssistant
 
 from .const import (
     BILDER_LOCAL_PATH,
+    BILDER_LOCAL_PATH_ALT,
     BILDER_SUBDIR,
+    BILDER_SUBDIR_ALT,
     CARD_FILE,
     DOMAIN,
     FRONTEND_MODULE,
@@ -47,6 +49,7 @@ from .const import (
     VERSION,
     WWW_SUBDIR,
 )
+from .bilder import umziehen
 from .datei import sicherungen_von, theme_schreiben
 from .karte import ressource_abgleichen, ressource_entfernen
 
@@ -466,6 +469,30 @@ def _registriere_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_delete_image)
 
 
+def _bilder_umziehen(hass: HomeAssistant) -> dict:
+    """Einmaliger Umzug nach HATGs Ordner - die Arbeit steht in bilder.py.
+
+    Hier steht nur, WOMIT: die vier Pfade und der Schreiber, der jede
+    geaenderte Theme vorher sichert. bilder.py selbst kennt Home Assistant
+    nicht und laesst sich deshalb gegen ein echtes Verzeichnis pruefen.
+    """
+    themes = Path(hass.config.path(THEMES_SUBDIR))
+    sicherungen = Path(hass.config.path(SICHERUNGEN_SUBDIR))
+
+    def schreibe(name: str, text: str) -> None:
+        theme_schreiben(themes, sicherungen, name, text, True)
+
+    return umziehen(
+        Path(hass.config.path(WWW_SUBDIR, BILDER_SUBDIR_ALT)),
+        Path(hass.config.path(WWW_SUBDIR, BILDER_SUBDIR)),
+        themes,
+        BILDER_LOCAL_PATH_ALT,
+        BILDER_LOCAL_PATH,
+        HATS_MARKE,
+        schreibe,
+    )
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Panel registrieren und Websocket anmelden."""
     www_path = Path(__file__).parent / "www"
@@ -485,6 +512,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             "config/www wurde gerade erst angelegt. Home Assistant liefert %s "
             "erst nach einem Neustart aus - bis dahin bleiben Hintergrundbilder leer.",
             BILDER_LOCAL_PATH,
+        )
+
+    # Der Umzug in HATGs Ordner, einmalig. Er laeuft bei jedem Start, tut aber
+    # nach dem ersten Mal nichts mehr: Ohne config/www/hats gibt es nichts zu
+    # tun, und der Ordner ist danach weg.
+    umzug = await hass.async_add_executor_job(_bilder_umziehen, hass)
+    if umzug["bilder"] or umzug["doppelt"] or umzug["themes"]:
+        _LOGGER.info(
+            "Bilder nach %s umgezogen: %s verschoben, %s waren schon da%s%s",
+            BILDER_LOCAL_PATH,
+            umzug["bilder"],
+            umzug["doppelt"],
+            f", umbenannt: {', '.join(umzug['umbenannt'])}" if umzug["umbenannt"] else "",
+            f", Adressen nachgezogen in: {', '.join(umzug['themes'])}" if umzug["themes"] else "",
         )
 
     # Die Pruefsumme steht im PFAD, nicht in der Abfrage - und sie deckt den

@@ -1106,7 +1106,7 @@ const TEXTE = {
     "Kein Bild": "No image",
     "Noch keine Bilder - lad eins hoch": "No images yet - upload one",
     "Hochgeladen": "Uploaded", "Lag schon da": "Was already there", "Loeschen": "Delete",
-    "Bilder liegen in config/www/hats und kommen unter /local/hats von Home Assistant selbst - die Theme bleibt damit weitergebbar.": "Images live in config/www/hats and are served from /local/hats by Home Assistant itself - that keeps the theme shareable.",
+    "Bilder liegen in config/www/hatg und kommen unter /local/hatg von Home Assistant selbst - denselben Ordner benutzt HATG, beide sehen dieselben Bilder.": "Images live in config/www/hatg and are served from /local/hatg by Home Assistant itself - HATG uses the same folder, so both see the same images.",
     "Add-ons": "Add-ons",
     "Felder angebunden": "fields wired up",
     "von": "of", "Stilzielen an": "style targets on",
@@ -1287,7 +1287,7 @@ class HatsPanel extends HTMLElement {
 
   // Die Bildergalerie.
   //
-  // Bilder liegen in config/www/hats und kommen unter /local/hats von Home
+  // Bilder liegen in config/www/hatg und kommen unter /local/hatg von Home
   // Assistant SELBST. Das ist der ganze Punkt: Eine Adresse, die nur HATS
   // ausliefert, macht eine weitergegebene Theme unbrauchbar - beim Empfaenger
   // bliebe der Hintergrund leer, ohne Fehlermeldung, weil ein fehlendes Bild
@@ -1324,7 +1324,7 @@ class HatsPanel extends HTMLElement {
               <button class="bildweg" data-bild-weg="${b.name}" title="${T("Loeschen")}">✕</button>
             </figure>`).join("")}
         </div>` : `<p class="leer">${T("Noch keine Bilder - lad eins hoch")}</p>`}
-        <p class="noch">${T("Bilder liegen in config/www/hats und kommen unter /local/hats von Home Assistant selbst - die Theme bleibt damit weitergebbar.")}</p>
+        <p class="noch">${T("Bilder liegen in config/www/hatg und kommen unter /local/hatg von Home Assistant selbst - denselben Ordner benutzt HATG, beide sehen dieselben Bilder.")}</p>
       </div>`;
 
     const feld = d.querySelector(".bildwahl");

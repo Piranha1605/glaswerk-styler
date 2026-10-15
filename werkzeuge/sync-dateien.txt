@@ -5,6 +5,7 @@
 __init__.py
 config_flow.py
 const.py
+bilder.py
 datei.py
 karte.py
 manifest.json
@@ -28,7 +29,7 @@ www/vorschau/glas-symbolkachel-nachher.jpg
 www/vorschau/glas-symbolkachel-vorher.jpg
 www/zuordnung.js
 # Die Hilfeseite und ihre fuenf Bilder. Von Hand eingetragen, wie
-# ha_blanko und datei.py: sync-liste-bauen.sh kennt sie noch nicht.
+# ha_blanko, datei.py und bilder.py: sync-liste-bauen.sh kennt sie noch nicht.
 www/hilfe.js
 www/hilfe/bedienelemente.jpg
 www/hilfe/karte.jpg

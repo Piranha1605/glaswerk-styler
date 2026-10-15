@@ -34,12 +34,32 @@ THEMES_SUBDIR = "themes"
 # Namens. Siehe datei.py.
 SICHERUNGEN_SUBDIR = "hats/sicherungen"
 
-# Hintergrundbilder liegen in config/www/hats und kommen unter /local/hats von
+# Hintergrundbilder liegen in config/www/hatg und kommen unter /local/hatg von
 # Home Assistant SELBST. Das ist der ganze Punkt: Eine Adresse, die nur HATS
 # ausliefert, macht eine weitergegebene Theme unbrauchbar - beim Empfaenger
 # bliebe der Hintergrund leer, ohne Fehlermeldung, weil ein fehlendes Bild in
 # CSS einfach nichts tut. HATG hat das 2026-09-30 an einer weitergegebenen
 # Theme gelernt.
 WWW_SUBDIR = "www"
-BILDER_SUBDIR = "hats"
-BILDER_LOCAL_PATH = "/local/hats"
+
+# DERSELBE ORDNER WIE HATG, seit dem 15.10.2026. Auf Ansage: "koennen wir hier
+# die upload funktion benutzen und den upload ordner von HATG verwenden. Dann
+# haben beide systeme den selben bilderpfad."
+#
+# Der Ordner heisst deshalb weiter "hatg", obwohl beide ihn benutzen. Ihn
+# umzubenennen waere der groessere Eingriff: In jeder HATG-Theme steht
+# /local/hatg/<datei>, und HATG schreibt dorthin weiter. Ein Ordnername ist
+# ein Name; ein toter Pfad in einer weitergegebenen Theme ist ein Fehler.
+#
+# Was dadurch moeglich wird: Ein Bild, das in HATG hochgeladen wurde, steht in
+# HATS zur Auswahl - und umgekehrt. Und eine Theme, die in einem der beiden
+# gebaut wurde, zeigt ihr Bild auch im anderen.
+BILDER_SUBDIR = "hatg"
+BILDER_LOCAL_PATH = "/local/hatg"
+
+# Der Ordner von vorher. Er wird beim Start einmal geleert - die Bilder ziehen
+# um, und die Adressen in den eigenen Themes ziehen mit. Beides zusammen,
+# sonst zeigt eine Theme auf ein Bild, das nicht mehr dort liegt, und der
+# Hintergrund bleibt leer, ohne Fehlermeldung.
+BILDER_SUBDIR_ALT = "hats"
+BILDER_LOCAL_PATH_ALT = "/local/hats"

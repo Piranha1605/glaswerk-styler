@@ -102,14 +102,22 @@ import { readFileSync as lies } from "node:fs";
 const py = lies(path.join(hier, "../custom_components/hats/__init__.py"), "utf8");
 const konst = lies(path.join(hier, "../custom_components/hats/const.py"), "utf8");
 
-pruefe("Bilder liegen in config/www/hats, nicht hinter einer eigenen Route", () => {
-  // Der ganze Punkt: Eine Adresse, die nur HATS ausliefert, macht eine
+pruefe("Bilder liegen in config/www/hatg, nicht hinter einer eigenen Route", () => {
+  // Der ganze Punkt bleibt: Eine Adresse, die nur HATS ausliefert, macht eine
   // weitergegebene Theme unbrauchbar - beim Empfaenger bliebe der Hintergrund
   // leer, ohne Fehlermeldung, weil ein fehlendes Bild in CSS nichts tut.
   // HATG hat das am 2026-09-30 an einer weitergegebenen Theme gelernt.
-  assert.match(konst, /BILDER_SUBDIR = "hats"/);
-  assert.match(konst, /BILDER_LOCAL_PATH = "\/local\/hats"/);
+  //
+  // DER ORDNER IST SEIT DEM 15.10.2026 HATGS, auf Ansage: "den upload ordner
+  // von HATG verwenden. Dann haben beide systeme den selben bilderpfad." Er
+  // heisst weiter "hatg", obwohl ihn beide benutzen - in jeder HATG-Theme
+  // steht /local/hatg/<datei>, und HATG schreibt dorthin weiter.
+  assert.match(konst, /BILDER_SUBDIR = "hatg"/);
+  assert.match(konst, /BILDER_LOCAL_PATH = "\/local\/hatg"/);
   assert.match(py, /Path\(hass\.config\.path\(WWW_SUBDIR, BILDER_SUBDIR\)\)/);
+  // Und der alte Ordner steht nur noch als Quelle des Umzugs da.
+  assert.match(konst, /BILDER_SUBDIR_ALT = "hats"/);
+  assert.match(py, /umziehen\(/, "der Umzug wird nicht aufgerufen");
 });
 
 pruefe("Hochladen laesst nur Bilder durch und keinen Pfad", () => {
