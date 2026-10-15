@@ -460,11 +460,13 @@ pruefe("Die Regel fuer verschachtelte Karten steht ALLEIN", () => {
   // ein Selektor in ihrer Liste unbekannt ist. Stuende die Zeile in der
   // Liste der uebrigen Ausnahmen, verloeren Ueberschriften und Textkarten
   // dort ihre Ausnahme mit - in einem Browser, den hier niemand misst.
-  const v = VORLAGEN.find((x) => x.id === "glas-karten");
-  assert.ok(v, "glas-karten gibt es nicht mehr");
+  // Geprueft wird JEDE Vorlage, nicht nur glas-karten: Die Regel ist seit
+  // dem 15.10.2026 in zweien drin, und die naechste kommt bestimmt.
+  let gefunden = 0;
+  for (const v of VORLAGEN) {
   const ohneKommentar = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
   const treffer = [...ohneKommentar.matchAll(/:host-context\([^)]*\)/g)];
-  assert.strictEqual(treffer.length, 1, "nicht genau eine Regel fuer verschachtelte Karten");
+  gefunden += treffer.length;
 
   for (const m of treffer) {
     // Der Selektorkopf dieser Regel: vom vorigen "}" bis zum "{".
@@ -475,13 +477,50 @@ pruefe("Die Regel fuer verschachtelte Karten steht ALLEIN", () => {
       `:host-context steht in einer Selektorliste (${kopf.trim().replace(/\s+/g, " ")}) ` +
       "- ein Browser ohne Unterstuetzung wirft dann die ganze Regel weg");
     const block = ohneKommentar.slice(auf, ohneKommentar.indexOf("}", auf));
-    for (const eig of ["background", "box-shadow", "backdrop-filter"])
-      assert.ok(new RegExp(`${eig}:\\s*none`).test(block), `die Regel raeumt ${eig} nicht ab`);
+    // Weichzeichnung raeumt JEDE dieser Regeln ab; Flaeche und Schatten nur
+    // die, die ueberhaupt eine Flaeche malt.
+    assert.match(block, /backdrop-filter:\s*none/, `${v.id}: die Regel raeumt die Weichzeichnung nicht ab`);
+    if (/background:/.test(block))
+      for (const eig of ["background", "box-shadow"])
+        assert.ok(new RegExp(`${eig}:\\s*none`).test(block), `${v.id}: die Regel raeumt ${eig} nicht ab`);
   }
+  }
+  assert.ok(gefunden >= 1, `keine Regel fuer verschachtelte Karten (${gefunden})`);
+  // Und NUR in "Karten in Glas". In "Nur Weichzeichnung" waere sie falsch:
+  // Dort ist die innere Karte oft die einzige, die ueberhaupt noch
+  // weichzeichnen darf - die Huelle schalten solche Karten sich selbst ab.
+  const nur = VORLAGEN.find((x) => x.id === "glas-nur-weichzeichnung");
+  assert.doesNotMatch(nur.css.replace(/\/\*[\s\S]*?\*\//g, ""), /:host-context/,
+    "Nur-Weichzeichnung nimmt verschachtelte Karten aus - dann bleibt bei Horizon-Cards keine uebrig");
   // Und die uebrigen Ausnahmen stehen weiter in IHRER Liste - sonst waere
   // der Test oben auch dann gruen, wenn es sie gar nicht mehr gaebe.
-  assert.match(ohneKommentar, /:host\(hui-heading-card\) ha-card,/, "die Ueberschriften-Ausnahme fehlt");
-  assert.match(ohneKommentar, /ha-card\.text-only \{/, "die Textkarten-Ausnahme fehlt");
+  const karten = VORLAGEN.find((x) => x.id === "glas-karten").css;
+  assert.match(karten, /:host\(hui-heading-card\) ha-card,/, "die Ueberschriften-Ausnahme fehlt");
+  assert.match(karten, /ha-card\.text-only \{/, "die Textkarten-Ausnahme fehlt");
+});
+
+pruefe("Nur-Weichzeichnung malt keine Flaeche", () => {
+  // Aus HATG uebernommen, auf Ansage vom 15.10.2026. Ihr ganzer Sinn ist,
+  // dass die Karte ihre Flaeche SELBST malt - Horizon-Cards, Shelly-Karten.
+  // Eine Flaeche oder ein Schatten aus dieser Vorlage waere genau das, was
+  // sie vermeiden soll, und der Unterschied zu "Karten in Glas" waere weg.
+  const v = VORLAGEN.find((x) => x.id === "glas-nur-weichzeichnung");
+  assert.ok(v, "die Vorlage gibt es nicht");
+  const ohneKommentar = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
+  // Die erste Regel ist die der Karte selbst.
+  const auf = ohneKommentar.indexOf("{");
+  const block = ohneKommentar.slice(auf, ohneKommentar.indexOf("}", auf));
+  assert.match(block, /backdrop-filter:\s*var\(--ha-card-backdrop-filter/, "sie zeichnet nicht weich");
+  assert.match(block, /border-radius:\s*var\(--ha-card-border-radius/, "sie folgt nicht der Rundung der Theme");
+  assert.doesNotMatch(block, /(^|[\s;{])background(-color|-image)?:/,
+    "sie malt eine Flaeche - dann ist sie 'Karten in Glas' mit anderem Namen");
+  assert.doesNotMatch(block, /(^|[\s;{])box-shadow:/, "sie setzt einen Schatten auf die Karte");
+  // Die beiden Werte kommen aus der Theme, nicht aus der Vorlage.
+  assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, "feste Farbe in der Kartenregel");
+  // Und die Ausnahmen von "Karten in Glas" gelten hier auch: Was keine
+  // Flaeche hat, braucht keinen Weichzeichner.
+  for (const w of ["hui-heading-card", "mushroom-title-card", "type-custom-bubble-card", "text-only"])
+    assert.ok(ohneKommentar.includes(w), `die Ausnahme fuer ${w} fehlt`);
 });
 
 pruefe("Der Grund ausserhalb des Dashboards liegt UNTER dem bewegten", () => {

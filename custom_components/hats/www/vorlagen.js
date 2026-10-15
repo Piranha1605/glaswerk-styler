@@ -290,6 +290,83 @@ ha-card.is-on .bubble-color-background {
 
   // -------------------------------------------------------------------------
   {
+    id: "glas-nur-weichzeichnung",
+    gruppe: "glas",
+    ziel: "card",
+    de: "Nur Weichzeichnung unter der Karte",
+    en: "Blur only beneath the card",
+    zweckDe: "Für Karten, die ihre Fläche selbst malen - Horizon-Cards, Shelly-Karten. Sie bekommen den Weichzeichner der Theme, aber keine zweite Fläche darüber.",
+    zweckEn: "For cards that paint their own surface - Horizon cards, Shelly cards. They get the theme's blur but no second surface on top.",
+    // AUS HATG UEBERNOMMEN, auf Ansage vom 15.10.2026: "ja bitte". Dort heisst
+    // sie "Glas: nur Weichzeichnung unter der Karte" und nennt Horizon-Cards
+    // und Shelly-Karten beim Namen. Der Maintainer erinnerte sich an sie, die
+    // Sitzung an den Horizon-Cards fragte danach - und in HATS fehlte sie.
+    //
+    // WANN MAN SIE NIMMT: wenn "Karten in Glas" aus ist. Die Karte malt dann
+    // ihre Flaeche selbst, und von der Theme kommt nur der Weichzeichner
+    // darunter. Beide zugleich schadet nicht, bringt aber nichts: "Karten in
+    // Glas" setzt dieselbe Weichzeichnung schon, mit Flaeche darueber.
+    css: `/* Nur die Karte selbst, nicht ihr Wirt: Ein backdrop-filter auf dem Wirt
+   macht ihn zum Bezugsrahmen fuer position: fixed, und Bubble-Pop-ups fallen
+   dann auf Hoehe 0 zusammen. */
+:host(ha-card),
+ha-card {
+  backdrop-filter: var(--ha-card-backdrop-filter, blur(18px));
+  -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(18px));
+  /* Die Weichzeichnung folgt der Rundung DIESES Elements. Karten, deren
+     Flaeche tiefer liegt, runden ihre leere ha-card sonst mit 16 px und die
+     Flaeche darin mit 24 px - die Ecken lagen dann ausserhalb. */
+  border-radius: var(--ha-card-border-radius, 12px) !important;
+}
+
+/* Die Menueleiste der Horizon-Cards ist eine Pille. Ihre Flaeche liest keinen
+   Kartenschatten und stuende neben den uebrigen Karten ohne Kontur; sie
+   bekommt den der Theme, die Kapsel des aktiven Punkts die plastische
+   Innenkante. Die kommt zuerst aus --karten-gewaehlt-schatten, der
+   gemeinsamen Kette der Horizon-Cards - sonst ueberstimmte diese Regel deren
+   eigenen Verlauf fuer aktive Flaechen. */
+ha-card:has(.menue-leiste) {
+  border-radius: 9999px !important;
+}
+.menue-leiste {
+  box-shadow: var(--ha-card-box-shadow, 0 8px 32px rgba(0, 0, 0, 0.28)) !important;
+}
+.menue-kapsel {
+  box-shadow: var(--karten-gewaehlt-schatten,
+    inset 3px 3px 7px color-mix(in srgb, var(--accent-color) 62%, #000000),
+    inset -2px -2px 6px color-mix(in srgb, var(--accent-color) 74%, #ffffff)) !important;
+}
+
+/* Dieselben Ausnahmen wie bei "Karten in Glas": Was keine Flaeche hat, braucht
+   auch keinen Weichzeichner - er kostet nur Rechenzeit. Bubbles Huelle
+   umschliesst die Container, die "Bubble Card in Glas" schon weichzeichnet. */
+:host(.type-custom-bubble-card) ha-card,
+:host(hui-heading-card) ha-card,
+:host(mushroom-title-card) ha-card,
+:host(mushroom-chips-card) ha-card,
+:host(.text-only),
+ha-card.text-only {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+
+/* HIER STEHT ABSICHTLICH KEINE REGEL FUER VERSCHACHTELTE KARTEN.
+   In "Karten in Glas" gibt es sie, und sie ist dort richtig: Zwei Flaechen
+   uebereinander sind ein Kasten im Kasten. Hier waere sie falsch.
+
+   Der Fall, fuer den diese Vorlage gemacht ist, sieht naemlich genau so aus:
+   Eine Huelle ohne Flaeche, darin die Karte, die ihre Flaeche selbst malt -
+   Horizon-Cards tun das. Die Huelle schalten solche Karten sich oft selbst
+   ab (inline, mit !important). Naehme ich der inneren dann auch noch die
+   Weichzeichnung, bliebe GAR KEINE uebrig, und die Vorlage taete bei genau
+   den Karten nichts, fuer die sie da ist.
+
+   Zweimal weichzeichnen kostet Rechenzeit und sieht etwas staerker aus. Das
+   ist der Preis, und er ist kleiner als der andere. */`,
+  },
+  // -------------------------------------------------------------------------
+  {
     id: "glas-lichtkante",
     gruppe: "glas",
     ziel: "card",

@@ -1149,7 +1149,7 @@ export const KARTENSTIL_FELDER = [...KARTENFELDER, ...FLAECHENFELDER];
 // sie sind weder Karte noch Hintergrund.
 
 export const SORTEN_VORLAGEN = {
-  karten: ["glas-karten", "glas-bubble", "glas-lichtkante", "glas-symbolkachel",
+  karten: ["glas-karten", "glas-bubble", "glas-nur-weichzeichnung", "glas-lichtkante", "glas-symbolkachel",
            "sync-bedienelemente", "glas-knoepfe", "regler-gluehen", "regler-schlank"],
   hintergrund: ["abschnitte-trennen"],
   oberflaeche: ["grund-ueberall", "glas-leistenknoepfe", "glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
