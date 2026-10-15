@@ -1069,11 +1069,11 @@ import { rampe, begleiter } from "./palette.js";
 // Also nur die Farben. Die Wahl selbst steht in der Liste, und eine Seite, die
 // nur wiederholt, worauf man gerade geklickt hat, ist ein Klick zu viel.
 export function seiteHatInhalt(schluessel) {
-  // Die Farben haben seit dem 14.10.2026 eine Seite, obwohl sie weder
-  // Vorlagen noch Felder tragen: Dort steht die freie Farbwahl. Auf Ansage -
-  // "dann brauchen wir bei den Farben ein Feld wo der User seine farben frei
-  // waehlen kann".
-  if (schluessel === "palette") return true;
+  // Die Ausnahme fuer "palette" ist am 15.10.2026 wieder weggefallen: Die
+  // freie Farbwahl stand einen Tag lang als Abschnitt auf dieser Seite und
+  // sitzt seitdem in einem eigenen Fenster, erreichbar ueber eine Kachel in
+  // der Liste. Damit traegt die Seite wieder nichts - und eine Seite, die nur
+  // wiederholt, worauf man geklickt hat, ist ein Klick zu viel.
   return (SORTEN_VORLAGEN[schluessel] || []).length > 0
       || (SORTEN_FELDER[schluessel] || []).length > 0;
 }
@@ -1084,6 +1084,44 @@ export function seiteHatInhalt(schluessel) {
 // Saettigung der Rolle neutral auf 0. Am 14.10.2026 gegengeprobt - Nords
 // #4c566a, Gruvboxs #928374 und reines Rot ergeben dieselbe graue Rampe. Ein
 // Regler dafuer waere ein Regler ohne Wirkung.
+// Aus eingegebenen Farben ein vollwertiges Teil machen
+//
+// Auf Ansage vom 15.10.2026: "koennen wir so ein fenster machen wo der user
+// eigene farben eingeben kann", mit einem Bild der Gruvbox-Kachel.
+//
+// Das Ergebnis sieht aus wie jede andere Palette und wird auch so behandelt:
+// teilAnwenden() schreibt daraus die Rampen, palettenVorschau() zeichnet die
+// Tupfer. Es gibt deshalb KEINE zweite Strecke fuer eigene Farben - was der
+// Nutzer eingibt, laeuft durch denselben Code wie Nord oder Gruvbox.
+//
+// neutral steht mit Absicht nicht in FREIE_ROLLEN: rampe() setzt die
+// Saettigung der neutralen Rolle auf null, der eingegebene Ton waere also
+// ohne Wirkung. Ein Feld, das nichts tut, ist schlimmer als keines.
+//
+// Das Teil bekommt KEINE id aus dem Baukasten: Es steht nicht in PALETTEN,
+// und erkenneTeil() wuerde es nie wiederfinden. Nach dem Anwenden zeigt die
+// Liste deshalb keinen Haken - das ist richtig so, denn die Theme traegt dann
+// eine Rampe, die zu keinem der fuenfzehn Teile gehoert.
+export function eigenePalette(farben, akzent) {
+  const hex = (v) => (/^#[0-9a-f]{6}$/i.test(String(v || "")) ? String(v) : null);
+  const aus = {};
+  for (const { rolle } of FREIE_ROLLEN) {
+    const h = hex(farben && farben[rolle]);
+    if (h) aus[rolle] = h;
+  }
+  const a = hex(akzent);
+  return {
+    id: "eigene",
+    de: "Eigene Farben", en: "Own colours",
+    zweckDe: "Selbst eingegeben.", zweckEn: "Entered by hand.",
+    farben: aus,
+    // Hell und dunkel derselbe Ton: Eine Palette hebt ihren Akzent im Dunkeln
+    // sonst eine Stufe an (siehe Glaswerk). Das zu raten waere eine
+    // Entscheidung fuer den Nutzer - er hat genau eine Farbe genannt.
+    ...(a ? { akzent: { light: a, dark: a } } : {}),
+  };
+}
+
 export const FREIE_ROLLEN = [
   { rolle: "primary", de: "Primaer", en: "Primary" },
   { rolle: "red", de: "Rot", en: "Red" },

@@ -28,6 +28,7 @@ import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
 import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, seiteHatInhalt, FREIE_ROLLEN,
+         eigenePalette,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
@@ -1451,6 +1452,15 @@ class HatsPanel extends HTMLElement {
                 ${an ? `<span class="bk-haken"><ha-icon icon="mdi:check"></ha-icon></span>` : ""}
               </button>`;
             }).join("")}
+            ${schluessel === "palette" ? `
+            <button class="bk-teil bk-eigen" data-bk-farbfenster ${m ? "" : "disabled"}
+                    title="${esc(T("Eigene Farben eingeben"))}">
+              <span class="bk-tupfer">${(this._freieFarben && FREIE_ROLLEN.some((r) => this._freieFarben[r.rolle])
+                  ? palettenVorschau(eigenePalette(this._freieFarben, this._freieFarben.akzent), dunkel)
+                  : []).map((f) => `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")
+                  || `<i class="bk-leer"></i><i class="bk-leer"></i><i class="bk-leer"></i>`}</span>
+              <span class="bk-name">${T("Eigene...")}</span>
+            </button>` : ""}
           </div>
         </section>`;
     };
@@ -1554,16 +1564,17 @@ class HatsPanel extends HTMLElement {
             }).join("")}
           </div>
         </section>` : ""}
-        ${schluessel === "palette" ? this.farbwahlHtml(lies, T) : ""}
         ${schluessel === "hintergrund" ? hintergrundSeiteHtml({ modell: m, spr: this.spr, wetter: wetterEntitaeten(this._hass) }) : ""}
       </div>`;
   }
 
-  // Freie Farbwahl auf der Seite der Sorte "Farben"
+  // Das Fenster fuer eigene Farben
   //
-  // Auf Ansage vom 14.10.2026. Vorher konnte man nur eine der fuenfzehn
-  // Paletten nehmen; wer seine eigene Farbe wollte, musste 55 Stufen von Hand
-  // setzen.
+  // Auf Ansage vom 14.10.2026 zuerst als Abschnitt auf der Farbseite, am
+  // 15.10.2026 auf Ansage ins Fenster gezogen: "koennen wir so ein fenster
+  // machen wo der user eigene farben eingeben kann", mit einem Bild der
+  // Gruvbox-Kachel. Es liegt deshalb im ZWEITEN Overlay - ueber dem
+  // Baukasten, nicht an seiner Stelle.
   //
   // WAS DER WAEHLER ZEIGT, ist Stufe 50 der jeweiligen Rolle - nicht die
   // Basis, aus der die Rampe einmal entstand. Die laesst sich naemlich nicht
@@ -1576,45 +1587,92 @@ class HatsPanel extends HTMLElement {
   // auf dem Schirm SIEHT. Und gedreht wird nur, was der Nutzer anfasst - aus
   // seiner Farbe entsteht dann eine saubere neue Rampe. Ohne Anfassen wird
   // nichts neu gerechnet, also driftet auch nichts.
-  farbwahlHtml(lies, T) {
+  //
+  // Gemerkt wird die Wahl NUR fuer diese Sitzung. Ein eigenes Feld in der
+  // Theme waere ein Hilfsfeld, und die bleiben beim Abschalten als Verweis
+  // ins Leere stehen. Nach dem Neuladen steht im Waehler wieder, was die
+  // Theme hergibt - das ist die Wahrheit, nur weniger bequem.
+  zeigeFarbfenster() {
+    const T = (x) => t(x, this.spr);
+    const m = ZUSTAND.modell;
+    if (!m) return;
     const modus = this._hass?.themes?.darkMode ? "dark" : "light";
-    // Der Waehler haelt die GEWAEHLTE Farbe, die Zeile darunter zeigt, was
-    // daraus wird. Beides, weil beides stimmt und keines allein genuegt:
-    //
-    // Zeigte der Waehler Stufe 50, spraenge er nach jedem Drehen weg - wer
-    // #1db954 waehlt, saehe danach #127635 im Feld und hielte es fuer kaputt
-    // (am 14.10.2026 genau so gemessen). Zeigte nur er die Wahl, wuesste
-    // niemand, welcher Ton tatsaechlich auf dem Schirm landet.
-    //
-    // Gemerkt wird die Wahl NUR fuer diese Sitzung. Ein eigenes Feld in der
-    // Theme waere ein Hilfsfeld, und die bleiben beim Abschalten als Verweis
-    // ins Leere stehen. Nach dem Neuladen steht im Waehler wieder, was die
-    // Theme hergibt - das ist die Wahrheit, nur weniger bequem.
+    const lies = (name, ebene) => {
+      const k = name.replace(/^--/, "");
+      return ebene === "beide" ? m.flach[k] : m[ebene]?.[k];
+    };
     this._freieFarben ??= {};
-    const felder = FREIE_ROLLEN.map((r) => {
-      const wert = lies(`--ha-color-${r.rolle}-50`, "beide") || "";
-      const wahl = this._freieFarben[r.rolle] || wert;
-      return `
-        <label class="bk-farbe">
-          <input type="color" data-bk-rolle="${r.rolle}" value="${/^#[0-9a-f]{6}$/i.test(wahl) ? wahl : "#888888"}">
-          <span>${this.spr === "en" ? r.en : r.de}</span>
-          <b title="${T("Stufe 50 der Rampe - der Ton, der auf dem Schirm landet")}">${wert || "–"}</b>
-        </label>`;
-    }).join("");
+
+    const zeile = (rolle, name, wahl, ist) => `
+      <label class="bk-farbe">
+        <input type="color" data-ff-rolle="${rolle}"
+               value="${/^#[0-9a-f]{6}$/i.test(wahl) ? wahl : "#888888"}">
+        <span>${name}</span>
+        <b title="${esc(T("Stufe 50 der Rampe - der Ton, der auf dem Schirm landet"))}">${ist || "–"}</b>
+      </label>`;
+
+    const d = this.shadowRoot.querySelector(".overlay.zwei .dialog");
     const akzent = lies("--accent-color", modus) || "";
-    return `
-      <section class="bk-sorte">
-        <h3>${T("Eigene Farben")}</h3>
-        <p class="bk-zweck">${T("Jede Farbe erzeugt elf Stufen. Neutral fehlt mit Absicht - HA rechnet die Rolle grau, egal welcher Ton hineingeht.")}</p>
+    d.innerHTML = `
+      <header class="dkopf">
+        <div><h2>${T("Eigene Farben")}</h2><p>${T("Jede Farbe erzeugt elf Stufen")}</p></div>
+        <button class="zu" aria-label="${esc(T("Schließen"))}">✕</button>
+      </header>
+      <div class="feldseite">
+        <p class="bk-zweck">${T("Neutral fehlt mit Absicht - HA rechnet die Rolle grau, egal welcher Ton hineingeht.")}</p>
         <div class="bk-farben">
-          ${felder}
-          <label class="bk-farbe">
-            <input type="color" data-bk-akzent="1" value="${/^#[0-9a-f]{6}$/i.test(akzent) ? akzent : "#888888"}">
-            <span>${T("Akzent")}</span>
-            <b>${akzent || "–"}</b>
-          </label>
+          ${FREIE_ROLLEN.map((r) => zeile(r.rolle, this.spr === "en" ? r.en : r.de,
+              this._freieFarben[r.rolle] || lies(`--ha-color-${r.rolle}-50`, "beide") || "",
+              lies(`--ha-color-${r.rolle}-50`, "beide") || "")).join("")}
+          ${zeile("akzent", T("Akzent"), this._freieFarben.akzent || akzent, akzent)}
         </div>
-      </section>`;
+        <div class="ff-vorschau"><span class="bk-tupfer"></span>
+          <em>${T("So sehen die Tupfer der Palette danach aus")}</em></div>
+        <div class="importwege">
+          <button class="modalknopf ff-anwenden">${T("Uebernehmen")}</button>
+        </div>
+      </div>`;
+
+    const tupfer = d.querySelector(".ff-vorschau .bk-tupfer");
+    const zeichneTupfer = () => {
+      const teil = eigenePalette(this._freieFarben, this._freieFarben.akzent);
+      tupfer.innerHTML = palettenVorschau(teil, modus === "dark")
+        .map((f) => `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("");
+    };
+    // Erst einmal mit dem, was die Theme schon hergibt - sonst steht die
+    // Vorschau leer da, bis jemand eine Farbe anfasst.
+    for (const r of FREIE_ROLLEN)
+      this._freieFarben[r.rolle] ??= lies(`--ha-color-${r.rolle}-50`, "beide") || undefined;
+    this._freieFarben.akzent ??= akzent || undefined;
+    zeichneTupfer();
+
+    d.querySelectorAll("[data-ff-rolle]").forEach((el) =>
+      el.addEventListener("input", () => {
+        this._freieFarben[el.dataset.ffRolle] = el.value;
+        zeichneTupfer();
+      })
+    );
+    d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    d.querySelector(".ff-anwenden").addEventListener("click", () => {
+      const teil = eigenePalette(this._freieFarben, this._freieFarben.akzent);
+      // Dieselbe Strecke wie eine Kachel: teilAnwenden schreibt nicht selbst,
+      // es meldet nur, was es gesetzt hat - die Buchfuehrung bleibt hier.
+      const r = teilAnwenden("palette", teil, (name, wert, ebene) => {
+        const k = name.replace(/^--/, "");
+        if (wert === "" || wert === null || wert === undefined) entferne(ZUSTAND.modell, k);
+        else setze(ZUSTAND.modell, k, wert, ebene);
+        ZUSTAND.geaendert.add(k);
+      });
+      ZUSTAND.meldung = { art: "gut",
+        text: `${T("Eigene Farben")} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
+      this.schliesseFeld();
+      this.zeichneBaukasten();
+      this.zeichneZaehler();
+    });
+
+    const o = this.shadowRoot.querySelector(".overlay.zwei");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
   }
 
   bindeBkSeite(wurzel) {
@@ -1639,47 +1697,6 @@ class HatsPanel extends HTMLElement {
       });
     });
 
-    // Die freie Farbwahl. change und nicht input: Ein Farbwaehler feuert
-    // waehrend des Ziehens, und jede Runde rechnet elf Stufen plus Begleiter.
-    wurzel.querySelectorAll("[data-bk-rolle]").forEach((el) =>
-      el.addEventListener("change", () => {
-        if (!ZUSTAND.modell) return;
-        const r = rampe(el.value, el.dataset.bkRolle);
-        if (!r) return;
-        // Die Wahl merken, damit der Waehler nicht wegspringt.
-        (this._freieFarben ??= {})[el.dataset.bkRolle] = el.value;
-        for (const [k, v] of Object.entries(r)) {
-          setze(ZUSTAND.modell, k, v, "beide");
-          ZUSTAND.geaendert.add(k);
-        }
-        // Die Begleiter haengen an der Primaerfarbe - inklusive
-        // --primary-color und seinem Tripel, die sonst auf der alten stehen
-        // blieben.
-        if (el.dataset.bkRolle === "primary") {
-          const b = begleiter(el.value);
-          if (b) for (const [k, v] of Object.entries(b)) {
-            setze(ZUSTAND.modell, k, v, "beide");
-            ZUSTAND.geaendert.add(k);
-          }
-        }
-        this.zeichneBaukasten();
-        this.zeichneZaehler();
-      })
-    );
-
-    // Der Akzent ist das Einzige der Palette, das je Modus verschieden ist -
-    // geschrieben wird deshalb nur der Modus, den der Nutzer gerade sieht.
-    // Beide zugleich zu setzen hiesse, den anderen blind zu ueberschreiben.
-    wurzel.querySelectorAll("[data-bk-akzent]").forEach((el) =>
-      el.addEventListener("change", () => {
-        if (!ZUSTAND.modell) return;
-        const modus = this._hass?.themes?.darkMode ? "dark" : "light";
-        setze(ZUSTAND.modell, "accent-color", el.value, modus);
-        ZUSTAND.geaendert.add("accent-color");
-        this.zeichneBaukasten();
-        this.zeichneZaehler();
-      })
-    );
 
     wurzel.querySelectorAll("[data-bk-vorlage]").forEach((el) =>
       el.addEventListener("change", () => {
@@ -1714,6 +1731,8 @@ class HatsPanel extends HTMLElement {
         this.zeichneBaukasten();
       })
     );
+    wurzel.querySelector("[data-bk-farbfenster]")?.addEventListener("click",
+      () => this.zeigeFarbfenster());
     wurzel.querySelectorAll("[data-bk-teil]").forEach((b) =>
       b.addEventListener("click", () => {
         if (!ZUSTAND.modell) return;
@@ -3218,11 +3237,29 @@ class HatsPanel extends HTMLElement {
          mehr darin - die Liste darunter ist der Weg, und beide fuehrten
          ohnehin in dasselbe Pop-up. Geblieben sind die Aktionen, rechts, wo
          sie vorher auch sassen. */
+      /* Das Aussehen der Steuerleiste, auf Ansage vom 15.10.2026: "du kannst
+         das design mit uebernehmen fuer unsere kopfleiste". Die Zahlen sind
+         aus hats-control-card.js ABGELESEN, nicht nachempfunden:
+
+             Leiste    padding 8px (--ha-space-2), Rundung --ha-card-border-radius
+             Knopf     40px hoch, Rundung --ha-border-radius-lg (12px)
+             Luecke    4px (--ha-space-1)
+             Symbol    20px
+
+         Uebersetzt in die eigenen Tokens des Panels - dieselbe Proportion,
+         aber ohne Theme-Variablen, denn das Panel benutzt bewusst keine
+         (siehe Kopf der Datei): --s-r-gross ist 22px, --s-r ist 14px.
+
+         Und das Glas: Die Steuerleiste zeichnet weich, was hinter ihr liegt.
+         Der Panel-Hintergrund ist ein Verlauf, also bringt das hier dasselbe. */
       .menueleiste { display: flex; align-items: center; gap: 4px;
-                     padding: 6px; margin-bottom: 16px;
-                     border-radius: 999px; background: var(--s-glas-innen);
-                     box-shadow: inset 0 1px 0 var(--s-kante); }
-      .ml-marke { width: 30px; height: 30px; flex: none; border-radius: 9px; margin: 0 6px 0 2px;
+                     padding: 8px; margin-bottom: 16px;
+                     border-radius: var(--s-r-gross); background: var(--s-glas-innen);
+                     backdrop-filter: blur(14px) saturate(150%);
+                     -webkit-backdrop-filter: blur(14px) saturate(150%);
+                     box-shadow: var(--s-schatten-klein); }
+      .ml-marke { width: 32px; height: 32px; flex: none; border-radius: var(--s-r-klein);
+                  margin: 0 6px 0 2px;
                   background: linear-gradient(145deg, #c6f24d, #8fd92a);
                   box-shadow: var(--s-schatten-klein); }
       /* margin-left: auto hielt frueher der Trenner - er stand zwischen den
@@ -3230,11 +3267,14 @@ class HatsPanel extends HTMLElement {
          die Aktionen bleiben aber rechts: Wer sie dort sucht, findet sie dort. */
       .ml-aktionen { display: flex; gap: 2px; margin-left: auto; }
       .ml-knopf { display: flex; align-items: center; justify-content: center; flex: none;
-                  width: 38px; height: 38px; border: 0; background: none;
-                  color: var(--s-tinte); cursor: pointer; border-radius: 999px;
+                  width: 40px; height: 40px; border: 0; background: none;
+                  color: var(--s-tinte); cursor: pointer; border-radius: var(--s-r);
                   transition: background .15s ease, box-shadow .15s ease; }
-      .ml-knopf ha-icon { --mdc-icon-size: 19px; color: var(--s-tinte-leise); flex: none; }
-      .ml-knopf:hover:not([disabled]) { background: rgba(255,255,255,.7); }
+      .ml-knopf ha-icon { --mdc-icon-size: 20px; color: var(--s-tinte-leise); flex: none; }
+      /* Ueberfahren hebt den Knopf an, wie jede andere Flaeche im Panel -
+         vorher war es nur ein helleres Weiss ohne Plastik. */
+      .ml-knopf:hover:not([disabled]) { background: var(--s-karte);
+                                        box-shadow: var(--s-schatten-klein); }
       /* Nicht verfuegbar heisst leiser, nicht unsichtbar - siehe die alte
          Schalterreihe, wo opacity .35 den Knopf verschwinden liess. */
       .ml-knopf[disabled] { cursor: default; }
@@ -3295,6 +3335,11 @@ class HatsPanel extends HTMLElement {
 
       .uixraster { display: grid; gap: 10px; margin-top: 14px;
                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+      /* Die Kachel "Eigene..." hat noch keine Farben - drei graue Tupfer
+         sagen das, ohne dass dort eine Luecke klafft. */
+      .bk-eigen .bk-leer { background: var(--s-linie); }
+      .ff-vorschau { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; }
+      .ff-vorschau em { color: var(--s-tinte-leise); font-style: normal; font-size: 13px; }
       .uixziel { background: var(--s-glas-innen); box-shadow: inset 0 1px 0 var(--s-kante);
                  border-radius: var(--s-r); padding: 11px 13px; }
       /* Ein eingeschaltetes Ziel traegt ein Textfeld und bekommt deshalb die

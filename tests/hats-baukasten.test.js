@@ -361,12 +361,14 @@ pruefe("Eine Sorte ohne Inhalt bekommt keine Unterseite", () => {
   // Farben/Richtung der rest ist doppelt." Ein Klick auf eine Palette oeffnete
   // eine Seite, auf der nur dieselbe Kachel noch einmal stand.
   //
-  // Seit demselben Tag, spaeter, haben die Farben doch eine Seite - aber nicht
-  // mit derselben Kachel darauf, sondern mit der freien Farbwahl. Auf Ansage:
-  // "dann brauchen wir bei den Farben ein Feld wo der User seine farben frei
-  // waehlen kann". Der Grund von damals bleibt gueltig: Eine Seite, die nur
-  // wiederholt, worauf man geklickt hat, ist ein Klick zu viel.
-  assert.strictEqual(seiteHatInhalt("palette"), true, "die freie Farbwahl ist weg");
+  // Spaeter am selben Tag hatten die Farben doch eine Seite, mit der freien
+  // Farbwahl darauf. Am 15.10.2026 ist sie ins Fenster gezogen, auf Ansage:
+  // "koennen wir so ein fenster machen wo der user eigene farben eingeben
+  // kann". Damit gilt wieder, was am Anfang galt - und der Grund von damals
+  // ist derselbe: Eine Seite, die nur wiederholt, worauf man geklickt hat,
+  // ist ein Klick zu viel.
+  assert.strictEqual(seiteHatInhalt("palette"), false,
+    "die Farbseite traegt wieder etwas - ein Klick auf eine Palette oeffnet dann eine leere Seite");
   assert.ok(FREIE_ROLLEN.length >= 3, "zu wenige Rollen zur Wahl");
   // neutral steht NICHT dabei - rampe() zwingt die Saettigung dort auf 0,
   // der Regler haette keine Wirkung.
@@ -376,19 +378,23 @@ pruefe("Eine Sorte ohne Inhalt bekommt keine Unterseite", () => {
     assert.strictEqual(seiteHatInhalt(k), true, `${k} hat nichts zu zeigen`);
 
   // Gegenprobe gegen eine haendisch gepflegte Liste: Die Antwort kommt aus den
-  // Daten, nicht aus einer zweiten Aufzaehlung. "palette" ist die eine
-  // Ausnahme, und sie steht als Ausnahme da statt still mitzulaufen - ihre
-  // Seite traegt die freie Farbwahl, die weder Vorlage noch Feld ist.
+  // Daten, nicht aus einer zweiten Aufzaehlung. Seit dem 15.10.2026 gibt es
+  // dabei keine Ausnahme mehr - die freie Farbwahl stand einen Tag lang als
+  // Abschnitt auf der Farbseite und sitzt jetzt in einem eigenen Fenster.
   for (const k of Object.keys(BAUKASTEN)) {
-    const hat = k === "palette"
-      || (SORTEN_VORLAGEN[k] || []).length > 0 || (SORTEN_FELDER[k] || []).length > 0;
+    const hat = (SORTEN_VORLAGEN[k] || []).length > 0 || (SORTEN_FELDER[k] || []).length > 0;
     assert.strictEqual(seiteHatInhalt(k), hat, k);
   }
+  assert.strictEqual(seiteHatInhalt("palette"), false,
+    "die Farbseite traegt wieder nichts - sonst oeffnet ein Klick eine leere Seite");
 
-  // Und das Panel fragt wirklich, statt immer zu oeffnen.
+  // Und das Panel bietet das Fenster an, statt die Wahl auf der Seite zu
+  // zeigen. Beides zusammen: die Kachel, die es oeffnet, und die Methode.
   const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
-  assert.match(panel, /schluessel === "palette" \? this\.farbwahlHtml/,
-    "die Seite der Farben zeigt die freie Wahl nicht");
+  assert.match(panel, /data-bk-farbfenster/, "keine Kachel, die das Farbfenster oeffnet");
+  assert.match(panel, /zeigeFarbfenster\(\)\s*\{/, "die Methode zeigeFarbfenster fehlt");
+  assert.doesNotMatch(panel, /farbwahlHtml/,
+    "die alte eingebettete Farbwahl steht noch da - dann gibt es sie zweimal");
   const klick = panel.slice(panel.indexOf('wurzel.querySelectorAll("[data-bk-teil]")'), panel.indexOf("oeffneUix() {"));
   assert.match(klick, /if \(!seiteHatInhalt\(sorte\)\) return;/, "ein Klick auf das gesetzte Teil oeffnet weiter");
   assert.match(klick, /if \(seiteHatInhalt\(sorte\)\) this\._bkSeite = sorte;/, "nach dem Anwenden wird weiter immer geoeffnet");
