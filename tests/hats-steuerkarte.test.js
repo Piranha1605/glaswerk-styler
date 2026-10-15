@@ -217,9 +217,10 @@ pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
   // Diese beiden legt die Leiste nicht an. Sie SUCHT sie, von sich aus nach
   // oben, um die Kopfzeile im Vollbild wegzunehmen.
   const gesucht = ["ha-top-app-bar-fixed", "hui-root"];
-  // Und diese drei sind keine Bauteile, sondern Theme-Felder: Die Regler fuer
-  // Transparenz und Schrift lesen und schreiben sie in der Datei.
-  const felder = ["ha-card-backdrop-filter", "ha-card-background", "ha-font-size-scale"];
+  // Und diese vier sind keine Bauteile, sondern Theme-Felder: Die Regler fuer
+  // Transparenz und Schrift lesen und schreiben sie in der Datei. Die
+  // Dialogflaeche zieht seit dem 15.10.2026 mit der Transparenz mit.
+  const felder = ["ha-card-backdrop-filter", "ha-card-background", "ha-dialog-surface-background", "ha-font-size-scale"];
   // ha-form legt nur der Editor an. Ist es nach drei Sekunden nicht
   // angemeldet, gibt getConfigElement nichts zurueck, und HAs eigener
   // Formular-Editor springt ein - gezeichnet wird also immer etwas.

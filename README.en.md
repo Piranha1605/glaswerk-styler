@@ -177,7 +177,10 @@ the same way and under the same conditions:
 - **Transparency** (0 to 80 %) changes the card surface. If the theme keeps it
   apart for light and dark, the slider applies to the mode currently shown. If
   the surface is not a plain colour — the "Liquid Glass" card style stores two
-  gradients — the slider stays locked.
+  gradients — the slider stays locked. The surface of dialogs and of the
+  settings window follows by the same step, so it stays as much more opaque
+  than the cards as before — at most fully opaque, and never below 50 %
+  opacity, so text on it stays readable.
 - **Text size** (90 to 120 %) sets the factor Home Assistant uses for all font
   sizes. Tiles and Mushroom grow with it; the names in Bubble Card stay as they
   are. Above 100 %, tiles cut long names short sooner.

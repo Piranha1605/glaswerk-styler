@@ -1728,6 +1728,34 @@ Gemessen an der Testmaschine, `glaswerk` im Dunkelmodus:
 sind die Marker im Text der Datei, nicht `vorlageIstAn`. Vier Mutationen
 gegengeprüft, am Ende PyYAML.
 
+### Die Dialogfläche zieht mit der Transparenz mit
+
+Gemeldet über HATS Aufbau: *„im dunkelmodus stimmt die kartenfarbe von den
+einstellungen nicht zur theme"*. Der Regler schrieb nur
+`--ha-card-background`; bei 76 Prozent waren die Karten durchsichtig, das
+Fenster davor blieb bei 0,9. Auf Ansage vom 15.10.2026 (*„ja bitte
+anpassen"*) zieht `--ha-dialog-surface-background` mit — eine Ausnahme von
+„nur das Feld, an dem gezogen wurde", und zwar die einzige.
+
+**Um denselben Schritt, nicht auf denselben Wert.** glaswerk legt das Fenster
+mit Absicht deckender an (hell 0,86 gegen 0,42). Der Abstand bleibt, und
+zurückgeschoben steht wieder genau der alte Wert in der Datei.
+
+**Zwei Grenzen.** Nie über 1, und nie unter `DIALOG_MIN` (0,5) — auf einem
+Dialog steht Text. Ein Fenster, das schon darunter liegt, wird nicht deckender
+gemacht, nur nicht noch dünner. Ist die Dialogfläche ein Verlauf oder ein
+`var()`, bleibt sie, wie sie ist; die Karte geht trotzdem.
+
+**Die Grenze oben kostet den Rundlauf.** Die Datei ist der einzige Speicher:
+Wer die Karte so deckend zieht, dass das Fenster an 1 stößt (glaswerk hell:
+unter 44 Prozent Transparenz), findet es zurückgeschoben bei 0,62 statt 0,86.
+Ein Test hält genau das fest, damit es niemand für einen neuen Fehler hält.
+
+Gemessen an der Testmaschine, glaswerk dunkel: 54 → 76 Prozent änderte genau
+zwei Zeilen (Karte 0,46 → 0,24, Fenster 0,9 → 0,68), das Fenster zeichnete
+sofort mit 0,68. Zurück auf 54: die Datei Byte für Byte die von vorher.
+`tests/hats-steuerkarte-darstellung.test.js`, drei Mutationen gegengeprüft.
+
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 
 Beim Zusammenfügen legte der Kartenwähler dem Badge eine knappe Stunde lang

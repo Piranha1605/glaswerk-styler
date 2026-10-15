@@ -67,12 +67,15 @@ pruefe("Das Fenster liest beide Gruppen in einem Zug - dasselbe wie jede fuer si
   assert.ok(dauern(DATEI), "glaswerk hat keinen Bewegungsblock");
 });
 
-pruefe("Nur Transparenz gezogen: genau die eine Zeile, der Bewegungsblock bleibt", () => {
+pruefe("Nur Transparenz gezogen: Karte und Fenster, der Bewegungsblock bleibt", () => {
   const { werte } = leseReglerAusDatei(DATEI, NAME, "light", "alles", w);
   const { yaml, grund } = schreibeReglerInDatei(DATEI, NAME, "light", { ...werte, transparenz: 50 },
     new Set(["transparenz"]), w);
   assert.strictEqual(grund, undefined);
-  assert.strictEqual(yaml, ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.5)"'));
+  // Karte 0.42 -> 0.5, die Dialogflaeche um denselben Schritt 0.86 -> 0.94.
+  assert.strictEqual(yaml, ersetze(ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.5)"'),
+    '      ha-dialog-surface-background: "rgba(255, 255, 255, 0.86)"',
+    '      ha-dialog-surface-background: "rgba(255, 255, 255, 0.94)"'));
 });
 
 pruefe("Nur die Bewegung gezogen: der Block aendert sich, Flaeche und Schrift nicht", () => {

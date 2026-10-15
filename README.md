@@ -180,7 +180,10 @@ dieselbe Weise und mit denselben Bedingungen:
 - **Transparenz** (0 bis 80 %) ändert die Kartenfläche. Steht sie in der Theme
   für hell und dunkel getrennt, gilt der Regler für den Modus, der gerade
   angezeigt wird. Ist die Fläche keine einfache Farbe — der Kartenstil „Liquid
-  Glass" legt zwei Verläufe ab —, bleibt der Regler gesperrt.
+  Glass" legt zwei Verläufe ab —, bleibt der Regler gesperrt. Die Fläche der
+  Dialoge und des Einstellungsfensters zieht um denselben Schritt mit, bleibt
+  also so viel deckender als die Karten wie vorher — höchstens ganz deckend,
+  und nie unter 50 % Deckkraft, damit Text darauf lesbar bleibt.
 - **Schrift** (90 bis 120 %) setzt den Faktor, mit dem Home Assistant alle
   Schriftgrößen rechnet. Kacheln und Mushroom wachsen mit; die Namen in Bubble
   Card bleiben, wie sie sind. Über 100 % kürzen Kacheln lange Namen früher ab.

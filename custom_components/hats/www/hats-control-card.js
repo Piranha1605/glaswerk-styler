@@ -829,6 +829,17 @@ export const SCHRIFT = { min: 90, max: 120, schritt: 5 };
 export const UNSCHAERFE_SPANNE = { min: 0, max: 40, schritt: 2 };
 
 const FLAECHE = "ha-card-background";
+// Die Flaeche der Dialoge - und des Einstellungsfensters selbst. Sie zieht
+// mit der Kartenflaeche mit, auf Ansage vom 15.10.2026 ("ja bitte
+// anpassen"): Vorher wurden die Karten bei 76 Prozent durchsichtig, das
+// Fenster davor blieb bei seiner Deckkraft, und es sah aus wie ein Fehler.
+//
+// Mitgezogen wird um denselben SCHRITT, nicht auf denselben Wert. glaswerk
+// legt das Fenster mit Absicht deckender an (hell 0.86 gegen 0.42) - das
+// bleibt so, und zurueckgeschoben steht wieder genau der alte Wert da.
+// Unter DIALOG_MIN geht es nicht: Auf einem Dialog steht Text.
+const DIALOG = "ha-dialog-surface-background";
+export const DIALOG_MIN = 0.5;
 const UNSCHAERFE = "ha-card-backdrop-filter";
 const SKALA = "ha-font-size-scale";
 
@@ -959,7 +970,19 @@ export function schreibeDarstellungInDatei(text, themeName, modus, werte, w) {
   if (werte.transparenz !== undefined) {
     if (stand.karte.grund) return { grund: stand.karte.grund, detail: stand.karte.detail };
     const block = blockVon(m, stand.karte.ebene);
-    block[FLAECHE] = mitDeckkraft(leseFarbe(block[FLAECHE]), 1 - werte.transparenz / 100);
+    const neu = 1 - werte.transparenz / 100;
+    block[FLAECHE] = mitDeckkraft(leseFarbe(block[FLAECHE]), neu);
+    // Die Dialogflaeche dort, wo sie steht - und nur, wenn sie eine einfache
+    // Farbe ist. Ein Verlauf oder ein var() bleibt, wie er ist.
+    const ebene = ebeneVon(m, DIALOG, modus);
+    const dialog = ebene ? leseFarbe(blockVon(m, ebene)[DIALOG]) : null;
+    if (dialog) {
+      const ziel = dialog.a + (neu - stand.karte.deckkraft);
+      // Ein Fenster, das schon durchsichtiger ist als die Grenze, wird nicht
+      // deckender gemacht - nur nicht noch durchsichtiger.
+      const unten = Math.min(dialog.a, DIALOG_MIN);
+      blockVon(m, ebene)[DIALOG] = mitDeckkraft(dialog, Math.min(1, Math.max(unten, ziel)));
+    }
   }
   if (werte.schrift !== undefined) {
     if (stand.schrift.grund) return { grund: stand.schrift.grund, detail: stand.schrift.detail };

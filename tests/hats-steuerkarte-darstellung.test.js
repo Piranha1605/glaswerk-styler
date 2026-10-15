@@ -8,6 +8,8 @@
 //
 //   - sie aendert genau die Zeile, an deren Feld gezogen wurde - und zwar
 //     dort, wo sie steht (je Modus: nur im geltenden; flach: flach)
+//   - mit der Transparenz zieht die Dialogflaeche um denselben Schritt mit,
+//     nie unter 0,5 und nie ueber 1 (seit dem 15.10.2026)
 //   - sie schreibt den anderen Wert NICHT mit; was das Panel daran geaendert
 //     hat, bleibt
 //   - eine Kartenflaeche, die keine einfache Farbe ist, wird nicht angefasst
@@ -27,7 +29,7 @@ import * as theme from "../custom_components/hats/www/theme.js";
 import * as hintergrund from "../custom_components/hats/www/hintergrund.js";
 import {
   leseDarstellungAusDatei, schreibeDarstellungInDatei, leseFarbe, mitDeckkraft,
-  TRANSPARENZ, SCHRIFT, MUSHROOM_SCHRIFT, FUNKTIONEN, badgeKurzform,
+  TRANSPARENZ, SCHRIFT, MUSHROOM_SCHRIFT, FUNKTIONEN, badgeKurzform, DIALOG_MIN,
 } from "../custom_components/hats/www/hats-control-card.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
@@ -40,6 +42,11 @@ const NAME = "glaswerk";
 const HELL = '      ha-card-background: "rgba(255, 255, 255, 0.42)"';
 const DUNKEL = '      ha-card-background: "rgba(22, 28, 46, 0.46)"';
 const SKALA = '  ha-font-size-scale: "1"';
+// Die Dialogflaeche, die seit dem 15.10.2026 mitzieht - hell 0.86, dunkel 0.9.
+const DIALOG_HELL = '      ha-dialog-surface-background: "rgba(255, 255, 255, 0.86)"';
+const DIALOG_DUNKEL = '      ha-dialog-surface-background: "rgba(26, 31, 48, 0.9)"';
+const dialogHell = (a) => `      ha-dialog-surface-background: "rgba(255, 255, 255, ${a})"`;
+const dialogDunkel = (a) => `      ha-dialog-surface-background: "rgba(26, 31, 48, ${a})"`;
 
 let n = 0;
 function pruefe(was, fn) { fn(); n++; console.log("ok", was); }
@@ -55,7 +62,7 @@ function ersetze(text, alt, neu) {
 pruefe("Die Datei traegt die drei Zeilen, auf die sich der Test stuetzt", () => {
   // Gegenprobe zu allem Folgenden: Baut jemand glaswerk um, faellt das hier
   // auf und nicht als Raetsel weiter unten.
-  for (const z of [HELL, DUNKEL, SKALA]) assert.strictEqual(DATEI.split(z).length, 2, z);
+  for (const z of [HELL, DUNKEL, SKALA, DIALOG_HELL, DIALOG_DUNKEL]) assert.strictEqual(DATEI.split(z).length, 2, z);
 });
 
 pruefe("glaswerk laesst sich lesen: 58 % hell, 54 % dunkel, Schrift 100 %", () => {
@@ -70,29 +77,66 @@ pruefe("glaswerk laesst sich lesen: 58 % hell, 54 % dunkel, Schrift 100 %", () =
   assert.strictEqual(hell.karte.weich, true, "glaswerk zeichnet weich");
 });
 
-pruefe("Transparenz im Hellmodus aendert genau die eine Zeile", () => {
+pruefe("Transparenz im Hellmodus: die Karte, und das Fenster um denselben Schritt", () => {
+  // Karte 0.42 -> 0.5, also +0.08; das Fenster 0.86 -> 0.94.
   const { yaml, grund } = schreibeDarstellungInDatei(DATEI, NAME, "light", { transparenz: 50 }, w);
   assert.strictEqual(grund, undefined);
-  assert.strictEqual(yaml, ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.5)"'));
+  assert.strictEqual(yaml, ersetze(ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.5)"'),
+    DIALOG_HELL, dialogHell(0.94)));
 });
 
 pruefe("Transparenz im Dunkelmodus aendert die Zeile im Dunkelblock, nicht die helle", () => {
+  // Karte 0.46 -> 0.3, also -0.16; das Fenster 0.9 -> 0.74. Die hellen Zeilen bleiben.
   const { yaml } = schreibeDarstellungInDatei(DATEI, NAME, "dark", { transparenz: 70 }, w);
-  assert.strictEqual(yaml, ersetze(DATEI, DUNKEL, '      ha-card-background: "rgba(22, 28, 46, 0.3)"'));
+  assert.strictEqual(yaml, ersetze(ersetze(DATEI, DUNKEL, '      ha-card-background: "rgba(22, 28, 46, 0.3)"'),
+    DIALOG_DUNKEL, dialogDunkel(0.74)));
 });
 
 pruefe("Zurueck auf den alten Wert ist die Datei Byte fuer Byte die von vorher", () => {
+  for (const t of [50, 70, 80]) {
+    const eins = schreibeDarstellungInDatei(DATEI, NAME, "light", { transparenz: t }, w).yaml;
+    assert.notStrictEqual(eins, DATEI);
+    const zwei = schreibeDarstellungInDatei(eins, NAME, "light", { transparenz: 58 }, w).yaml;
+    assert.strictEqual(zwei, DATEI, `ueber ${t} % und zurueck`);
+  }
+});
+
+pruefe("Das Fenster stoesst an 1 - danach steht es zurueckgeschoben deckender als vorher", () => {
+  // Die Grenze, ehrlich festgehalten: Die Datei ist der einzige Speicher. Ist
+  // das Fenster einmal auf 1 gedrueckt, weiss niemand mehr, dass es 0.14 ueber
+  // der Karte lag. Karte 0.42 -> 0.8 (+0.38): Fenster 1.24 -> 1. Zurueck auf
+  // 0.42 (-0.38): Fenster 0.62.
   const eins = schreibeDarstellungInDatei(DATEI, NAME, "light", { transparenz: 20 }, w).yaml;
-  assert.notStrictEqual(eins, DATEI);
+  assert.ok(eins.includes(dialogHell(1)), "nicht auf 1 begrenzt");
   const zwei = schreibeDarstellungInDatei(eins, NAME, "light", { transparenz: 58 }, w).yaml;
-  assert.strictEqual(zwei, DATEI);
+  assert.strictEqual(zwei, ersetze(DATEI, DIALOG_HELL, dialogHell(0.62)));
+});
+
+pruefe("Unter 0,5 geht das Fenster nicht, und ein Verlauf dort bleibt unberuehrt", () => {
+  assert.strictEqual(DIALOG_MIN, 0.5);
+  // Fenster bei 0.6: bei 80 % stuende es auf 0.38 (0.6 - 0.22).
+  const gleich = ersetze(DATEI, DIALOG_HELL, dialogHell(0.6));
+  const duenn = schreibeDarstellungInDatei(gleich, NAME, "light", { transparenz: 80 }, w).yaml;
+  assert.ok(duenn.includes(dialogHell(0.5)), "unter die Grenze gefallen");
+  // Schon unter der Grenze: nicht deckender gemacht, nur nicht noch duenner.
+  const schon = ersetze(DATEI, DIALOG_HELL, dialogHell(0.3));
+  assert.ok(schreibeDarstellungInDatei(schon, NAME, "light", { transparenz: 80 }, w).yaml.includes(dialogHell(0.3)));
+  // Gegenprobe: Ein Verlauf als Dialogflaeche wird nicht zerlegt, die Karte geht trotzdem.
+  const verlauf = '      ha-dialog-surface-background: "linear-gradient(red, blue)"';
+  const mitVerlauf = ersetze(DATEI, DIALOG_HELL, verlauf);
+  const { yaml, grund } = schreibeDarstellungInDatei(mitVerlauf, NAME, "light", { transparenz: 50 }, w);
+  assert.strictEqual(grund, undefined);
+  assert.strictEqual(yaml, ersetze(mitVerlauf, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.5)"'));
 });
 
 pruefe("Die Enden der Spanne: 0 % ist deckend, 80 % ist Deckkraft 0,2", () => {
   const deckend = schreibeDarstellungInDatei(DATEI, NAME, "light", { transparenz: TRANSPARENZ.min }, w).yaml;
-  assert.strictEqual(deckend, ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 1)"'));
+  assert.strictEqual(deckend, ersetze(ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 1)"'),
+    DIALOG_HELL, dialogHell(1)));
+  // Karte 0.42 -> 0.2 (-0.22), Fenster 0.86 -> 0.64.
   const duenn = schreibeDarstellungInDatei(DATEI, NAME, "light", { transparenz: TRANSPARENZ.max }, w).yaml;
-  assert.strictEqual(duenn, ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.2)"'));
+  assert.strictEqual(duenn, ersetze(ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.2)"'),
+    DIALOG_HELL, dialogHell(0.64)));
 });
 
 pruefe("Schrift: die Skala aendert sich, Mushroom bekommt zwei Verweise dazu - sonst nichts", () => {
@@ -185,8 +229,9 @@ pruefe("Steht die Flaeche flach, bleibt sie flach - und gilt damit fuer beide Mo
   const stand = leseDarstellungAusDatei(flach, NAME, "dark", w);
   assert.strictEqual(stand.karte.ebene, "flach");
   const { yaml } = schreibeDarstellungInDatei(flach, NAME, "dark", { transparenz: 30 }, w);
-  assert.strictEqual(yaml, ersetze(flach, '  ha-card-background: "rgba(40, 40, 40, 0.5)"',
-    '  ha-card-background: "rgba(40, 40, 40, 0.7)"'));
+  // Karte 0.5 -> 0.7 (+0.2): das dunkle Fenster 0.9 -> 1.1, also 1.
+  assert.strictEqual(yaml, ersetze(ersetze(flach, '  ha-card-background: "rgba(40, 40, 40, 0.5)"',
+    '  ha-card-background: "rgba(40, 40, 40, 0.7)"'), DIALOG_DUNKEL, dialogDunkel(1)));
   const m = theme.leseTheme(yaml);
   assert.strictEqual(m.light["ha-card-background"], undefined);
   assert.strictEqual(m.dark["ha-card-background"], undefined);
@@ -210,7 +255,9 @@ pruefe("Eine Flaeche in Hex wird beim ersten Schreiben zu rgba(), danach ist die
   const hex = ersetze(DATEI, HELL, '      ha-card-background: "#ffffff"');
   assert.strictEqual(leseDarstellungAusDatei(hex, NAME, "light", w).werte.transparenz, 0);
   const eins = schreibeDarstellungInDatei(hex, NAME, "light", { transparenz: 40 }, w).yaml;
-  assert.strictEqual(eins, ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.6)"'));
+  // Karte 1 -> 0.6 (-0.4): Fenster 0.86 -> 0.46, an der Grenze 0.5.
+  assert.strictEqual(eins, ersetze(ersetze(DATEI, HELL, '      ha-card-background: "rgba(255, 255, 255, 0.6)"'),
+    DIALOG_HELL, dialogHell(0.5)));
   const zwei = schreibeDarstellungInDatei(eins, NAME, "light", { transparenz: 40 }, w).yaml;
   assert.strictEqual(zwei, eins);
 });
@@ -316,4 +363,4 @@ pruefe("Gegenprobe mit PyYAML: Home Assistant liest, was die Karte schreibt", ()
 });
 
 console.log(`\n${n} Pruefungen`);
-if (n < 22) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
+if (n < 24) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
