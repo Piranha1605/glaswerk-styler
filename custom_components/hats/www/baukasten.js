@@ -62,6 +62,35 @@ const HA_TOENE = {
 // aber nicht. Das gehoert entschieden, nicht weggeschwiegen - siehe CLAUDE.md.
 const VORSCHAU_ROLLEN = ["primary", "red", "green", "orange"];
 
+// Die Glasperle eines Kartenstils: genau die Werte, die das Teil setzt.
+//
+// Auf Ansage vom 15.10.2026: "auch als glasperle wie die farben zum
+// beispiel". Elf Kartenstile mit Namen allein unterscheidet niemand - und
+// gerade bei Glas sagt der Name am wenigsten.
+//
+// Sie ist KEIN Nachbau. Flaeche, Rand, Schatten und Weichzeichnung kommen aus
+// den Feldern dieses Teils, und hinter der Perle liegt ein bunter Grund: Sie
+// blendet also wirklich, was hinter ihr liegt, statt es zu behaupten.
+// Zusammengelegt wird wie beim Anwenden - erst flach, dann der Modus darueber.
+// Fehlt ein Feld, bleibt die Eigenschaft weg; sonst stuende dort "undefined".
+export function kartenPerle(teil, dunkel = false) {
+  const f = { ...(teil.flach || {}), ...(teil[dunkel ? "dark" : "light"] || {}) };
+  const st = [];
+  if (f["--ha-card-background"]) st.push(`background:${f["--ha-card-background"]}`);
+  if (f["--ha-card-backdrop-filter"]) {
+    st.push(`backdrop-filter:${f["--ha-card-backdrop-filter"]}`);
+    st.push(`-webkit-backdrop-filter:${f["--ha-card-backdrop-filter"]}`);
+  }
+  const bw = f["--ha-card-border-width"], bc = f["--ha-card-border-color"];
+  if (bw && bw !== "0" && bc) st.push(`border:${bw} solid ${bc}`);
+  if (f["--ha-card-box-shadow"]) st.push(`box-shadow:${f["--ha-card-box-shadow"]}`);
+  // Gedeckelt: 26 px Rundung auf einer 26 px hohen Perle waere eine Kapsel,
+  // und alle saehen gleich aus. Der Unterschied zwischen 4 und 9 bleibt.
+  const r = parseFloat(f["--ha-card-border-radius"]);
+  if (Number.isFinite(r)) st.push(`border-radius:${Math.min(r, 9)}px`);
+  return st.join(";");
+}
+
 export function palettenVorschau(teil, dunkel = false) {
   const aus = [];
   if (teil.akzent) aus.push({ rolle: "akzent", hex: teil.akzent[dunkel ? "dark" : "light"] });
@@ -526,6 +555,114 @@ export const KARTENSTILE = [
              "--sidebar-background-color": "rgba(20, 25, 40, 0.42)",
              "--app-header-background-color": "rgba(20, 25, 40, 0.34)",
              "--card-background-color": "#1c2234" },
+    braucht: { hintergrund: true },
+  },
+  // ------------------------------------------------------------------ 15.10.
+  // Drei Glaeser aus der Bubble-Welt, uebergeben als styles:-Bloecke mit der
+  // Frage: "koennen wir die vier glaswerte hier mit in die vorauswahl packen
+  // mit der orginalen waeren es 5."
+  //
+  // ES SIND DREI, NICHT VIER. Der erste und der zweite Block sind
+  // zeichengleich - dieselbe Flaeche, dieselbe Weichzeichnung, derselbe Rand,
+  // derselbe Lichtstreifen. Mit "Glas" und "Liquid Glass" stehen damit fuenf
+  // Glaeser zur Wahl, und das ist die Zahl, die gemeint war.
+  //
+  // WAS BEIM UEBERSETZEN PASSIERT IST, und warum es kein Abschreiben war:
+  //
+  // 1. Die Bloecke zielen auf .bubble-container, also auf EINE Kartensorte.
+  //    Hier stehen sie als Theme-Felder und gelten fuer alles - HA-Kacheln,
+  //    Mushroom, Bubble (ueber die Vorlage "Bubble Card in Glas").
+  // 2. Der Lichtstreifen lag in einem ::before. Er steht jetzt als erste
+  //    Ebene in --ha-card-background: ha-card liest die Kurzform background,
+  //    dort darf alles stehen, was CSS als Hintergrund kennt. Dasselbe tut
+  //    "Liquid Glass" seit dem 14.10.
+  // 3. Die Werte sind fuer einen DUNKLEN Grund gemacht - weisses Glas bei
+  //    10 Prozent ist auf Hell unsichtbar. Die Hellwerte sind deshalb
+  //    gerechnet und an der Testmaschine nachgesehen, nicht uebernommen.
+  {
+    id: "klarglas",
+    de: "Klarglas", en: "Clear glass",
+    zweckDe: "Duenne Scheibe mit schraegem Lichtstreifen und hellem Rand. Das Glas aus Bubbles styles-Block, fuer alle Karten.",
+    zweckEn: "A thin pane with a diagonal sheen and a bright rim. The glass from Bubble's styles block, for every card.",
+    flach: { "--ha-card-backdrop-filter": "blur(20px) saturate(150%)",
+             "--ha-card-border-radius": "20px", "--ha-card-border-width": "1px",
+             "--ha-card-border-color": "rgba(255, 255, 255, 0.25)",
+             "--app-header-backdrop-filter": "blur(20px) saturate(150%)" },
+    light: { "--ha-card-background":
+               "linear-gradient(115deg, rgba(255,255,255,.55) 0%, transparent 35%), " +
+               "rgba(255, 255, 255, 0.34)",
+             "--ha-card-box-shadow": "0 10px 30px rgba(22, 40, 78, .12)",
+             "--ha-dialog-surface-background": "rgba(255, 255, 255, 0.88)",
+             "--mdc-dialog-scrim-color": "rgba(16, 24, 44, 0.32)",
+             "--sidebar-background-color": "rgba(255, 255, 255, 0.34)",
+             "--app-header-background-color": "rgba(255, 255, 255, 0.26)",
+             "--card-background-color": "#ffffff" },
+    dark:  { "--ha-card-background":
+               "linear-gradient(115deg, rgba(255,255,255,.35) 0%, transparent 35%), " +
+               "rgba(255, 255, 255, 0.10)",
+             "--ha-card-box-shadow": "0 12px 34px rgba(0, 0, 0, .42)",
+             "--ha-dialog-surface-background": "rgba(26, 31, 48, 0.9)",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.52)",
+             "--sidebar-background-color": "rgba(255, 255, 255, 0.07)",
+             "--app-header-background-color": "rgba(255, 255, 255, 0.06)",
+             "--card-background-color": "#1c2234" },
+    braucht: { hintergrund: true },
+  },
+  {
+    id: "rauchglas",
+    de: "Rauchglas", en: "Smoked glass",
+    zweckDe: "Dunkle Scheibe mit feiner Lichtkante oben. Haelt den Blick auf dem Inhalt, auch wenn der Grund unruhig ist.",
+    zweckEn: "A dark pane with a fine highlight on top. Keeps the eye on the content even over a busy background.",
+    // Im Dunkeln die uebergebenen Werte. Im Hellen waere rgba(10,12,16,.45)
+    // eine fast schwarze Karte - und HAs Schrift ist dort DUNKEL. Das ergaebe
+    // dunkelgrau auf dunkelgrau, dieselbe Falle wie die Seitenleiste am
+    // 12.10. (Kontrast 1,19 : 1). Hell traegt deshalb denselben Ton bei
+    // 18 Prozent: sichtbar rauchig, Schrift bleibt lesbar.
+    flach: { "--ha-card-backdrop-filter": "blur(22px) saturate(120%)",
+             "--ha-card-border-radius": "20px", "--ha-card-border-width": "1px",
+             "--ha-card-border-color": "rgba(255, 255, 255, 0.08)",
+             "--app-header-backdrop-filter": "blur(22px) saturate(120%)" },
+    light: { "--ha-card-background": "rgba(44, 52, 70, 0.18)",
+             "--ha-card-box-shadow": "inset 0 1px 0 rgba(255, 255, 255, .35), " +
+               "0 10px 28px rgba(22, 40, 78, .14)",
+             "--ha-dialog-surface-background": "rgba(255, 255, 255, 0.9)",
+             "--mdc-dialog-scrim-color": "rgba(16, 24, 44, 0.36)",
+             "--sidebar-background-color": "rgba(44, 52, 70, 0.14)",
+             "--app-header-background-color": "rgba(44, 52, 70, 0.12)",
+             "--card-background-color": "#ffffff" },
+    dark:  { "--ha-card-background": "rgba(10, 12, 16, 0.45)",
+             "--ha-card-box-shadow": "inset 0 1px 0 rgba(255, 255, 255, .06), " +
+               "0 14px 36px rgba(0, 0, 0, .5)",
+             "--ha-dialog-surface-background": "rgba(14, 17, 24, 0.92)",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.56)",
+             "--sidebar-background-color": "rgba(10, 12, 16, 0.42)",
+             "--app-header-background-color": "rgba(10, 12, 16, 0.36)",
+             "--card-background-color": "#14171e" },
+    braucht: { hintergrund: true },
+  },
+  {
+    id: "milchglas",
+    de: "Milchglas", en: "Frosted glass",
+    zweckDe: "Stark weichgezeichnet und milchig, mit hellem Rand. Der Grund ist da, aber nur als Farbe, nicht als Bild.",
+    zweckEn: "Heavily blurred and milky, with a bright rim. The ground is there as colour, not as a picture.",
+    flach: { "--ha-card-backdrop-filter": "blur(18px) saturate(160%)",
+             "--ha-card-border-radius": "20px", "--ha-card-border-width": "1px",
+             "--ha-card-border-color": "rgba(255, 255, 255, 0.35)",
+             "--app-header-backdrop-filter": "blur(18px) saturate(160%)" },
+    light: { "--ha-card-background": "rgba(255, 255, 255, 0.55)",
+             "--ha-card-box-shadow": "0 8px 24px rgba(22, 40, 78, .10)",
+             "--ha-dialog-surface-background": "rgba(255, 255, 255, 0.92)",
+             "--mdc-dialog-scrim-color": "rgba(16, 24, 44, 0.3)",
+             "--sidebar-background-color": "rgba(255, 255, 255, 0.46)",
+             "--app-header-background-color": "rgba(255, 255, 255, 0.38)",
+             "--card-background-color": "#ffffff" },
+    dark:  { "--ha-card-background": "rgba(255, 255, 255, 0.14)",
+             "--ha-card-box-shadow": "0 10px 28px rgba(0, 0, 0, .4)",
+             "--ha-dialog-surface-background": "rgba(30, 36, 54, 0.92)",
+             "--mdc-dialog-scrim-color": "rgba(0, 0, 0, 0.5)",
+             "--sidebar-background-color": "rgba(255, 255, 255, 0.1)",
+             "--app-header-background-color": "rgba(255, 255, 255, 0.08)",
+             "--card-background-color": "#1e2436" },
     braucht: { hintergrund: true },
   },
   {

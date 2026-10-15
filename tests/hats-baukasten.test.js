@@ -6,7 +6,7 @@
 
 import assert from "node:assert";
 import { rampe } from "../custom_components/hats/www/palette.js";
-import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau, seiteHatInhalt,
+import { BAUKASTEN, PALETTEN, KARTENSTILE, SCHRIFTEN, HINTERGRUENDE, palettenVorschau, kartenPerle, seiteHatInhalt,
          SORTEN_FELDER,
          KARTENSTIL_FELDER, teilAnwenden, erkenneTeil, SORTEN_VORLAGEN,
          RUNDUNGEN, DICHTEN, FREIE_ROLLEN } from "../custom_components/hats/www/baukasten.js";
@@ -60,6 +60,68 @@ pruefe("JEDER Kartenstil setzt alle sechs Felder", () => {
     for (const f of KARTENSTIL_FELDER)
       assert.ok(gesetzt.has(f), `${s.id}: ${f} fehlt`);
   }
+});
+
+pruefe("Die drei uebergebenen Glaeser tragen im Dunkeln die uebergebenen Werte", () => {
+  // Am 15.10.2026 hat der Maintainer vier styles:-Bloecke fuer Bubble Card
+  // uebergeben. ES SIND DREI - der erste und der zweite sind zeichengleich.
+  //
+  // Hier steht, was UEBERGEBEN wurde, nicht was HATS daraus gemacht hat. Das
+  // ist der Sinn dieser Pruefung: Die Hellwerte sind gerechnet und duerfen
+  // sich aendern, die Dunkelwerte sind gegeben und duerfen es nicht. Wer sie
+  // "verbessert", merkt es hier - und nicht der Maintainer daran, dass sein
+  // Glas anders aussieht als das, was er geschickt hat.
+  const UEBERGEBEN = {
+    klarglas: { flaeche: "rgba(255, 255, 255, 0.10)", filter: "blur(20px) saturate(150%)",
+                rand: "rgba(255, 255, 255, 0.25)", streifen: "linear-gradient(115deg, rgba(255,255,255,.35) 0%, transparent 35%)" },
+    rauchglas: { flaeche: "rgba(10, 12, 16, 0.45)", filter: "blur(22px) saturate(120%)",
+                 rand: "rgba(255, 255, 255, 0.08)", kante: "inset 0 1px 0 rgba(255, 255, 255, .06)" },
+    milchglas: { flaeche: "rgba(255, 255, 255, 0.14)", filter: "blur(18px) saturate(160%)",
+                 rand: "rgba(255, 255, 255, 0.35)" },
+  };
+  for (const [id, w] of Object.entries(UEBERGEBEN)) {
+    const t = KARTENSTILE.find((k) => k.id === id);
+    assert.ok(t, `${id} fehlt in den Kartenstilen`);
+    assert.ok(t.dark["--ha-card-background"].includes(w.flaeche),
+      `${id}: die dunkle Flaeche ist nicht die uebergebene`);
+    assert.strictEqual(t.flach["--ha-card-backdrop-filter"], w.filter,
+      `${id}: andere Weichzeichnung als uebergeben`);
+    assert.strictEqual(t.flach["--ha-card-border-color"], w.rand, `${id}: anderer Rand`);
+    assert.strictEqual(t.flach["--ha-card-border-width"], "1px", `${id}: der Rand ist weg`);
+    // Der Lichtstreifen lag in einem ::before; er steht jetzt als erste Ebene
+    // im Hintergrund - ha-card liest die Kurzform background.
+    if (w.streifen) assert.ok(t.dark["--ha-card-background"].startsWith(w.streifen),
+      `${id}: der Lichtstreifen fehlt oder steht nicht vorn`);
+    if (w.kante) assert.ok(t.dark["--ha-card-box-shadow"].startsWith(w.kante),
+      `${id}: die Lichtkante oben fehlt`);
+  }
+  // Und fuenf Glaeser sind es, wie angesagt ("mit der orginalen waeren es 5").
+  const glaeser = KARTENSTILE.filter((k) => /glas|liquid/.test(k.id)).map((k) => k.id);
+  assert.deepStrictEqual(glaeser, ["glas", "klarglas", "rauchglas", "milchglas", "liquid"]);
+});
+
+pruefe("Die Glasperle kommt aus den Feldern des Teils, nicht von daneben", () => {
+  // Zwei Orte fuer dieselbe Farbe laufen auseinander - deshalb rechnet
+  // kartenPerle() aus dem Teil selbst. Geprueft wird genau das: Was in der
+  // Perle steht, muss im Teil stehen.
+  for (const t of KARTENSTILE) {
+    for (const dunkel of [false, true]) {
+      const perle = kartenPerle(t, dunkel);
+      const f = { ...t.flach, ...(dunkel ? t.dark : t.light) };
+      assert.ok(perle.length > 20, `${t.id}: leere Perle`);
+      assert.ok(perle.includes(`background:${f["--ha-card-background"]}`),
+        `${t.id}: die Perle zeigt eine andere Flaeche als das Teil`);
+      if (f["--ha-card-backdrop-filter"])
+        assert.ok(perle.includes(`backdrop-filter:${f["--ha-card-backdrop-filter"]}`),
+          `${t.id}: die Perle zeichnet nicht weich, obwohl das Teil es tut`);
+      // Die Rundung ist gedeckelt - sonst waere jede Perle eine Kapsel.
+      const r = /border-radius:(\d+)px/.exec(perle);
+      assert.ok(r && Number(r[1]) <= 9, `${t.id}: die Perle rundet ungedeckelt`);
+    }
+  }
+  // Gegenprobe: Ein Teil ohne Felder ergibt eine Perle ohne Eigenschaften -
+  // keine erfundenen Vorgaben, die etwas zeigen, was nicht gesetzt ist.
+  assert.strictEqual(kartenPerle({ id: "nichts" }, false), "");
 });
 
 pruefe("Die Flaeche steht je Modus, die Form flach", () => {

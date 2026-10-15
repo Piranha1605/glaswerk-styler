@@ -35,7 +35,7 @@ import { ERKLAERUNGEN, MERKSAETZE, AUSLESEN } from "./hilfe.js";
 // hier einmal ausrechnen, sonst suchen die Bilder unter /hilfe/ und bleiben
 // leer, ohne Meldung.
 const HILFE_BILDER = new URL("./hilfe/", import.meta.url).href;
-import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, seiteHatInhalt, FREIE_ROLLEN,
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, kartenPerle, seiteHatInhalt, FREIE_ROLLEN,
          eigenePalette,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
@@ -1473,12 +1473,17 @@ class HatsPanel extends HTMLElement {
               // 14.10.2026 - "ich habe keine farben zum auswaehlen", und zu
               // Recht: Da stand nur Text.
               const tupfer = schluessel === "palette" ? palettenVorschau(teil, dunkel) : null;
+              // Die Glasperle tut fuer die Kartenstile, was die Tupfer fuer
+              // die Paletten tun - sie zeigt, was man waehlt. Siehe
+              // kartenPerle() in baukasten.js.
+              const perle = schluessel === "karten" ? kartenPerle(teil, dunkel) : null;
               const zweck = this.spr === "en" ? teil.zweckEn : teil.zweckDe;
               return `
               <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}
                       ${tupfer ? `title="${esc(zweck)}"` : ""}>
                 ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
+                ${perle ? `<span class="bk-perlgrund"><i style="${perle}"></i></span>` : ""}
                 ${tupfer ? `<span class="bk-tupfer">${tupfer.map((f) =>
                     `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")}</span>` : ""}
                 <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
@@ -3886,6 +3891,19 @@ class HatsPanel extends HTMLElement {
          unlesbar. Der Haken steht rechts daneben, deshalb endet er bei 70 %. */
       .bk-streifen { display: block; height: 10px; width: 70%; border-radius: 999px;
                      margin-bottom: 4px; border: 1px solid rgba(27,36,48,.10); }
+
+      /* Die Glasperle. Der Grund darunter ist bunt und hat eine harte Kante
+         in der Mitte: Nur daran sieht man, ob eine Scheibe weichzeichnet
+         oder bloss durchsichtig ist. Ein gleichmaessiger Verlauf saehe unter
+         jeder Weichzeichnung gleich aus. */
+      .bk-perlgrund { position: relative; display: block; width: 76px; height: 30px;
+                      margin-bottom: 8px; border-radius: 9px; overflow: hidden;
+                      background:
+                        linear-gradient(90deg, transparent 46%, rgba(255,255,255,.85) 46%,
+                                               rgba(255,255,255,.85) 54%, transparent 54%),
+                        linear-gradient(115deg, #2f6df0 0%, #7a5cf0 38%, #e8833a 70%, #15c08a 100%); }
+      .bk-perlgrund i { position: absolute; inset: 5px 8px; display: block;
+                        border-radius: 7px; }
       /* Die Farbtupfer einer Palette. Der erste ist der Akzent - die einzige
          Farbe, die je Modus verschieden ist, und die, die man am haeufigsten
          sieht. Deshalb steht er vorn.
