@@ -29,7 +29,7 @@ export const VORLAGEN = [
     ziel: "card",
     de: "Karten in Glas",
     en: "Cards in glass",
-    zweckDe: "Die Grundflaeche: Weichzeichnung, Rundung und Schatten fuer jede Karte. Ueberschriften und reine Textkarten bleiben ohne Flaeche, Auswahlfelder bleiben deckend.",
+    zweckDe: "Die Grundfläche: Weichzeichnung, Rundung und Schatten für jede Karte. Überschriften und reine Textkarten bleiben ohne Fläche, Auswahlfelder bleiben deckend.",
     zweckEn: "The base surface: blur, radius and shadow for every card. Headings and text-only cards stay without a surface, dropdowns stay opaque.",
     css: `/* Nur die Karte selbst, nicht ihr Wirt.
 
@@ -113,7 +113,7 @@ ha-select.bubble-dropdown-select {
     ziel: "card",
     de: "Bubble Card in Glas",
     en: "Bubble Card in glass",
-    zweckDe: "Gibt Bubble-Karten dieselbe Glasflaeche, Rundung, Lichtkante und denselben Schatten wie den HA-Karten. Ohne sie bleiben Bubble-Karten flach - \"Karten in Glas\" nimmt sie ausdruecklich aus.",
+    zweckDe: "Gibt Bubble-Karten dieselbe Glasfläche, Rundung, Lichtkante und denselben Schatten wie den HA-Karten. Ohne sie bleiben Bubble-Karten flach - \"Karten in Glas\" nimmt sie ausdrücklich aus.",
     zweckEn: "Gives Bubble cards the same glass surface, radius, light edge and shadow as the HA cards. Without it Bubble cards stay flat - \"Cards in glass\" deliberately excludes them.",
     css: `/* Bubble braucht BEIDES: Variablen und eine Regel.
 
@@ -262,7 +262,7 @@ ha-card.is-on .bubble-color-background {
     ziel: "card",
     de: "Lichtkante auf Karten",
     en: "Light edge on cards",
-    zweckDe: "Der helle Saum oben und der weiche Schimmer quer ueber die Flaeche - das, was echtes Glas von einer halbtransparenten Flaeche unterscheidet.",
+    zweckDe: "Der helle Saum oben und der weiche Schimmer quer über die Fläche - das, was echtes Glas von einer halbtransparenten Fläche unterscheidet.",
     zweckEn: "The bright rim along the top and the soft sheen across the surface - what separates real glass from a merely translucent panel.",
     css: `/* Der Saum liegt als ::before UEBER der Flaeche und unter dem Inhalt.
    Zwei Dinge zusammen machen den Glaseindruck aus: ein heller Ring, der oben
@@ -345,7 +345,7 @@ ha-card.text-only::before {
     ziel: "card",
     de: "Symbole als Kachel",
     en: "Icons as rounded tiles",
-    zweckDe: "Macht aus den runden Symbolflaechen weiche Quadrate - in Kacheln, bei Mushroom, in Zeilen und auf Glance-Karten zugleich.",
+    zweckDe: "Macht aus den runden Symbolflächen weiche Quadrate - in Kacheln, bei Mushroom, in Zeilen und auf Glance-Karten zugleich.",
     zweckEn: "Turns the round icon backgrounds into soft squares - in tiles, in Mushroom, in rows and on glance cards at once.",
     css: `/* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
    Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
@@ -399,7 +399,7 @@ ha-card {
     ziel: "grid-section",
     de: "Abschnitte mit einer Linie trennen",
     en: "Separate sections with a line",
-    zweckDe: "Zieht eine feine Linie ueber jeden Abschnitt eines Sections-Dashboards, damit die Reihen optisch auseinandergehen.",
+    zweckDe: "Zieht eine feine Linie über jeden Abschnitt eines Sections-Dashboards, damit die Reihen optisch auseinandergehen.",
     zweckEn: "Draws a thin line above each section of a sections dashboard so the rows read as separate blocks.",
     css: `/* Auf einem Sections-Dashboard stehen die Abschnitte in einem Raster und
    brechen um. Wo zwei Reihen aufeinandertreffen, laeuft der letzte Inhalt der
@@ -444,9 +444,9 @@ ha-card {
     id: "sync-bedienelemente",
     gruppe: "sync",
     ziel: "card",
-    de: "Slider und Symbolflaechen gleichziehen",
+    de: "Slider und Symbolflächen gleichziehen",
     en: "Align sliders and icon backgrounds",
-    zweckDe: "Zieht Schieberegler und Symbolflaechen von Home Assistant, Bubble Card und Mushroom auf dasselbe Bild - dieselbe Farbe, dieselbe Deckkraft, dieselbe Groesse.",
+    zweckDe: "Zieht Schieberegler und Symbolflächen von Home Assistant, Bubble Card und Mushroom auf dasselbe Bild - dieselbe Farbe, dieselbe Deckkraft, dieselbe Größe.",
     zweckEn: "Brings sliders and icon backgrounds of Home Assistant, Bubble Card and Mushroom to the same look - same colour, same opacity, same size.",
     css: `/* Alle drei Familien zeigen dieselbe Lampe verschieden. Am 13.10.2026 an
    einer Lampe in rgb(129,173,255) gemessen, bevor etwas angefasst wurde:
@@ -845,7 +845,7 @@ ha-user-badge {
     ziel: "top-app-bar-fixed",
     de: "Kopfleiste in Glas (Einstellungen)",
     en: "Top bar in glass (settings)",
-    zweckDe: "Dasselbe fuer die Leiste der Einstellungsseiten - die ist ein anderes Bauteil als die des Dashboards.",
+    zweckDe: "Dasselbe für die Leiste der Einstellungsseiten - die ist ein anderes Bauteil als die des Dashboards.",
     zweckEn: "The same for the settings pages' bar - a different component from the dashboard one.",
     css: `/* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
    .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
@@ -868,7 +868,7 @@ header.top-app-bar {
     ziel: "dialog",
     de: "Dialoge in Glas",
     en: "Dialogs in glass",
-    zweckDe: "Gerundete Dialogflaeche mit Lichtkante. Bewusst OHNE Weichzeichnung - die macht die Auswahllisten darin unerreichbar.",
+    zweckDe: "Gerundete Dialogfläche mit Lichtkante. Bewusst OHNE Weichzeichnung - die macht die Auswahllisten darin unerreichbar.",
     zweckEn: "Rounded dialog surface with a light edge. Deliberately WITHOUT blur - it makes the dropdowns inside unreachable.",
     css: `/* KEIN backdrop-filter auf der Dialogflaeche.
 
@@ -907,7 +907,7 @@ wa-drawer::part(dialog) {
     ziel: "more-info",
     de: "Info-Dialog in Glas",
     en: "More-info dialog in glass",
-    zweckDe: "Rundung und Lichtkante fuer den Dialog, der sich beim Klick auf eine Entitaet oeffnet.",
+    zweckDe: "Rundung und Lichtkante für den Dialog, der sich beim Klick auf eine Entität öffnet.",
     zweckEn: "Radius and light edge for the dialog that opens when you tap an entity.",
     css: `/* :host ist hier ha-more-info-dialog. Auch hier keine Weichzeichnung auf
    der Flaeche - aus demselben Grund wie bei den uebrigen Dialogen. */
@@ -928,7 +928,7 @@ wa-drawer::part(dialog),
     ziel: "badge",
     de: "Badges in Glas",
     en: "Badges in glass",
-    zweckDe: "Die kleinen Zustandsplaketten oben auf dem Dashboard bekommen dieselbe Glasflaeche wie die Karten.",
+    zweckDe: "Die kleinen Zustandsplaketten oben auf dem Dashboard bekommen dieselbe Glasfläche wie die Karten.",
     zweckEn: "The small state badges at the top of the dashboard get the same glass surface as the cards.",
     css: `:host,
 .badge {
@@ -946,7 +946,7 @@ wa-drawer::part(dialog),
     ziel: "toast",
     de: "Meldungen in Glas",
     en: "Toasts in glass",
-    zweckDe: "Die Meldung unten links bekommt Glasflaeche, Rundung und Lichtkante.",
+    zweckDe: "Die Meldung unten links bekommt Glasfläche, Rundung und Lichtkante.",
     zweckEn: "The message at the bottom left gets a glass surface, radius and light edge.",
     css: `:host,
 .toast,
@@ -965,9 +965,9 @@ ha-toast {
     id: "glas-knoepfe",
     gruppe: "glas",
     ziel: "card",
-    de: "Symbolknoepfe anpassen",
+    de: "Symbolknöpfe anpassen",
     en: "Icon buttons",
-    zweckDe: "Groesse, Rundung, Schatten und die Klick-Welle der Symbolknoepfe - alles ueber Variablen, die durch jede Shadow-Grenze erben.",
+    zweckDe: "Größe, Rundung, Schatten und die Klick-Welle der Symbolknöpfe - alles über Variablen, die durch jede Shadow-Grenze erben.",
     zweckEn: "Size, radius, shadow and the ripple of icon buttons - all through variables, which inherit through every shadow boundary.",
     css: `/* Nur Variablen, keine Regeln auf das Innere des Knopfes.
 
@@ -1005,9 +1005,9 @@ ha-card {
     id: "glas-leistenknoepfe",
     gruppe: "glas",
     ziel: "root",
-    de: "Ein Hauch Glas auf den Leistenknoepfen",
+    de: "Ein Hauch Glas auf den Leistenknöpfen",
     en: "A touch of glass on the bar buttons",
-    zweckDe: "Die Symbolknoepfe in der Kopfleiste bekommen eine durchscheinende Flaeche statt gar keiner - sichtbar erst, wenn man sie sucht.",
+    zweckDe: "Die Symbolknöpfe in der Kopfleiste bekommen eine durchscheinende Fläche statt gar keiner - sichtbar erst, wenn man sie sucht.",
     zweckEn: "The icon buttons in the header get a translucent surface instead of none - visible only once you look for them.",
     css: `/* Am 14.10.2026 gemessen, auf Ansage ("unsere knoepfe brauchen noch einen
    hauch von glas"): HAs Symbolknoepfe tragen im Ruhezustand GAR KEINE
@@ -1071,9 +1071,9 @@ ha-icon-button {
     id: "grund-ueberall",
     gruppe: "glas",
     ziel: "drawer",
-    de: "Der Grund auch ausserhalb des Dashboards",
+    de: "Der Grund auch außerhalb des Dashboards",
     en: "The ground beyond the dashboard",
-    zweckDe: "Traegt den Hintergrund der Theme auch hinter die Einstellungen, das Profil und jede andere Seite - sonst stehen die Glaskarten dort vor einer leeren Flaeche.",
+    zweckDe: "Trägt den Hintergrund der Theme auch hinter die Einstellungen, das Profil und jede andere Seite - sonst stehen die Glaskarten dort vor einer leeren Fläche.",
     zweckEn: "Carries the theme's background behind settings, profile and every other page - otherwise the glass cards there sit on a blank surface.",
     css: `/* Am 14.10.2026 gemessen, auf Ansage ("die ansichten unter einstellungen").
    Auf /config/dashboard stand der Befund so:
@@ -1163,7 +1163,7 @@ ha-icon-button {
     ziel: "card",
     de: "Regler glimmen lassen",
     en: "Let sliders glow",
-    zweckDe: "Ein Schein um den Schieberegler, in der Farbe der Entitaet - nicht in einer festen. Laeuft bei allen drei Familien.",
+    zweckDe: "Ein Schein um den Schieberegler, in der Farbe der Entität - nicht in einer festen. Läuft bei allen drei Familien.",
     zweckEn: "A glow around the slider, in the entity's own colour - not a fixed one. Works in all three families.",
     css: `/* Die EINZIGE der gesammelten Spielereien, die bei allen drei Familien
    laeuft. Am 14.10.2026 an der Vergleichsseite gemessen, an 17 Karten.
