@@ -159,7 +159,7 @@ pruefe("Die Stufen stehen NUR in der Liste, nicht noch einmal in der Leiste", ()
   assert.match(quelle, /data-schalter="\$\{k\.id\}"/);
   assert.match(quelle, /\{ id: "baukasten",/);
   assert.match(quelle, /class="kopfknopf"/, "die Dateiknoepfe im Kopf fehlen");
-  assert.match(quelle, /\{ titel: T\("Werkzeuge"\), wege: \[/, "die Reihe der Werkzeuge fehlt");
+  assert.match(quelle, /\{ id: "werkzeuge", titel: T\("Werkzeuge"\), wege: \[/, "die Reihe der Werkzeuge fehlt");
   assert.doesNotMatch(quelle, /\.ml-aktionen \{/, "die alte Leiste ist zurueck");
 });
 

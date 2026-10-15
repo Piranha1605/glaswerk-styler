@@ -2242,11 +2242,13 @@ class HatsPanel extends HTMLElement {
   // Theme man bearbeitet, rechts, WOMIT. Vorher lagen beide Sorten als fuenf
   // gleich aussehende Karten nebeneinander, und "Neue Theme" stand neben
   // "Was macht welche Variable?".
-  wegeHtml(T) {
+  // welche: "anfangen" oder "werkzeuge". Ohne Angabe beide - das ist der
+  // Fall ohne offene Theme, wo nichts dazwischensteht.
+  wegeHtml(T, welche) {
     const d = ZUSTAND.dateien;
     const zahl = d === null ? null : d.filter((x) => x.name !== "ha_blanko.yaml").length;
     const reihen = [
-      { titel: T("Datei"), wege: [
+      { id: "anfangen", titel: T("Anfangen"), wege: [
         { id: "neu", icon: "mdi:file-plus-outline", t: T("Neue Theme"),
           p: T("Leer anfangen, mit Home Assistants eigenen Farben als Grundlage.") },
         { id: "oeffnen", icon: "mdi:folder-open-outline", t: T("Vorhandene oeffnen"),
@@ -2254,22 +2256,24 @@ class HatsPanel extends HTMLElement {
              : `${zahl} ${zahl === 1 ? T("Theme auf dieser Instanz") : T("Themes auf dieser Instanz")}` },
         { id: "lesen", icon: "mdi:file-import-outline", t: T("Datei oder Text"),
           p: T("Eine Theme von anderswo einlesen - auch eine fremde.") },
+        // Die Hilfe steht HIER und nicht bei den Werkzeugen, seit dem
+        // 15.10.2026: Sie fasst keine Theme an, sie wird vor der ersten
+        // Entscheidung gebraucht - und sie fuellt die vierte Stelle, die
+        // sonst leer blieb. Gesperrt ist sie nie.
+        { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
+          p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
       ] },
-      { titel: T("Werkzeuge"), wege: [
+      { id: "werkzeuge", titel: T("Werkzeuge"), wege: [
         // Der Baukasten geht AUCH ohne offene Theme: Er legt dann erst eine
-        // an. Alles andere hier braucht eine und ist sonst gesperrt.
+        // an. UIX daneben braucht eine und ist sonst gesperrt.
         { id: "baukasten", icon: "mdi:toy-brick-outline", t: T("Baukasten"),
           p: T("Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.") },
         { id: "uix", icon: "mdi:auto-fix", t: "UI eXtension",
           p: T("Vorlagen und Stilziele - alles, was eine Regel braucht statt eines Werts."),
           aus: !ZUSTAND.modell },
-        // Die Hilfe ist nie gesperrt - sie fasst keine Theme an und wird vor
-        // der ersten Entscheidung gebraucht, nicht erst danach.
-        { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
-          p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
       ] },
     ];
-    return reihen.map((r) => `
+    return reihen.filter((r) => !welche || r.id === welche).map((r) => `
       <section class="wegereihe">
         <h3>${r.titel}</h3>
         <div class="startwege">
@@ -2650,10 +2654,16 @@ class HatsPanel extends HTMLElement {
                  Die Reihenfolge ist die der Arbeit: erst woher die Theme
                  kommt (Datei), dann womit man sie baut (Werkzeuge), dann
                  worauf sie aufsetzt (Start), dann die acht Stufen. -->
-            ${this.wegeHtml(T)}
-
-            ${!ZUSTAND.modell ? "" : `
+            ${!ZUSTAND.modell ? this.wegeHtml(T) : `
+            ${this.wegeHtml(T, "anfangen")}
             ${this.startFelder(T)}
+            <!-- Die Werkzeuge stehen DIREKT ueber der Liste, seit dem
+                 15.10.2026 - mit zwei Pfeilen angesagt, die von ihnen nach
+                 unten zeigten. Der Grund ist die Reihenfolge der Arbeit:
+                 oben, womit man anfaengt, in der Mitte, worauf die Theme
+                 aufsetzt, und unten, womit man sie baut - direkt an den acht
+                 Stufen, die dasselbe von Hand tun. -->
+            ${this.wegeHtml(T, "werkzeuge")}
             <div class="liste">
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
             </div>`}

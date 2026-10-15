@@ -304,10 +304,10 @@ pruefe("Der Baukasten steht ganz oben, vor UIX", () => {
   // in einer Leiste, sondern in der Werkzeugzeile ueber der Stufenliste.
   // Seit dem 15.10.2026 steht alles auf EINER Seite, in zwei Reihen: Datei
   // und Werkzeuge. Der Baukasten ist der erste der Werkzeuge.
-  const w = panel.slice(panel.indexOf('{ titel: T("Werkzeuge"), wege: ['),
-                        panel.indexOf("    ];", panel.indexOf('{ titel: T("Werkzeuge"), wege: [')));
+  const w = panel.slice(panel.indexOf('{ id: "werkzeuge", titel: T("Werkzeuge"), wege: ['),
+                        panel.indexOf("    ];", panel.indexOf('{ id: "werkzeuge", titel: T("Werkzeuge"), wege: [')));
   assert.ok(w.length > 200, "die Reihe der Werkzeuge wurde nicht gefunden");
-  const ids = [...w.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  const ids = [...w.slice(w.indexOf("wege: [")).matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
   assert.strictEqual(ids[0], "baukasten", "der Baukasten steht nicht an erster Stelle");
   assert.ok(ids.indexOf("baukasten") < ids.indexOf("uix"), "der Baukasten gehoert vor UIX");
   assert.match(panel, /baukasten: \(\) => this\.oeffneBaukasten\(\)/, "der Knopf ist nicht verdrahtet");

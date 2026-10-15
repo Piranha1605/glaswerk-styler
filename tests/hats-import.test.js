@@ -210,13 +210,18 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
   const teil = (von, bis) => panel.slice(panel.indexOf(von), panel.indexOf(bis, panel.indexOf(von)));
   const orte = {
     kopf: teil('<div class="sichern">', '<button class="speichern">'),
-    datei: teil('{ titel: T("Datei"), wege: [', '{ titel: T("Werkzeuge")'),
-    werkzeuge: teil('{ titel: T("Werkzeuge"), wege: [', "    ];"),
+    anfangen: teil('{ id: "anfangen", titel: T("Anfangen"), wege: [', '{ id: "werkzeuge"'),
+    werkzeuge: teil('{ id: "werkzeuge", titel: T("Werkzeuge"), wege: [', "    ];"),
   };
   for (const [name, t] of Object.entries(orte))
     assert.ok(t.length > 200, `${name}: der Block wurde nicht gefunden`);
 
-  const idsVon = (t) => [...t.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  // Die Reihen tragen selbst eine id ("anfangen", "werkzeuge") - die ist
+  // keine Aktion. Gezaehlt wird erst ab "wege: [".
+  const idsVon = (t) => {
+    const ab = t.indexOf("wege: [");   // der Kopf hat keine - dann alles
+    return [...(ab > -1 ? t.slice(ab) : t).matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  };
   const benutzt = new Set(Object.values(orte).flatMap(idsVon));
 
   for (const a of aktionen)
@@ -227,9 +232,12 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
   // Und jeder Ort traegt das, was dorthin gehoert.
   assert.deepStrictEqual(idsVon(orte.kopf), ["verwerfen", "laden2", "kopie2"],
     "im Kopf steht nicht mehr das, was zur Datei gehoert");
-  assert.deepStrictEqual(idsVon(orte.datei), ["neu", "oeffnen", "lesen"],
-    "die Reihe Datei hat sich geaendert");
-  assert.deepStrictEqual(idsVon(orte.werkzeuge), ["baukasten", "uix", "hilfe"],
+  // Die Hilfe steht oben bei den Wegen zum Anfangen, nicht bei den
+  // Werkzeugen: Sie fasst keine Theme an - und sie fuellt die vierte
+  // Stelle, die sonst leer blieb.
+  assert.deepStrictEqual(idsVon(orte.anfangen), ["neu", "oeffnen", "lesen", "hilfe"],
+    "die Reihe Anfangen hat sich geaendert");
+  assert.deepStrictEqual(idsVon(orte.werkzeuge), ["baukasten", "uix"],
     "die Reihe Werkzeuge hat sich geaendert");
   // Und es gibt keine zweite Seite mehr, auf der dasselbe noch einmal steht.
   assert.doesNotMatch(panel, /ZUSTAND\.start/, "der Startseiten-Merker ist zurueck");
@@ -239,7 +247,7 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
 pruefe("Die Hilfe gilt auch ohne offene Theme", () => {
   // Sie ist der einzige Weg, der keine Theme anfasst. Ein gesperrter
   // Hilfeknopf waere genau dann gesperrt, wenn man ihn braucht.
-  const w = panel.slice(panel.indexOf('{ titel: T("Werkzeuge"), wege: ['), panel.indexOf("    ];"));
+  const w = panel.slice(panel.indexOf('{ id: "anfangen"'), panel.indexOf('{ id: "werkzeuge"'));
   const eintrag = /\{ id: "hilfe",[\s\S]{0,260}?\},/.exec(w);
   assert.ok(eintrag, "der Hilfeweg fehlt");
   assert.doesNotMatch(eintrag[0], /aus:/, "die Hilfe wird gesperrt");
@@ -255,7 +263,7 @@ pruefe("Die Knoepfe im Kopf tragen Titel statt Beschriftung", () => {
     "die Knoepfe werden nicht mehr aus EINER Vorlage erzeugt");
   // Die Wege dagegen tragen Namen - sie haben Platz und sind keine
   // Symbolreihe.
-  const w = panel.slice(panel.indexOf("  wegeHtml(T) {"), panel.indexOf("  // Worauf die Theme aufsetzt"));
+  const w = panel.slice(panel.indexOf("  wegeHtml(T, welche) {"), panel.indexOf("  // Worauf die Theme aufsetzt"));
   assert.match(w, /<b>\$\{w\.t\}<\/b>/, "die Wege haben keine Beschriftung");
 });
 
@@ -302,11 +310,19 @@ pruefe("Eine Seite, von der alles weitergeht", () => {
   const seite = panel.slice(panel.indexOf("            <!-- EINE SEITE,"), panel.indexOf("            </section>"));
   assert.ok(seite.length > 300, "der Rumpf der Seite wurde nicht gefunden");
   // Die Wege stehen IMMER da, die Felder und die Stufen nur mit Theme.
-  assert.match(seite, /\$\{this\.wegeHtml\(T\)\}/, "die Wege fehlen");
-  const nachWegen = seite.slice(seite.indexOf("wegeHtml"));
-  assert.match(nachWegen, /\$\{!ZUSTAND\.modell \? "" : `[\s\S]*?startFelder\(T\)/,
-    "die Startfelder haengen nicht an der offenen Theme");
-  assert.match(nachWegen, /class="liste"/, "die Stufenliste fehlt");
+  assert.match(seite, /this\.wegeHtml\(T\)/, "die Wege fehlen, wenn keine Theme offen ist");
+  assert.match(seite, /this\.wegeHtml\(T, "anfangen"\)/, "die Reihe Anfangen fehlt");
+  assert.match(seite, /this\.wegeHtml\(T, "werkzeuge"\)/, "die Reihe Werkzeuge fehlt");
+  // Und die Werkzeuge stehen UNTER den Startfeldern, direkt ueber der Liste.
+  assert.ok(seite.indexOf('wegeHtml(T, "werkzeuge")') > seite.indexOf("startFelder(T)"),
+    "die Werkzeuge stehen wieder ueber den Startfeldern");
+  assert.ok(seite.indexOf('class="liste"') > seite.indexOf('wegeHtml(T, "werkzeuge")'),
+    "die Liste steht nicht unter den Werkzeugen");
+  // Ohne Theme stehen NUR die Wege da; alles andere - Startfelder,
+  // Werkzeuge, Liste - haengt am Modell.
+  assert.match(seite, /\$\{!ZUSTAND\.modell \? this\.wegeHtml\(T\) : `/,
+    "die Seite unterscheidet nicht mehr, ob eine Theme offen ist");
+  assert.match(seite, /class="liste"/, "die Stufenliste fehlt");
   // Und der Name steht genau EINMAL auf der Seite - im Kopf.
   const felder = panel.slice(panel.indexOf("  startFelder(T) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
   assert.doesNotMatch(felder, /class="se-name"/,
@@ -368,9 +384,12 @@ pruefe("Ohne offene Theme gar nicht erst zeigen", () => {
   // dagegen nur Laerm - am 13.10.2026 gemeldet als "das ist komplett tot".
   // Der Block haengt jetzt eine Ebene hoeher am Modell: Die Seite ruft
   // startFelder(T) nur mit offener Theme auf. Geprueft wird genau das.
-  const seite = panel.slice(panel.indexOf("            ${this.wegeHtml(T)}"), panel.indexOf("            </section>"));
-  assert.match(seite, /\$\{!ZUSTAND\.modell \? "" : `[\s\S]{0,120}startFelder\(T\)/,
+  const seite = panel.slice(panel.indexOf("            <!-- EINE SEITE,"), panel.indexOf("            </section>"));
+  assert.ok(seite.length > 300, "der Rumpf der Seite wurde nicht gefunden");
+  assert.match(seite, /\$\{!ZUSTAND\.modell \? this\.wegeHtml\(T\) : `/,
     "die Startfelder stehen auch ohne Theme da");
+  assert.ok(seite.indexOf("startFelder(T)") > seite.indexOf("!ZUSTAND.modell ?"),
+    "die Startfelder stehen vor der Abfrage");
   const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
   assert.doesNotMatch(b, /ZUSTAND\.modell \? "" : "disabled"/,
     "die Felder sind wieder nur gesperrt statt weg");

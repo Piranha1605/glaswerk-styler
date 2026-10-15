@@ -63,7 +63,7 @@ pruefe("Die Dateiliste steht im Dialog, nicht auf der Startseite", () => {
   assert.match(panel, /async zeigeDateien\(\) \{/, "der Dialog fehlt");
   assert.match(panel, /oeffnen: \(\) => this\.zeigeDateien\(\)/,
     "das Ordner-Symbol fuehrt nicht zur Liste");
-  const wege = panel.slice(panel.indexOf("  wegeHtml(T) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
+  const wege = panel.slice(panel.indexOf("  wegeHtml(T, welche) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
   assert.ok(wege.length > 400, "die Wege wurden nicht gefunden");
   assert.doesNotMatch(wege, /liste schmal/, "die Liste steht wieder auf der Seite");
 });
