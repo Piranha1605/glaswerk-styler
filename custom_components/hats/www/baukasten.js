@@ -84,11 +84,15 @@ export function kartenPerle(teil, dunkel = false) {
   const bw = f["--ha-card-border-width"], bc = f["--ha-card-border-color"];
   if (bw && bw !== "0" && bc) st.push(`border:${bw} solid ${bc}`);
   if (f["--ha-card-box-shadow"]) st.push(`box-shadow:${f["--ha-card-box-shadow"]}`);
-  // Gedeckelt: 26 px Rundung auf einer 26 px hohen Perle waere eine Kapsel,
-  // und alle saehen gleich aus. Der Unterschied zwischen 4 und 9 bleibt.
+  // Gedeckelt: 26 px Rundung auf einer 30 px hohen Perle waere eine Kapsel,
+  // und alle saehen gleich aus. Der Unterschied zwischen 0 und 9 bleibt.
+  //
+  // Die Rundung kommt GETRENNT zurueck, nicht im Stil: Sie gilt auch fuer
+  // den bunten Grund dahinter. Stuende sie nur auf der Perle, schauten bei
+  // einem eckigen Stil die Ecken des Grundes daneben hervor - und genau das
+  // sah am 15.10.2026 nach einem Rahmen aus, der keiner war.
   const r = parseFloat(f["--ha-card-border-radius"]);
-  if (Number.isFinite(r)) st.push(`border-radius:${Math.min(r, 9)}px`);
-  return st.join(";");
+  return { stil: st.join(";"), radius: Number.isFinite(r) ? Math.min(r, 9) : 9 };
 }
 
 export function palettenVorschau(teil, dunkel = false) {

@@ -1483,7 +1483,7 @@ class HatsPanel extends HTMLElement {
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}
                       ${tupfer ? `title="${esc(zweck)}"` : ""}>
                 ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
-                ${perle ? `<span class="bk-perlgrund"><i style="${perle}"></i></span>` : ""}
+                ${perle ? `<span class="bk-perlgrund" style="border-radius:${perle.radius}px"><i style="${perle.stil}"></i></span>` : ""}
                 ${tupfer ? `<span class="bk-tupfer">${tupfer.map((f) =>
                     `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")}</span>` : ""}
                 <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
@@ -3895,15 +3895,27 @@ class HatsPanel extends HTMLElement {
       /* Die Glasperle. Der Grund darunter ist bunt und hat eine harte Kante
          in der Mitte: Nur daran sieht man, ob eine Scheibe weichzeichnet
          oder bloss durchsichtig ist. Ein gleichmaessiger Verlauf saehe unter
-         jeder Weichzeichnung gleich aus. */
+         jeder Weichzeichnung gleich aus.
+
+         DIE PERLE FUELLT DEN GRUND GANZ. Zuerst sass sie eingerueckt darin,
+         damit man den Grund auch neben ihr sieht - und am 15.10.2026 kam
+         prompt die Frage: "was sind das fuer rahmen." Es waren keine: Es war
+         der Grund, der ringsum herausschaute. Bei einer DECKENDEN Karte sah
+         das aus wie ein bunter Rahmen um ein schwarzes Feld, also nach einem
+         Fehler. Jetzt zeigt sich der Grund nur noch DURCH das Glas - und
+         genau das ist die Auskunft, die man sucht.
+
+         Die Rundung steht inline am Grund und wird von der Perle geerbt,
+         sonst blieben bei einem eckigen Stil die runden Ecken des Grundes
+         stehen - derselbe Rahmen in klein. */
       .bk-perlgrund { position: relative; display: block; width: 76px; height: 30px;
-                      margin-bottom: 8px; border-radius: 9px; overflow: hidden;
+                      margin-bottom: 8px; overflow: hidden;
                       background:
                         linear-gradient(90deg, transparent 46%, rgba(255,255,255,.85) 46%,
                                                rgba(255,255,255,.85) 54%, transparent 54%),
                         linear-gradient(115deg, #2f6df0 0%, #7a5cf0 38%, #e8833a 70%, #15c08a 100%); }
-      .bk-perlgrund i { position: absolute; inset: 5px 8px; display: block;
-                        border-radius: 7px; }
+      .bk-perlgrund i { position: absolute; inset: 0; display: block;
+                        border-radius: inherit; }
       /* Die Farbtupfer einer Palette. Der erste ist der Akzent - die einzige
          Farbe, die je Modus verschieden ist, und die, die man am haeufigsten
          sieht. Deshalb steht er vorn.

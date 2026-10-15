@@ -106,22 +106,24 @@ pruefe("Die Glasperle kommt aus den Feldern des Teils, nicht von daneben", () =>
   // Perle steht, muss im Teil stehen.
   for (const t of KARTENSTILE) {
     for (const dunkel of [false, true]) {
-      const perle = kartenPerle(t, dunkel);
+      const { stil, radius } = kartenPerle(t, dunkel);
       const f = { ...t.flach, ...(dunkel ? t.dark : t.light) };
-      assert.ok(perle.length > 20, `${t.id}: leere Perle`);
-      assert.ok(perle.includes(`background:${f["--ha-card-background"]}`),
+      assert.ok(stil.length > 20, `${t.id}: leere Perle`);
+      assert.ok(stil.includes(`background:${f["--ha-card-background"]}`),
         `${t.id}: die Perle zeigt eine andere Flaeche als das Teil`);
       if (f["--ha-card-backdrop-filter"])
-        assert.ok(perle.includes(`backdrop-filter:${f["--ha-card-backdrop-filter"]}`),
+        assert.ok(stil.includes(`backdrop-filter:${f["--ha-card-backdrop-filter"]}`),
           `${t.id}: die Perle zeichnet nicht weich, obwohl das Teil es tut`);
-      // Die Rundung ist gedeckelt - sonst waere jede Perle eine Kapsel.
-      const r = /border-radius:(\d+)px/.exec(perle);
-      assert.ok(r && Number(r[1]) <= 9, `${t.id}: die Perle rundet ungedeckelt`);
+      // Die Rundung ist gedeckelt - sonst waere jede Perle eine Kapsel -,
+      // und sie steht NICHT im Stil: Sie gilt auch fuer den Grund dahinter.
+      assert.ok(radius >= 0 && radius <= 9, `${t.id}: die Perle rundet ungedeckelt (${radius})`);
+      assert.doesNotMatch(stil, /border-radius/,
+        `${t.id}: die Rundung steht in der Perle - dann bleiben die Ecken des Grundes stehen`);
     }
   }
   // Gegenprobe: Ein Teil ohne Felder ergibt eine Perle ohne Eigenschaften -
   // keine erfundenen Vorgaben, die etwas zeigen, was nicht gesetzt ist.
-  assert.strictEqual(kartenPerle({ id: "nichts" }, false), "");
+  assert.strictEqual(kartenPerle({ id: "nichts" }, false).stil, "");
 });
 
 pruefe("Die Flaeche steht je Modus, die Form flach", () => {
