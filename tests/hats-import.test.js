@@ -180,46 +180,78 @@ pruefe("Gegenprobe: ohne Blockskalar waere es kaputt", () => {
 // ---------------------------------------------------------------------------
 // Die Schalterreihe oben links.
 
-pruefe("Eine Leiste oben, und darin nur noch die Aktionen", () => {
+pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
   // Drei Stellen fuer Navigation waren zwei zu viel: Seitenleiste,
   // Schalterreihe und Startkarten wurden am 13.10.2026 zu einer Pille oben.
-  // Links standen dann die acht Stufen, rechts die Aktionen - und am
-  // 14.10.2026 sind auch die Stufen gegangen. Sie fuehrten in dasselbe
-  // Pop-up wie die Zeile in der Liste darunter, und die sagt mehr.
-  const block = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
-  assert.ok(block.length > 600, "die Leiste wurde nicht gefunden");
-  const ids = [...block.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
-  // Speichern steht bewusst NICHT dabei - es bleibt im Kopf, und zweimal
-  // derselbe Knopf nebeneinander ist einer zu viel.
-  // UIX steht seit dem 13.10.2026 hier oben statt in einer Spalte rechts -
-  // auf Ansage, damit rechts frei wird. Der Baukasten steht davor: Er kommt
-  // in der Arbeit zuerst, UIX ist der Feinschliff danach.
+  // Am 14.10. fielen die acht Stufen daraus (die Liste sagt mehr), am
+  // 15.10. die Leiste selbst - auf Ansage: "die leiste oben ist eigendlich
+  // ueberfluessig bis auf speichern".
   //
-  // "hilfe" kam am 15.10.2026 dazu und steht VOR "neu", also am Ende der
-  // Gruppe, die etwas oeffnet (Baukasten, UIX, Hilfe) und vor der Gruppe, die
-  // etwas mit der Datei tut. Als einziger Knopf ist er nie gesperrt: Die
-  // Hilfe gilt auch, wenn noch keine Theme offen ist.
-  assert.deepStrictEqual(ids,
-    ["baukasten", "uix", "hilfe", "neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
-  const hilfe = /\{ id: "hilfe",[^}]*\}/.exec(block);
-  assert.ok(hilfe, "der Hilfeknopf fehlt");
-  assert.doesNotMatch(hilfe[0], /aus:/, "der Hilfeknopf wird gesperrt - sie gilt auch ohne offene Theme");
-  assert.doesNotMatch(block, /data-rail=/, "die Stufen stehen wieder in der Leiste");
+  // DIE GEFAHR BEIM UMRAEUMEN IST NICHT DAS AUSSEHEN, SONDERN DER VERLUST.
+  // Neun Symbole an drei neue Orte zu verteilen heisst: Eines kann dabei
+  // herausfallen, und dann gibt es eine Funktion, die niemand mehr aufrufen
+  // kann - sichtbar an nichts. Dieser Test zaehlt deshalb beide Richtungen
+  // gegeneinander, statt eine Liste von Namen zu pflegen.
+  assert.doesNotMatch(panel, /class="menueleiste"/, "die Leiste ist zurueck");
+  assert.doesNotMatch(panel, /class="ml-knopf"/, "die Leistenknoepfe sind zurueck");
+  assert.doesNotMatch(panel, /data-rail=/, "die Stufen stehen wieder in einer Leiste");
   assert.doesNotMatch(panel, /class="rail"/, "die alte Seitenleiste ist zurueck");
-  // Gegenprobe: Die Leiste ist nicht leer geworden - die Marke und die acht
-  // Aktionen stehen noch da, und die Aktionen weiter rechts.
-  assert.match(block, /<div class="ml-marke"><\/div>/);
-  assert.strictEqual((block.match(/class="ml-knopf"/g) || []).length, 1,
-    "die Aktionen werden nicht mehr aus EINER Vorlage erzeugt");
+
+  // Was es an Aktionen gibt: die Schluessel von `schalter`.
+  const schalterBlock = panel.slice(panel.indexOf("    const schalter = {"),
+                                    panel.indexOf("querySelectorAll(\"[data-schalter]\")"));
+  assert.ok(schalterBlock.length > 200, "der Schalterblock wurde nicht gefunden");
+  const aktionen = [...schalterBlock.matchAll(/^\s{6}([a-z0-9]+): \(\) =>/gm)].map((m) => m[1]);
+  assert.ok(aktionen.length >= 9, `nur ${aktionen.length} Aktionen gefunden`);
+
+  // Wo sie im Markup vorkommen - drei Orte, jeder mit seiner Begruendung:
+  const teil = (von, bis) => panel.slice(panel.indexOf(von), panel.indexOf(bis, panel.indexOf(von)));
+  const orte = {
+    kopf: teil('<div class="sichern">', '<button class="speichern">'),
+    werkzeuge: teil('<div class="werkzeuge">', '<div class="liste">'),
+    start: teil('<div class="startwege">', "</div>`}"),
+  };
+  for (const [name, t] of Object.entries(orte))
+    assert.ok(t.length > 200, `${name}: der Block wurde nicht gefunden`);
+
+  const idsVon = (t) => [...t.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  const benutzt = new Set(Object.values(orte).flatMap(idsVon));
+
+  for (const a of aktionen)
+    assert.ok(benutzt.has(a), `die Aktion "${a}" hat keinen Knopf mehr - sie ist unerreichbar`);
+  for (const b of benutzt)
+    assert.ok(aktionen.includes(b), `der Knopf "${b}" ruft eine Aktion auf, die es nicht gibt`);
+
+  // Und jeder Ort traegt das, was dorthin gehoert.
+  assert.deepStrictEqual(idsVon(orte.kopf), ["start", "verwerfen", "laden2", "kopie2"],
+    "im Kopf steht nicht mehr das, was zur Datei gehoert");
+  assert.deepStrictEqual(idsVon(orte.werkzeuge), ["baukasten", "uix", "hilfe"],
+    "die Werkzeugzeile ueber der Liste hat sich geaendert");
+  assert.ok(idsVon(orte.start).includes("hilfe"),
+    "die Hilfe fehlt auf der Startseite - dort wird sie zuerst gebraucht");
 });
 
-pruefe("Nur Symbole, keine Beschriftung", () => {
-  // Gilt weiter fuer die Aktionen: Der Titel steht im title und im aria-label,
-  // nicht als Text daneben - so passt die Leiste in jede Breite.
-  const block = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
-  assert.doesNotMatch(block, /<span>\$\{k\.t\}<\/span>/, "die Beschriftungen sind zurueck");
-  assert.match(block, /title="\$\{k\.t\}" aria-label="\$\{k\.t\}"/,
+pruefe("Die Hilfe gilt auch ohne offene Theme", () => {
+  // Sie ist der einzige Weg, der keine Theme anfasst. Ein gesperrter
+  // Hilfeknopf waere genau dann gesperrt, wenn man ihn braucht.
+  const start = panel.slice(panel.indexOf('<div class="startwege">'), panel.indexOf("</div>`}", panel.indexOf('<div class="startwege">')));
+  const eintrag = /\{ id: "hilfe",[\s\S]{0,240}?\},/.exec(start);
+  assert.ok(eintrag, "der Hilfeweg fehlt auf der Startseite");
+  assert.doesNotMatch(eintrag[0], /aus:/, "die Hilfe wird auf der Startseite gesperrt");
+});
+
+pruefe("Die Knoepfe im Kopf tragen Titel statt Beschriftung", () => {
+  // Gilt weiter: Der Name steht im title und im aria-label, nicht als Text
+  // daneben - vier Knoepfe neben Speichern muessen in jede Breite passen.
+  const kopf = panel.slice(panel.indexOf('<div class="sichern">'), panel.indexOf('<button class="speichern">'));
+  assert.match(kopf, /title="\$\{k\.t\}" aria-label="\$\{k\.t\}"/,
     "ohne Beschriftung braucht es wenigstens title und aria-label");
+  assert.strictEqual((kopf.match(/class="kopfknopf"/g) || []).length, 1,
+    "die Knoepfe werden nicht mehr aus EINER Vorlage erzeugt");
+  // Die Werkzeuge dagegen tragen Namen - sie haben Platz und sind keine
+  // Symbolreihe.
+  const w = panel.slice(panel.indexOf('<div class="werkzeuge">'), panel.indexOf('<div class="liste">', panel.indexOf('<div class="werkzeuge">')));
+  assert.match(w, /<b>\$\{w\.t\}<\/b>/, "die Werkzeuge haben keine Beschriftung");
 });
 
 pruefe("Verwerfen geht auf den Stand beim Oeffnen zurueck", () => {
@@ -236,22 +268,27 @@ pruefe("Oeffnen fragt bei Ungespeichertem nach", () => {
     "zumStart wirft Ungespeichertes ohne Rueckfrage weg");
 });
 
-pruefe("Die Startwege stehen NUR auf der leeren Startseite", () => {
-  // Hier stand bis zum 13.10.2026 das Gegenteil: "Die Startkarten sind weg,
-  // zwei Wege zur selben Sache nebeneinander sind einer zu viel." Das stimmte,
-  // solange die Karten NEBEN der Symbolleiste lagen.
+pruefe("Die Startwege stehen auf der Startseite, immer", () => {
+  // Diese Pruefung hat ihre Erwartung zweimal gewechselt, und beide Male war
+  // der Grund derselbe: Wo sonst kommt man an diese Wege?
   //
-  // Jetzt liegen sie dort, wo die Leiste nichts tun kann: Ohne offene Theme
-  // sind ihre Knoepfe gesperrt (aus: ZUSTAND.start), unbeschriftet und damit
-  // unlesbar. Auf Ansage: "warum machen wir auf der seite womit faengst du an
-  // nicht grosse buttons mit laden neu aus vorlage und so weiter".
+  //   bis 13.10.  gar keine Karten - "zwei Wege zur selben Sache"
+  //   bis 15.10.  Karten, aber nur ohne offene Theme; sonst trug die
+  //               Leiste oben dieselben Wege
+  //   seit 15.10. immer - die Leiste gibt es nicht mehr
   //
-  // Die Bedingung ist deshalb das Entscheidende an dieser Pruefung - sobald
-  // eine Theme offen ist, verschwinden die Karten und die Leiste uebernimmt.
+  // Mit offener Theme stehen oben die Starteinstellungen (Name, Herkunft,
+  // Modus, Hintergrundbilder) und darunter die Wege. Ohne sie waere die
+  // Startseite mit offener Theme eine Sackgasse.
   const sb = panel.slice(panel.indexOf("startbild(T) {"), panel.indexOf("zeigeDateien("));
-  assert.match(sb, /class="startwege/, "die Startwege fehlen");
-  assert.match(sb, /\$\{ZUSTAND\.modell \? "" : `[\s\S]{0,900}class="startwege/,
-    "die Startwege haengen nicht daran, dass KEINE Theme offen ist");
+  const wege = sb.indexOf('class="startwege');
+  assert.ok(wege > -1, "die Startwege fehlen");
+  assert.doesNotMatch(sb.slice(Math.max(0, wege - 900), wege), /\$\{ZUSTAND\.modell \? "" : `/,
+    "die Startwege haengen wieder daran, dass KEINE Theme offen ist");
+  // Die Starteinstellungen dagegen SCHON - ein Block, der nichts tun kann,
+  // ist nur Laerm. Am 13.10.2026 gemeldet: "das ist komplett tot".
+  assert.match(sb, /\$\{!ZUSTAND\.modell \? "" : `[\s\S]{0,400}class="starteinst"/,
+    "die Starteinstellungen stehen jetzt auch ohne Theme da");
   // Sie fuehren zu denselben Aktionen wie die Leiste, ueber einen eigenen
   // Namen - sonst kaeme ein Klick zweimal an.
   assert.match(panel, /querySelectorAll\("\[data-start\]"\)/, "die Wege sind nicht verdrahtet");

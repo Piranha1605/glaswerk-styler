@@ -44,9 +44,14 @@ pruefe("Nur die einfache Form, kein -yaml", () => {
   assert.doesNotMatch(panel, /"uix-" \+ el\.dataset\.uix \+ "-yaml"/);
 });
 
-pruefe("UIX steht oben in der Leiste, nicht mehr rechts", () => {
-  const leiste = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
-  assert.match(leiste, /id: "uix"/, "der UIX-Knopf fehlt in der Leiste");
+pruefe("UIX steht in der Werkzeugzeile, nicht mehr rechts", () => {
+  // Am 13.10.2026 aus der Add-on-Spalte nach oben in die Leiste, am
+  // 15.10.2026 mit der Leiste in die Werkzeugzeile ueber der Stufenliste.
+  // Dort traegt es zum ersten Mal einen Namen statt nur eines Symbols.
+  const w = panel.slice(panel.indexOf('<div class="werkzeuge">'),
+                        panel.indexOf('<div class="liste">', panel.indexOf('<div class="werkzeuge">')));
+  assert.match(w, /id: "uix"/, "der UIX-Knopf fehlt in der Werkzeugzeile");
+  assert.match(w, /t: "UI eXtension"/, "UIX steht ohne Namen da");
   // Die Spalte darf nicht zurueckkommen - sonst stuende UIX an zwei Stellen.
   assert.doesNotMatch(panel, /addonSpalte/, "die Add-on-Spalte ist zurueck");
   assert.doesNotMatch(panel, /class="addons"/, "die Add-on-Spalte ist zurueck");

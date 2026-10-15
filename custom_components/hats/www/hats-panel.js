@@ -2250,8 +2250,14 @@ class HatsPanel extends HTMLElement {
         </div>`).join("")}
       </div>`}
 
-      ${ZUSTAND.modell ? "" : `
-      <!-- Vier Wege, gross und beschriftet.
+      <!-- DIE WEGE STEHEN IMMER DA, auch wenn schon eine Theme offen ist.
+           Bis zum 15.10.2026 waren sie an "kein Modell" geknuepft: Wer eine
+           Theme offen hatte, sah hier nur die Starteinstellungen. Das ging,
+           solange die Leiste oben die Wege trug - sie ist jetzt weg, und
+           damit waere die Startseite mit offener Theme eine Sackgasse
+           gewesen: kein Weg zu einer anderen Datei, keiner zu einer neuen.
+           Beim Umbau selbst aufgefallen, nicht im Betrieb. -->
+      <!-- Fuenf Wege, gross und beschriftet.
            Hier stand bis zum 13.10.2026 ein einzelner Satz in der Mitte einer
            leeren Seite, waehrend die Wege als kleine Symbole oben rechts lagen -
            gesperrt, unbeschriftet und damit unlesbar. Auf Ansage: "warum machen
@@ -2269,13 +2275,18 @@ class HatsPanel extends HTMLElement {
             p: `${zahlDateien} ${zahlDateien === 1 ? T("Theme auf dieser Instanz") : T("Themes auf dieser Instanz")}` },
           { id: "lesen", icon: "mdi:file-import-outline", t: T("Datei oder Text"),
             p: T("Eine Theme von anderswo einlesen - auch eine fremde.") },
+          // Die Hilfe steht hier, weil sie VOR der ersten Entscheidung
+          // gebraucht wird und nicht erst danach. Sie ist der einzige Weg,
+          // der keine Theme anfasst.
+          { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
+            p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
         ].map((w) => `
         <button class="startweg" data-start="${w.id}">
           <ha-icon icon="${w.icon}"></ha-icon>
           <b>${w.t}</b>
           <span>${w.p}</span>
         </button>`).join("")}
-      </div>`}
+      </div>
     `;
   }
 
@@ -2525,39 +2536,27 @@ class HatsPanel extends HTMLElement {
       <div class="buehne">
         <div class="wolke a"></div><div class="wolke b"></div>
         <div class="fenster">
-          <!-- In der Leiste stehen nur noch die AKTIONEN.
-               Links sassen bis zum 14.10.2026 die acht Stufen. Sie sind weg,
-               auf Ansage: "eigendlich brauchen wir das menue oben link nicht
-               mehr da wir eh die seite haben und alles als popup auf geht."
-               Nachgesehen und bestaetigt - beide Wege riefen dieselbe Zeile:
-               die Knoepfe oben ueber data-rail, die Zeile in der Liste ueber
-               ihren eigenen Klick, und beide landeten in oeffne(nr), also im
-               selben Pop-up. Die Liste darunter nennt jede Stufe beim Namen,
-               mit Stand, Gruppen und Feldzahl; die Knoepfe hatten nur ein
-               Symbol. Zwei Wege zur selben Sache, und der schlechtere oben.
-               Damit ist auch die alte Begruendung wieder ganz: eine Leiste
-               statt dreier Stellen - jetzt wirklich eine.
-               Speichern steht bewusst NICHT hier, sondern im Kopf. -->
-          <nav class="menueleiste">
-            <div class="ml-marke"></div>
-            <div class="ml-aktionen">
-              ${[
-                { id: "baukasten", icon: "mdi:toy-brick-outline",  t: T("Baukasten"), aus: ZUSTAND.start },
-                { id: "uix",     icon: "mdi:auto-fix",             t: "UIX", aus: ZUSTAND.start },
-                { id: "hilfe",    icon: "mdi:help-circle-outline",  t: T("Was macht welche Variable?") },
-                { id: "neu",      icon: "mdi:file-plus-outline",    t: T("Neue Theme") },
-                { id: "lesen",    icon: "mdi:file-import-outline",  t: T("Datei oder Text") },
-                { id: "oeffnen",  icon: "mdi:folder-open-outline",  t: T("Vorhandene oeffnen") },
-                { id: "verwerfen", icon: "mdi:undo-variant",        t: T("Aenderungen verwerfen"), aus: ZUSTAND.start || !ZUSTAND.geaendert.size },
-                { id: "laden2",   icon: "mdi:download-outline",     t: T("Als Datei herunterladen"), aus: ZUSTAND.start },
-                { id: "kopie2",   icon: "mdi:content-copy",         t: T("In die Zwischenablage"),   aus: ZUSTAND.start },
-              ].map((k) => `
-                <button class="ml-knopf" data-schalter="${k.id}"
-                        title="${k.t}" aria-label="${k.t}" ${k.aus ? "disabled" : ""}>
-                  <ha-icon icon="${k.icon}"></ha-icon>
-                </button>`).join("")}
-            </div>
-          </nav>
+          <!-- HIER STAND DIE MENUELEISTE, und sie ist am 15.10.2026 ganz
+               gefallen. Auf Ansage: "die menueleist in hats kann doch
+               eigendlich auch weg. wir starten immer mit der womit faengst du
+               an seite da kann die hilfe auch noch mit runter und dann ist die
+               leiste oben eigendlich ueberfluessig bis auf speichern."
+
+               Der Weg dahin ging ueber zwei Stufen. Zuerst fielen die acht
+               Stufenknoepfe, weil die Liste darunter dasselbe tut und dabei
+               jede Stufe beim Namen nennt. Was blieb, waren neun
+               unbeschriftete Symbole - und jedes davon hat anderswo schon
+               einen Platz:
+
+                   neu, lesen, oeffnen, baukasten, hilfe   die Startseite
+                   verwerfen, herunterladen, kopieren      gehoeren zur Datei,
+                                                           also neben Speichern
+                   uix                                     die Werkzeugzeile
+                                                           ueber der Liste
+
+               Damit ist die alte Begruendung "eine Leiste statt dreier
+               Stellen" endlich eingeloest: Es ist jetzt gar keine Leiste
+               mehr, sondern die Seite selbst. -->
 
           <div class="rumpf">
             <section class="inhalt">
@@ -2571,6 +2570,23 @@ class HatsPanel extends HTMLElement {
                 <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
                        placeholder="${T("Name der Theme")}" spellcheck="false">
                 <span class="zaehlerbox"><b class="zaehler">${ZUSTAND.geaendert.size}</b> ${T("Aenderungen")}</span>
+                <!-- Was zur DATEI gehoert, steht neben Speichern: verwerfen,
+                     herunterladen, kopieren - und der Weg zurueck zum Anfang.
+                     "Bis auf speichern" heisst nicht nur den einen Knopf,
+                     sondern das, was mit ihm zu tun hat.
+                     Und: zumStart() hatte bis heute GAR KEINEN Aufrufer. Wer
+                     eine Theme offen hatte, kam nicht mehr zur Startseite
+                     zurueck, ohne das Panel neu zu laden. -->
+                ${[
+                  { id: "start",     icon: "mdi:home-outline",     t: T("Zurueck zum Anfang") },
+                  { id: "verwerfen", icon: "mdi:undo-variant",     t: T("Aenderungen verwerfen"), aus: !ZUSTAND.geaendert.size },
+                  { id: "laden2",    icon: "mdi:download-outline", t: T("Als Datei herunterladen") },
+                  { id: "kopie2",    icon: "mdi:content-copy",     t: T("In die Zwischenablage") },
+                ].map((k) => `
+                <button class="kopfknopf" data-schalter="${k.id}"
+                        title="${k.t}" aria-label="${k.t}" ${k.aus ? "disabled" : ""}>
+                  <ha-icon icon="${k.icon}"></ha-icon>
+                </button>`).join("")}
                 <button class="speichern">${T("Speichern")}</button>
               </div>`}
             </header>
@@ -2585,6 +2601,25 @@ class HatsPanel extends HTMLElement {
             <p class="meldung ${ZUSTAND.meldung ? ZUSTAND.meldung.art : ""}">${ZUSTAND.ladefehler ? T("Grundlage nicht geladen: ") + ZUSTAND.ladefehler : (ZUSTAND.meldung ? ZUSTAND.meldung.text : "")}</p>
 
             ${ZUSTAND.start ? this.startbild(T) : `
+            <!-- Die drei Werkzeuge ueber der Liste. Sie sind keine Stufe -
+                 sie haben keinen Stand und keine Felderzahl -, gehoeren aber
+                 in dieselbe Spalte: Wer hier liest, liest von oben nach
+                 unten, und der Baukasten ist der erste Griff. Sie tragen
+                 Namen, anders als die Symbole in der alten Leiste. -->
+            <div class="werkzeuge">
+              ${[
+                { id: "baukasten", icon: "mdi:toy-brick-outline", t: T("Baukasten"),
+                  p: T("Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.") },
+                { id: "uix", icon: "mdi:auto-fix", t: "UI eXtension",
+                  p: T("Vorlagen und Stilziele - alles, was eine Regel braucht statt eines Werts.") },
+                { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
+                  p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
+              ].map((w) => `
+              <button class="werkzeug" data-schalter="${w.id}">
+                <ha-icon icon="${w.icon}"></ha-icon>
+                <div class="wtext"><b>${w.t}</b><span>${w.p}</span></div>
+              </button>`).join("")}
+            </div>
             <div class="liste">
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
             </div>`}
@@ -2638,6 +2673,7 @@ class HatsPanel extends HTMLElement {
       b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
     const schalter = {
+      start: () => this.zumStart(),
       baukasten: () => this.oeffneBaukasten(),
       uix: () => this.oeffneUix(),
       hilfe: () => this.oeffneHilfe(),
@@ -3391,33 +3427,37 @@ class HatsPanel extends HTMLElement {
 
          Und das Glas: Die Steuerleiste zeichnet weich, was hinter ihr liegt.
          Der Panel-Hintergrund ist ein Verlauf, also bringt das hier dasselbe. */
-      .menueleiste { display: flex; align-items: center; gap: 4px;
-                     padding: 8px; margin-bottom: 16px;
-                     border-radius: var(--s-r-gross); background: var(--s-glas-innen);
-                     backdrop-filter: blur(14px) saturate(150%);
-                     -webkit-backdrop-filter: blur(14px) saturate(150%);
-                     box-shadow: var(--s-schatten-klein); }
-      .ml-marke { width: 32px; height: 32px; flex: none; border-radius: var(--s-r-klein);
-                  margin: 0 6px 0 2px;
-                  background: linear-gradient(145deg, #c6f24d, #8fd92a);
-                  box-shadow: var(--s-schatten-klein); }
-      /* margin-left: auto hielt frueher der Trenner - er stand zwischen den
-         Stufen und den Aktionen. Ohne die Stufen gibt es nichts zu trennen,
-         die Aktionen bleiben aber rechts: Wer sie dort sucht, findet sie dort. */
-      .ml-aktionen { display: flex; gap: 2px; margin-left: auto; }
-      .ml-knopf { display: flex; align-items: center; justify-content: center; flex: none;
-                  width: 40px; height: 40px; border: 0; background: none;
-                  color: var(--s-tinte); cursor: pointer; border-radius: var(--s-r);
-                  transition: background .15s ease, box-shadow .15s ease; }
-      .ml-knopf ha-icon { --mdc-icon-size: 20px; color: var(--s-tinte-leise); flex: none; }
-      /* Ueberfahren hebt den Knopf an, wie jede andere Flaeche im Panel -
-         vorher war es nur ein helleres Weiss ohne Plastik. */
-      .ml-knopf:hover:not([disabled]) { background: var(--s-karte);
-                                        box-shadow: var(--s-schatten-klein); }
+      /* Die Knoepfe neben Speichern. Dieselben Masse wie die alten
+         Leistenknoepfe (40 px, Symbol 20) - sie sind dieselbe Sorte Knopf,
+         nur an dem Ort, an den sie gehoeren. */
+      .kopfknopf { display: flex; align-items: center; justify-content: center; flex: none;
+                   width: 40px; height: 40px; border: 0; background: none;
+                   color: var(--s-tinte); cursor: pointer; border-radius: var(--s-r);
+                   transition: background .15s ease, box-shadow .15s ease; }
+      .kopfknopf ha-icon { --mdc-icon-size: 20px; color: var(--s-tinte-leise); flex: none; }
+      .kopfknopf:hover:not([disabled]) { background: var(--s-karte);
+                                         box-shadow: var(--s-schatten-klein); }
       /* Nicht verfuegbar heisst leiser, nicht unsichtbar - siehe die alte
          Schalterreihe, wo opacity .35 den Knopf verschwinden liess. */
-      .ml-knopf[disabled] { cursor: default; }
-      .ml-knopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
+      .kopfknopf[disabled] { cursor: default; }
+      .kopfknopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
+
+      /* ---- Die Werkzeuge ueber der Stufenliste ---- */
+      /* Eine Zeile wie in der Liste, nur ohne Spur und ohne Stand: Diese drei
+         haben keinen Fortschritt, sie sind Griffe. Dass sie sich wie die
+         Stufen anfuehlen, ist Absicht - es ist dieselbe Spalte. */
+      .werkzeuge { display: grid; gap: 8px; margin: 0 0 18px; }
+      .werkzeug { display: flex; align-items: center; gap: 14px; width: 100%;
+                  padding: 12px 16px; border: 0; text-align: left; cursor: pointer;
+                  font: inherit; color: var(--s-tinte);
+                  border-radius: var(--s-r-gross); background: var(--s-glas-innen);
+                  box-shadow: var(--s-schatten-klein);
+                  transition: background .15s ease, box-shadow .15s ease; }
+      .werkzeug:hover { background: var(--s-karte); box-shadow: var(--s-schatten); }
+      .werkzeug ha-icon { --mdc-icon-size: 22px; color: var(--s-tinte-leise); flex: none; }
+      .werkzeug .wtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .werkzeug .wtext b { font-size: 14px; font-weight: 500; }
+      .werkzeug .wtext span { font-size: 12px; color: var(--s-tinte-leise); }
 
       /* ---- Rumpf ---- */
       /* Seit dem 13.10.2026 eine Spalte: Die Add-on-Leiste rechts ist weg,

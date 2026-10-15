@@ -154,10 +154,13 @@ pruefe("Die Stufen stehen NUR in der Liste, nicht noch einmal in der Leiste", ()
   assert.match(quelle, /querySelectorAll\("\.zeile"\)[\s\S]{0,120}this\.oeffne\(Number\(z\.dataset\.stufe\)\)/,
     "die Zeile in der Liste oeffnet die Stufe nicht");
   assert.match(quelle, /<div class="zeile" data-stufe="\$\{s\.n\}">/);
-  // Und die Aktionen sind geblieben, rechts: Die Leiste ist nicht leer.
+  // Und die Aktionen sind geblieben - seit dem 15.10.2026 ohne Leiste:
+  // was zur Datei gehoert im Kopf, die Werkzeuge ueber der Liste.
   assert.match(quelle, /data-schalter="\$\{k\.id\}"/);
   assert.match(quelle, /\{ id: "baukasten",/);
-  assert.match(quelle, /\.ml-aktionen \{[^}]*margin-left: auto/);
+  assert.match(quelle, /class="kopfknopf"/, "die Dateiknoepfe im Kopf fehlen");
+  assert.match(quelle, /<div class="werkzeuge">/, "die Werkzeugzeile fehlt");
+  assert.doesNotMatch(quelle, /\.ml-aktionen \{/, "die alte Leiste ist zurueck");
 });
 
 // --- Die Beschriftungen, 14.10.2026 ------------------------------------

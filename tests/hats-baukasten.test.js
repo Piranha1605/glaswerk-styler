@@ -227,14 +227,22 @@ import path from "node:path";
 const hier = path.dirname(fileURLToPath(import.meta.url));
 const panel = readFileSync(path.join(hier, "../custom_components/hats/www/hats-panel.js"), "utf8");
 
-pruefe("Der Knopf steht in der Leiste, vor UIX", () => {
+pruefe("Der Baukasten steht ganz oben, vor UIX", () => {
   // Zuerst zusammenstecken, dann feinjustieren - die Reihenfolge der Knoepfe
-  // ist die Reihenfolge der Arbeit.
-  const leiste = panel.slice(panel.indexOf('<nav class="menueleiste">'), panel.indexOf('<header class="kopf">'));
-  const ids = [...leiste.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  // ist die Reihenfolge der Arbeit. Seit dem 15.10.2026 steht sie nicht mehr
+  // in einer Leiste, sondern in der Werkzeugzeile ueber der Stufenliste.
+  const w = panel.slice(panel.indexOf('<div class="werkzeuge">'),
+                        panel.indexOf('<div class="liste">', panel.indexOf('<div class="werkzeuge">')));
+  assert.ok(w.length > 200, "die Werkzeugzeile wurde nicht gefunden");
+  const ids = [...w.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
   assert.strictEqual(ids[0], "baukasten", "der Baukasten steht nicht an erster Stelle");
   assert.ok(ids.indexOf("baukasten") < ids.indexOf("uix"), "der Baukasten gehoert vor UIX");
   assert.match(panel, /baukasten: \(\) => this\.oeffneBaukasten\(\)/, "der Knopf ist nicht verdrahtet");
+  // Und auf der Startseite ist er der zweite Weg - direkt nach "Neue Theme",
+  // weil er genau das tut und den Baukasten gleich darueber legt.
+  const start = panel.slice(panel.indexOf('<div class="startwege">'));
+  const sids = [...start.slice(0, start.indexOf("</div>`}")).matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+  assert.strictEqual(sids[1], "baukasten", "der Baukasten ist nicht der zweite Startweg");
 });
 
 pruefe("Ein leerer Wert entfernt das Feld, statt es leer zu schreiben", () => {
