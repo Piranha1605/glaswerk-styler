@@ -27,6 +27,14 @@ import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teile
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
+import { ERKLAERUNGEN, MERKSAETZE, AUSLESEN } from "./hilfe.js";
+
+// Ein relativer Import loest sich gegen die Adresse SEINES Moduls auf, ein
+// src im Markup dagegen gegen die Adresse der SEITE (/hats). Die Bilder
+// liegen neben diesem Modul, unter /hats_static/<summe>/ - also die Adresse
+// hier einmal ausrechnen, sonst suchen die Bilder unter /hilfe/ und bleiben
+// leer, ohne Meldung.
+const HILFE_BILDER = new URL("./hilfe/", import.meta.url).href;
 import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, seiteHatInhalt, FREIE_ROLLEN,
          eigenePalette,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
@@ -1137,6 +1145,13 @@ const TEXTE = {
     "Einstellungen öffnen": "Open settings",
     "Schließen": "Close",
     "Felder": "fields",
+    "Was macht welche Variable?": "What does each variable do?",
+    "mit Satz": "explained",
+    "noch offen": "still open",
+    "noch kein Satz": "no sentence yet",
+    "Kennt Home Assistant, bietet HATS nicht an": "Home Assistant has these, HATS does not offer them",
+    "Diese Felder lassen sich hier nicht einstellen - der Satz steht trotzdem da, damit die Luecke sichtbar ist.":
+      "These fields cannot be set here - the sentence is kept anyway so the gap stays visible.",
     "zuletzt geändert": "last changed",
     "gerade eben": "just now",
     "Entwurf": "Draft",
@@ -1799,6 +1814,109 @@ class HatsPanel extends HTMLElement {
     );
   }
 
+  // Die Hilfeseite: jedes Feld, das HATS anbietet, mit einem Satz dazu
+  //
+  // Auf Ansage vom 15.10.2026, mit einer uebergebenen Seite "Theme-Variablen"
+  // in der Hand: "koennen wir damit eine hilfeseite aufbauen".
+  //
+  // GEBAUT AUS DER EIGENEN FELDLISTE, nicht aus der Seite. Die Gruende stehen
+  // im Kopf von hilfe.js; der wichtigste: Die Seite erklaert 78 der 463
+  // Felder. Gebaut aus STUFEN ist die Hilfe vollstaendig, kann nicht
+  // auseinanderlaufen, und jedes neue Feld steht sofort darin.
+  //
+  // DIE LUECKE IST ABSICHT. Ein Feld ohne Satz zeigt "noch kein Satz" statt
+  // gar nicht aufzutauchen - so ist die Hilfeseite zugleich die Arbeitsliste.
+  // Oben steht, wie viele es sind.
+  oeffneHilfe() {
+    this._offen = "hilfe";
+    this.zeichneHilfe();
+    const o = this.shadowRoot.querySelector(".overlay");
+    o.hidden = false;
+    requestAnimationFrame(() => o.classList.add("da"));
+    document.addEventListener("keydown", this._esc);
+  }
+
+  zeichneHilfe() {
+    const T = (x) => t(x, this.spr);
+    const d = this.shadowRoot.querySelector(".dialog");
+    let mit = 0, ohne = 0;
+    const benutzt = new Set();
+    const satz = (e) => (e && (e[this.spr] || e.de)) || "";
+
+    const stufen = STUFEN.map((st) => {
+      const gruppen = (st.gruppen || []).map((g) => {
+        const zeilen = (g.felder || []).map((f) => {
+          benutzt.add(f.v);
+          const e = satz(ERKLAERUNGEN[f.v]);
+          if (e) mit++; else ohne++;
+          return `
+            <tr${e ? "" : ' class="hi-leer"'}>
+              <td><code>${f.v}</code></td>
+              <td>${this.spr === "en" ? (f.en || f.t) : f.t}</td>
+              <td>${e ? esc(e) : `<em>${T("noch kein Satz")}</em>`}</td>
+            </tr>`;
+        }).join("");
+        return `
+          <h4>${g.name}</h4>
+          <p class="zweck">${T(ZWECK[g.name] || "")}</p>
+          <table class="hi-tab"><tbody>${zeilen}</tbody></table>`;
+      }).join("");
+      return `
+        <section class="hi-stufe">
+          <h3><span class="hi-nr" style="background:${st.marke}">${st.n}</span>${T(st.titel)}</h3>
+          ${gruppen}
+        </section>`;
+    }).join("");
+
+    const merk = MERKSAETZE.map((m) => {
+      const x = m[this.spr] || m.de;
+      return `
+      <section class="hi-merk">
+        <h4>${esc(x.titel)}</h4>
+        ${m.bild ? `<img src="${HILFE_BILDER}${m.bild}" alt="" loading="lazy">` : ""}
+        <p>${esc(x.text).replace(/\n/g, "<br>")}</p>
+      </section>`;
+    }).join("");
+
+    const lesen = AUSLESEN.map((a) => {
+      const x = a[this.spr] || a.de;
+      return `
+      <section class="hi-merk">
+        <h4>${esc(x.titel)}</h4>
+        <p>${esc(x.text)}</p>
+        <pre><code>${esc(a.code)}</code></pre>
+      </section>`;
+    }).join("");
+
+    // Saetze, die auf KEIN Feld des Panels zeigen. Sie stammen aus der
+    // uebergebenen Seite und beschreiben Felder, die Home Assistant kennt und
+    // HATS nicht anbietet. Sie fielen bis zum 15.10.2026 stumm weg - jetzt
+    // stehen sie am Ende als Liste. Dasselbe Prinzip wie NOCH_OHNE_KACHEL im
+    // Build-Skript: Was fehlt, gehoert sichtbar, nicht verschwiegen.
+    const fremd = Object.keys(ERKLAERUNGEN).filter((v) => !benutzt.has(v)).sort();
+    const ohneKachel = !fremd.length ? "" : `
+      <section class="hi-stufe">
+        <h3><span class="hi-nr" style="background:var(--s-tinte-leise)">+</span>${T("Kennt Home Assistant, bietet HATS nicht an")}</h3>
+        <p class="zweck">${T("Diese Felder lassen sich hier nicht einstellen - der Satz steht trotzdem da, damit die Luecke sichtbar ist.")}</p>
+        <table class="hi-tab"><tbody>${fremd.map((v) => `
+          <tr><td><code>${v}</code></td><td></td><td>${esc(satz(ERKLAERUNGEN[v]))}</td></tr>`).join("")}
+        </tbody></table>
+      </section>`;
+
+    d.innerHTML = `
+      <header class="dkopf">
+        <div><h2>${T("Was macht welche Variable?")}</h2>
+          <p>${mit + ohne} ${T("Felder")} · ${mit} ${T("mit Satz")} · ${ohne} ${T("noch offen")}</p></div>
+        <button class="zu" aria-label="${esc(T("Schließen"))}">✕</button>
+      </header>
+      <div class="hilfeseite">
+        <div class="hi-merke">${merk}${lesen}</div>
+        ${stufen}
+        ${ohneKachel}
+      </div>`;
+    d.querySelector(".zu").addEventListener("click", () => this.schliesse());
+  }
+
   oeffneUix() {
     this._offen = "uix";
     this.zeichneUix();
@@ -2407,6 +2525,7 @@ class HatsPanel extends HTMLElement {
               ${[
                 { id: "baukasten", icon: "mdi:toy-brick-outline",  t: T("Baukasten"), aus: ZUSTAND.start },
                 { id: "uix",     icon: "mdi:auto-fix",             t: "UIX", aus: ZUSTAND.start },
+                { id: "hilfe",    icon: "mdi:help-circle-outline",  t: T("Was macht welche Variable?") },
                 { id: "neu",      icon: "mdi:file-plus-outline",    t: T("Neue Theme") },
                 { id: "lesen",    icon: "mdi:file-import-outline",  t: T("Datei oder Text") },
                 { id: "oeffnen",  icon: "mdi:folder-open-outline",  t: T("Vorhandene oeffnen") },
@@ -2502,6 +2621,7 @@ class HatsPanel extends HTMLElement {
     const schalter = {
       baukasten: () => this.oeffneBaukasten(),
       uix: () => this.oeffneUix(),
+      hilfe: () => this.oeffneHilfe(),
       neu: () => this.neuBeginnen(),
       lesen: () => this.zeigeImport(),
       oeffnen: () => this.zeigeDateien(),
@@ -3287,6 +3407,35 @@ class HatsPanel extends HTMLElement {
       .inhalt { flex: 1; min-width: 0; padding: 26px 30px 30px; }
 
       /* ---- UIX-Seite im grossen Dialog ---- */
+      /* ---- Hilfeseite ---- */
+      .hilfeseite { padding: 20px 26px 26px; overflow: auto; }
+      .hi-merke { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                  gap: 14px; margin-bottom: 26px; }
+      .hi-merk { background: var(--s-glas-innen); border-radius: var(--s-r);
+                 padding: 14px 16px; box-shadow: var(--s-schatten-klein); }
+      .hi-merk h4 { margin: 0 0 6px; font-size: 14px; }
+      .hi-merk p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--s-tinte-leise); }
+      .hi-merk img { width: 100%; border-radius: var(--s-r-klein); margin: 4px 0 10px; }
+      .hi-merk pre { margin: 10px 0 0; padding: 10px; overflow: auto;
+                     background: rgba(27,36,48,.06); border-radius: var(--s-r-klein);
+                     font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--s-tinte); }
+      .hi-stufe { margin-bottom: 26px; }
+      .hi-stufe h3 { display: flex; align-items: center; gap: 9px; margin: 0 0 4px; font-size: 16px; }
+      .hi-nr { display: flex; align-items: center; justify-content: center; flex: none;
+               width: 22px; height: 22px; border-radius: 7px; color: #fff;
+               font-size: 12px; font-weight: 700; }
+      .hi-stufe h4 { margin: 14px 0 2px; font-size: 13px; color: var(--s-tinte); }
+      .hi-tab { width: 100%; border-collapse: collapse; margin-top: 6px; }
+      .hi-tab td { padding: 6px 10px 6px 0; vertical-align: top; font-size: 13px;
+                   border-top: 1px solid var(--s-linie); }
+      .hi-tab td:first-child { width: 32%; }
+      .hi-tab td:nth-child(2) { width: 18%; color: var(--s-tinte-leise); }
+      .hi-tab code { font: 12px ui-monospace, Menlo, monospace; color: var(--s-tinte); }
+      /* Ein Feld ohne Satz steht leiser da, aber es steht da - es ist die
+         Arbeitsliste, kein Fehler. */
+      .hi-leer td { color: var(--s-tinte-leise); }
+      .hi-leer em { font-style: normal; opacity: .7; }
+
       .uixseite { padding: 20px 26px 26px; overflow: auto; }
       .uixtitel { font-size: 13px; font-weight: 600; letter-spacing: .02em;
                   margin: 22px 0 10px; color: var(--s-tinte); }

@@ -194,7 +194,16 @@ pruefe("Eine Leiste oben, und darin nur noch die Aktionen", () => {
   // UIX steht seit dem 13.10.2026 hier oben statt in einer Spalte rechts -
   // auf Ansage, damit rechts frei wird. Der Baukasten steht davor: Er kommt
   // in der Arbeit zuerst, UIX ist der Feinschliff danach.
-  assert.deepStrictEqual(ids, ["baukasten", "uix", "neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
+  //
+  // "hilfe" kam am 15.10.2026 dazu und steht VOR "neu", also am Ende der
+  // Gruppe, die etwas oeffnet (Baukasten, UIX, Hilfe) und vor der Gruppe, die
+  // etwas mit der Datei tut. Als einziger Knopf ist er nie gesperrt: Die
+  // Hilfe gilt auch, wenn noch keine Theme offen ist.
+  assert.deepStrictEqual(ids,
+    ["baukasten", "uix", "hilfe", "neu", "lesen", "oeffnen", "verwerfen", "laden2", "kopie2"]);
+  const hilfe = /\{ id: "hilfe",[^}]*\}/.exec(block);
+  assert.ok(hilfe, "der Hilfeknopf fehlt");
+  assert.doesNotMatch(hilfe[0], /aus:/, "der Hilfeknopf wird gesperrt - sie gilt auch ohne offene Theme");
   assert.doesNotMatch(block, /data-rail=/, "die Stufen stehen wieder in der Leiste");
   assert.doesNotMatch(panel, /class="rail"/, "die alte Seitenleiste ist zurueck");
   // Gegenprobe: Die Leiste ist nicht leer geworden - die Marke und die acht

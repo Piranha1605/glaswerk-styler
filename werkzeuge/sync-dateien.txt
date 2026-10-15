@@ -27,6 +27,14 @@ www/vorschau/glas-lichtkante-vorher.jpg
 www/vorschau/glas-symbolkachel-nachher.jpg
 www/vorschau/glas-symbolkachel-vorher.jpg
 www/zuordnung.js
+# Die Hilfeseite und ihre fuenf Bilder. Von Hand eingetragen, wie
+# ha_blanko und datei.py: sync-liste-bauen.sh kennt sie noch nicht.
+www/hilfe.js
+www/hilfe/bedienelemente.jpg
+www/hilfe/karte.jpg
+www/hilfe/meldungen.jpg
+www/hilfe/schalter-knoepfe.jpg
+www/hilfe/schrift.jpg
 
 werkzeuge/vorschau.js|/config/www/hats-vorschau.js
 werkzeuge/themes/liquid_glass.yaml|/config/themes/liquid_glass.yaml
