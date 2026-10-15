@@ -28,8 +28,15 @@ pruefe("Sieben Sorten, jede mit beiden Sprachen", () => {
   // "rundung" und "dichte" sind am 14.10.2026 dazugekommen, auf Ansage: Sie
   // stehen VOR den Karten, weil sie die ganze Oberflaeche betreffen und die
   // Karten nur einen Teil davon.
+  //
+  // Und seit dem 15.10.2026 steht der HINTERGRUND vor den Karten: "waere es
+  // nicht besser wir setzen erst den hintergrund und uebernehmen den
+  // gewaehlten hintergrund hinter der Musterkarte". Die Reihenfolge ist die
+  // Reihenfolge der Arbeit - eine Glaskarte ohne Grund ist eine etwas
+  // hellere Wand, und die Musterkarte auf der Kartenseite steht seitdem auf
+  // genau diesem Grund.
   assert.deepStrictEqual(Object.keys(BAUKASTEN),
-    ["palette", "schrift", "rundung", "dichte", "karten", "hintergrund", "oberflaeche"]);
+    ["palette", "schrift", "rundung", "dichte", "hintergrund", "karten", "oberflaeche"]);
   for (const [sorte, s] of Object.entries(BAUKASTEN)) {
     assert.ok(s.de && s.en, `${sorte}: eine Sprache fehlt`);
     if (s.nurVorlagen) {

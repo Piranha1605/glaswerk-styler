@@ -35,7 +35,7 @@ import { ERKLAERUNGEN, MERKSAETZE, AUSLESEN } from "./hilfe.js";
 // hier einmal ausrechnen, sonst suchen die Bilder unter /hilfe/ und bleiben
 // leer, ohne Meldung.
 const HILFE_BILDER = new URL("./hilfe/", import.meta.url).href;
-import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, palettenVorschau, kartenPerle, seiteHatInhalt, FREIE_ROLLEN,
+import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, HINTERGRUENDE, palettenVorschau, kartenPerle, seiteHatInhalt, FREIE_ROLLEN,
          eigenePalette,
          SORTEN_VORLAGEN, SORTEN_FELDER } from "./baukasten.js";
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
@@ -1428,9 +1428,32 @@ class HatsPanel extends HTMLElement {
     // immer leuchtet, liest niemand mehr.
     const glasOhneGrund = sitzt.karten === "glas" && sitzt.hintergrund === "keiner";
 
+
     // Der Modus des Nutzers, nicht der der Theme: Die Kachel zeigt, was er
     // zu sehen bekaeme, wenn er das Teil jetzt waehlt.
     const dunkel = !!this._hass?.themes?.darkMode;
+
+    // WAS HINTER DER GLASPERLE LIEGT: der gewaehlte Hintergrund, nicht ein
+    // erfundener bunter Streifen. Auf Ansage vom 15.10.2026 - "uebernehmen
+    // den gewaehlten hintergrund hinter der Musterkarte das mann gleich sieht
+    // wo mann endet. ich sehe nie richtig wie die transparenz ist wenn das
+    // feld auf ist."
+    //
+    // Genommen wird die VORSCHAU des Hintergrundteils, nicht sein Wert: Der
+    // Wert sind radiale Verlaeufe von 990 px Durchmesser, auf einer 76 px
+    // breiten Perle waere davon eine einzige Farbe zu sehen. Die Vorschau ist
+    // genau dafuer da - vier Toene aus dem Grund, nebeneinander.
+    //
+    // Ohne erkannten Hintergrund faellt es auf den Seitengrund der Theme
+    // zurueck, und erst danach auf einen neutralen Ton. Das ist keine
+    // Verlegenheit, sondern die Auskunft: Wer keinen Grund gewaehlt hat,
+    // SIEHT, dass sein Glas vor einer einfarbigen Wand steht.
+    const grundTeil = HINTERGRUENDE.find((h) => h.id === sitzt.hintergrund);
+    const perlGrund =
+      (grundTeil && grundTeil.vorschau && grundTeil.vorschau[dunkel ? "dark" : "light"])
+      || lies("--primary-background-color", dunkel ? "dark" : "light")
+      || lies("--primary-background-color", "beide")
+      || (dunkel ? "#15181f" : "#e7ecf3");
 
     const sorteHtml = (schluessel) => {
       const s = BAUKASTEN[schluessel];
@@ -1483,7 +1506,7 @@ class HatsPanel extends HTMLElement {
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}
                       ${tupfer ? `title="${esc(zweck)}"` : ""}>
                 ${v ? `<span class="bk-streifen" style="background:${v}"></span>` : ""}
-                ${perle ? `<span class="bk-perlgrund" style="border-radius:${perle.radius}px"><i style="${perle.stil}"></i></span>` : ""}
+                ${perle ? `<span class="bk-buehne" style="background:${perlGrund}"><i style="${perle.stil};border-radius:${perle.radius}px"></i></span>` : ""}
                 ${tupfer ? `<span class="bk-tupfer">${tupfer.map((f) =>
                     `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")}</span>` : ""}
                 <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
@@ -3908,14 +3931,37 @@ class HatsPanel extends HTMLElement {
          Die Rundung steht inline am Grund und wird von der Perle geerbt,
          sonst blieben bei einem eckigen Stil die runden Ecken des Grundes
          stehen - derselbe Rahmen in klein. */
-      .bk-perlgrund { position: relative; display: block; width: 76px; height: 30px;
-                      margin-bottom: 8px; overflow: hidden;
-                      background:
-                        linear-gradient(90deg, transparent 46%, rgba(255,255,255,.85) 46%,
-                                               rgba(255,255,255,.85) 54%, transparent 54%),
-                        linear-gradient(115deg, #2f6df0 0%, #7a5cf0 38%, #e8833a 70%, #15c08a 100%); }
-      .bk-perlgrund i { position: absolute; inset: 0; display: block;
-                        border-radius: inherit; }
+      /* DIE BUEHNE: der gewaehlte Hintergrund unter der ganzen Kachel, und
+         darauf eine Musterkarte in dem Stil, den die Kachel anbietet.
+
+         Auf Ansage vom 15.10.2026, in zwei Schritten: erst "uebernehmen den
+         gewaehlten hintergrund hinter der Musterkarte das mann gleich sieht
+         wo mann endet", dann, mit einem Bild der Kachel: "und der kommt
+         unter die ganze karte."
+
+         Sie laeuft deshalb bis an die Kanten - die Polsterung der Kachel
+         wird mit negativen Raendern zurueckgenommen - und traegt oben
+         dieselbe Rundung wie die Kachel selbst. Was man sieht, ist die
+         Schichtung, die spaeter auf dem Dashboard steht: Grund, darauf
+         Karte. Bei 76 px Perle sah man das nicht; bei 120 px Musterkarte
+         sieht man auch, wie durchscheinend sie wirklich ist.
+
+         Die Schrift der Kachel bleibt auf der eigenen Flaeche des Panels
+         darunter: Das Panel liest keine Theme-Variablen fuer sich selbst,
+         und ein Zwecktext auf einem dunklen Grund waere nicht mehr lesbar. */
+      .bk-buehne { position: relative; display: block;
+                   margin: -13px -15px 10px; height: 76px; overflow: hidden;
+                   background-size: cover !important; background-position: center !important;
+                   border-radius: calc(var(--s-r) - 1px) calc(var(--s-r) - 1px) 0 0; }
+      /* Die harte Kante. Sie liegt UEBER dem Grund und unter der Musterkarte
+         - ohne sie saehe eine Weichzeichnung auf einem ruhigen Grund genauso
+         aus wie gar keine. Das Einzige hier, was nicht aus der Theme kommt. */
+      .bk-buehne::before { content: ""; position: absolute; inset: 0;
+                           background: linear-gradient(90deg, transparent 49%,
+                             rgba(255,255,255,.7) 49%, rgba(255,255,255,.7) 51%,
+                             transparent 51%); }
+      .bk-buehne i { position: absolute; left: 50%; top: 50%; display: block;
+                     width: 120px; height: 44px; transform: translate(-50%, -50%); }
       /* Die Farbtupfer einer Palette. Der erste ist der Akzent - die einzige
          Farbe, die je Modus verschieden ist, und die, die man am haeufigsten
          sieht. Deshalb steht er vorn.

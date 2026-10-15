@@ -1169,11 +1169,21 @@ export const BAUKASTEN = {
   dichte: { de: "Dichte", en: "Density", teile: DICHTEN,
             zweckDe: "Wie viel Luft zwischen den Dingen steht.",
             zweckEn: "How much air sits between things." },
-  karten: { de: "Karten", en: "Cards", teile: KARTENSTILE },
+  // DER HINTERGRUND STEHT VOR DEN KARTEN, seit dem 15.10.2026. Auf Ansage:
+  // "waere es nicht besser wir setzen erst den hintergrund und uebernehmen
+  // den gewaehlten hintergrund hinter der Musterkarte das mann gleich sieht
+  // wo mann endet."
+  //
+  // Das ist die Reihenfolge der Arbeit: Eine Glaskarte ohne Grund ist eine
+  // etwas hellere Wand - erst der Grund macht aus der Scheibe eine Scheibe.
+  // Und die Glasperle auf der Kartenseite zeigt seitdem genau diesen Grund
+  // hinter sich, statt eines erfundenen bunten Streifens.
+  //
   // gleich: Mit und ohne das Wort "fixed" ist es derselbe Hintergrund, nur
   // anders aufgehaengt. Ohne diesen Vergleich verloere eine Theme ihren Haken,
   // sobald jemand die Flaeche fest stellt oder wieder loest.
   hintergrund: { de: "Hintergrund", en: "Background", teile: HINTERGRUENDE, gleich: ohneFest },
+  karten: { de: "Karten", en: "Cards", teile: KARTENSTILE },
   oberflaeche: { de: "Oberflaeche", en: "Chrome", teile: OBERFLAECHE_LEER,
                  nurVorlagen: true,
                  zweckDe: "Seitenleiste, Kopfleiste, Dialoge und Meldungen.",

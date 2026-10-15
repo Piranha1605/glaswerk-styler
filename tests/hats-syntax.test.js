@@ -71,5 +71,105 @@ pruefe("Und node --check allein findet sie wirklich nicht", () => {
     "node --check ist streng geworden - tests/hats-syntax.test.js kann vereinfacht werden");
 });
 
+// ---------------------------------------------------------------------------
+// Die zweite Falle derselben Familie: benutzt, bevor es da ist.
+//
+// Am 15.10.2026 bezahlt. In zeichneBaukasten() stand eine neue Zeile, die
+// `dunkel` las - zwei Zeilen VOR dem `const dunkel = ...`. Das ist gueltige
+// Syntax, also kommt es durch jeden Parser; erst im Browser kam
+//
+//     Uncaught ReferenceError: Cannot access 'dunkel' before initialization
+//
+// und der Baukasten ging gar nicht mehr auf. Kein Test hat es gesehen, denn
+// die Tests lesen die Quelle als TEXT - sie fuehren sie nicht aus.
+//
+// Diese Pruefung schliesst die Luecke fuer den Fall, der dabei auftrat: eine
+// Konstante der obersten Ebene einer Methode, die weiter oben schon gelesen
+// wird. Sie prueft nicht alles (eine Zuweisung in einer verschachtelten
+// Funktion, die spaeter laeuft, ist erlaubt und faellt hier nicht auf) - aber
+// genau diesen Fehler faengt sie, und der kostete den Baukasten.
+// Zeichenketten und Kommentare werden GEWEISST, nicht entfernt: Die Stellen
+// muessen vergleichbar bleiben. Drei falsche Treffer hat der erste Entwurf
+// dieser Pruefung gemeldet, und alle drei waren Text, kein Code:
+//
+//     "Welches Teil sitzt gerade?"     ein Kommentar
+//     data-bk-seite="${schluessel}"    ein Attributname mit Bindestrich
+//     accept=".yaml,text/plain"        ein Wort in einer Zeichenkette
+//
+// In einer Schablone bleibt stehen, was in ${...} steht - das IST Code.
+function maskiere(t) {
+  let aus = "", i = 0, art = null;
+  while (i < t.length) {
+    const c = t[i];
+    if (!art) {
+      if (c === '"' || c === "'" || c === "`") { art = c; aus += " "; i++; continue; }
+      if (c === "/" && t[i + 1] === "/") { while (i < t.length && t[i] !== "\n") { aus += " "; i++; } continue; }
+      if (c === "/" && t[i + 1] === "*") { const e = t.indexOf("*/", i + 2);
+        const bis = e < 0 ? t.length : e + 2;
+        for (; i < bis; i++) aus += t[i] === "\n" ? "\n" : " ";
+        continue; }
+      aus += c; i++; continue;
+    }
+    if (c === "\\") { aus += "  "; i += 2; continue; }
+    if (art === "`" && c === "$" && t[i + 1] === "{") {
+      aus += "  "; i += 2;
+      let tiefe = 1;
+      while (i < t.length && tiefe > 0) {
+        if (t[i] === "{") tiefe++;
+        else if (t[i] === "}") { tiefe--; if (!tiefe) { aus += " "; i++; break; } }
+        aus += t[i]; i++;
+      }
+      continue;
+    }
+    if (c === art) { art = null; aus += " "; i++; continue; }
+    aus += c === "\n" ? "\n" : " "; i++;
+  }
+  return aus;
+}
+
+pruefe("Keine Konstante wird vor ihrer Zeile gelesen", () => {
+  const quelle = readFileSync(path.join(wwwDir, "hats-panel.js"), "utf8");
+  // Methoden einer Klasse: zwei Leerzeichen Einzug, ihr Rumpf vier.
+  const methoden = [...quelle.matchAll(/^  (?:async )?([a-zA-Z_$][\w$]*)\([^)]*\) \{$/gm)];
+  let geprueft = 0;
+  for (const m of methoden) {
+    const ab = m.index + m[0].length;
+    const ende = quelle.indexOf("\n  }\n", ab);
+    if (ende < 0) continue;
+    const rumpf = maskiere(quelle.slice(ab, ende));
+    // Die Namen, die als Parameter einer inneren Funktion vorkommen:
+    // (a, b) => ... und function f(a, b) { ... }
+    const parameter = new Set();
+    for (const re of [/\(([^()]*)\)\s*=>/g, /function\s*[\w$]*\s*\(([^()]*)\)/g])
+      for (const m of rumpf.matchAll(re))
+        for (const teil of m[1].split(","))
+          if (/^\s*[a-zA-Z_$][\w$]*\s*$/.test(teil)) parameter.add(teil.trim());
+    for (const d of rumpf.matchAll(/^    const (?:\{ )?([a-zA-Z_$][\w$]*)/gm)) {
+      const name = d[1];
+      // UEBERSPRUNGEN wird, was derselbe Name in einem anderen
+      // Gueltigkeitsbereich sein koennte: Ein Parameter einer inneren
+      // Funktion verdeckt die aeussere Konstante, und sein Auftreten weiter
+      // oben ist voellig richtig - in oeffneFeld() etwa `(v, modus) => ...`
+      // neben einem spaeteren `const v`.
+      //
+      // GESAMMELT WERDEN NUR ECHTE PARAMETERLISTEN. Der erste Entwurf nahm
+      // jede Klammer mit Kommas, also auch den AUFRUF palettenVorschau(teil,
+      // dunkel) - und uebersprang damit ausgerechnet `dunkel`, den Namen,
+      // dessentwegen diese Pruefung entstanden ist. Die Gegenprobe unten hat
+      // es gezeigt: Sie blieb gruen, obwohl der Fehler wieder drin war.
+      if (name.length < 3 || parameter.has(name)) continue;
+      // Nicht als Wortgrenze zaehlen: der Bindestrich (sonst traefe `seite`
+      // mitten in data-bk-seite) und der Punkt davor (x.v ist ein Zugriff
+      // auf eine Eigenschaft, keine Benutzung der Konstanten v).
+      const erste = rumpf.search(new RegExp(`(?<![\\w$\\-.])${name}(?![\\w$-])`));
+      geprueft++;
+      assert.ok(erste >= d.index,
+        `${m[1]}(): "${name}" wird gelesen, bevor es deklariert ist ` +
+        `(Zeichen ${erste} statt ${d.index}) - im Browser ein ReferenceError`);
+    }
+  }
+  assert.ok(geprueft > 50, `nur ${geprueft} Konstanten geprueft - der Leser trifft nichts`);
+});
+
 console.log(`\n${n} Pruefungen`);
 if (n < 5) { console.error("Zu wenige Pruefungen gelaufen."); process.exit(1); }
