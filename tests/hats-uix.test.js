@@ -48,9 +48,9 @@ pruefe("UIX steht in der Werkzeugzeile, nicht mehr rechts", () => {
   // Am 13.10.2026 aus der Add-on-Spalte nach oben in die Leiste, am
   // 15.10.2026 mit der Leiste in die Werkzeugzeile ueber der Stufenliste.
   // Dort traegt es zum ersten Mal einen Namen statt nur eines Symbols.
-  const w = panel.slice(panel.indexOf('<div class="werkzeuge">'),
-                        panel.indexOf('<div class="liste">', panel.indexOf('<div class="werkzeuge">')));
-  assert.match(w, /id: "uix"/, "der UIX-Knopf fehlt in der Werkzeugzeile");
+  const w = panel.slice(panel.indexOf('{ titel: T("Werkzeuge"), wege: ['),
+                        panel.indexOf("    ];", panel.indexOf('{ titel: T("Werkzeuge"), wege: [')));
+  assert.match(w, /id: "uix"/, "der UIX-Knopf fehlt in der Reihe der Werkzeuge");
   assert.match(w, /t: "UI eXtension"/, "UIX steht ohne Namen da");
   // Die Spalte darf nicht zurueckkommen - sonst stuende UIX an zwei Stellen.
   assert.doesNotMatch(panel, /addonSpalte/, "die Add-on-Spalte ist zurueck");

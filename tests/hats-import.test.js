@@ -204,12 +204,14 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
   const aktionen = [...schalterBlock.matchAll(/^\s{6}([a-z0-9]+): \(\) =>/gm)].map((m) => m[1]);
   assert.ok(aktionen.length >= 9, `nur ${aktionen.length} Aktionen gefunden`);
 
-  // Wo sie im Markup vorkommen - drei Orte, jeder mit seiner Begruendung:
+  // Wo sie im Markup vorkommen - seit dem 15.10.2026 noch drei Orte, aber
+  // auf EINER Seite: der Kopf (was zur Datei gehoert) und die zwei Reihen
+  // "Datei" und "Werkzeuge".
   const teil = (von, bis) => panel.slice(panel.indexOf(von), panel.indexOf(bis, panel.indexOf(von)));
   const orte = {
     kopf: teil('<div class="sichern">', '<button class="speichern">'),
-    werkzeuge: teil('<div class="werkzeuge">', '<div class="liste">'),
-    start: teil('<div class="startwege">', "</div>`}"),
+    datei: teil('{ titel: T("Datei"), wege: [', '{ titel: T("Werkzeuge")'),
+    werkzeuge: teil('{ titel: T("Werkzeuge"), wege: [', "    ];"),
   };
   for (const [name, t] of Object.entries(orte))
     assert.ok(t.length > 200, `${name}: der Block wurde nicht gefunden`);
@@ -223,21 +225,24 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
     assert.ok(aktionen.includes(b), `der Knopf "${b}" ruft eine Aktion auf, die es nicht gibt`);
 
   // Und jeder Ort traegt das, was dorthin gehoert.
-  assert.deepStrictEqual(idsVon(orte.kopf), ["start", "verwerfen", "laden2", "kopie2"],
+  assert.deepStrictEqual(idsVon(orte.kopf), ["verwerfen", "laden2", "kopie2"],
     "im Kopf steht nicht mehr das, was zur Datei gehoert");
+  assert.deepStrictEqual(idsVon(orte.datei), ["neu", "oeffnen", "lesen"],
+    "die Reihe Datei hat sich geaendert");
   assert.deepStrictEqual(idsVon(orte.werkzeuge), ["baukasten", "uix", "hilfe"],
-    "die Werkzeugzeile ueber der Liste hat sich geaendert");
-  assert.ok(idsVon(orte.start).includes("hilfe"),
-    "die Hilfe fehlt auf der Startseite - dort wird sie zuerst gebraucht");
+    "die Reihe Werkzeuge hat sich geaendert");
+  // Und es gibt keine zweite Seite mehr, auf der dasselbe noch einmal steht.
+  assert.doesNotMatch(panel, /ZUSTAND\.start/, "der Startseiten-Merker ist zurueck");
+  assert.doesNotMatch(panel, /this\.startbild\(/, "die Startseite ist zurueck");
 });
 
 pruefe("Die Hilfe gilt auch ohne offene Theme", () => {
   // Sie ist der einzige Weg, der keine Theme anfasst. Ein gesperrter
   // Hilfeknopf waere genau dann gesperrt, wenn man ihn braucht.
-  const start = panel.slice(panel.indexOf('<div class="startwege">'), panel.indexOf("</div>`}", panel.indexOf('<div class="startwege">')));
-  const eintrag = /\{ id: "hilfe",[\s\S]{0,240}?\},/.exec(start);
-  assert.ok(eintrag, "der Hilfeweg fehlt auf der Startseite");
-  assert.doesNotMatch(eintrag[0], /aus:/, "die Hilfe wird auf der Startseite gesperrt");
+  const w = panel.slice(panel.indexOf('{ titel: T("Werkzeuge"), wege: ['), panel.indexOf("    ];"));
+  const eintrag = /\{ id: "hilfe",[\s\S]{0,260}?\},/.exec(w);
+  assert.ok(eintrag, "der Hilfeweg fehlt");
+  assert.doesNotMatch(eintrag[0], /aus:/, "die Hilfe wird gesperrt");
 });
 
 pruefe("Die Knoepfe im Kopf tragen Titel statt Beschriftung", () => {
@@ -248,10 +253,10 @@ pruefe("Die Knoepfe im Kopf tragen Titel statt Beschriftung", () => {
     "ohne Beschriftung braucht es wenigstens title und aria-label");
   assert.strictEqual((kopf.match(/class="kopfknopf"/g) || []).length, 1,
     "die Knoepfe werden nicht mehr aus EINER Vorlage erzeugt");
-  // Die Werkzeuge dagegen tragen Namen - sie haben Platz und sind keine
+  // Die Wege dagegen tragen Namen - sie haben Platz und sind keine
   // Symbolreihe.
-  const w = panel.slice(panel.indexOf('<div class="werkzeuge">'), panel.indexOf('<div class="liste">', panel.indexOf('<div class="werkzeuge">')));
-  assert.match(w, /<b>\$\{w\.t\}<\/b>/, "die Werkzeuge haben keine Beschriftung");
+  const w = panel.slice(panel.indexOf("  wegeHtml(T) {"), panel.indexOf("  // Worauf die Theme aufsetzt"));
+  assert.match(w, /<b>\$\{w\.t\}<\/b>/, "die Wege haben keine Beschriftung");
 });
 
 pruefe("Verwerfen geht auf den Stand beim Oeffnen zurueck", () => {
@@ -262,38 +267,54 @@ pruefe("Verwerfen geht auf den Stand beim Oeffnen zurueck", () => {
   assert.match(b, /ZUSTAND\.geaendert\.clear\(\)/);
 });
 
-pruefe("Oeffnen fragt bei Ungespeichertem nach", () => {
-  const b = panel.slice(panel.indexOf("  zumStart() {"), panel.indexOf("  verwerfen() {"));
-  assert.match(b, /ZUSTAND\.geaendert\.size && !this\._startBestaetigt/,
-    "zumStart wirft Ungespeichertes ohne Rueckfrage weg");
+pruefe("Jeder Weg, der das Modell ersetzt, fragt bei Ungespeichertem nach", () => {
+  // Die Rueckfrage stand bis zum 15.10.2026 in zumStart() - dem Weg zurueck
+  // auf die Startseite. Die Startseite ist weg, die Gefahr nicht: "Neue
+  // Theme", "Vorhandene oeffnen" und "Datei oder Text" ersetzen das Modell
+  // genauso, und sie stehen jetzt gross auf derselben Seite wie die Arbeit.
+  const h = panel.slice(panel.indexOf("  darfVerlassen() {"), panel.indexOf("  async neuBeginnen("));
+  assert.ok(h.length > 200, "darfVerlassen() fehlt");
+  assert.match(h, /if \(!ZUSTAND\.geaendert\.size\) return true/, "fragt auch ohne Aenderungen");
+  assert.match(h, /this\._verlassenBestaetigt/, "fragt bei jedem Klick statt einmal");
+  for (const weg of ["async neuBeginnen()", "async oeffneDatei(name)", "importiereText(text, quelle)"]) {
+    const ab = panel.indexOf("  " + weg + " {");
+    assert.ok(ab > -1, `${weg} gibt es nicht mehr`);
+    assert.match(panel.slice(ab, ab + 400), /if \(!this\.darfVerlassen\(\)\) return/,
+      `${weg} wirft Ungespeichertes ohne Rueckfrage weg`);
+  }
 });
 
-pruefe("Die Startwege stehen auf der Startseite, immer", () => {
-  // Diese Pruefung hat ihre Erwartung zweimal gewechselt, und beide Male war
+pruefe("Eine Seite, von der alles weitergeht", () => {
+  // Diese Pruefung hat ihre Erwartung dreimal gewechselt, und jedes Mal war
   // der Grund derselbe: Wo sonst kommt man an diese Wege?
   //
   //   bis 13.10.  gar keine Karten - "zwei Wege zur selben Sache"
   //   bis 15.10.  Karten, aber nur ohne offene Theme; sonst trug die
   //               Leiste oben dieselben Wege
-  //   seit 15.10. immer - die Leiste gibt es nicht mehr
-  //
-  // Mit offener Theme stehen oben die Starteinstellungen (Name, Herkunft,
-  // Modus, Hintergrundbilder) und darunter die Wege. Ohne sie waere die
-  // Startseite mit offener Theme eine Sackgasse.
-  const sb = panel.slice(panel.indexOf("startbild(T) {"), panel.indexOf("zeigeDateien("));
-  const wege = sb.indexOf('class="startwege');
-  assert.ok(wege > -1, "die Startwege fehlen");
-  assert.doesNotMatch(sb.slice(Math.max(0, wege - 900), wege), /\$\{ZUSTAND\.modell \? "" : `/,
-    "die Startwege haengen wieder daran, dass KEINE Theme offen ist");
-  // Die Starteinstellungen dagegen SCHON - ein Block, der nichts tun kann,
-  // ist nur Laerm. Am 13.10.2026 gemeldet: "das ist komplett tot".
-  assert.match(sb, /\$\{!ZUSTAND\.modell \? "" : `[\s\S]{0,400}class="starteinst"/,
-    "die Starteinstellungen stehen jetzt auch ohne Theme da");
-  // Sie fuehren zu denselben Aktionen wie die Leiste, ueber einen eigenen
-  // Namen - sonst kaeme ein Klick zweimal an.
-  assert.match(panel, /querySelectorAll\("\[data-start\]"\)/, "die Wege sind nicht verdrahtet");
-  assert.match(panel, /neu: \(\) => this\.neuBeginnen\(\)/);
-  assert.match(panel, /lesen: \(\) => this\.zeigeImport\(\)/);
+  //   15.10.      Karten immer, auf einer eigenen Startseite
+  //   seit 15.10. EINE Seite: "wir haben zu viele seiten wo wir starten
+  //               koennen. lass die letzte zu unser einzigen seite machen
+  //               von wo alles weiter geht."
+  // Geprueft wird der AUFRUF, nicht das Wort: Im Kommentar steht noch,
+  // dass hier einmal startbild() stand, und das soll es auch.
+  assert.doesNotMatch(panel, /this\.startbild\(/, "die Startseite ist zurueck");
+  assert.doesNotMatch(panel, /this\.zumStart\(/, "der Weg zur Startseite ist zurueck");
+  const seite = panel.slice(panel.indexOf("            <!-- EINE SEITE,"), panel.indexOf("            </section>"));
+  assert.ok(seite.length > 300, "der Rumpf der Seite wurde nicht gefunden");
+  // Die Wege stehen IMMER da, die Felder und die Stufen nur mit Theme.
+  assert.match(seite, /\$\{this\.wegeHtml\(T\)\}/, "die Wege fehlen");
+  const nachWegen = seite.slice(seite.indexOf("wegeHtml"));
+  assert.match(nachWegen, /\$\{!ZUSTAND\.modell \? "" : `[\s\S]*?startFelder\(T\)/,
+    "die Startfelder haengen nicht an der offenen Theme");
+  assert.match(nachWegen, /class="liste"/, "die Stufenliste fehlt");
+  // Und der Name steht genau EINMAL auf der Seite - im Kopf.
+  const felder = panel.slice(panel.indexOf("  startFelder(T) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
+  assert.doesNotMatch(felder, /class="se-name"/,
+    "das Namensfeld steht zweimal auf derselben Seite");
+  assert.match(panel, /class="namensfeld"/, "das Namensfeld fehlt im Kopf");
+  // Die beiden anderen der drei Felder sind da.
+  assert.match(felder, /T\("Herkunft"\)/, "die Grundlage fehlt");
+  assert.match(felder, /data-se-modus/, "der Modus fehlt");
 });
 
 pruefe("Die Texte der Schalter stehen IM en-Block", () => {
@@ -316,14 +337,16 @@ pruefe("Deaktiviert heisst leiser, nicht unsichtbar", () => {
 
 
 // ---------------------------------------------------------------------------
-// Die Starteinstellungen auf dem Startbild.
+// Die Starteinstellungen, seit dem 15.10.2026 auf der einen Seite.
 
-pruefe("Name, Herkunft, Modus und beide Hintergruende stehen dort", () => {
+pruefe("Herkunft, Modus und beide Hintergruende stehen dort", () => {
   // Sie entscheiden sich, BEVOR man an Farben geht - deshalb hierher und
-  // nicht als Kachelgruppe in Stufe 1.
+  // nicht als Kachelgruppe in Stufe 1. Der NAME steht im Kopf, neben
+  // Speichern: Seit alles auf einer Seite steht, waere er hier das zweite
+  // Feld fuer denselben Wert.
   const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
   assert.ok(b.length > 400, "der Block wurde nicht gefunden");
-  assert.match(b, /class="se-name"/, "Name fehlt");
+  assert.doesNotMatch(b, /class="se-name"/, "der Name steht zweimal auf der Seite");
   assert.match(b, /T\("Herkunft"\)/, "Herkunft fehlt");
   assert.match(b, /data-se-modus/, "Modus fehlt");
   assert.match(b, /--lovelace-background/, "Hintergrundbild fehlt");
@@ -343,7 +366,11 @@ pruefe("Ohne offene Theme gar nicht erst zeigen", () => {
   // "Gesperrt statt versteckt" gilt fuer die Knopfleiste, wo die Position
   // etwas sagt. Ein ganzer Einstellungsblock, der nichts tun kann, ist
   // dagegen nur Laerm - am 13.10.2026 gemeldet als "das ist komplett tot".
-  assert.match(panel, /\$\{!ZUSTAND\.modell \? "" : `\s*\n\s*<div class="starteinst">/);
+  // Der Block haengt jetzt eine Ebene hoeher am Modell: Die Seite ruft
+  // startFelder(T) nur mit offener Theme auf. Geprueft wird genau das.
+  const seite = panel.slice(panel.indexOf("            ${this.wegeHtml(T)}"), panel.indexOf("            </section>"));
+  assert.match(seite, /\$\{!ZUSTAND\.modell \? "" : `[\s\S]{0,120}startFelder\(T\)/,
+    "die Startfelder stehen auch ohne Theme da");
   const b = panel.slice(panel.indexOf('<div class="starteinst">'), panel.indexOf('<p class="startnotiz">'));
   assert.doesNotMatch(b, /ZUSTAND\.modell \? "" : "disabled"/,
     "die Felder sind wieder nur gesperrt statt weg");

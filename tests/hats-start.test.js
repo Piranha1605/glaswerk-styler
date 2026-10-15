@@ -63,8 +63,9 @@ pruefe("Die Dateiliste steht im Dialog, nicht auf der Startseite", () => {
   assert.match(panel, /async zeigeDateien\(\) \{/, "der Dialog fehlt");
   assert.match(panel, /oeffnen: \(\) => this\.zeigeDateien\(\)/,
     "das Ordner-Symbol fuehrt nicht zur Liste");
-  const start = panel.slice(panel.indexOf("  startbild(T) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
-  assert.doesNotMatch(start, /liste schmal/, "die Liste steht wieder auf der Startseite");
+  const wege = panel.slice(panel.indexOf("  wegeHtml(T) {"), panel.indexOf("  // Die Dateiliste als Dialog"));
+  assert.ok(wege.length > 400, "die Wege wurden nicht gefunden");
+  assert.doesNotMatch(wege, /liste schmal/, "die Liste steht wieder auf der Seite");
 });
 
 pruefe("Der Start laedt nicht von allein eine Grundlage", () => {
@@ -72,7 +73,11 @@ pruefe("Der Start laedt nicht von allein eine Grundlage", () => {
   // Datei oeffnet, haette die Vorlage schon drunterliegen.
   assert.doesNotMatch(panel, /if \(!ZUSTAND\.modell\) this\.ladeGrundlage\(\)/,
     "Die Grundlage wird beim Oeffnen immer noch blind geladen");
-  assert.match(panel, /if \(ZUSTAND\.start && ZUSTAND\.dateien === null\) this\.ladeListe\(\)/);
+  // Geladen wird die Liste seit dem 15.10.2026 immer: Der Weg "Vorhandene
+  // oeffnen" steht auf derselben Seite wie alles andere, es gibt keine
+  // Startseite mehr, an der es haengen koennte.
+  assert.match(panel, /if \(ZUSTAND\.dateien === null\) this\.ladeListe\(\)/);
+  assert.doesNotMatch(panel, /ZUSTAND\.start/, "der Startseiten-Merker ist zurueck");
 });
 
 pruefe("Oeffnen setzt den Vergleichsstand neu", () => {
@@ -81,7 +86,8 @@ pruefe("Oeffnen setzt den Vergleichsstand neu", () => {
   const block = panel.slice(panel.indexOf("async oeffneDatei("), panel.indexOf("async neuBeginnen("));
   assert.match(block, /this\._grundlage = JSON\.parse\(JSON\.stringify\(m\)\)/);
   assert.match(block, /ZUSTAND\.geaendert\.clear\(\)/);
-  assert.match(block, /ZUSTAND\.start = false/);
+  // ZUSTAND.start gibt es nicht mehr - eine Seite, kein Merker.
+  assert.match(block, /ZUSTAND\.bericht = berichtUeberTheme/);
 });
 
 pruefe("Die Texte des Startbilds stehen IM en-Block", () => {

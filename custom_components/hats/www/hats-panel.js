@@ -985,7 +985,12 @@ const ZWECK = {
 
   "Rundung": "Wie weich die Ecken sind, von klein bis Karte",
   "Rahmen": "Breite und Farbe der Kanten",
-  "Abstaende": "Luft zwischen den Dingen",
+  // Die Warnung steht im Zweck, weil sie genau dort gelesen wird, wo man
+  // gleich an einem der fuenf dreht. Gemessen am 15.10.2026 an der
+  // eingeklappten Leiste: --ha-space-12 macht den Knopf von 48 auf 72 px,
+  // und HAs Schiene bleibt bei 56 - der Ueberstand ist das abgeschnittene
+  // Ende der Pille. Auch -1, -3, -6 und -10 verschieben sie.
+  "Abstaende": "Luft zwischen den Dingen. 1, 3, 6, 10 und 12 verschieben HAs Seitenleiste - sie rechnet mit vier Pixeln je Stufe.",
   "Raster": "Die Zeilenhoehe, aus der jede Karte ihre Hoehe bekommt",
   "Schatten": "Tiefe in drei Stufen, je Modus verschieden",
 
@@ -1225,7 +1230,6 @@ const ZUSTAND = {
   // Solange true, ist noch nichts gewaehlt: weder Vorlage noch vorhandene
   // Datei. Vorher eine Grundlage zu laden waere bequem und falsch - wer
   // danach eine Datei oeffnet, haette die Vorlage schon drunterliegen.
-  start: true,
   dateien: null,     // null = noch nicht geholt, [] = geholt und leer
   bericht: null,     // was beim letzten Einlesen herauskam
   uixAus: {},        // CSS abgeschalteter Stilziele - abschalten darf nichts vernichten
@@ -1256,7 +1260,9 @@ class HatsPanel extends HTMLElement {
       // Nur beim ersten Mal - ein Seitenwechsel darf die Arbeit nicht
       // wegwerfen. Geladen wird jetzt nichts von allein: erst fragen, womit
       // angefangen wird.
-      if (ZUSTAND.start && ZUSTAND.dateien === null) this.ladeListe();
+      // Die Liste der Dateien wird IMMER gebraucht - der Weg "Vorhandene
+      // oeffnen" steht jetzt auf derselben Seite wie alles andere.
+      if (ZUSTAND.dateien === null) this.ladeListe();
     }
   }
 
@@ -2222,32 +2228,71 @@ class HatsPanel extends HTMLElement {
   }
 
   // Das Startbild: zwei Wege, und darunter die vorhandenen Dateien.
-  startbild(T) {
+  // ---- Die eine Seite: Wege, Startfelder, Stufen ----
+  //
+  // Hier stand bis zum 15.10.2026 startbild() - die zweite Seite neben der
+  // Uebersicht. Auf Ansage: "wir haben zu viele seiten wo wir starten
+  // koennen. lass die letzte zu unser einzigen seite machen von wo alles
+  // weiter geht."
+  //
+  // Aus einer Methode sind zwei geworden, weil die Seite zwei verschiedene
+  // Dinge zeigt: die WEGE stehen immer da, die FELDER nur mit offener Theme.
+
+  // Zwei Reihen, und die Trennung ist nicht kosmetisch: Links steht, WELCHE
+  // Theme man bearbeitet, rechts, WOMIT. Vorher lagen beide Sorten als fuenf
+  // gleich aussehende Karten nebeneinander, und "Neue Theme" stand neben
+  // "Was macht welche Variable?".
+  wegeHtml(T) {
     const d = ZUSTAND.dateien;
-    if (d === null) return `<div class="liste"><p class="leer">${T("Lade...")}</p></div>`;
-
-    const meine = d.filter((x) => x.hats && x.name !== "ha_blanko.yaml");
-    const fremde = d.filter((x) => !x.hats && x.name !== "ha_blanko.yaml");
-    const kb = (n) => (n < 1024 ? n + " B" : Math.round(n / 1024) + " kB");
-    // ha_blanko zaehlt nicht mit - es ist die Grundlage, keine Theme zum Oeffnen.
-    const zahlDateien = meine.length + fremde.length;
-
-    return `
-      <!-- Die Starteinstellungen gehoeren hierher, nicht als Kachelgruppe in
-           Stufe 1: Name, Herkunft und Modus entscheiden sich, BEVOR man an
-           Farben geht, und die Hintergrundbilder gehoeren dazu.
-           Ohne offene Theme werden sie GAR NICHT gezeigt. "Gesperrt statt
-           versteckt" gilt fuer die Knopfleiste, wo die Position etwas sagt -
-           ein ganzer Einstellungsblock, der nichts tun kann, ist dagegen nur
-           Laerm. Am 13.10.2026 gemeldet: "das ist komplett tot", und das
-           stimmte. -->
-      ${!ZUSTAND.modell ? "" : `
-      <div class="starteinst">
-        <div class="sezeile">
-          <label>${T("Name der Theme")}</label>
-          <input class="se-name" type="text" value="${ZUSTAND.name || ""}"
-                 placeholder="mein_theme" spellcheck="false">
+    const zahl = d === null ? null : d.filter((x) => x.name !== "ha_blanko.yaml").length;
+    const reihen = [
+      { titel: T("Datei"), wege: [
+        { id: "neu", icon: "mdi:file-plus-outline", t: T("Neue Theme"),
+          p: T("Leer anfangen, mit Home Assistants eigenen Farben als Grundlage.") },
+        { id: "oeffnen", icon: "mdi:folder-open-outline", t: T("Vorhandene oeffnen"),
+          p: zahl === null ? T("Lade...")
+             : `${zahl} ${zahl === 1 ? T("Theme auf dieser Instanz") : T("Themes auf dieser Instanz")}` },
+        { id: "lesen", icon: "mdi:file-import-outline", t: T("Datei oder Text"),
+          p: T("Eine Theme von anderswo einlesen - auch eine fremde.") },
+      ] },
+      { titel: T("Werkzeuge"), wege: [
+        // Der Baukasten geht AUCH ohne offene Theme: Er legt dann erst eine
+        // an. Alles andere hier braucht eine und ist sonst gesperrt.
+        { id: "baukasten", icon: "mdi:toy-brick-outline", t: T("Baukasten"),
+          p: T("Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.") },
+        { id: "uix", icon: "mdi:auto-fix", t: "UI eXtension",
+          p: T("Vorlagen und Stilziele - alles, was eine Regel braucht statt eines Werts."),
+          aus: !ZUSTAND.modell },
+        // Die Hilfe ist nie gesperrt - sie fasst keine Theme an und wird vor
+        // der ersten Entscheidung gebraucht, nicht erst danach.
+        { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
+          p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
+      ] },
+    ];
+    return reihen.map((r) => `
+      <section class="wegereihe">
+        <h3>${r.titel}</h3>
+        <div class="startwege">
+          ${r.wege.map((w) => `
+          <button class="startweg" data-start="${w.id}" ${w.aus ? "disabled" : ""}>
+            <ha-icon icon="${w.icon}"></ha-icon>
+            <b>${w.t}</b>
+            <span>${w.p}</span>
+          </button>`).join("")}
         </div>
+      </section>`).join("");
+  }
+
+  // Worauf die Theme aufsetzt. Auf Ansage: "die drei felder muessen hier mit
+  // rein" - Name, Grundlage und Modus. Der NAME steht im Kopf, neben
+  // Speichern; zweimal dasselbe Feld auf einer Seite waere eines zu viel.
+  // Die beiden Hintergrundbilder gehoeren dazu: Sie entscheiden sich, bevor
+  // man an Farben geht.
+  startFelder(T) {
+    return `
+      <section class="wegereihe">
+        <h3>${T("Start")}</h3>
+      <div class="starteinst">
         <div class="sezeile">
           <label>${T("Herkunft")}</label>
           <span class="sewert">${ZUSTAND.meta.Grundlage || "ha_blanko"}</span>
@@ -2276,47 +2321,10 @@ class HatsPanel extends HTMLElement {
             </button>
           </span>`).join("")}
         </div>`).join("")}
-      </div>`}
-
-      <!-- DIE WEGE STEHEN IMMER DA, auch wenn schon eine Theme offen ist.
-           Bis zum 15.10.2026 waren sie an "kein Modell" geknuepft: Wer eine
-           Theme offen hatte, sah hier nur die Starteinstellungen. Das ging,
-           solange die Leiste oben die Wege trug - sie ist jetzt weg, und
-           damit waere die Startseite mit offener Theme eine Sackgasse
-           gewesen: kein Weg zu einer anderen Datei, keiner zu einer neuen.
-           Beim Umbau selbst aufgefallen, nicht im Betrieb. -->
-      <!-- Fuenf Wege, gross und beschriftet.
-           Hier stand bis zum 13.10.2026 ein einzelner Satz in der Mitte einer
-           leeren Seite, waehrend die Wege als kleine Symbole oben rechts lagen -
-           gesperrt, unbeschriftet und damit unlesbar. Auf Ansage: "warum machen
-           wir auf der seite womit faengst du an nicht grosse buttons mit laden
-           neu aus vorlage und so weiter".
-           Die Symbolleiste bleibt, sie ist der schnelle Weg fuer den, der das
-           Panel kennt. Diese Karten sind der erste. -->
-      <div class="startwege">
-        ${[
-          { id: "neu", icon: "mdi:file-plus-outline", t: T("Neue Theme"),
-            p: T("Leer anfangen, mit Home Assistants eigenen Farben als Grundlage.") },
-          { id: "baukasten", icon: "mdi:toy-brick-outline", t: T("Mit dem Baukasten"),
-            p: T("Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.") },
-          { id: "oeffnen", icon: "mdi:folder-open-outline", t: T("Vorhandene oeffnen"),
-            p: `${zahlDateien} ${zahlDateien === 1 ? T("Theme auf dieser Instanz") : T("Themes auf dieser Instanz")}` },
-          { id: "lesen", icon: "mdi:file-import-outline", t: T("Datei oder Text"),
-            p: T("Eine Theme von anderswo einlesen - auch eine fremde.") },
-          // Die Hilfe steht hier, weil sie VOR der ersten Entscheidung
-          // gebraucht wird und nicht erst danach. Sie ist der einzige Weg,
-          // der keine Theme anfasst.
-          { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
-            p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
-        ].map((w) => `
-        <button class="startweg" data-start="${w.id}">
-          <ha-icon icon="${w.icon}"></ha-icon>
-          <b>${w.t}</b>
-          <span>${w.p}</span>
-        </button>`).join("")}
       </div>
-    `;
+      </section>`;
   }
+
 
   // Die Dateiliste als Dialog hinter dem Ordner-Symbol.
   //
@@ -2393,6 +2401,7 @@ class HatsPanel extends HTMLElement {
   // gibt es wieder aus, ob die Oberflaeche es kennt oder nicht. Was fehlte,
   // war nicht die Faehigkeit, sondern die Auskunft - deshalb der Bericht.
   async oeffneDatei(name) {
+    if (!this.darfVerlassen()) return;
     try {
       const r = await this._hass.connection.sendMessagePromise({
         type: "hats/load_theme_file", filename: name });
@@ -2405,7 +2414,6 @@ class HatsPanel extends HTMLElement {
       // heisst ab jetzt: anders als beim Oeffnen.
       this._grundlage = JSON.parse(JSON.stringify(m));
       ZUSTAND.geaendert.clear();
-      ZUSTAND.start = false;
       ZUSTAND.meldung = { text: `Geoeffnet: ${name}`, art: "gut" };
       ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT, EIGENE_ZIELE);
     } catch (e) {
@@ -2419,6 +2427,7 @@ class HatsPanel extends HTMLElement {
   // Name kommt aus dem Theme selbst, nicht aus dem Dateinamen - in der Datei
   // steht er als Wurzelschluessel, und der ist massgeblich.
   importiereText(text, quelle) {
+    if (!this.darfVerlassen()) return;
     const m = leseTheme(text || "");
     if (m.fehler) {
       ZUSTAND.meldung = { text: "Nicht gelesen: " + m.fehler, art: "fehler" };
@@ -2430,7 +2439,6 @@ class HatsPanel extends HTMLElement {
     ZUSTAND.meta.Grundlage = quelle;
     this._grundlage = JSON.parse(JSON.stringify(m));
     ZUSTAND.geaendert.clear();
-    ZUSTAND.start = false;
     ZUSTAND.meldung = { text: `Gelesen aus ${quelle}`, art: "gut" };
     ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT, EIGENE_ZIELE);
     this.zeichne();
@@ -2468,25 +2476,6 @@ class HatsPanel extends HTMLElement {
     this.zeichne();
   }
 
-  // Zurueck zum Startbild. Wer Ungespeichertes hat, wird gefragt - und zwar
-  // einmal, nicht bei jedem Klick.
-  zumStart() {
-    if (ZUSTAND.geaendert.size && !this._startBestaetigt) {
-      this._startBestaetigt = true;
-      ZUSTAND.meldung = { text: t("Ungespeicherte Aenderungen - nochmal druecken zum Verlassen", this.spr), art: "fehler" };
-      this.zeichne();
-      setTimeout(() => { this._startBestaetigt = false; }, 6000);
-      return;
-    }
-    this._startBestaetigt = false;
-    ZUSTAND.start = true;
-    ZUSTAND.bericht = null;
-    ZUSTAND.meldung = null;
-    ZUSTAND.dateien = null;
-    this.zeichne();
-    this.ladeListe();
-  }
-
   // Zurueck auf den Stand beim Oeffnen. _grundlage ist genau dafuer da: Sie
   // haelt die Datei, wie sie hereinkam - nicht die leere Vorlage.
   verwerfen() {
@@ -2498,12 +2487,32 @@ class HatsPanel extends HTMLElement {
     this.zeichne();
   }
 
+  // Die Rueckfrage bei Ungespeichertem.
+  //
+  // Sie stand bis zum 15.10.2026 in zumStart() - dem Weg zurueck auf die
+  // Startseite. Die Startseite ist weg, die Gefahr nicht: "Neue Theme" und
+  // "Vorhandene oeffnen" ersetzen das Modell genauso, und sie stehen jetzt
+  // gross auf derselben Seite wie die Arbeit.
+  //
+  // EINMAL fragen, nicht bei jedem Klick: Wer es wirklich will, drueckt
+  // zweimal. Nach sechs Sekunden gilt wieder die Frage - sonst wuerde ein
+  // Klick von gestern den von heute durchlassen.
+  darfVerlassen() {
+    if (!ZUSTAND.geaendert.size) return true;
+    if (this._verlassenBestaetigt) { this._verlassenBestaetigt = false; return true; }
+    this._verlassenBestaetigt = true;
+    ZUSTAND.meldung = { text: t("Ungespeicherte Aenderungen - nochmal druecken zum Verlassen", this.spr), art: "fehler" };
+    this.zeichne();
+    setTimeout(() => { this._verlassenBestaetigt = false; }, 6000);
+    return false;
+  }
+
   async neuBeginnen() {
+    if (!this.darfVerlassen()) return;
     await this.ladeGrundlage();
     ZUSTAND.name = "";
     ZUSTAND.meta.Grundlage = "ha_blanko";
     ZUSTAND.geaendert.clear();
-    ZUSTAND.start = false;
     this.zeichne();
   }
 
@@ -2590,10 +2599,10 @@ class HatsPanel extends HTMLElement {
             <section class="inhalt">
             <header class="kopf">
               <div>
-                <h1>${ZUSTAND.start ? T("Womit faengst du an?") : T("Guten Tag")}</h1>
-                <p>${ZUSTAND.start ? T("Eine neue Theme oder eine vorhandene weiterbauen") : T("Dein Theme im Überblick")}</p>
+                <h1>${ZUSTAND.modell ? T("Guten Tag") : T("Womit faengst du an?")}</h1>
+                <p>${ZUSTAND.modell ? T("Dein Theme im Überblick") : T("Eine neue Theme oder eine vorhandene weiterbauen")}</p>
               </div>
-              ${ZUSTAND.start ? "" : `
+              ${!ZUSTAND.modell ? "" : `
               <div class="sichern">
                 <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
                        placeholder="${T("Name der Theme")}" spellcheck="false">
@@ -2602,11 +2611,9 @@ class HatsPanel extends HTMLElement {
                      herunterladen, kopieren - und der Weg zurueck zum Anfang.
                      "Bis auf speichern" heisst nicht nur den einen Knopf,
                      sondern das, was mit ihm zu tun hat.
-                     Und: zumStart() hatte bis heute GAR KEINEN Aufrufer. Wer
-                     eine Theme offen hatte, kam nicht mehr zur Startseite
-                     zurueck, ohne das Panel neu zu laden. -->
+                     Das Haus-Symbol ist am 15.10.2026 wieder gegangen: Es
+                     fuehrte zur Startseite, und die gibt es nicht mehr. -->
                 ${[
-                  { id: "start",     icon: "mdi:home-outline",     t: T("Zurueck zum Anfang") },
                   { id: "verwerfen", icon: "mdi:undo-variant",     t: T("Aenderungen verwerfen"), aus: !ZUSTAND.geaendert.size },
                   { id: "laden2",    icon: "mdi:download-outline", t: T("Als Datei herunterladen") },
                   { id: "kopie2",    icon: "mdi:content-copy",     t: T("In die Zwischenablage") },
@@ -2619,7 +2626,7 @@ class HatsPanel extends HTMLElement {
               </div>`}
             </header>
 
-            ${ZUSTAND.start ? "" : `
+            ${!ZUSTAND.modell ? "" : `
             <div class="kennzahlen">
               <div class="kennzahl"><b>${fertig}/${STUFEN.length}</b><span>${T("Stufen fertig")}</span></div>
               <div class="kennzahl" title="${felderGesamt} ${T("bietet das Panel an")}"><b>${felderImModell}</b><span>${T("Felder")}</span></div>
@@ -2628,26 +2635,25 @@ class HatsPanel extends HTMLElement {
 
             <p class="meldung ${ZUSTAND.meldung ? ZUSTAND.meldung.art : ""}">${ZUSTAND.ladefehler ? T("Grundlage nicht geladen: ") + ZUSTAND.ladefehler : (ZUSTAND.meldung ? ZUSTAND.meldung.text : "")}</p>
 
-            ${ZUSTAND.start ? this.startbild(T) : `
-            <!-- Die drei Werkzeuge ueber der Liste. Sie sind keine Stufe -
-                 sie haben keinen Stand und keine Felderzahl -, gehoeren aber
-                 in dieselbe Spalte: Wer hier liest, liest von oben nach
-                 unten, und der Baukasten ist der erste Griff. Sie tragen
-                 Namen, anders als die Symbole in der alten Leiste. -->
-            <div class="werkzeuge">
-              ${[
-                { id: "baukasten", icon: "mdi:toy-brick-outline", t: T("Baukasten"),
-                  p: T("Fertige Teile zusammenstecken: Farben, Schrift, Karten, Hintergrund.") },
-                { id: "uix", icon: "mdi:auto-fix", t: "UI eXtension",
-                  p: T("Vorlagen und Stilziele - alles, was eine Regel braucht statt eines Werts.") },
-                { id: "hilfe", icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?"),
-                  p: T("Jedes Feld, das HATS anbietet, mit einem Satz dazu.") },
-              ].map((w) => `
-              <button class="werkzeug" data-schalter="${w.id}">
-                <ha-icon icon="${w.icon}"></ha-icon>
-                <div class="wtext"><b>${w.t}</b><span>${w.p}</span></div>
-              </button>`).join("")}
-            </div>
+            <!-- EINE SEITE, von der alles weitergeht.
+                 Auf Ansage vom 15.10.2026: "wir haben zu viele seiten wo wir
+                 starten koennen. lass die letzte zu unser einzigen seite
+                 machen von wo alles weiter geht." Dazu: "die drei felder
+                 muessen hier mit rein" - Name, Grundlage und Modus.
+
+                 Die Startseite ist damit weg. Sie war der dritte Ort, an dem
+                 dasselbe stand: erst die Leiste oben (gefallen), dann die
+                 Startseite neben der Uebersicht. Jetzt steht alles
+                 untereinander auf EINER Seite, und was ohne Theme nichts tun
+                 kann, steht gar nicht erst da.
+
+                 Die Reihenfolge ist die der Arbeit: erst woher die Theme
+                 kommt (Datei), dann womit man sie baut (Werkzeuge), dann
+                 worauf sie aufsetzt (Start), dann die acht Stufen. -->
+            ${this.wegeHtml(T)}
+
+            ${!ZUSTAND.modell ? "" : `
+            ${this.startFelder(T)}
             <div class="liste">
               ${STUFEN.map((s, i) => this.zeile(s, i, T)).join("")}
             </div>`}
@@ -2701,7 +2707,6 @@ class HatsPanel extends HTMLElement {
       b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
     const schalter = {
-      start: () => this.zumStart(),
       baukasten: () => this.oeffneBaukasten(),
       uix: () => this.oeffneUix(),
       hilfe: () => this.oeffneHilfe(),
@@ -3470,22 +3475,6 @@ class HatsPanel extends HTMLElement {
       .kopfknopf[disabled] { cursor: default; }
       .kopfknopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
 
-      /* ---- Die Werkzeuge ueber der Stufenliste ---- */
-      /* Eine Zeile wie in der Liste, nur ohne Spur und ohne Stand: Diese drei
-         haben keinen Fortschritt, sie sind Griffe. Dass sie sich wie die
-         Stufen anfuehlen, ist Absicht - es ist dieselbe Spalte. */
-      .werkzeuge { display: grid; gap: 8px; margin: 0 0 18px; }
-      .werkzeug { display: flex; align-items: center; gap: 14px; width: 100%;
-                  padding: 12px 16px; border: 0; text-align: left; cursor: pointer;
-                  font: inherit; color: var(--s-tinte);
-                  border-radius: var(--s-r-gross); background: var(--s-glas-innen);
-                  box-shadow: var(--s-schatten-klein);
-                  transition: background .15s ease, box-shadow .15s ease; }
-      .werkzeug:hover { background: var(--s-karte); box-shadow: var(--s-schatten); }
-      .werkzeug ha-icon { --mdc-icon-size: 22px; color: var(--s-tinte-leise); flex: none; }
-      .werkzeug .wtext { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-      .werkzeug .wtext b { font-size: 14px; font-weight: 500; }
-      .werkzeug .wtext span { font-size: 12px; color: var(--s-tinte-leise); }
 
       /* ---- Rumpf ---- */
       /* Seit dem 13.10.2026 eine Spalte: Die Add-on-Leiste rechts ist weg,
@@ -3997,6 +3986,16 @@ class HatsPanel extends HTMLElement {
          Gross genug, dass die Beschriftung die Arbeit macht und nicht das
          Symbol. Zwei Spalten ab 560px: Vier Karten nebeneinander waeren auf
          einem Tablet schmaler als ihr eigener Text. */
+      /* Eine Reihe mit Ueberschrift. Links steht, WELCHE Theme man
+         bearbeitet, rechts, WOMIT - ohne die beiden Woerter stuende "Neue
+         Theme" neben "Was macht welche Variable?" und saehe gleich aus. */
+      .wegereihe { margin: 0 0 22px; }
+      .wegereihe h3 { margin: 0; font-size: 11.5px; font-weight: 600;
+                      letter-spacing: .09em; text-transform: uppercase;
+                      color: var(--s-tinte-leise); }
+      .startweg[disabled] { opacity: .45; cursor: default; transform: none; }
+      .startweg[disabled]:hover { border-color: rgba(27,36,48,.08);
+                                  box-shadow: var(--s-schatten-klein); }
       .startwege { display: grid; gap: 14px; margin-top: 8px;
                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
       .startweg { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
