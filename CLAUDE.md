@@ -186,6 +186,25 @@ Ausführlich in `docs/uebergabe-neues-projekt.md` von HATG, hier das Nötigste:
   Sections-Dashboard nicht auf, und dann ist jede DOM-Messung wertlos — erkennbar
   daran, dass alles leer aussieht, auch das Funktionierende.
 
+- **Ein gemessener Wert kann eine Animation sein.** `ha-card` trägt
+  `transition: all .3s ease-out` — am 15.10.2026 aus
+  `customElements.get("ha-card").elementStyles` gelesen. Jede Änderung an
+  Fläche, Weichzeichnung, Schatten und Rundung läuft also als Übergang, und wer
+  währenddessen misst, bekommt eine Zwischenstufe:
+
+      erwartet   backdrop-filter: none
+      gemessen   backdrop-filter: blur(0.177px) saturate(1.009)
+
+  Gemeldet von der Sitzung an den Horizon-Cards, die eine neue Regel
+  gegenprüfte; nach rund zweieinhalb Sekunden stand sauber `none` da. Beim
+  Laden einer Seite reihen sich mehrere Theme-Durchläufe aneinander, deshalb
+  dauert es länger als die 0,3 Sekunden einer einzelnen Änderung. Dieselbe
+  Falle in anderem Gewand: Am selben Tag las eine Messung an derselben Karte
+  `blur(3.97793px) saturate(1.1989)` — der Rückweg derselben Animation —, und
+  sie fiel zunächst niemandem auf. Also
+  **auf den Endwert warten, nicht auf einen Zeitpunkt** — zweimal messen und
+  vergleichen, bis sich nichts mehr ändert.
+
 ### Kein eigenes `rgb-`Feld — es blockiert HAs Ableitung
 
 Gemeldet am 12.10.2026: „im Dunkelmodus ist die Menüleiste dunkel". Gemessen war
