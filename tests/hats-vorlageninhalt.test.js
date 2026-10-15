@@ -295,79 +295,157 @@ pruefe("Keine Jinja-Zeichen in einer Vorlage", () => {
   }
 });
 
-pruefe("Die Seitenleiste zentriert ueber max-width, nicht ueber width", () => {
-  // Gemeldet am 14.10.2026 mit einem Bild der schmalen Leiste: "erstens sind
-  // die icons nicht mittig". Die Ursache ist unsere Abstandsleiter - HAs
-  // Kette (48 + 2*4 = 56) ist genau auf vier Pixel je Stufe getrimmt, die
-  // Schiene steht dagegen fest.
+pruefe("Die Dichte haelt sich aus der Seitenleiste heraus", () => {
+  // Gemeldet am 14.10.2026 ("erstens sind die icons nicht mittig") und am
+  // 15.10.2026 noch einmal: "das zerschiesst uns die position der icons und
+  // die aktive schalterpille wird am rand abgeschnitten."
   //
-  // Und die Behebung hat eine eigene Falle: Auf width liegt HAs
-  // "transition: width .25s". Eine Breite von aussen wird davon
-  // aufgefressen - selbst inline mit !important blieb der Knopf bei 60,
-  // dreimal gemessen. max-width wird nicht mitanimiert.
+  // Die Ursache ist unsere Abstandsleiter. HAs Schiene steht fest auf 56px
+  // (home-assistant-main), und die Kette darin ist genau auf vier Pixel je
+  // Stufe getrimmt: --ha-space-12 (48) + 2 * --ha-space-1 (4) = 56. Bei fuenf
+  // Pixeln wird der Knopf 60 breit. Gemessen an der eingeklappten Leiste:
+  // Ueberstand 10 px, Symbolmitte 40 statt 27,5 - der Ueberstand IST das
+  // abgeschnittene Ende der Pille.
+  //
+  // Die sieben Stufen stehen deshalb in der Leiste auf HAs eigenen Werten.
+  // WELCHE sieben, ist aus customElements.get("ha-sidebar").elementStyles
+  // gelesen, nicht geraten - eine Stufe zu wenig, und ein Mass verschiebt
+  // sich weiter.
   const sb = VORLAGEN.find((v) => v.id === "glas-seitenleiste");
   assert.ok(sb, "glas-seitenleiste gibt es nicht mehr");
-  const regel = sb.css.slice(sb.css.indexOf(":host(:not([expanded]))"));
-  assert.ok(regel.startsWith(":host(:not([expanded]))"), "die Regel fuer die schmale Leiste fehlt");
-  const block = regel.slice(0, regel.indexOf("}") + 1);
-  assert.match(block, /max-width:/, "zentriert nicht ueber max-width");
-  assert.doesNotMatch(block, /(^|[^-])width:\s*calc/m,
-    "setzt width - das frisst HAs eigene transition auf");
-  // Gerechnet wird aus der Schiene, nicht aus der Leiter: Sonst waere das
-  // Ergebnis wieder an die Dichte gekoppelt, und genau die war das Problem.
-  assert.match(block, /--ha-sidebar-width/, "rechnet nicht aus der Schiene");
-  assert.match(block, /--ha-row-item-padding-inline/, "ruecke das Symbol nicht ein");
+
+  const ab = sb.css.indexOf("\n:host {");
+  assert.ok(ab > -1, "der Block fuer die Leiste selbst fehlt");
+  const bloecke = [];
+  let i = ab;
+  while (i > -1) { bloecke.push(sb.css.slice(i, sb.css.indexOf("}", i))); i = sb.css.indexOf("\n:host {", i + 1); }
+  const leiter = bloecke.find((b) => b.includes("--ha-space-"));
+  assert.ok(leiter, "die Leiter wird in der Leiste nicht festgehalten");
+
+  const erwartet = { 1: 4, 2: 8, 3: 12, 4: 16, 6: 24, 10: 40, 12: 48 };
+  for (const [stufe, wert] of Object.entries(erwartet))
+    assert.match(leiter, new RegExp(`--ha-space-${stufe}:\\s*${wert}px`),
+      `--ha-space-${stufe} steht nicht auf HAs ${wert}px`);
+  const gesetzt = (leiter.match(/--ha-space-\d+/g) || []).length;
+  assert.strictEqual(gesetzt, 7, `${gesetzt} Stufen statt der sieben, die die Leiste liest`);
+
+  // Und KEINE zweite Geometrie daneben. Vorher stutzte eine Regel den Knopf
+  // mit max-width zurecht und rechnete das Symbol wieder mittig; mit der
+  // Leiter auf HAs Werten kommt HAs eigene Rechnung heraus, und zwei
+  // Mechanismen fuer dieselbe Sache laufen auseinander.
+  // Geprueft wird ohne Kommentare - die Begruendung oben nennt die alten
+  // Namen, und das ist kein Rueckfall.
+  const ohneKommentar = sb.css.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.doesNotMatch(ohneKommentar, /max-width:\s*calc\(var\(--ha-sidebar-width/,
+    "die alte Breitenregel steht wieder da - sie rechnet neben HA her");
+  assert.doesNotMatch(ohneKommentar, /--ha-row-item-padding-inline/,
+    "das Symbol wird wieder von Hand eingerueckt");
 });
 
 pruefe("Jeder aktive Knopf traegt DENSELBEN Verlauf, aus dem Akzent", () => {
   // Auf Ansage vom 14.10.2026: "im alten hatg konnten wir die aktiven buttons
   // mit einem farbverlauf belegen", und dann, mit drei Bildern: "bekommen wir
-  // den farbverlauf aus dem kalender auf die aktiven buttons".
+  // den farbverlauf aus dem kalender auf die aktiven buttons". Am 15.10.2026
+  // kamen die Zahlen und das Nutzerbild dazu: "kannst du dem usericon und den
+  // zahlenhintergrund auch den farbverlauf drueber legen".
   //
   // Die Zahlen sind am Datumsfeld der Kalender-Kachel abgelesen, nicht
-  // gewaehlt: 150 Grad, 48 Prozent nach 24 Prozent Akzent. Sie stehen an zwei
-  // Stellen - Seitenleiste und Kapsel der Steuerleiste -, und genau deshalb
-  // prueft dieser Test sie GEGENEINANDER. Ein Verlauf, der zweimal anders
-  // gerechnet wird, laeuft auseinander, sobald jemand einen davon anfasst.
+  // gewaehlt: 150 Grad, 48 Prozent nach 24 Prozent Akzent. Sie stehen
+  // inzwischen an VIER Stellen, und genau deshalb prueft dieser Test sie
+  // gegeneinander statt gegen eine eigene Erwartung. Ein Verlauf, der an
+  // einer Stelle anders gerechnet wird, laeuft auseinander, sobald jemand
+  // eine davon anfasst.
   const hol = (id) => {
     const v = VORLAGEN.find((x) => x.id === id);
     assert.ok(v, `${id} gibt es nicht mehr`);
-    const ab = v.css.indexOf("background-image: linear-gradient");
-    assert.ok(ab > -1, `${id}: der Verlauf fehlt`);
-    return { v, block: v.css.slice(ab, v.css.indexOf(";", ab)) };
+    const bloecke = [];
+    let ab = v.css.indexOf("background-image: linear-gradient");
+    while (ab > -1) {
+      bloecke.push(v.css.slice(ab, v.css.indexOf(";", ab)));
+      ab = v.css.indexOf("background-image: linear-gradient", ab + 1);
+    }
+    assert.ok(bloecke.length, `${id}: der Verlauf fehlt`);
+    return { v, bloecke };
   };
-  const a = hol("glas-seitenleiste");
-  const b = hol("verlauf-kapsel");
+  const stellen = [hol("glas-seitenleiste"), hol("verlauf-kapsel")];
+  const alle = stellen.flatMap(({ v, bloecke }) => bloecke.map((b) => [v.id, b]));
+  assert.strictEqual(alle.length, 4,
+    `vier Stellen erwartet, gefunden ${alle.length} - Pille, Zahl, Nutzerbild, Kapsel`);
 
-  const ohneLeerraum = (t) => t.replace(/\s+/g, " ").trim();
-  assert.strictEqual(ohneLeerraum(a.block), ohneLeerraum(b.block),
-    "die beiden Verlaeufe sind nicht mehr derselbe");
+  // !important faellt beim Vergleich weg: Es sagt, ob die Regel sich gegen
+  // eine von HA durchsetzen muss - die Pille und die Ziffer muessen das, der
+  // Wirt des Nutzerbilds nicht. Der VERLAUF selbst muss derselbe sein.
+  const ohneLeerraum = (t) => t.replace(/\s*!important\s*$/, "").replace(/\s+/g, " ").trim();
+  for (const [id, block] of alle.slice(1))
+    assert.strictEqual(ohneLeerraum(block), ohneLeerraum(alle[0][1]),
+      `${id}: dieser Verlauf ist nicht mehr derselbe wie die anderen`);
 
-  for (const { v, block } of [a, b]) {
+  for (const [id, block] of alle) {
     // Beide Stufen kommen aus --accent-color.
     assert.strictEqual((block.match(/var\(--accent-color\)/g) || []).length, 2,
-      `${v.id}: nicht beide Stufen haengen am Akzent`);
+      `${id}: nicht beide Stufen haengen am Akzent`);
     // Keine festen Farben - der Nutzer aendert den Akzent, der Verlauf geht mit.
-    assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, `${v.id}: feste Hexfarbe im Verlauf`);
-    assert.doesNotMatch(block, /\brgba?\(/i, `${v.id}: feste rgb-Farbe im Verlauf`);
+    assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, `${id}: feste Hexfarbe im Verlauf`);
+    assert.doesNotMatch(block, /\brgba?\(/i, `${id}: feste rgb-Farbe im Verlauf`);
     // Und der Winkel des Kalenders.
-    assert.match(block, /150deg/, `${v.id}: nicht der Winkel des Kalenders`);
+    assert.match(block, /150deg/, `${id}: nicht der Winkel des Kalenders`);
   }
 
-  // KEIN deckender Rueckfall mehr, und das ist Absicht: Ein durchscheinender
+  // KEIN deckender Rueckfall, und das ist Absicht: Ein durchscheinender
   // Verlauf ueber einer deckenden Akzentflaeche ergibt wieder eine deckende
   // Flaeche - der Rueckfall haette die Wirkung aufgehoben. Der Kalender macht
   // es genauso, dort steht background-color auf rgba(0,0,0,0) (gemessen).
-  for (const id of ["glas-seitenleiste", "verlauf-kapsel"]) {
-    const v = VORLAGEN.find((x) => x.id === id);
-    const ab = v.css.indexOf("background-image: linear-gradient");
-    const regelAnfang = v.css.lastIndexOf("{", ab);
-    const regel = v.css.slice(regelAnfang, v.css.indexOf("}", ab));
-    assert.doesNotMatch(regel, /background-color:\s*var\(--accent-color\)/,
-      `${id}: deckende Akzentflaeche unter dem Verlauf - er wird unsichtbar`);
-    assert.match(regel, /background-color:\s*transparent/,
-      `${id}: background-color muss ausdruecklich transparent sein`);
+  //
+  // Geprueft wird jede Regel, die einen Verlauf traegt. Wo Home Assistant
+  // selbst eine Flaeche malt - die Pille, die Zahl -, muss sie ausdruecklich
+  // geraeumt sein; das Nutzerbild hat gar keine und braucht es nicht.
+  const malenSelbst = [".selected::before", ".badge"];
+  for (const { v, bloecke } of stellen) {
+    let ab = v.css.indexOf("background-image: linear-gradient");
+    while (ab > -1) {
+      const regel = v.css.slice(v.css.lastIndexOf("{", ab), v.css.indexOf("}", ab));
+      const waehler = v.css.slice(v.css.lastIndexOf("*/", ab) + 2, v.css.lastIndexOf("{", ab));
+      assert.doesNotMatch(regel, /background-color:\s*var\(--accent-color\)/,
+        `${v.id}: deckende Akzentflaeche unter dem Verlauf - er wird unsichtbar`);
+      if (malenSelbst.some((w) => waehler.includes(w)))
+        assert.match(regel, /background-color:\s*transparent/,
+          `${v.id} (${waehler.trim().split("\n").pop()}): background-color muss ausdruecklich transparent sein`);
+      ab = v.css.indexOf("background-image: linear-gradient", ab + 1);
+    }
   }
+});
+
+pruefe("Die Schrift geht mit der Flaeche mit", () => {
+  // Der eigentliche Fehler beim Verlauf auf Zahl und Nutzerbild, am
+  // 15.10.2026 an glaswerk gemessen: Beide Flaechen waren HELL und trugen
+  // deshalb dunkle Schrift. Der Verlauf ist im Dunkelmodus dunkel.
+  //
+  //     Ziffer, hell    weiss auf dem Verlauf     1,85 : 1
+  //     "e", dunkel     #212121 auf dem Verlauf   1,38 : 1
+  //
+  // Beide Namen zeigen jetzt auf --primary-text-color, das dem Modus folgt.
+  // Ohne diese Zeilen ist der Verlauf da und der Inhalt weg - und genau das
+  // sieht man auf einem Bildschirmfoto nicht, man liest es nur nicht mehr.
+  const v = VORLAGEN.find((x) => x.id === "glas-seitenleiste");
+  const regel = (wahl) => {
+    const ab = v.css.indexOf(`\n${wahl} {`);
+    assert.ok(ab > -1, `${wahl} fehlt in glas-seitenleiste`);
+    return v.css.slice(ab, v.css.indexOf("}", ab));
+  };
+  assert.match(regel(".badge"), /--text-accent-color:\s*var\(--primary-text-color\)/,
+    "die Ziffer behaelt ihre weisse Schrift auf dem Verlauf");
+  const user = regel("ha-user-badge");
+  assert.match(user, /--light-primary-color:\s*transparent/,
+    "der helle Kreis liegt weiter ueber dem Verlauf");
+  assert.match(user, /--text-light-primary-color:\s*var\(--primary-text-color\)/,
+    "der Buchstabe behaelt seine dunkle Schrift auf dem Verlauf");
+  // Gegenprobe: Die beiden Namen sind die, die ha-user-badge wirklich liest -
+  // sonst pruefte das hier eine Zeile, die niemand anfasst. Gemessen aus
+  // customElements.get("ha-user-badge").elementStyles:
+  //   .initials { background-color: var(--light-primary-color);
+  //               color: var(--text-light-primary-color, var(--primary-text-color)) }
+  assert.doesNotMatch(user, /\.initials/,
+    "ein Selektor auf .initials - der kommt durch die Shadow-Grenze nicht durch");
 });
 
 pruefe("Der Grund ausserhalb des Dashboards liegt UNTER dem bewegten", () => {

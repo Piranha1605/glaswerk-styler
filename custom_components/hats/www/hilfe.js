@@ -98,8 +98,12 @@ export const ERKLAERUNGEN = {
     en: "The height of one grid row, and with it the height of EVERY card. A tile is two 56px rows plus an 8px gap. HA never sets this field - the component's fallback is the only source.",
   },
   "--ha-sidebar-expanded-width": {
-    de: "Die Breite der ausgeklappten Seitenleiste. Die EINGEKLAPPTE steht fest in home-assistant-main (56px) und laesst sich von einer Theme nicht aendern.",
-    en: "The width of the expanded sidebar. The COLLAPSED one is hard-coded in home-assistant-main (56px) and no theme can change it.",
+    de: "Bietet HATS nicht an, und zwar mit Absicht. Das Feld verstellt nur die innere Flaeche der Leiste; den Platz daneben reserviert home-assistant-main fest mit --ha-sidebar-width (256px ausgeklappt, 56px eingeklappt), und dorthin kommt eine Theme nicht. Am 15.10.2026 an einer 255px breiten Schiene gemessen: 200px lassen 55px Luecke, 320px laufen 65px ueber - und der Ueberstand ist das abgeschnittene Ende der Pille.",
+    en: "Not offered by HATS, and that is deliberate. The field moves only the sidebar's inner surface; the space beside it is reserved by home-assistant-main through --ha-sidebar-width (256px expanded, 56px collapsed), which no theme can reach. Measured on 15 Oct 2026 against a 255px rail: 200px leaves a 55px gap, 320px overruns by 65px - and that overrun is the clipped end of the pill.",
+  },
+  "--ha-sidebar-expanded-item-width": {
+    de: "Bietet HATS nicht an, aus demselben Grund wie --ha-sidebar-expanded-width. Gelesen wird es von :host([expanded]) ha-list-item-button; gemessen laufen 380px um 129px ueber die Schiene hinaus, 160px lassen 91px Luecke.",
+    en: "Not offered by HATS, for the same reason as --ha-sidebar-expanded-width. It is read by :host([expanded]) ha-list-item-button; measured, 380px overruns the rail by 129px and 160px leaves a 91px gap.",
   },
   "--ha-switch-background-color": { de: "Schiene, aus", en: "track, off" },
   "--ha-switch-border-color": { de: "ihr Rand, aus", en: "its border, off" },

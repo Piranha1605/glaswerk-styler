@@ -309,8 +309,27 @@ const STUFEN = [
         { t: "Gewaehlt", art: "farbe", v: "--sidebar-selected-icon-color", ebene: "getrennt" },
         { t: "Menueknopf Schrift", art: "farbe", v: "--sidebar-menu-button-text-color", ebene: "getrennt" },
         { t: "Menueknopf Flaeche", art: "farbe", v: "--sidebar-menu-button-background-color", ebene: "getrennt" },
-        { t: "Breite ausgeklappt", art: "mass", v: "--ha-sidebar-expanded-width", ebene: "beide", min: 180, max: 400 },
-        { t: "Breite Eintrag", art: "mass", v: "--ha-sidebar-expanded-item-width", ebene: "beide", min: 160, max: 380 } ] },
+        // KEINE BREITEN MEHR. Auf Ansage vom 15.10.2026: "dann muss die
+        // funktion raus die die weite der seitenleiste aendert. das
+        // zerschiesst uns die position der icons und die aktive
+        // schalterpille wird am rand abgeschnitten."
+        //
+        // Hier standen --ha-sidebar-expanded-width und
+        // --ha-sidebar-expanded-item-width. Beide werden gelesen, und beide
+        // sind trotzdem eine Falle: Sie verstellen die INNERE Flaeche,
+        // waehrend home-assistant-main den Platz daneben fest reserviert
+        // (--ha-sidebar-width: calc(256px + safe-area)). Am 15.10.2026
+        // gemessen, Schiene 255 px:
+        //
+        //     expanded-width       200 -> .menu 200, 55 px Luecke
+        //                          320 -> .menu 320, 65 px laufen ueber
+        //     expanded-item-width  160 -> Knopf 160, 91 px Luecke
+        //                          380 -> Knopf 380, 129 px laufen ueber
+        //
+        // Der Ueberstand ist das abgeschnittene Ende der Pille. Ein Feld,
+        // das nur zwischen Luecke und Abschneiden waehlen laesst, ist keine
+        // Einstellung. Die Schiene selbst erreicht eine Theme nicht.
+      ] },
       { name: "Schatten und Leisten", felder: [
         { t: "Leiste Schatten", art: "text", v: "--bar-box-shadow", ebene: "getrennt" },
         { t: "Rollschatten", art: "farbe", v: "--ha-color-shadow-scrollable-fade", ebene: "beide" },

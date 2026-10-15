@@ -645,37 +645,50 @@ ha-list-item-button.selected::before,
   opacity: 1 !important;
 }
 
-/* Eingeklappt sitzen die Symbole mittig.
+/* DIE DICHTE HAELT SICH AUS DER SEITENLEISTE HERAUS.
 
-   Gemeldet am 14.10.2026 mit einem Bild der schmalen Leiste: "erstens sind
-   die icons nicht mittig". Gemessen, und es ist unsere Leiter:
+   Auf Ansage vom 15.10.2026: "dann muss die funktion raus die die weite der
+   seitenleiste aendert. das zerschiesst uns die position der icons und die
+   aktive schalterpille wird am rand abgeschnitten."
 
-       ha-sidebar ha-list-item-button { width: var(--ha-space-12);
-                                        margin: 0 var(--ha-space-1) ...;
-                                        --ha-row-item-padding-inline: var(--ha-space-3) }
-       ha-icon[slot=start] { width: var(--ha-space-6) }
+   Gemessen, und es war nicht die Vorlage, sondern die Leiter. HAs Schiene
+   steht FEST - home-assistant-main setzt
 
-   Bei HAs vier Pixeln je Stufe geht die Rechnung genau auf: 48 + 2*4 = 56,
-   und das ist die Schiene. Die Schiene selbst steht aber FEST - in
-   home-assistant-main als calc(56px + safe-area-inset-left), also an einem
-   Element, das ein Theme-Feld am html nicht erreicht. Bei fuenf Pixeln je
-   Stufe wird der Eintrag 60 breit, das Symbol sitzt bei 5+15+15 = 35, und die
-   Schienenmitte liegt bei 27,5. Gemessen: 7,5 px zu weit rechts.
+       --ha-sidebar-width: calc(56px + safe-area-inset-left)
 
-   Gerechnet wird deshalb aus der Schiene zurueck, nicht aus der Leiter. Bei
-   vier Pixeln je Stufe kommt wieder HAs eigener Stand heraus (46 und 8 statt
-   48 und 12, Symbolmitte 28 wie vorher), bei jeder anderen Dichte sitzt es
-   mittig statt daneben.
+   und die Knoepfe darin rechnen mit --ha-space-12 (Breite) plus zweimal
+   --ha-space-1 (Rand). Bei HAs vier Pixeln je Stufe geht das genau auf:
+   48 + 8 = 56. Bei fuenf wird der Knopf 60 breit, und die Schiene bleibt 56.
+   Am 15.10.2026 an der eingeklappten Leiste gemessen:
 
-   MAX-WIDTH UND NICHT WIDTH, und das ist der Punkt, an dem drei Versuche
-   scheiterten: Auf width liegt HAs eigenes transition: width .25s. Eine
-   Breite von aussen wird davon aufgefressen - selbst inline mit !important
-   blieb der Knopf bei 60 (gemessen, dreimal). max-width wird nicht
-   mitanimiert und greift sofort. */
-:host(:not([expanded])) ha-list-item-button {
-  max-width: calc(var(--ha-sidebar-width, 56px) - 2 * var(--ha-space-1)) !important;
-  --ha-row-item-padding-inline: calc(
-    (var(--ha-sidebar-width, 56px) - 2 * var(--ha-space-1) - var(--ha-space-6)) / 2) !important;
+       Dichte 5   Knopf 60 px   Ueberstand 10 px   Symbolmitte 40 statt 27,5
+
+   Der Ueberstand ist genau das abgeschnittene Ende der Pille.
+
+   DESHALB STEHEN DIE SIEBEN STUFEN, DIE DIE LEISTE LIEST, HIER AUF HAs
+   EIGENEN WERTEN. Welche sieben es sind, ist nicht geraten, sondern aus
+   customElements.get("ha-sidebar").elementStyles gelesen: 1, 2, 3, 4, 6, 10
+   und 12. Ueberall sonst gilt die gewaehlte Dichte weiter - sie polstert das
+   Dashboard, und genau dafuer ist sie da.
+
+   VORHER STAND HIER DAS GEGENTEIL: eine Regel, die den Knopf mit max-width
+   zurechtstutzte und das Symbol mit --ha-row-item-padding-inline wieder
+   mittig rechnete. Sie hat funktioniert (gemessen: Symbolmitte 28 bei einer
+   Schienenmitte von 27,5), war aber eine zweite Geometrie neben HAs eigener.
+   Mit den Stufen auf HAs Werten kommt HAs Rechnung von selbst wieder heraus,
+   und es gibt nur noch eine.
+
+   WAS DAS NICHT LOEST: Wer die Dichte aendert und diese Vorlage AUS hat,
+   bekommt die verschobene Leiste wieder. Ein Theme-Feld kann nicht auf ein
+   Bauteil zielen, dafuer braucht es eine Regel - und eine Regel braucht UIX. */
+:host {
+  --ha-space-1: 4px;
+  --ha-space-2: 8px;
+  --ha-space-3: 12px;
+  --ha-space-4: 16px;
+  --ha-space-6: 24px;
+  --ha-space-10: 40px;
+  --ha-space-12: 48px;
 }
 
 /* Schrift und Symbol auf der Akzentflaeche. HA faerbt beide mit
@@ -688,6 +701,61 @@ ha-list-item-button.selected::part(headline),
 ha-list-item-button.selected ha-svg-icon[slot="start"],
 ha-list-item-button.selected ha-icon[slot="start"] {
   color: var(--text-accent-color, var(--text-primary-color)) !important;
+}
+
+/* Die Zahlen und das Nutzerbild bekommen denselben Verlauf.
+
+   Auf Ansage vom 15.10.2026, mit einem Bild der unteren Leiste: "kannst du
+   dem usericon und den zahlenhintergrund auch den farbverlauf drueber legen".
+
+   DIE SCHRIFT MUSS MIT, und das ist hier die ganze Arbeit. Beide Flaechen
+   waren hell und trugen deshalb DUNKLE Schrift; der Verlauf ist im
+   Dunkelmodus dunkel. Am 15.10.2026 an glaswerk gemessen, Weiss
+   beziehungsweise HAs Vorgabe auf der neuen Flaeche:
+
+       Ziffer, hell    weiss auf dem Verlauf     1,85 : 1   unlesbar
+       Ziffer, dunkel  weiss auf dem Verlauf     6,59 : 1
+       "e", dunkel     #212121 auf dem Verlauf   1,38 : 1   unlesbar
+
+   Mit --primary-text-color folgt die Schrift dem Modus, und beide stehen in
+   beiden Modi gut: Ziffer 9,41 / 6,59, Buchstabe 9,95 / 5,62.
+
+   Nebenbei behoben, was vorher schon nicht stimmte: Die weisse Ziffer auf
+   der deckenden Akzentflaeche hatte 2,26 : 1 im Dunkeln und 3,12 : 1 im
+   Hellen - beides unter dem, was selbst fuer grosse Schrift reicht. Dieselbe
+   Sorte Fehler wie an der Kapsel der Steuerleiste (2,75 : 1).
+
+   Die Zahl ist ein span.badge im Shadow Root der Leiste, also mit einem
+   gewoehnlichen Selektor erreichbar. --text-accent-color ist der Name, den
+   .badge selbst liest - er wird hier umgesetzt statt color ueberschrieben. */
+.badge {
+  --text-accent-color: var(--primary-text-color);
+  background-color: transparent !important;
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--accent-color) 48%, transparent),
+    color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
+}
+
+/* Das Nutzerbild liegt eine Shadow-Grenze tiefer: ha-user-badge malt seinen
+   Kreis als div.initials im EIGENEN Shadow Root, und dorthin kommt kein
+   Selektor. Zwei Variablen kommen aber an, denn sie erben durch jede Grenze:
+
+       .initials { background-color: var(--light-primary-color);
+                   color: var(--text-light-primary-color, --primary-text-color) }
+
+   Also wird der Kreis durchsichtig gestellt und der Verlauf auf den WIRT
+   gelegt - er ist 40 x 40, der Kreis fuellt ihn zu 100 Prozent. Beide
+   Variablen stehen nur an diesem Element, ausserhalb aendert sich nichts.
+
+   Ohne Bild gilt das; wer ein Foto hinterlegt hat, hat .picture statt
+   .initials, und das Foto deckt den Verlauf ab. Das ist richtig so. */
+ha-user-badge {
+  --light-primary-color: transparent;
+  --text-light-primary-color: var(--primary-text-color);
+  border-radius: var(--ha-border-radius-circle, 50%);
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--accent-color) 48%, transparent),
+    color-mix(in srgb, var(--accent-color) 24%, transparent));
 }`,
   },
 
