@@ -1011,43 +1011,90 @@ export const RUNDUNGEN = [
 // Die Luecken ZWISCHEN den Abschnitten ruehrt die Dichte nicht an - die
 // aendern die Luft um die Spalten, nicht die Groesse einer Karte. Sie stehen
 // als eigene Felder in Stufe 3.
-function abstandsLeiter(schritt) {
+// Die Dichte ist das RASTER, nicht die Abstandsleiter.
+//
+// Am 15.10.2026 auf Ansage umgebaut: "das muss raus. die einstellung auf ha
+// lassen oder den fehler finden warum die menue icons sich verschieben."
+//
+// Der Fehler ist gefunden, und er ist keiner von HATS: HAs Seitenleiste ist
+// auf vier Pixel je Stufe GETRIMMT. Die Schiene steht fest in
+// home-assistant-main (56px + safe-area), und der Knopf darin rechnet sich
+// aus der Leiter zusammen - 48 + 2 * 4 = 56 geht genau auf. An der
+// eingeklappten Leiste gemessen, jede Stufe einzeln auf ihren Wert fuer
+// sechs Pixel gesetzt:
+//
+//     --ha-space-12   Knopf 48 -> 72 px, Ueberstand -3 -> +21   <- die Breite
+//     --ha-space-1    Symbolmitte 28 -> 30
+//     --ha-space-3    Symbolmitte 28 -> 34
+//     --ha-space-6    Symbolmitte 28 -> 34
+//     --ha-space-10   Zeilenhoehe 40 -> 60
+//     --ha-space-2    bewegt nichts
+//     --ha-space-4    bewegt nichts
+//
+// Der Ueberstand IST das abgeschnittene Ende der Pille. Eine Theme kann die
+// Schiene nicht erreichen, also kann sie die Leiter nicht global aendern,
+// ohne die Leiste zu zerlegen. Das laesst sich nur mit einer REGEL
+// einfangen, und eine Regel braucht UIX - das tut die Vorlage
+// "Seitenleiste in Glas", aber eben nur, wenn sie an ist.
+//
+// DESHALB FASST DER BAUKASTEN DIE LEITER NICHT MEHR AN. Was er setzt, ist
+// das Raster der Sections - und genau das traegt die Kartengroesse: Am
+// 14.10.2026 gemessen blieb eine Kachel bei 3, 4 und 5 Pixeln je Stufe auf
+// 120 px, waehrend die Zeilenhoehe sie von 120 auf 88 brachte. Die Leiter
+// war fuer die Kartengroesse ohnehin der falsche Hebel.
+//
+// Einzeln einstellbar bleibt --ha-space-4 ("Kartenpolster") auf der
+// Dichte-Seite: gemessen bewegt es in der Leiste nichts.
+// Die Leiter von vorher. Sie wird NIE GESCHRIEBEN - sie steht nur da, damit
+// eine Datei aus der Zeit vor dem 15.10.2026 ihren Haken behaelt. Ein Umbau
+// am Baukasten darf einer bestehenden Datei nichts nehmen, an der sich
+// nichts geaendert hat; dieselbe Regel wie beim Hintergrund und "fixed".
+function alteLeiter(schritt) {
   const f = {};
   for (let i = 1; i <= 20; i++) f[`--ha-space-${i}`] = `${schritt * i}px`;
-  f["--ha-section-grid-row-height"] = `${8 * schritt + 24}px`;
-  f["--ha-section-grid-row-gap"] = `${2 * schritt}px`;
-  f["--ha-section-grid-column-gap"] = `${2 * schritt}px`;
   return f;
+}
+
+function rasterMasse(schritt) {
+  return {
+    "--ha-section-grid-row-height": `${8 * schritt + 24}px`,
+    "--ha-section-grid-row-gap": `${2 * schritt}px`,
+    "--ha-section-grid-column-gap": `${2 * schritt}px`,
+  };
 }
 
 export const DICHTEN = [
   {
     id: "eng",
     de: "Eng", en: "Tight",
-    zweckDe: "Drei Pixel je Stufe, Zeilenhoehe 48. Mehr auf den Schirm.",
-    zweckEn: "Three pixels per step, row height 48. More on screen.",
-    felder: abstandsLeiter(3),
+    zweckDe: "Zeilenhoehe 48, Luecke 6. Mehr auf den Schirm.",
+    zweckEn: "Row height 48, gap 6. More on screen.",
+    felder: rasterMasse(3),
+    altFelder: alteLeiter(3),
   },
   {
     id: "ha",
     de: "Home Assistant", en: "Home Assistant",
-    zweckDe: "Wie ausgeliefert: vier Pixel je Stufe, Zeilenhoehe 56.",
-    zweckEn: "As shipped: four pixels per step, row height 56.",
-    felder: abstandsLeiter(4),
+    zweckDe: "Wie ausgeliefert: Zeilenhoehe 56, Luecke 8.",
+    zweckEn: "As shipped: row height 56, gap 8.",
+    felder: rasterMasse(4),
+    altFelder: alteLeiter(4),
   },
   {
     id: "weit",
     de: "Weit", en: "Roomy",
-    zweckDe: "Fuenf Pixel je Stufe, Zeilenhoehe 64. Mit dem Finger leichter zu treffen.",
-    zweckEn: "Five pixels per step, row height 64. Easier to hit with a finger.",
-    felder: abstandsLeiter(5),
+    zweckDe: "Zeilenhoehe 64, Luecke 10. Mit dem Finger leichter zu treffen.",
+    zweckEn: "Row height 64, gap 10. Easier to hit with a finger.",
+    felder: rasterMasse(5),
+    altFelder: alteLeiter(5),
   },
   {
     id: "sehr-weit",
     de: "Sehr weit", en: "Very roomy",
-    zweckDe: "Sechs Pixel je Stufe, Zeilenhoehe 72. Fuer Wandtablets.",
-    zweckEn: "Six pixels per step, row height 72. For wall tablets.",
-    felder: abstandsLeiter(6),
+    zweckDe: "Zeilenhoehe 72, Luecke 12. Fuer Wandtablets.",
+    zweckEn: "Row height 72, gap 12. For wall tablets.",
+    felder: rasterMasse(6),
+    altFelder: alteLeiter(6),
   },
 ];
 
@@ -1369,6 +1416,22 @@ export function erkenneTeil(sorte, lies) {
 
   // Erster Durchgang: alles muss stimmen.
   for (const teil of teile) if (passtAuf(teil, new Set())) return teil.id;
+
+  // Dritter Durchgang vorgezogen, weil er eindeutiger ist als der zweite:
+  // Dateien von VOR einem Umbau, erkannt an Feldern, die der Baukasten heute
+  // nicht mehr schreibt. Bisher gibt es das nur bei der Dichte - sie setzte
+  // bis zum 15.10.2026 die zwanzig Stufen der Abstandsleiter und setzt heute
+  // nur noch das Raster. Ohne diesen Durchgang verloere jede aeltere Theme
+  // ihren Haken, ohne dass an ihr etwas geaendert wurde.
+  for (const teil of teile) {
+    if (!teil.altFelder) continue;
+    let passt = true;
+    for (const [k, v] of Object.entries(teil.altFelder)) {
+      const ist = lies(k.startsWith("--") ? k : "--" + k, "beide");
+      if (glatt(ist ?? "") !== glatt(v ?? "")) { passt = false; break; }
+    }
+    if (passt) return teil.id;
+  }
 
   // Zweiter Durchgang, OHNE die Felder, die die Sorte selbst als Regler
   // anbietet.

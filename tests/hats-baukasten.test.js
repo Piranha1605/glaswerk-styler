@@ -302,18 +302,21 @@ pruefe("Der Baukasten steht ganz oben, vor UIX", () => {
   // Zuerst zusammenstecken, dann feinjustieren - die Reihenfolge der Knoepfe
   // ist die Reihenfolge der Arbeit. Seit dem 15.10.2026 steht sie nicht mehr
   // in einer Leiste, sondern in der Werkzeugzeile ueber der Stufenliste.
-  const w = panel.slice(panel.indexOf('<div class="werkzeuge">'),
-                        panel.indexOf('<div class="liste">', panel.indexOf('<div class="werkzeuge">')));
-  assert.ok(w.length > 200, "die Werkzeugzeile wurde nicht gefunden");
+  // Seit dem 15.10.2026 steht alles auf EINER Seite, in zwei Reihen: Datei
+  // und Werkzeuge. Der Baukasten ist der erste der Werkzeuge.
+  const w = panel.slice(panel.indexOf('{ titel: T("Werkzeuge"), wege: ['),
+                        panel.indexOf("    ];", panel.indexOf('{ titel: T("Werkzeuge"), wege: [')));
+  assert.ok(w.length > 200, "die Reihe der Werkzeuge wurde nicht gefunden");
   const ids = [...w.matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
   assert.strictEqual(ids[0], "baukasten", "der Baukasten steht nicht an erster Stelle");
   assert.ok(ids.indexOf("baukasten") < ids.indexOf("uix"), "der Baukasten gehoert vor UIX");
   assert.match(panel, /baukasten: \(\) => this\.oeffneBaukasten\(\)/, "der Knopf ist nicht verdrahtet");
-  // Und auf der Startseite ist er der zweite Weg - direkt nach "Neue Theme",
-  // weil er genau das tut und den Baukasten gleich darueber legt.
-  const start = panel.slice(panel.indexOf('<div class="startwege">'));
-  const sids = [...start.slice(0, start.indexOf("</div>`}")).matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
-  assert.strictEqual(sids[1], "baukasten", "der Baukasten ist nicht der zweite Startweg");
+  // Und er ist NICHT gesperrt, wenn keine Theme offen ist: Er legt dann erst
+  // eine an. UIX daneben schon - eine Vorlage braucht eine Theme.
+  const bk = /\{ id: "baukasten",[\s\S]{0,200}?\},/.exec(w);
+  assert.ok(bk && !/aus:/.test(bk[0]), "der Baukasten ist ohne Theme gesperrt");
+  const uix = /\{ id: "uix",[\s\S]{0,260}?\},/.exec(w);
+  assert.ok(uix && /aus: !ZUSTAND\.modell/.test(uix[0]), "UIX ist ohne Theme nicht gesperrt");
 });
 
 pruefe("Ein leerer Wert entfernt das Feld, statt es leer zu schreiben", () => {
@@ -509,62 +512,86 @@ pruefe("Jede Rundung setzt die ganze Leiter und die Karte dazu", () => {
       assert.ok(!(`--ha-border-radius-${s}` in t.felder), `${t.id}: fasst ${s} an`);
 });
 
-pruefe("Jede Dichte setzt alle zwanzig Stufen, linear", () => {
-  // Home Assistant haelt die Leiter linear: vier Pixel mal n. Ein Teil
-  // multipliziert also nur den Schritt - eine Stufe, die aus der Reihe
-  // faellt, waere in jedem Polster sichtbar.
+pruefe("Die Dichte setzt das Raster und faesst die Leiter NICHT an", () => {
+  // Bis zum 15.10.2026 setzte jedes Dichte-Teil die zwanzig Stufen der
+  // Abstandsleiter. Das hat HAs Seitenleiste zerlegt, und zwar unheilbar:
+  // Ihre Schiene steht fest in home-assistant-main (56px), der Knopf darin
+  // rechnet sich aus der Leiter zusammen (48 + 2 * 4 = 56), und eine Theme
+  // erreicht die Schiene nicht. An der eingeklappten Leiste gemessen, jede
+  // Stufe einzeln auf ihren Wert fuer sechs Pixel:
+  //
+  //     --ha-space-12   Knopf 48 -> 72, Ueberstand -3 -> +21
+  //     --ha-space-1    Symbolmitte 28 -> 30
+  //     --ha-space-3    Symbolmitte 28 -> 34
+  //     --ha-space-6    Symbolmitte 28 -> 34
+  //     --ha-space-10   Zeilenhoehe 40 -> 60
+  //
+  // Der Ueberstand IST das abgeschnittene Ende der Pille. Also setzt der
+  // Baukasten nur noch das Raster - und das ist ohnehin der Hebel, an dem
+  // die Kartengroesse haengt: Bei 3, 4 und 5 Pixeln je Stufe blieb eine
+  // Kachel auf 120 px, die Zeilenhoehe brachte sie von 120 auf 88.
   const RASTER = ["--ha-section-grid-row-height", "--ha-section-grid-row-gap",
                   "--ha-section-grid-column-gap"];
   for (const t of DICHTEN) {
     const k = Object.keys(t.felder || {});
-    assert.strictEqual(k.length, 20 + RASTER.length, `${t.id}: falsche Feldzahl`);
-    const schritt = parseInt(t.felder["--ha-space-1"], 10);
-    assert.ok(schritt > 0, `${t.id}: Schritt null`);
-    for (let i = 1; i <= 20; i++)
-      assert.strictEqual(t.felder[`--ha-space-${i}`], `${schritt * i}px`, `${t.id}: Stufe ${i}`);
-    // Das Raster haengt am selben Schritt. Ohne diese drei waere "Eng" ein
-    // Name ohne Wirkung: an der Instanz gemessen bleibt eine Kachel bei 3, 4
-    // und 5 px je Stufe auf 120 px, weil ihre Hoehe aus der Zeile kommt.
-    for (const n of RASTER) assert.ok(t.felder[n], `${t.id}: ${n} fehlt`);
-    assert.strictEqual(t.felder["--ha-section-grid-row-height"], `${8 * schritt + 24}px`,
-      `${t.id}: Zeilenhoehe nicht am Schritt`);
+    assert.deepStrictEqual(k.sort(), [...RASTER].sort(), `${t.id}: nicht genau das Raster`);
+    const hoehe = parseInt(t.felder["--ha-section-grid-row-height"], 10);
+    const schritt = (hoehe - 24) / 8;
+    assert.ok(Number.isInteger(schritt) && schritt > 0, `${t.id}: Zeilenhoehe nicht am Schritt`);
     assert.strictEqual(t.felder["--ha-section-grid-row-gap"], `${2 * schritt}px`,
       `${t.id}: Zeilenluecke nicht am Schritt`);
     assert.strictEqual(t.felder["--ha-section-grid-column-gap"], `${2 * schritt}px`,
       `${t.id}: Spaltenluecke nicht am Schritt`);
+    for (let i = 1; i <= 20; i++)
+      assert.ok(!(`--ha-space-${i}` in t.felder),
+        `${t.id}: fasst --ha-space-${i} an - das verschiebt die Seitenleiste`);
   }
   // Und einer davon ist Home Assistants eigener - sonst kaeme man nicht
-  // zurueck. Beim Raster heisst das: genau die Ausweichwerte, die in
-  // hui-grid-section stehen (am 14.10.2026 aus elementStyles gelesen).
+  // zurueck. Genau die Ausweichwerte aus hui-grid-section, am 14.10.2026 aus
+  // elementStyles gelesen.
   const ha = DICHTEN.find((t) => t.id === "ha");
-  assert.ok(ha && ha.felder["--ha-space-4"] === "16px", "die ausgelieferte Dichte fehlt");
+  assert.ok(ha, "die ausgelieferte Dichte fehlt");
   assert.strictEqual(ha.felder["--ha-section-grid-row-height"], "56px", "HAs Zeilenhoehe");
   assert.strictEqual(ha.felder["--ha-section-grid-row-gap"], "8px", "HAs Zeilenluecke");
   assert.strictEqual(ha.felder["--ha-section-grid-column-gap"], "8px", "HAs Spaltenluecke");
+  // Die vier bleiben unterscheidbar, auch mit nur drei Feldern - sonst
+  // bekaeme erkenneTeil zwei Treffer und die Kachel keinen Haken.
+  const hoehen = DICHTEN.map((t) => t.felder["--ha-section-grid-row-height"]);
+  assert.strictEqual(new Set(hoehen).size, DICHTEN.length, "zwei Dichten sehen gleich aus");
 });
 
-pruefe("Eine Theme ohne die Rasterfelder behaelt ihren Haken bei der Dichte", () => {
-  // Die Gegenprobe zum Umbau vom 14.10.2026. Jede Theme von vorher traegt die
-  // drei Rasterfelder nicht. Ohne sie darf die Dichte trotzdem erkannt werden
-  // - sonst haette ein Umbau am Baukasten jeder bestehenden Datei einen Haken
-  // genommen, ohne dass an ihr etwas geaendert wurde.
-  const m = leer();
-  const schreibe = schreiberFuer(m);
-  teilAnwenden("dichte", DICHTEN.find((t) => t.id === "weit"), schreibe);
-  const lies = leserFuer(m);
-  assert.strictEqual(erkenneTeil("dichte", lies), "weit", "frisch gebaut nicht erkannt");
+pruefe("Eine Theme von vor dem Umbau behaelt ihren Haken bei der Dichte", () => {
+  // Zweimal umgebaut, zweimal dieselbe Regel: Ein Umbau am Baukasten darf
+  // einer bestehenden Datei nichts nehmen, an der sich nichts geaendert hat.
+  //
+  //   14.10.  die drei Rasterfelder kamen DAZU - eine Datei ohne sie wurde
+  //           weiter ueber die Leiter erkannt
+  //   15.10.  die Leiter faellt WEG - eine Datei mit ihr wird jetzt ueber
+  //           altFelder erkannt, die nie geschrieben werden
+  const frisch = leer();
+  teilAnwenden("dichte", DICHTEN.find((t) => t.id === "weit"), schreiberFuer(frisch));
+  assert.strictEqual(erkenneTeil("dichte", leserFuer(frisch)), "weit", "frisch gebaut nicht erkannt");
+  // Frisch heisst: NUR das Raster, keine Leiter.
+  for (let i = 1; i <= 20; i++)
+    assert.ok(!(`--ha-space-${i}` in frisch.beide), `der Baukasten schreibt --ha-space-${i}`);
 
-  // Jetzt die drei Felder herausnehmen, wie in einer alten Datei.
-  for (const n of ["--ha-section-grid-row-height", "--ha-section-grid-row-gap",
-                   "--ha-section-grid-column-gap"]) {
-    delete m.beide[n]; delete m.light[n]; delete m.dark[n];
-  }
-  assert.strictEqual(erkenneTeil("dichte", leserFuer(m)), "weit", "alte Datei verliert den Haken");
+  // Eine Datei von vorher: die Leiter, kein Raster.
+  const alt = leer();
+  for (let i = 1; i <= 20; i++) alt.beide[`--ha-space-${i}`] = `${5 * i}px`;
+  assert.strictEqual(erkenneTeil("dichte", leserFuer(alt)), "weit", "alte Datei verliert den Haken");
 
-  // Gegenprobe: Es ist nicht so, dass die Dichte gar nicht mehr geprueft wird.
-  // Eine Leiter, die zu keinem Teil gehoert, bleibt ohne Haken.
-  m.beide["--ha-space-7"] = "99px";
-  assert.strictEqual(erkenneTeil("dichte", leserFuer(m)), null, "fremde Leiter erkannt");
+  // Und eine Datei mit BEIDEM - so sieht glaswerk heute aus.
+  const beides = leer();
+  teilAnwenden("dichte", DICHTEN.find((t) => t.id === "weit"), schreiberFuer(beides));
+  for (let i = 1; i <= 20; i++) beides.beide[`--ha-space-${i}`] = `${5 * i}px`;
+  assert.strictEqual(erkenneTeil("dichte", leserFuer(beides)), "weit", "Datei mit beidem nicht erkannt");
+
+  // Gegenprobe: Es ist nicht so, dass die Dichte gar nicht mehr geprueft
+  // wird. Eine Leiter, die zu keinem Teil gehoert, bleibt ohne Haken.
+  const fremd = leer();
+  for (let i = 1; i <= 20; i++) fremd.beide[`--ha-space-${i}`] = `${7 * i}px`;
+  fremd.beide["--ha-space-7"] = "99px";
+  assert.strictEqual(erkenneTeil("dichte", leserFuer(fremd)), null, "fremde Leiter erkannt");
 });
 
 pruefe("Rundung, Dichte und Kartenstil stehen nebeneinander", () => {
@@ -589,7 +616,10 @@ pruefe("Rundung, Dichte und Kartenstil stehen nebeneinander", () => {
   // Die Rundung hat die Karte wirklich mitgenommen - sonst waere der Haken
   // oben nur deshalb geblieben, weil gar nichts passiert ist.
   assert.strictEqual(lies("--ha-card-border-radius", "beide"), "2px");
-  assert.strictEqual(lies("--ha-space-4", "beide"), "20px");
+  // Und die Dichte hat das Raster gesetzt. Hier stand bis zum 15.10.2026
+  // --ha-space-4; seitdem faesst die Dichte die Leiter nicht mehr an, weil
+  // fuenf ihrer Stufen HAs Seitenleiste verschieben.
+  assert.strictEqual(lies("--ha-section-grid-row-height", "beide"), "64px");
 });
 
 pruefe("Ohne den Regler bleibt der Haken nur, wenn er EINDEUTIG ist", () => {
