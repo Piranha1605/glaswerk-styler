@@ -125,7 +125,7 @@ const TEILE = [
   ["palette",     "glaswerk-orange"],
   ["schrift",     "system"],
   ["rundung",     "rund"],
-  ["dichte",      "weit"],
+  ["dichte",      "eng"],
   ["karten",      "glas"],
   ["hintergrund", "glaswerk"],
 ];
@@ -157,21 +157,25 @@ function kopfSatz() {
 // Dichte sie gar nicht anfasste.
 //
 // Seit demselben Tag tut sie es, und "weit" hiesse 64 - also MEHR als vorher.
-// Das waere die falsche Richtung. Deshalb bleibt das Polster bei fuenf Pixeln
-// je Stufe, und nur die Zeile geht auf 48:
+// Das waere die falsche Richtung gewesen. Gemessen, hell und dunkel:
 //
 //     Zeile 64   Kachel 134     zu wuchtig
 //     Zeile 56   Kachel 120     der Stand, der zu gross war
-//     Zeile 48   Kachel 104     an der Instanz verglichen, hell und dunkel
+//     Zeile 48   Kachel 104     an der Instanz verglichen
 //
-// Das Polster ist der Innenraum einer Karte und entscheidet, ob man mit dem
-// Finger trifft; die Zeile ist ihre Hoehe. Der Vorwurf galt der Hoehe.
+// Bis zum 15.10.2026 stand hier deshalb "Dichte: weit" und darunter eine
+// einzelne Zeile, die die Zeilenhoehe auf 48 zog - das Polster weit, die
+// Hoehe eng. Beides geht nicht mehr, und zwar aus einem guten Grund: Die
+// Dichte setzt seit heute nur noch das Raster und faesst HAs Abstandsleiter
+// nicht mehr an, weil fuenf ihrer Stufen die Seitenleiste verschieben (die
+// Messung steht in CLAUDE.md). Es gibt also kein "Polster" mehr, das man
+// unabhaengig von der Zeile waehlen koennte.
 //
-// Die Theme behaelt dabei ihren Haken bei "Dichte: weit" - erkenneTeil
-// ueberspringt im zweiten Durchgang die Felder, die die Sorte als Regler
-// fuehrt, und die Zeilenhoehe ist seit dem 14.10.2026 eines davon. Genau
-// dafuer ist der zweite Durchgang da: Der Baukasten laedt zum Drehen ein.
-schreibe("--ha-section-grid-row-height", "48px", "beide");
+// Damit ist "eng" genau das, was diese Theme will: Zeile 48, Luecke 6. Das
+// Polster folgt HAs vier Pixeln - vorher waren es fuenf, der Unterschied
+// liegt im Innenraum von entities- und glance-Karten, nicht an den Kacheln.
+// Und die Theme behaelt ihren Haken, ohne dass eine Handarbeit ihn
+// wegnimmt: Was der Baukasten anbietet, steht auch im Baukasten.
 
 // --- Glas auf den Knoepfen --------------------------------------------------
 //
@@ -469,8 +473,12 @@ const lies = (name, ebene) => {
   const k = name.replace(/^--/, "");
   return ebene === "beide" ? zurueckM.flach[k] : (zurueckM[ebene]?.[k] ?? zurueckM.flach[k]);
 };
-const soll = { palette: "glaswerk", schrift: "system", rundung: "rund",
-               dichte: "weit", karten: "glas", hintergrund: "glaswerk" };
+// GERECHNET, NICHT GETIPPT. Hier stand dieselbe Liste ein zweites Mal - und
+// sie war seit dem Palettenwechsel am 15.10.2026 falsch ("glaswerk" statt
+// "glaswerk-orange"). Das Skript lief seitdem auf Exit 1, ohne dass es jemand
+// bemerkte, weil die Datei trotzdem geschrieben wird. Dieselbe Lehre wie beim
+// Kopfsatz der Theme: Was zweimal dasteht, widerspricht sich irgendwann.
+const soll = Object.fromEntries(TEILE);
 const treffer = Object.fromEntries(
   Object.keys(soll).map((s) => [s, erkenneTeil(s, lies)]));
 const erkannt = Object.entries(soll).every(([s, id]) => treffer[s] === id);

@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 23:31:32
+# Erzeugt mit HATS 0.2.0b5 am 15.10.2026, 17:56:40
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # FASSUNG 1 - eingefroren, damit man sie gegen die naechste stellen kann.
@@ -15,7 +15,7 @@
 # Funktionen.
 # 
 # Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk-orange,
-# Schrift system, Rundung rund, Dichte weit, Karten glas, Hintergrund
+# Schrift system, Rundung rund, Dichte eng, Karten glas, Hintergrund
 # glaswerk.
 # Wer die Theme im Panel oeffnet, sieht sie dort alle sechs angehakt und
 # kann eines austauschen, ohne den Rest zu verlieren.
@@ -204,29 +204,29 @@ glaswerk_v1:
   ha-line-height-expanded: "2"
   ha-line-height-normal: "1.6"
   ha-moz-osx-font-smoothing: "grayscale"
-  ha-section-grid-column-gap: "10px"
-  ha-section-grid-row-gap: "10px"
+  ha-section-grid-column-gap: "6px"
+  ha-section-grid-row-gap: "6px"
   ha-section-grid-row-height: "48px"
-  ha-space-1: "5px"
-  ha-space-10: "50px"
-  ha-space-11: "55px"
-  ha-space-12: "60px"
-  ha-space-13: "65px"
-  ha-space-14: "70px"
-  ha-space-15: "75px"
-  ha-space-16: "80px"
-  ha-space-17: "85px"
-  ha-space-18: "90px"
-  ha-space-19: "95px"
-  ha-space-2: "10px"
-  ha-space-20: "100px"
-  ha-space-3: "15px"
-  ha-space-4: "20px"
-  ha-space-5: "25px"
-  ha-space-6: "30px"
-  ha-space-7: "35px"
-  ha-space-8: "40px"
-  ha-space-9: "45px"
+  ha-space-1: "4px"
+  ha-space-10: "40px"
+  ha-space-11: "44px"
+  ha-space-12: "48px"
+  ha-space-13: "52px"
+  ha-space-14: "56px"
+  ha-space-15: "60px"
+  ha-space-16: "64px"
+  ha-space-17: "68px"
+  ha-space-18: "72px"
+  ha-space-19: "76px"
+  ha-space-2: "8px"
+  ha-space-20: "80px"
+  ha-space-3: "12px"
+  ha-space-4: "16px"
+  ha-space-5: "20px"
+  ha-space-6: "24px"
+  ha-space-7: "28px"
+  ha-space-8: "32px"
+  ha-space-9: "36px"
   ha-switch-checked-background-color: "#2196f3"
   ha-switch-checked-background-color-hover: "#1b86de"
   ha-switch-checked-border-color: "#2196f3"
@@ -328,6 +328,39 @@ glaswerk_v1:
 
     /* Auswahlfelder und Menues bleiben deckend - durchscheinend sind sie
        unlesbar, weil der Text der Karte darunter durchschlaegt. */
+    /* EINE KARTE IN EINER KARTE BEKOMMT KEINE ZWEITE FLAECHE.
+
+       Gemeldet am 15.10.2026 von der Sitzung an den Horizon-Cards, mit einer
+       Messung an der Testinstanz: Ihre Zeilen-Karte besteht aus zwei
+       ineinanderliegenden Elementen, und beide haben eine eigene ha-card. Die
+       aeussere schalten sie sich inline ab; die innere trug trotzdem Glas, und
+       darin lag je Zeile noch eine Flaeche. Ein Kasten im Kasten.
+
+       Dass das ueberhaupt passiert, liegt an UIX: Es haengt seinen uix-card-Knoten
+       in BEIDE Shadow Roots - in den der aeusseren Karte und in den der inneren.
+       Gemessen, beide tragen denselben Block. Die innere Regel weiss dabei nicht,
+       dass ueber ihr schon eine Karte steht.
+
+       :host-context() weiss es. Es prueft die Vorfahren des Wirts UEBER
+       Shadow-Grenzen hinweg - das ist das Einzige in CSS, das das kann, und
+       deshalb steht es hier. An der Zeilen-Karte gegengeprueft: Der Selektor
+       greift, die innere ha-card verliert Flaeche, Weichzeichnung und Schatten,
+       die aeussere behaelt sie.
+
+       EIGENER BLOCK, und das ist kein Stil, sondern noetig: Firefox kennt
+       :host-context() nicht, und ein Browser wirft eine Regel GANZ weg, sobald
+       ein Selektor in ihrer Liste unbekannt ist. Stuende die Zeile in der Liste
+       oben, verloeren Ueberschriften und Textkarten dort ihre Ausnahme mit. So
+       faellt nur diese eine Regel aus, und es bleibt beim heutigen Stand. */
+    :host-context(ha-card) ha-card {
+      background: none !important;
+      background-image: none !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
     ha-dropdown,
     ha-combo-box,
     ha-select,
@@ -489,6 +522,65 @@ glaswerk_v1:
       -webkit-backdrop-filter: none !important;
     }
     /* HATS:glas-bubble:ENDE */
+    /* HATS:glas-nur-weichzeichnung:START */
+    /* Nur die Karte selbst, nicht ihr Wirt: Ein backdrop-filter auf dem Wirt
+       macht ihn zum Bezugsrahmen fuer position: fixed, und Bubble-Pop-ups fallen
+       dann auf Hoehe 0 zusammen. */
+    :host(ha-card),
+    ha-card {
+      backdrop-filter: var(--ha-card-backdrop-filter, blur(18px));
+      -webkit-backdrop-filter: var(--ha-card-backdrop-filter, blur(18px));
+      /* Die Weichzeichnung folgt der Rundung DIESES Elements. Karten, deren
+         Flaeche tiefer liegt, runden ihre leere ha-card sonst mit 16 px und die
+         Flaeche darin mit 24 px - die Ecken lagen dann ausserhalb. */
+      border-radius: var(--ha-card-border-radius, 12px) !important;
+    }
+
+    /* Die Menueleiste der Horizon-Cards ist eine Pille. Ihre Flaeche liest keinen
+       Kartenschatten und stuende neben den uebrigen Karten ohne Kontur; sie
+       bekommt den der Theme, die Kapsel des aktiven Punkts die plastische
+       Innenkante. Die kommt zuerst aus --karten-gewaehlt-schatten, der
+       gemeinsamen Kette der Horizon-Cards - sonst ueberstimmte diese Regel deren
+       eigenen Verlauf fuer aktive Flaechen. */
+    ha-card:has(.menue-leiste) {
+      border-radius: 9999px !important;
+    }
+    .menue-leiste {
+      box-shadow: var(--ha-card-box-shadow, 0 8px 32px rgba(0, 0, 0, 0.28)) !important;
+    }
+    .menue-kapsel {
+      box-shadow: var(--karten-gewaehlt-schatten,
+        inset 3px 3px 7px color-mix(in srgb, var(--accent-color) 62%, #000000),
+        inset -2px -2px 6px color-mix(in srgb, var(--accent-color) 74%, #ffffff)) !important;
+    }
+
+    /* Dieselben Ausnahmen wie bei "Karten in Glas": Was keine Flaeche hat, braucht
+       auch keinen Weichzeichner - er kostet nur Rechenzeit. Bubbles Huelle
+       umschliesst die Container, die "Bubble Card in Glas" schon weichzeichnet. */
+    :host(.type-custom-bubble-card) ha-card,
+    :host(hui-heading-card) ha-card,
+    :host(mushroom-title-card) ha-card,
+    :host(mushroom-chips-card) ha-card,
+    :host(.text-only),
+    ha-card.text-only {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* HIER STEHT ABSICHTLICH KEINE REGEL FUER VERSCHACHTELTE KARTEN.
+       In "Karten in Glas" gibt es sie, und sie ist dort richtig: Zwei Flaechen
+       uebereinander sind ein Kasten im Kasten. Hier waere sie falsch.
+
+       Der Fall, fuer den diese Vorlage gemacht ist, sieht naemlich genau so aus:
+       Eine Huelle ohne Flaeche, darin die Karte, die ihre Flaeche selbst malt -
+       Horizon-Cards tun das. Die Huelle schalten solche Karten sich oft selbst
+       ab (inline, mit !important). Naehme ich der inneren dann auch noch die
+       Weichzeichnung, bliebe GAR KEINE uebrig, und die Vorlage taete bei genau
+       den Karten nichts, fuer die sie da ist.
+
+       Zweimal weichzeichnen kostet Rechenzeit und sieht etwas staerker aus. Das
+       ist der Preis, und er ist kleiner als der andere. */
+    /* HATS:glas-nur-weichzeichnung:ENDE */
     /* HATS:glas-symbolkachel:START */
     /* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
        Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
@@ -1153,37 +1245,50 @@ glaswerk_v1:
       opacity: 1 !important;
     }
 
-    /* Eingeklappt sitzen die Symbole mittig.
+    /* DIE DICHTE HAELT SICH AUS DER SEITENLEISTE HERAUS.
 
-       Gemeldet am 14.10.2026 mit einem Bild der schmalen Leiste: "erstens sind
-       die icons nicht mittig". Gemessen, und es ist unsere Leiter:
+       Auf Ansage vom 15.10.2026: "dann muss die funktion raus die die weite der
+       seitenleiste aendert. das zerschiesst uns die position der icons und die
+       aktive schalterpille wird am rand abgeschnitten."
 
-           ha-sidebar ha-list-item-button { width: var(--ha-space-12);
-                                            margin: 0 var(--ha-space-1) ...;
-                                            --ha-row-item-padding-inline: var(--ha-space-3) }
-           ha-icon[slot=start] { width: var(--ha-space-6) }
+       Gemessen, und es war nicht die Vorlage, sondern die Leiter. HAs Schiene
+       steht FEST - home-assistant-main setzt
 
-       Bei HAs vier Pixeln je Stufe geht die Rechnung genau auf: 48 + 2*4 = 56,
-       und das ist die Schiene. Die Schiene selbst steht aber FEST - in
-       home-assistant-main als calc(56px + safe-area-inset-left), also an einem
-       Element, das ein Theme-Feld am html nicht erreicht. Bei fuenf Pixeln je
-       Stufe wird der Eintrag 60 breit, das Symbol sitzt bei 5+15+15 = 35, und die
-       Schienenmitte liegt bei 27,5. Gemessen: 7,5 px zu weit rechts.
+           --ha-sidebar-width: calc(56px + safe-area-inset-left)
 
-       Gerechnet wird deshalb aus der Schiene zurueck, nicht aus der Leiter. Bei
-       vier Pixeln je Stufe kommt wieder HAs eigener Stand heraus (46 und 8 statt
-       48 und 12, Symbolmitte 28 wie vorher), bei jeder anderen Dichte sitzt es
-       mittig statt daneben.
+       und die Knoepfe darin rechnen mit --ha-space-12 (Breite) plus zweimal
+       --ha-space-1 (Rand). Bei HAs vier Pixeln je Stufe geht das genau auf:
+       48 + 8 = 56. Bei fuenf wird der Knopf 60 breit, und die Schiene bleibt 56.
+       Am 15.10.2026 an der eingeklappten Leiste gemessen:
 
-       MAX-WIDTH UND NICHT WIDTH, und das ist der Punkt, an dem drei Versuche
-       scheiterten: Auf width liegt HAs eigenes transition: width .25s. Eine
-       Breite von aussen wird davon aufgefressen - selbst inline mit !important
-       blieb der Knopf bei 60 (gemessen, dreimal). max-width wird nicht
-       mitanimiert und greift sofort. */
-    :host(:not([expanded])) ha-list-item-button {
-      max-width: calc(var(--ha-sidebar-width, 56px) - 2 * var(--ha-space-1)) !important;
-      --ha-row-item-padding-inline: calc(
-        (var(--ha-sidebar-width, 56px) - 2 * var(--ha-space-1) - var(--ha-space-6)) / 2) !important;
+           Dichte 5   Knopf 60 px   Ueberstand 10 px   Symbolmitte 40 statt 27,5
+
+       Der Ueberstand ist genau das abgeschnittene Ende der Pille.
+
+       DESHALB STEHEN DIE SIEBEN STUFEN, DIE DIE LEISTE LIEST, HIER AUF HAs
+       EIGENEN WERTEN. Welche sieben es sind, ist nicht geraten, sondern aus
+       customElements.get("ha-sidebar").elementStyles gelesen: 1, 2, 3, 4, 6, 10
+       und 12. Ueberall sonst gilt die gewaehlte Dichte weiter - sie polstert das
+       Dashboard, und genau dafuer ist sie da.
+
+       VORHER STAND HIER DAS GEGENTEIL: eine Regel, die den Knopf mit max-width
+       zurechtstutzte und das Symbol mit --ha-row-item-padding-inline wieder
+       mittig rechnete. Sie hat funktioniert (gemessen: Symbolmitte 28 bei einer
+       Schienenmitte von 27,5), war aber eine zweite Geometrie neben HAs eigener.
+       Mit den Stufen auf HAs Werten kommt HAs Rechnung von selbst wieder heraus,
+       und es gibt nur noch eine.
+
+       WAS DAS NICHT LOEST: Wer die Dichte aendert und diese Vorlage AUS hat,
+       bekommt die verschobene Leiste wieder. Ein Theme-Feld kann nicht auf ein
+       Bauteil zielen, dafuer braucht es eine Regel - und eine Regel braucht UIX. */
+    :host {
+      --ha-space-1: 4px;
+      --ha-space-2: 8px;
+      --ha-space-3: 12px;
+      --ha-space-4: 16px;
+      --ha-space-6: 24px;
+      --ha-space-10: 40px;
+      --ha-space-12: 48px;
     }
 
     /* Schrift und Symbol auf der Akzentflaeche. HA faerbt beide mit
@@ -1196,6 +1301,61 @@ glaswerk_v1:
     ha-list-item-button.selected ha-svg-icon[slot="start"],
     ha-list-item-button.selected ha-icon[slot="start"] {
       color: var(--text-accent-color, var(--text-primary-color)) !important;
+    }
+
+    /* Die Zahlen und das Nutzerbild bekommen denselben Verlauf.
+
+       Auf Ansage vom 15.10.2026, mit einem Bild der unteren Leiste: "kannst du
+       dem usericon und den zahlenhintergrund auch den farbverlauf drueber legen".
+
+       DIE SCHRIFT MUSS MIT, und das ist hier die ganze Arbeit. Beide Flaechen
+       waren hell und trugen deshalb DUNKLE Schrift; der Verlauf ist im
+       Dunkelmodus dunkel. Am 15.10.2026 an glaswerk gemessen, Weiss
+       beziehungsweise HAs Vorgabe auf der neuen Flaeche:
+
+           Ziffer, hell    weiss auf dem Verlauf     1,85 : 1   unlesbar
+           Ziffer, dunkel  weiss auf dem Verlauf     6,59 : 1
+           "e", dunkel     #212121 auf dem Verlauf   1,38 : 1   unlesbar
+
+       Mit --primary-text-color folgt die Schrift dem Modus, und beide stehen in
+       beiden Modi gut: Ziffer 9,41 / 6,59, Buchstabe 9,95 / 5,62.
+
+       Nebenbei behoben, was vorher schon nicht stimmte: Die weisse Ziffer auf
+       der deckenden Akzentflaeche hatte 2,26 : 1 im Dunkeln und 3,12 : 1 im
+       Hellen - beides unter dem, was selbst fuer grosse Schrift reicht. Dieselbe
+       Sorte Fehler wie an der Kapsel der Steuerleiste (2,75 : 1).
+
+       Die Zahl ist ein span.badge im Shadow Root der Leiste, also mit einem
+       gewoehnlichen Selektor erreichbar. --text-accent-color ist der Name, den
+       .badge selbst liest - er wird hier umgesetzt statt color ueberschrieben. */
+    .badge {
+      --text-accent-color: var(--primary-text-color);
+      background-color: transparent !important;
+      background-image: linear-gradient(150deg,
+        color-mix(in srgb, var(--accent-color) 48%, transparent),
+        color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
+    }
+
+    /* Das Nutzerbild liegt eine Shadow-Grenze tiefer: ha-user-badge malt seinen
+       Kreis als div.initials im EIGENEN Shadow Root, und dorthin kommt kein
+       Selektor. Zwei Variablen kommen aber an, denn sie erben durch jede Grenze:
+
+           .initials { background-color: var(--light-primary-color);
+                       color: var(--text-light-primary-color, --primary-text-color) }
+
+       Also wird der Kreis durchsichtig gestellt und der Verlauf auf den WIRT
+       gelegt - er ist 40 x 40, der Kreis fuellt ihn zu 100 Prozent. Beide
+       Variablen stehen nur an diesem Element, ausserhalb aendert sich nichts.
+
+       Ohne Bild gilt das; wer ein Foto hinterlegt hat, hat .picture statt
+       .initials, und das Foto deckt den Verlauf ab. Das ist richtig so. */
+    ha-user-badge {
+      --light-primary-color: transparent;
+      --text-light-primary-color: var(--primary-text-color);
+      border-radius: var(--ha-border-radius-circle, 50%);
+      background-image: linear-gradient(150deg,
+        color-mix(in srgb, var(--accent-color) 48%, transparent),
+        color-mix(in srgb, var(--accent-color) 24%, transparent));
     }
     /* HATS:glas-seitenleiste:ENDE */
   uix-theme: "glaswerk_v1"
