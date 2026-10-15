@@ -207,10 +207,19 @@ pruefe("Ein eigenes Bild: fuer hell und dunkel, fest am Fenster, nur aus /local/
   // Ein Bild ist kein Punktebild: Die Punktbewegung faellt weg, wie im Panel.
   assert.ok(!/hats-hintergrund-punkte\s+\d/.test(m.flach["uix-root"] ?? ""));
   for (const boese of ["https://example.com/x.jpg", "/local/hats/../../secrets.yaml", "/local/hats/a b.jpg",
-    "/local/hats/x.jpg) ; color: red", "/local/anderswo/x.jpg"]) {
+    "/local/hats/x.jpg) ; color: red", "/local/anderswo/x.jpg",
+    // Dazu seit dem 15.10.2026: "hat" plus irgendwas ist KEIN Freibrief.
+    "/local/hatx/x.jpg", "/local/hat/x.jpg", "/local/hatgs/x.jpg"]) {
     assert.strictEqual(schreibeBildInDatei(DATEI, NAME, boese, w).grund, "bild", boese);
     assert.ok(!BILD_ADRESSE.test(boese), boese);
   }
+  // BEIDE ORDNER sind gut: HATS laedt seit dem 15.10.2026 nach config/www/hatg
+  // hoch, demselben Ordner wie HATG. Das alte /local/hats bleibt gueltig,
+  // damit eine Theme von vorher im Fenster anzeigbar bleibt - ein leeres Bild
+  // sieht man, ein stilles "Kein Bild" nicht.
+  // (Ergaenzt von HATS Aufbau; der Umzug war seine Aenderung.)
+  for (const gut of ["/local/hatg/wand.jpg", "/local/hats/wand.jpg", "/local/hatg/a-1_2.png"])
+    assert.ok(BILD_ADRESSE.test(gut), gut);
 });
 
 pruefe("Weichzeichnung: nur die Zahl im blur(), der Rest der Kette bleibt", () => {

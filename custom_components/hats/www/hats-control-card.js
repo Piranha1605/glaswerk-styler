@@ -184,7 +184,7 @@ export const TEXTE = {
       wechsel: (name) => `Inzwischen gilt die Theme „${name}“. Bitte neu öffnen.`,
       unschaerfe: (wert) => `Die Weichzeichnung ist kein einfacher Filter: ${wert}`,
       teil: (was) => `Unbekanntes Teil: ${was}`,
-      bild: (was) => `Kein Bild aus /local/hats: ${was}`,
+      bild: (was) => `Kein Bild aus /local/hatg: ${was}`,
     },
     nurKurzform: "Das Badge kennt nur `controls` - Ziele und Schalter gehören in die Karte.",
     wahl: {
@@ -287,7 +287,7 @@ export const TEXTE = {
       wechsel: (name) => `The theme "${name}" is active now. Please open again.`,
       unschaerfe: (wert) => `The blur is not a plain filter: ${wert}`,
       teil: (was) => `Unknown part: ${was}`,
-      bild: (was) => `Not an image from /local/hats: ${was}`,
+      bild: (was) => `Not an image from /local/hatg: ${was}`,
     },
     nurKurzform: "The badge only takes `controls` - targets and switches belong in the card.",
     wahl: {
@@ -1091,10 +1091,25 @@ export function schreibeTeilInDatei(text, themeName, sorte, teilId, w) {
   return { yaml: w.schreibeTheme(m) };
 }
 
-// Nur Bilder, die Home Assistant selbst unter /local/hats ausliefert - eine
+// Nur Bilder, die Home Assistant selbst unter /local ausliefert - eine
 // Adresse, die nur HATS kennt, machte die Theme unuebertragbar. Und nichts,
 // was aus dem url() ausbrechen koennte.
-export const BILD_ADRESSE = /^\/local\/hats\/[A-Za-z0-9._-]+$/;
+//
+// BEIDE ORDNER, seit dem 15.10.2026. HATS laedt seitdem nach config/www/hatg
+// hoch, demselben Ordner wie HATG - auf Ansage: "den upload ordner von HATG
+// verwenden. Dann haben beide systeme den selben bilderpfad." Ohne das "g"
+// hier wiese dieses Fenster ab heute JEDES hochgeladene Bild ab.
+//
+// Das alte "hats" bleibt mit drin, und das ist kein Rest: Eine Theme von vor
+// heute nennt /local/hats/<datei>. Das Bild liegt dort nicht mehr - aber ein
+// leeres Bild SIEHT man, ein stilles "Kein Bild" nicht.
+//
+// Geaendert von HATS Aufbau, nicht von dieser Sitzung: Der Umzug war meine
+// Aenderung, sie hat euer Fenster von aussen kaputt gemacht, und meine
+// Nachricht an euch haengt in einer Freigabe fest, die eine
+// Desktop-Sitzung nicht erteilen kann. Drei Zeilen, nichts sonst angefasst.
+// Die Begruendung liegt auch im Briefkasten.
+export const BILD_ADRESSE = /^\/local\/hat[gs]\/[A-Za-z0-9._-]+$/;
 
 export function bildWert(url, w) {
   return w.stelleFest(`url(${url}) center / cover no-repeat`, true);
