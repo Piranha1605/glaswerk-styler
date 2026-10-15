@@ -84,6 +84,39 @@ ha-card.text-only {
 
 /* Auswahlfelder und Menues bleiben deckend - durchscheinend sind sie
    unlesbar, weil der Text der Karte darunter durchschlaegt. */
+/* EINE KARTE IN EINER KARTE BEKOMMT KEINE ZWEITE FLAECHE.
+
+   Gemeldet am 15.10.2026 von der Sitzung an den Horizon-Cards, mit einer
+   Messung an der Testinstanz: Ihre Zeilen-Karte besteht aus zwei
+   ineinanderliegenden Elementen, und beide haben eine eigene ha-card. Die
+   aeussere schalten sie sich inline ab; die innere trug trotzdem Glas, und
+   darin lag je Zeile noch eine Flaeche. Ein Kasten im Kasten.
+
+   Dass das ueberhaupt passiert, liegt an UIX: Es haengt seinen uix-card-Knoten
+   in BEIDE Shadow Roots - in den der aeusseren Karte und in den der inneren.
+   Gemessen, beide tragen denselben Block. Die innere Regel weiss dabei nicht,
+   dass ueber ihr schon eine Karte steht.
+
+   :host-context() weiss es. Es prueft die Vorfahren des Wirts UEBER
+   Shadow-Grenzen hinweg - das ist das Einzige in CSS, das das kann, und
+   deshalb steht es hier. An der Zeilen-Karte gegengeprueft: Der Selektor
+   greift, die innere ha-card verliert Flaeche, Weichzeichnung und Schatten,
+   die aeussere behaelt sie.
+
+   EIGENER BLOCK, und das ist kein Stil, sondern noetig: Firefox kennt
+   :host-context() nicht, und ein Browser wirft eine Regel GANZ weg, sobald
+   ein Selektor in ihrer Liste unbekannt ist. Stuende die Zeile in der Liste
+   oben, verloeren Ueberschriften und Textkarten dort ihre Ausnahme mit. So
+   faellt nur diese eine Regel aus, und es bleibt beim heutigen Stand. */
+:host-context(ha-card) ha-card {
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 ha-dropdown,
 ha-combo-box,
 ha-select,

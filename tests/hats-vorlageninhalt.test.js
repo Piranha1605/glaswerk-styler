@@ -448,6 +448,42 @@ pruefe("Die Schrift geht mit der Flaeche mit", () => {
     "ein Selektor auf .initials - der kommt durch die Shadow-Grenze nicht durch");
 });
 
+pruefe("Die Regel fuer verschachtelte Karten steht ALLEIN", () => {
+  // Gemeldet am 15.10.2026 von der Sitzung an den Horizon-Cards: Eine Karte
+  // in einer Karte bekam zweimal Glas. UIX haengt seinen Knoten in beide
+  // Shadow Roots, und die innere Regel weiss nicht, dass ueber ihr schon
+  // eine Karte steht. :host-context() weiss es - es prueft die Vorfahren
+  // ueber Shadow-Grenzen hinweg und ist das Einzige in CSS, das das kann.
+  //
+  // DIE PRUEFUNG IST DER EIGENE BLOCK, nicht der Selektor. Firefox kennt
+  // :host-context() nicht, und ein Browser wirft eine Regel GANZ weg, sobald
+  // ein Selektor in ihrer Liste unbekannt ist. Stuende die Zeile in der
+  // Liste der uebrigen Ausnahmen, verloeren Ueberschriften und Textkarten
+  // dort ihre Ausnahme mit - in einem Browser, den hier niemand misst.
+  const v = VORLAGEN.find((x) => x.id === "glas-karten");
+  assert.ok(v, "glas-karten gibt es nicht mehr");
+  const ohneKommentar = v.css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const treffer = [...ohneKommentar.matchAll(/:host-context\([^)]*\)/g)];
+  assert.strictEqual(treffer.length, 1, "nicht genau eine Regel fuer verschachtelte Karten");
+
+  for (const m of treffer) {
+    // Der Selektorkopf dieser Regel: vom vorigen "}" bis zum "{".
+    const auf = ohneKommentar.indexOf("{", m.index);
+    const zu = ohneKommentar.lastIndexOf("}", m.index);
+    const kopf = ohneKommentar.slice(zu + 1, auf);
+    assert.ok(!kopf.includes(","),
+      `:host-context steht in einer Selektorliste (${kopf.trim().replace(/\s+/g, " ")}) ` +
+      "- ein Browser ohne Unterstuetzung wirft dann die ganze Regel weg");
+    const block = ohneKommentar.slice(auf, ohneKommentar.indexOf("}", auf));
+    for (const eig of ["background", "box-shadow", "backdrop-filter"])
+      assert.ok(new RegExp(`${eig}:\\s*none`).test(block), `die Regel raeumt ${eig} nicht ab`);
+  }
+  // Und die uebrigen Ausnahmen stehen weiter in IHRER Liste - sonst waere
+  // der Test oben auch dann gruen, wenn es sie gar nicht mehr gaebe.
+  assert.match(ohneKommentar, /:host\(hui-heading-card\) ha-card,/, "die Ueberschriften-Ausnahme fehlt");
+  assert.match(ohneKommentar, /ha-card\.text-only \{/, "die Textkarten-Ausnahme fehlt");
+});
+
 pruefe("Der Grund ausserhalb des Dashboards liegt UNTER dem bewegten", () => {
   // Gemeldet am 14.10.2026 von der Sitzung an der Steuerkarte: Die
   // Hintergrundbewegung lief nur im Vollbild. Sie lief in Wahrheit immer -
