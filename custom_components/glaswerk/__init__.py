@@ -69,7 +69,19 @@ GLASWERK_MARKE = "# Erzeugt mit Glaswerk "
 # Endungsliste jede ausfuehrbare Datei.
 _BILD_ENDUNGEN = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg", ".avif"}
 _BILD_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
-_BILD_MAX_BYTES = 12 * 1024 * 1024
+# Drei Megabyte, nicht zwoelf.
+#
+# Hier stand 12 MB, und das war eine Grenze, die nie griff: Home Assistants
+# Websocket nimmt 4.194.304 Bytes je Nachricht und wirft bei mehr die
+# VERBINDUNG weg ("Decompressed message exceeds size limit"). Der Server sah
+# ein zu grosses Bild also nie - es kam nicht bei ihm an. Im Panel stand
+# dann "Nicht hochgeladen: [object Object]", weil ein Verbindungsabbruch
+# keine Meldung traegt. Am 16.10.2026 an einem 1920x1200-Foto gemessen.
+#
+# Base64 blaeht um ein Drittel auf: 4 MB Nachricht sind rund 3 MB Datei. Das
+# Panel prueft seit demselben Tag VOR dem Senden gegen 2,8 MB und sagt es
+# verstaendlich; diese Grenze faengt, was auf anderem Weg hereinkaeme.
+_BILD_MAX_BYTES = 3 * 1024 * 1024
 KOPF_BYTES = 512
 
 

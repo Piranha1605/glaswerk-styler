@@ -1090,6 +1090,14 @@ const LETZTE_SPEICHER = "glaswerk-letzte-theme";
 // Home Assistant laedt aus dem Ordner jede .yaml als Theme, ein
 // Zwischenstand stuende also in der Theme-Auswahl des Nutzers.
 const ZWISCHEN_SPEICHER = "glaswerk-zwischenstand";
+
+/* Die groesste Datei, die durch Home Assistants Websocket passt.
+   Dort gilt eine feste Grenze von 4.194.304 Bytes je Nachricht; wird sie
+   ueberschritten, wirft HA die VERBINDUNG weg, statt die Nachricht
+   abzulehnen. Base64 blaeht um ein Drittel auf, 4 MB Nachricht sind also
+   rund 3 MB Datei - und davon geht noch Dateiname und Rahmen ab.
+   2,8 MB laesst Luft und ist eine runde Zahl in der Meldung. */
+const UPLOAD_MAX = 2.8 * 1024 * 1024;
 function zwischenLesen() {
   try {
     const t = localStorage.getItem(ZWISCHEN_SPEICHER);
@@ -1273,6 +1281,12 @@ const TEXTE = {
     "Pruefen, Bericht, Theme schreiben": "Check, report, write the theme",
     "Start": "Start", "Farben": "Colours", "Textfarben": "Text colours", "Schrift": "Font",
     "Name der Theme": "Theme name",
+    "Zu gross": "Too large",
+    "hat": "is",
+    "Home Assistant nimmt hoechstens": "Home Assistant accepts at most",
+    "je Bild - vorher verkleinern.": "per image - resize it first.",
+    "Nicht hochgeladen": "Not uploaded",
+    "Die Verbindung brach ab. Meist liegt das an der Groesse.": "The connection dropped. Usually that means the file is too large.",
     "Verwerfen": "Discard",
     "Herunterladen": "Download",
     "Kopieren": "Copy",
@@ -1476,6 +1490,30 @@ class GlaswerkPanel extends HTMLElement {
     feld.addEventListener("change", async () => {
       const f = feld.files && feld.files[0];
       if (!f) return;
+
+      /* HIER, nicht auf dem Server: Home Assistants Websocket nimmt
+         4.194.304 Bytes je Nachricht und wirft die Verbindung weg, wenn
+         mehr kommt ("Decompressed message exceeds size limit"). Der Server
+         sieht das Bild dann nie - seine eigene Grenze von 12 MB kommt gar
+         nicht zum Zug, und im Panel stand "[object Object]", weil ein
+         Verbindungsabbruch keine message traegt.
+
+         Base64 blaeht um ein Drittel auf: 4 MB Nachricht sind rund 3 MB
+         Datei. UPLOAD_MAX liegt darunter, damit Dateiname und Rahmen noch
+         hineinpassen. Am 16.10.2026 an einem 1920x1200-Foto gemessen. */
+      if (f.size > UPLOAD_MAX) {
+        const mb = (n) => (n / 1024 / 1024).toFixed(1).replace(".", ",");
+        ZUSTAND.meldung = {
+          text: `${T("Zu gross")}: ${f.name} ${T("hat")} ${mb(f.size)} MB. `
+              + `${T("Home Assistant nimmt hoechstens")} ${mb(UPLOAD_MAX)} MB `
+              + `${T("je Bild - vorher verkleinern.")}`,
+          art: "fehler",
+        };
+        feld.value = "";   // sonst loest dieselbe Datei kein change mehr aus
+        this.zeichne();
+        return;
+      }
+
       // base64 ohne den data:-Kopf - den will der Server nicht.
       const roh = await new Promise((ok, nein) => {
         const r = new FileReader();
@@ -1490,7 +1528,12 @@ class GlaswerkPanel extends HTMLElement {
         this.setzeBild(ziel, modus, `url(${a.url})`);
         this.zeigeGalerie(ziel, modus);
       } catch (e) {
-        ZUSTAND.meldung = { text: "Nicht hochgeladen: " + (e.message || e.code || e), art: "fehler" };
+        // Ein Verbindungsabbruch traegt weder message noch code - dann
+        // stuende hier "[object Object]". Lieber sagen, was man weiss.
+        const grund = e && (e.message || e.code)
+          ? (e.message || e.code)
+          : T("Die Verbindung brach ab. Meist liegt das an der Groesse.");
+        ZUSTAND.meldung = { text: `${T("Nicht hochgeladen")}: ${grund}`, art: "fehler" };
         this.zeichne();
       }
     });
