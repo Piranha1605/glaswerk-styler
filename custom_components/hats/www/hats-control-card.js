@@ -115,6 +115,7 @@ export const TEXTE = {
       replace_header: "Kopfzeile von Home Assistant ersetzen",
       menu_shape: "Form", menu_size: "Größe", collapse: "Ziele einklappen",
       placement: "Lage der Leiste",
+      hide_sidebar_button: "Knopf für die Seitenleiste weglassen",
       collapse_width: "Einklappen unter dieser Kartenbreite", show_highlight: "Kapsel auf der aktuellen Ansicht",
     },
     hilfe: {
@@ -126,6 +127,8 @@ export const TEXTE = {
       collapse_width: "Gemessen wird die Karte, nicht das Fenster.",
       placement: "Am unteren Rand schwebt die Leiste über dem Dashboard und rollt nicht mit. "
         + "Im Bearbeitungsmodus steht sie wieder im Raster.",
+      hide_sidebar_button: "Nur mit „Kopfzeile ersetzen\u201c. Achtung: Am Telefon ist er der einzige Weg "
+        + "in die Seitenleiste und damit zu den Einstellungen.",
     },
     knopffeld: {
       name: "Name", icon: "Symbol", link: "Ziel", entity: "Entität",
@@ -223,6 +226,7 @@ export const TEXTE = {
       replace_header: "Replace Home Assistant's header",
       menu_shape: "Shape", menu_size: "Size", collapse: "Collapse targets",
       placement: "Placement",
+      hide_sidebar_button: "Leave out the sidebar button",
       collapse_width: "Collapse below this card width", show_highlight: "Pill on the current view",
     },
     hilfe: {
@@ -234,6 +238,8 @@ export const TEXTE = {
       collapse_width: "The card is measured, not the window.",
       placement: "At the bottom edge the bar floats above the dashboard and does not scroll with it. "
         + "In edit mode it sits in the grid again.",
+      hide_sidebar_button: "Only with \"Replace header\". Careful: on a phone it is the only way "
+        + "into the sidebar and therefore to the settings.",
     },
     knopffeld: {
       name: "Name", icon: "Icon", link: "Target", entity: "Entity",
@@ -552,10 +558,15 @@ export function badgeConfig(config) {
 // Bearbeitungsmodus. Beide kommen deshalb von selbst dazu, wenn die Leiste sie
 // nicht schon hat. Der Stift entfaellt mit dem Einstellungsfenster: Dort steht
 // er.
-export function mitKopfKnoepfen(knoepfe, kopf) {
+export function mitKopfKnoepfen(knoepfe, kopf, ohneSeitenleiste = false) {
   if (!kopf) return knoepfe;
   const hat = (f) => knoepfe.some((k) => k.function === f);
-  const vorn = hat("sidebar") ? [] : [{ ...einKnopf({ function: "sidebar" }, -1), auto: true }];
+  // Der Knopf der Seitenleiste kommt von selbst dazu, laesst sich aber
+  // ablehnen: Mit einer eingeklappten Leiste stehen sonst ZWEI Hamburger
+  // nebeneinander - der fuer die Seitenleiste und der fuer die Ziele.
+  // Gemeldet am 16.10.2026 mit einem Bild.
+  const vorn = hat("sidebar") || ohneSeitenleiste
+    ? [] : [{ ...einKnopf({ function: "sidebar" }, -1), auto: true }];
   const hinten = hat("edit") || hat("settings")
     ? [] : [{ ...einKnopf({ function: "edit", align_end: true }, -1), auto: true }];
   // Neu gezaehlt: Die Kapsel findet ihren Knopf ueber index, und index ist
@@ -567,7 +578,7 @@ export function mitKopfKnoepfen(knoepfe, kopf) {
 export function pruefeConfig(config) {
   const kopf = config?.replace_header === true;
   return {
-    knoepfe: mitKopfKnoepfen(leseKnoepfe(config), kopf),
+    knoepfe: mitKopfKnoepfen(leseKnoepfe(config), kopf, config?.hide_sidebar_button === true),
     kopf,
     kiosk_only: config?.kiosk_only === true,
     einklappen: einklappArt(config),
@@ -1593,6 +1604,11 @@ const STIL_KARTE = `
   :host([offen]) { position: relative; z-index: 4; }
   :host([offen]) ha-card { overflow: visible; }
   .pfeil { --mdc-icon-size: 16px; }
+  /* Ohne Namen ist der Knopf ein Quadrat von --_h. Der Pfeil nimmt darin
+     Platz weg, und das Symbol rutscht aus der Mitte - gemeldet am 16.10.2026
+     mit einem Bild. Ein Hamburger allein sagt ohnehin "dahinter ist eine
+     Liste"; der Pfeil kommt zurueck, sobald ein Name danebensteht. */
+  .menueknopf.nur-symbol .pfeil { display: none; }
   :host([offen="liste"]) .liste {
     display: flex; flex-direction: column; gap: 2px;
     position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
@@ -3380,6 +3396,7 @@ export function kartenFormular(t, mitAnzeige, fuerBadge = false) {
       // gestern mit full_width bezahlt hat.
       ...(fuerBadge ? [] : [
         { name: "replace_header", selector: { boolean: {} } },
+        { name: "hide_sidebar_button", selector: { boolean: {} } },
         { name: "placement", selector: wahl(PLATZIERUNGEN) },
         { name: "menu_shape", selector: wahl(FORMEN) },
         { name: "menu_size", selector: wahl(GROESSEN) },

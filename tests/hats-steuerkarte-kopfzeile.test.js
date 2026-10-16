@@ -75,6 +75,31 @@ pruefe("Eine Leiste mit nur Seitenleiste und Rand hat keine Ziele zum Einklappen
   assert.deepStrictEqual(mehrInDieListe({ zu: false, weg: 0 }, e, true), { zu: true, weg: 1 });
 });
 
+pruefe("Der Seitenleisten-Knopf laesst sich ablehnen, der Stift nicht aus Versehen", () => {
+  const nur = (c) => pruefeConfig(c).knoepfe.map((k) => k.function);
+  const leiste = { replace_header: true, collapse: "always",
+    buttons: [{ name: "Home", link: "/a" }, { function: "settings", align_end: true }] };
+  // Ohne das Feld kommt er dazu - das war und bleibt die Vorgabe.
+  assert.ok(nur(leiste).includes("sidebar"));
+  // Mit dem Feld nicht. Gemeldet am 16.10.2026: Mit eingeklappter Leiste
+  // standen ZWEI Hamburger nebeneinander.
+  assert.ok(!nur({ ...leiste, hide_sidebar_button: true }).includes("sidebar"));
+  // Der Rest bleibt unberuehrt: Die eigenen Knoepfe stehen weiter da, und der
+  // Stift entfaellt weiter nur, weil settings da ist.
+  assert.deepStrictEqual(nur({ ...leiste, hide_sidebar_button: true }), ["", "settings"]);
+  // Und ohne replace_header aendert das Feld gar nichts.
+  assert.deepStrictEqual(nur({ buttons: leiste.buttons, hide_sidebar_button: true }), ["", "settings"]);
+});
+
+pruefe("Ohne Namen traegt der Menueknopf keinen Pfeil", () => {
+  // Sonst nimmt der Pfeil im Quadrat von --_h Platz weg, und das Symbol
+  // rutscht aus der Mitte. Gemeldet am 16.10.2026 mit einem Bild.
+  const quelle = readFileSync(new URL("../custom_components/hats/www/hats-control-card.js", import.meta.url), "utf8");
+  assert.ok(/\.menueknopf\.nur-symbol \.pfeil \{ display: none; \}/.test(quelle));
+  // Gegenprobe: "nur-symbol" wird wirklich nur ohne Namen gesetzt.
+  assert.ok(/e\.classList\.toggle\("nur-symbol", !name\);/.test(quelle));
+});
+
 pruefe("Unten geheftet klebt die Leiste nicht zusaetzlich oben fest", () => {
   // Beide setzen position: fixed an dieselbe ha-card - der eine top, der
   // andere bottom. Zusammen zerrten sie die Leiste ueber die ganze Hoehe.
