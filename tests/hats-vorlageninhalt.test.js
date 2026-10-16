@@ -441,6 +441,21 @@ pruefe("Die Schrift geht mit der Flaeche mit", () => {
   // Beide Namen zeigen jetzt auf --primary-text-color, das dem Modus folgt.
   // Ohne diese Zeilen ist der Verlauf da und der Inhalt weg - und genau das
   // sieht man auf einem Bildschirmfoto nicht, man liest es nur nicht mehr.
+  // Und dasselbe am eingeschalteten Schalter der Steuerleiste, am 16.10.2026
+  // am Haus gesehen: Der Verlauf stand, die Schrift war schwarz geblieben.
+  // Die Karte rechnet ihre Schriftfarbe aus der BERECHNETEN Flaechenfarbe -
+  // und zwar, bevor UIX seinen Knoten eingehaengt hat. Danach rechnet niemand
+  // nach. Ein Wettlauf, den man nicht gewinnt, sondern vermeidet: Wer die
+  // Flaeche malt, bestimmt die Schrift darauf.
+  const kapsel = VORLAGEN.find((x) => x.id === "verlauf-kapsel");
+  const schalter = kapsel.css.slice(kapsel.css.indexOf("\n.knopf.gefuellt {"));
+  assert.match(schalter, /color:\s*var\(--primary-text-color\)\s*!important/,
+    "der eingeschaltete Schalter bestimmt seine Schriftfarbe nicht selbst");
+  // !important ist der Punkt: Die Karte setzt .knopf.gefuellt.hell auf Schwarz,
+  // und das ist spezifischer. Ohne das Wort bliebe es dabei.
+  assert.ok(!/color:\s*var\(--primary-text-color\)\s*;/.test(schalter),
+    "ohne !important verliert die Regel gegen .knopf.gefuellt.hell aus der Karte");
+
   const v = VORLAGEN.find((x) => x.id === "glas-seitenleiste");
   const regel = (wahl) => {
     const ab = v.css.indexOf(`\n${wahl} {`);

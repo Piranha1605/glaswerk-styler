@@ -928,17 +928,26 @@ ha-user-badge {
    Gemessen am 16.10.2026 an light.ruckwand_skadis: rgb(129, 173, 255), im
    Verlauf angekommen als color(srgb 0.505882 0.678431 1 / 0.48).
 
-   DIE SCHRIFT STELLT SICH VON SELBST UM. Die Karte liest die BERECHNETE
-   Flaechenfarbe, um zwischen schwarzer und weisser Schrift zu waehlen. Durch
-   das transparent kommt dort rgba(0, 0, 0, 0) an - also weisse Schrift, und
-   die ist auf dem durchscheinenden Verlauf richtig. Ohne das transparent
-   bliebe die volle Lampenfarbe stehen, der Verlauf waere unsichtbar, und die
-   Schrift bliebe schwarz. */
+   UND DIE SCHRIFT GEHOERT DAZU. Die Karte waehlt zwischen schwarzer und
+   weisser Schrift nach der BERECHNETEN Flaechenfarbe - gemessen, bevor UIX
+   seinen Knoten eingehaengt hat. Am 16.10.2026 am Haus gesehen: Der Verlauf
+   stand, die Schrift war schwarz geblieben, denn gerechnet wurde noch mit dem
+   vollen rgb(129, 173, 255), und danach hat niemand mehr nachgerechnet. Das
+   ist ein Wettlauf, und den gewinnt man nicht, man vermeidet ihn: Wer die
+   Flaeche malt, bestimmt die Schrift darauf.
+
+   --primary-text-color ist dabei von sich aus modusrichtig. Im Dunkeln ist es
+   hell, und der Verlauf ueber der dunklen Karte ist dunkel; im Hellen
+   umgekehrt. Dieselbe Loesung wie bei der Ziffer der Seitenleiste am
+   15.10.2026 - dort stand weisse Schrift auf einem Verlauf mit 1,85 : 1. */
 .knopf.gefuellt .flaeche {
   background-color: transparent !important;
   background-image: linear-gradient(150deg,
     color-mix(in srgb, var(--hats-flaeche) 48%, transparent),
     color-mix(in srgb, var(--hats-flaeche) 24%, transparent)) !important;
+}
+.knopf.gefuellt {
+  color: var(--primary-text-color) !important;
 }`,
   },
 
