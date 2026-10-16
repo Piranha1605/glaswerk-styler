@@ -16,6 +16,19 @@ sind Dutzende Felder):
 - **Keine Sicherung.** Die alte Fassung war nach dem Schreiben weg. Jetzt liegt
   sie vorher in `sicherungen/<name>/`, die letzten `SICHERUNGEN_BEHALTEN`.
 
+Eine dritte Luecke ist am 16.10.2026 gemessen worden, zweimal an einem Tag,
+und **noch offen**:
+
+- **Eine Theme ohne Felder.** Wer eine neue Theme anlegt und speichert, bevor
+  er etwas eingestellt hat, bekommt eine Datei mit `Name:` und nichts
+  dahinter. In YAML ist das `null`, und Home Assistant lehnt dann das Laden
+  ALLER Themes ab: "Failed to reload themes: expected a mapping". Nicht nur
+  die eigene ist tot, sondern jede - und die Meldung nennt die schuldige Datei
+  nicht, man sucht also im ganzen Ordner.
+
+  Hier ist die Stelle, an der das aufzuhalten waere: `theme_schreiben` prueft
+  auf Ueberschreiben und auf Gleichheit, aber nicht auf Inhalt.
+
 Die Hilfsdatei endet NICHT auf `.yaml`: Home Assistant liest aus dem
 Themes-Ordner nur solche, und eine liegengebliebene Hilfsdatei waere sonst beim
 naechsten Start eine zweite, kaputte Theme. Die Sicherungen liegen ausserhalb
