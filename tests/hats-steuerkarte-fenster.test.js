@@ -18,7 +18,7 @@ import * as vorlagen from "../custom_components/hats/www/vorlagen.js";
 import { execFileSync } from "node:child_process";
 import {
   leseReglerAusDatei, schreibeReglerInDatei, leseBewegungAusDatei, leseDarstellungAusDatei, schreibeDarstellungInDatei,
-  aktuellerModus, knopfZeile, badgeKurzform, FUNKTIONEN, TEXTE, BEWEGUNG_REGLER, DARSTELLUNG_REGLER,
+  aktuellerModus, knopfZeile, badgeConfig, FUNKTIONEN, TEXTE, BEWEGUNG_REGLER, DARSTELLUNG_REGLER,
   leseFensterAusDatei, schreibeTeilInDatei, schreibeBildInDatei, leseUnschaerfe, mitUnschaerfe, FENSTER_SORTEN,
   BILD_ADRESSE, FENSTER_VORLAGEN_SORTEN, vorlagenFuersFenster, schreibeVorlageInDatei,
 } from "../custom_components/hats/www/hats-control-card.js";
@@ -44,9 +44,10 @@ function ersetze(text, alt, neu) {
 const dauern = (yaml) => [...yaml.matchAll(/hats-hintergrund-(drift|punkte|farbe)\s+(\d+)s/g)]
   .map((m) => `${m[1]}:${m[2]}`).sort().join(" ");
 
-pruefe("settings ist eine Funktion der Karte, das Badge nimmt sie nicht", () => {
+pruefe("settings ist eine Funktion, und das Badge nimmt sie seit dem 16.10. auch", () => {
   assert.ok(FUNKTIONEN.includes("settings"));
-  assert.throws(() => badgeKurzform({ buttons: [{ function: "settings" }] }));
+  assert.deepStrictEqual(badgeConfig({ buttons: [{ function: "settings" }] }).buttons,
+    [{ function: "settings" }]);
   for (const spr of ["de", "en"]) assert.ok(TEXTE[spr].alles && TEXTE[spr].funktion.settings, spr);
   assert.strictEqual(knopfZeile({ function: "settings" }, 0, undefined, TEXTE.de).titel,
     "Einstellungen (alles in einem Fenster)");

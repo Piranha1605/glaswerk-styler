@@ -9,7 +9,7 @@
 
 import assert from "node:assert";
 import {
-  pruefeConfig, mitKopfKnoepfen, inDieListe, mehrInDieListe, badgeKurzform, aktiverIndex, FUNKTIONEN, TEXTE,
+  pruefeConfig, mitKopfKnoepfen, inDieListe, mehrInDieListe, badgeConfig, aktiverIndex, FUNKTIONEN, TEXTE,
 } from "../custom_components/hats/www/hats-control-card.js";
 
 let n = 0;
@@ -75,9 +75,17 @@ pruefe("Eine Leiste mit nur Seitenleiste und Rand hat keine Ziele zum Einklappen
 });
 
 pruefe("Das Badge ersetzt keine Kopfzeile", () => {
-  assert.deepStrictEqual(badgeKurzform({ controls: ["mode"], replace_header: true }), { controls: ["mode"], kiosk_only: undefined });
-  assert.strictEqual(pruefeConfig(badgeKurzform({ controls: ["mode"], replace_header: true })).kopf, false);
-  assert.throws(() => badgeKurzform({ buttons: [{ function: "sidebar" }] }));
+  // Das Badge nimmt seit dem 16.10. die ganze Knopfliste - replace_header
+  // aber nie: Ein Badge, das HAs Kopfzeile ausblendet, waere von dort aus
+  // nicht wieder einzuschalten, denn der Weg zurueck geht ueber den Stift.
+  assert.strictEqual(badgeConfig({ controls: ["mode"], replace_header: true }).replace_header, undefined);
+  assert.strictEqual(pruefeConfig(badgeConfig({ controls: ["mode"], replace_header: true })).kopf, false);
+  // Gegenprobe: Bei der Karte kommt dasselbe Feld an.
+  assert.strictEqual(pruefeConfig({ controls: ["mode"], replace_header: true }).kopf, true);
+  // Der Seitenleisten-Knopf kommt jetzt durch - er blendet nur HAs
+  // Seitenleiste ein und aus, das kann ein Badge. Die Kopfzeile bleibt davon
+  // unberuehrt.
+  assert.strictEqual(pruefeConfig(badgeConfig({ buttons: [{ function: "sidebar" }] })).kopf, false);
 });
 
 pruefe("Die drei Knoepfe aus HAs Kopfzeile sind Funktionen, mit Namen in beiden Sprachen", () => {

@@ -29,7 +29,7 @@ import * as theme from "../custom_components/hats/www/theme.js";
 import * as hintergrund from "../custom_components/hats/www/hintergrund.js";
 import {
   leseDarstellungAusDatei, schreibeDarstellungInDatei, leseFarbe, mitDeckkraft,
-  TRANSPARENZ, SCHRIFT, MUSHROOM_SCHRIFT, FUNKTIONEN, badgeKurzform, DIALOG_MIN,
+  TRANSPARENZ, SCHRIFT, MUSHROOM_SCHRIFT, FUNKTIONEN, badgeConfig, DIALOG_MIN,
 } from "../custom_components/hats/www/hats-control-card.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
@@ -301,11 +301,14 @@ pruefe("Die Spannen sind die aus dem Brief von HATS Aufbau", () => {
   assert.strictEqual((100 - SCHRIFT.min) % SCHRIFT.schritt, 0);
 });
 
-pruefe("appearance ist eine Funktion der Karte, das Badge nimmt sie nicht", () => {
+pruefe("appearance ist eine Funktion, und das Badge nimmt sie seit dem 16.10. auch", () => {
   assert.ok(FUNKTIONEN.includes("appearance"));
-  assert.throws(() => badgeKurzform({ buttons: [{ function: "appearance" }] }));
-  // Gegenprobe: die Kurzform des Badges geht weiter.
-  assert.deepStrictEqual(badgeKurzform({ buttons: [{ function: "mode" }] }).controls, ["mode"]);
+  // Frueher wies das Badge jedes `buttons` ab. Auf Ansage nimmt es jetzt
+  // dieselbe Liste wie die Karte - die Funktion kommt also durch.
+  assert.deepStrictEqual(badgeConfig({ buttons: [{ function: "appearance" }] }).buttons,
+    [{ function: "appearance" }]);
+  // Gegenprobe: die alte Kurzform geht unveraendert weiter.
+  assert.deepStrictEqual(badgeConfig({ controls: ["mode"] }).controls, ["mode"]);
 });
 
 pruefe("Jedes Feld, das die Karte schreibt, bietet das Panel an", () => {

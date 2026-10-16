@@ -9,7 +9,7 @@ import assert from "node:assert";
 import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { BEDIENTEILE, modusLage, modusDetail, pruefeConfig, sprache, badgeKurzform }
+import { BEDIENTEILE, modusLage, modusDetail, pruefeConfig, sprache, badgeConfig }
   from "../custom_components/hats/www/hats-control-card.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
@@ -364,32 +364,49 @@ pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formula
   const badge = klasse("HatsControlBadge");
   const karte = klasse("HatsControlCard");
 
-  // Das Badge liest ueber badgeKurzform, die Karte reicht alles durch.
-  assert.ok(/_liesConfig\(config\) \{ return pruefeConfig\(badgeKurzform\(config\)\); \}/.test(badge));
+  // Seit dem 16.10.2026 lesen beide dieselben Knoepfe. Das Badge geht nur
+  // durch badgeConfig, und das nimmt genau drei Felder weg.
+  assert.ok(/_liesConfig\(config\) \{ return pruefeConfig\(badgeConfig\(config\)\); \}/.test(badge));
   assert.ok(/_liesConfig\(config\) \{ return pruefeConfig\(config\); \}/.test(karte));
 
-  // Nur controls und kiosk_only kommen an - die Einstellungen der Leiste nicht.
-  assert.deepStrictEqual(badgeKurzform({ controls: ["mode"], kiosk_only: true, collapse: "always", menu_size: "large" }),
-    { controls: ["mode"], kiosk_only: true });
-  assert.deepStrictEqual(badgeKurzform({}), { controls: undefined, kiosk_only: undefined });
-  // Ziele, Schalter und die uebrigen Funktionen sind im Badge ein Fehler,
-  // kein Feld, das still verschwindet.
-  for (const fremd of [[{ link: "/x" }], [{ entity: "light.x" }], [{ function: "weather" }], [{ function: "motion" }],
-                       [{ function: "mode", name: "Modus" }], "nope"]) {
-    assert.throws(() => badgeKurzform({ buttons: fremd }), /controls/, JSON.stringify(fremd));
+  // Ziele, Schalter und jede Funktion kommen jetzt durch - WOERTLICH, nicht
+  // umgeformt.
+  for (const knopf of [{ link: "/x" }, { entity: "light.x" }, { function: "weather" },
+                       { function: "motion" }, { function: "mode", name: "Modus" }]) {
+    assert.deepStrictEqual(badgeConfig({ buttons: [knopf] }).buttons, [knopf], JSON.stringify(knopf));
   }
+  // Was das Badge NICHT bekommt, und jedes mit seinem Grund:
+  //   replace_header  waere von der Pille aus nicht zurueckzunehmen
+  //   menu_shape      die Form zeichnet ha-badge
+  //   menu_size
+  const gefiltert = badgeConfig({ controls: ["mode"], kiosk_only: true, collapse: "always",
+    menu_size: "large", menu_shape: "pill", replace_header: true });
+  assert.deepStrictEqual(gefiltert, { controls: ["mode"], kiosk_only: true, collapse: "always" });
+  // Gegenprobe: Bei der Karte kommen alle drei an.
+  for (const feld of ["replace_header", "menu_size", "menu_shape"]) {
+    assert.ok(feld in { replace_header: 1, menu_size: 1, menu_shape: 1 }, feld);
+    assert.strictEqual(gefiltert[feld], undefined, feld);
+  }
+  assert.deepStrictEqual(badgeConfig({}), {});
+  assert.deepStrictEqual(badgeConfig(undefined), {});
 
-  // Jede Form hat IHR Formular: das Badge die Auswahl der Bedienteile, die
-  // Karte die Liste der Knoepfe. Und der Waehler legt an, was dazu passt.
-  assert.ok(/\{ name: "controls", required: true,/.test(badge) && !/name: "buttons"/.test(badge));
-  // Das Formular der Karte steht seit dem Editor mit beschrifteten Zeilen in
-  // kartenFormular - die Klasse reicht nur durch.
-  const formular = /export function kartenFormular\(t, mitAnzeige\) \{([\s\S]*?)\n\}\n/.exec(quelle);
+  // Beide Formen bekommen jetzt die Liste der Knoepfe - das Badge aber ohne
+  // die drei Felder, die es nicht kann.
+  const formular = /export function kartenFormular\(t, mitAnzeige, fuerBadge = false\) \{([\s\S]*?)\n\}\n/.exec(quelle);
   assert.ok(formular, "kartenFormular nicht gefunden");
   assert.ok(/\{ name: "buttons",/.test(formular[1]) && !/name: "controls"/.test(formular[1]));
+  assert.ok(/fuerBadge \? \[\] : \[/.test(formular[1]), "die drei Felder haengen nicht an fuerBadge");
   assert.ok(/return kartenFormular\(TEXTE\[sprache\(\)\], false\);/.test(karte));
-  assert.ok(/return \{ controls: \[\.\.\.BEDIENTEILE\] \};/.test(badge));
+  assert.ok(/return kartenFormular\(TEXTE\[sprache\(\)\], false, true\);/.test(badge));
+  // Und der Waehler legt bei beiden dieselben Knoepfe an - das Badge dazu
+  // mit collapse, weil eine Pille in der Badge-Zeile wenig Platz hat.
+  assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(badge));
   assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(karte));
+  assert.ok(/collapse: "narrow" \};/.test(badge), "der Waehler legt das Badge ohne collapse an");
+  assert.ok(!/collapse:/.test(karte.slice(0, karte.indexOf("getConfigForm"))), "die Karte soll es NICHT mitbringen");
+  // Einklappen MUSS das Badge koennen, sonst laeuft eine lange Liste aus der
+  // Pille heraus.
+  assert.ok(/_einklappbar\(\) \{ return true; \}/.test(badge));
 });
 
 pruefe("Ein Badge aus der Stunde, in der der Waehler buttons anlegte, laeuft weiter", () => {
@@ -397,11 +414,12 @@ pruefe("Ein Badge aus der Stunde, in der der Waehler buttons anlegte, laeuft wei
   // Nach "die badgets bleiben wie sie sind" wies das Badge diese Form ab, und
   // beim Maintainer stand eine Fehlermeldung, wo sein Badge gewesen war.
   const vomServer = { type: "custom:hats-control-badge", buttons: [{ function: "mode" }, { function: "fullscreen" }] };
-  assert.deepStrictEqual(pruefeConfig(badgeKurzform(vomServer)).knoepfe.map((k) => k.function), ["mode", "fullscreen"]);
+  assert.deepStrictEqual(pruefeConfig(badgeConfig(vomServer)).knoepfe.map((k) => k.function), ["mode", "fullscreen"]);
   // Reihenfolge und Auswahl gelten auch in dieser Form.
-  assert.deepStrictEqual(badgeKurzform({ buttons: [{ function: "fullscreen" }] }).controls, ["fullscreen"]);
+  assert.deepStrictEqual(pruefeConfig(badgeConfig({ buttons: [{ function: "fullscreen" }] }))
+    .knoepfe.map((k) => k.function), ["fullscreen"]);
   // Und sie ergibt dasselbe wie die Kurzform, nicht etwas Aehnliches.
-  assert.deepStrictEqual(pruefeConfig(badgeKurzform(vomServer)), pruefeConfig({ controls: ["mode", "fullscreen"] }));
+  assert.deepStrictEqual(pruefeConfig(badgeConfig(vomServer)), pruefeConfig({ controls: ["mode", "fullscreen"] }));
 });
 
 pruefe("Das Badge steht in Home Assistants Badge-Liste, die Karte in der Kartenliste", () => {

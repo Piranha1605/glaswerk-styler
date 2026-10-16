@@ -186,7 +186,6 @@ export const TEXTE = {
       teil: (was) => `Unbekanntes Teil: ${was}`,
       bild: (was) => `Kein Bild aus /local/hatg: ${was}`,
     },
-    nurKurzform: "Das Badge kennt nur `controls` - Ziele und Schalter gehören in die Karte.",
     wahl: {
       theme: "Rundung der Theme", pill: "ganz rund",
       small: "klein", normal: "normal", large: "groß",
@@ -289,7 +288,6 @@ export const TEXTE = {
       teil: (was) => `Unknown part: ${was}`,
       bild: (was) => `Not an image from /local/hatg: ${was}`,
     },
-    nurKurzform: "The badge only takes `controls` - targets and switches belong in the card.",
     wahl: {
       theme: "theme radius", pill: "fully round",
       small: "small", normal: "normal", large: "large",
@@ -502,24 +500,23 @@ export function inDieListe(knoepfe, zu, weg) {
 //
 // MIT EINER AUSNAHME, und die habe ich selbst verursacht: Am Abend des
 // 13.10.2026 legte der Waehler dem Badge eine knappe Stunde lang
+// Das Badge liest seit dem 16.10.2026 DIESELBEN Knoepfe wie die Karte - auf
+// Ansage des Maintainers. Davor nahm es nur `controls` mit Modus und Vollbild.
 //
-//     buttons: [{ function: mode }, { function: fullscreen }]
+// Was hier noch weggenommen wird, ist das, was auf einer Badge-Pille nichts
+// zu suchen hat:
 //
-// an statt `controls`. Der Maintainer hat in der Zeit ein Badge angelegt, und
-// als das Badge `buttons` danach abwies, stand dort eine Fehlermeldung statt
-// des Badges. Genau diese Form - nur Bedienteile, nichts sonst - meint dasselbe
-// wie die Kurzform und wird als sie gelesen.
-export function badgeKurzform(config) {
-  let controls = config?.controls;
-  const knoepfe = config?.buttons;
-  if (knoepfe !== undefined) {
-    const nurBedienteile = Array.isArray(knoepfe) && knoepfe.every((b) =>
-      b && typeof b === "object" && BEDIENTEILE.includes(b.function)
-      && Object.keys(b).every((feld) => feld === "function"));
-    if (!nurBedienteile) throw new Error(TEXTE[sprache()].nurKurzform);
-    controls = knoepfe.map((b) => b.function);
-  }
-  return { controls, kiosk_only: config?.kiosk_only };
+//   replace_header   Ein Badge, das HAs Kopfzeile ausblendet, waere von dort
+//                    aus nicht wieder einzuschalten - der Weg zurueck geht
+//                    ueber den Stift, und den traegt die Kopfzeile.
+//   menu_shape       Die Form zeichnet ha-badge, nicht wir.
+//   menu_size
+//
+// Die alte Kurzform `controls` gilt weiter: leseKnoepfe() kennt sie, und ein
+// Badge von gestern bleibt damit genau das, was es war.
+export function badgeConfig(config) {
+  const { replace_header, menu_shape, menu_size, ...rest } = config ?? {};
+  return rest;
 }
 
 // Wer HAs Kopfzeile ersetzt, nimmt ihren Menueknopf und ihren Stift mit weg.
@@ -3176,7 +3173,7 @@ export function ohneZeilen(config) {
 // browser_fullscreen mit Vorgabe an, staende der Schalter auf aus, waehrend
 // die Karte das Gegenteil taete. Aus demselben Grund fehlen state_background,
 // light_background und show_highlight: Sie sind von sich aus an.
-export function kartenFormular(t, mitAnzeige) {
+export function kartenFormular(t, mitAnzeige, fuerBadge = false) {
   const wahl = (werte) => ({ select: { mode: "dropdown",
     options: werte.map((wert) => ({ value: wert, label: t.wahl[wert] })) } });
   const anzeige = { selector: { constant: { value: "", label: "" } } };
@@ -3206,9 +3203,14 @@ export function kartenFormular(t, mitAnzeige) {
             ...(mitAnzeige ? { [ZEILE]: anzeige, [ZEILE_UNTER]: anzeige } : {}),
           } } } },
       { name: "kiosk_only", selector: { boolean: {} } },
-      { name: "replace_header", selector: { boolean: {} } },
-      { name: "menu_shape", selector: wahl(FORMEN) },
-      { name: "menu_size", selector: wahl(GROESSEN) },
+      // Drei Felder stehen nur bei der Karte. Ein Feld, das dasteht und
+      // nichts tut, ist schlimmer als keines - dieselbe Lehre, die ha-karten
+      // gestern mit full_width bezahlt hat.
+      ...(fuerBadge ? [] : [
+        { name: "replace_header", selector: { boolean: {} } },
+        { name: "menu_shape", selector: wahl(FORMEN) },
+        { name: "menu_size", selector: wahl(GROESSEN) },
+      ]),
       { name: "collapse", selector: wahl(EINKLAPPEN) },
       { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
     ],
@@ -3270,7 +3272,9 @@ class HatsControlCardEditor extends Basis {
       });
       this.append(this._form);
     }
-    const formular = kartenFormular(t, true);
+    // getConfigElement setzt `fuerBadge`, bevor HA setConfig ruft - derselbe
+    // Editor zeichnet damit Karte und Badge.
+    const formular = kartenFormular(t, true, this.fuerBadge === true);
     this._form.hass = this._hass;
     this._form.schema = formular.schema;
     this._form.computeLabel = formular.computeLabel;
@@ -3323,27 +3327,34 @@ class HatsControlCard extends Steuerung {
 class HatsControlBadge extends Steuerung {
   // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
   // ein leeres Auswahlfeld, waehrend beide Teile gezeichnet werden.
+  // Mit `collapse: "narrow"`, und das ist der Unterschied zur Karte: Eine
+  // Pille steht in der Badge-Zeile einer Ansicht und hat dort wenig Platz.
+  // Gemessen in einer 260 px breiten Spalte - ohne das Feld lief eine Leiste
+  // aus neun Knoepfen um 371 px ueber, mit ihm blieben drei in der Reihe und
+  // sieben wanderten in die Liste. Die VORGABE bleibt trotzdem "never", wie
+  // bei der Karte; hier legt nur der Waehler etwas Besseres an.
   static getStubConfig() {
-    return { controls: [...BEDIENTEILE] };
+    return { buttons: BEDIENTEILE.map((funktion) => ({ function: funktion })), collapse: "narrow" };
   }
 
   static getConfigForm() {
-    const t = TEXTE[sprache()];
-    return {
-      schema: [
-        { name: "controls", required: true,
-          selector: { select: { multiple: true, reorder: true,
-            options: BEDIENTEILE.map((wert) => ({ value: wert, label: t.teil[wert] })) } } },
-        { name: "kiosk_only", selector: { boolean: {} } },
-      ],
-      computeLabel: (feld) => t.feld[feld.name],
-      computeHelper: (feld) => t.hilfe[feld.name],
-    };
+    return kartenFormular(TEXTE[sprache()], false, true);
   }
 
-  _liesConfig(config) { return pruefeConfig(badgeKurzform(config)); }
+  static async getConfigElement() {
+    if (!(await ladeFormular())) return undefined;
+    const editor = document.createElement(EDITOR);
+    editor.fuerBadge = true;
+    return editor;
+  }
+
+  _liesConfig(config) { return pruefeConfig(badgeConfig(config)); }
   _stil() { return STIL_BADGE; }
-  _einklappbar() { return false; }
+  // Seit das Badge die ganze Knopfliste nimmt, MUSS es einklappen koennen:
+  // Neun Knoepfe in einer Pille laufen sonst aus dem Abschnitt. Mit den
+  // bisherigen zwei Teilen aendert sich dadurch nichts - 133 px laufen
+  // nirgends ueber, und was nicht ueberlaeuft, klappt auch nicht ein.
+  _einklappbar() { return true; }
   // Zwischen der Modus-Gruppe und einem Knopf daneben steht im Badge von
   // selbst ein Strich: Dort gibt es keine Spur, die die Gruppe zusammenhaelt.
   _gruppenstrich() { return true; }
