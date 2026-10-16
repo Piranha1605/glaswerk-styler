@@ -814,3 +814,76 @@ export function vertraegtVorlage(text) {
   });
   return funde;
 }
+
+// ---------------------------------------------------------------------------
+// Die Deckkraft des Hintergrunds
+//
+// Angelegt am 16.10.2026 auf Ansage: "was mir aufgefallen ist wir haben beim
+// hintergrund keinen regler fuer die deckkraft."
+//
+// Was hier gedaempft wird, ist der Hintergrund SELBST - nicht die Karten
+// darauf. Ein Foto oder ein kraeftiger Verlauf kann eine Oberflaeche
+// erschlagen; wer ihn zurueckdreht, bekommt dieselbe Stimmung leiser.
+//
+// Warum eine Vorlage und kein Theme-Feld: --lovelace-background traegt einen
+// WERT (Farbe, Verlauf, Bild). Eine Deckkraft laesst sich dort nicht
+// unterbringen, ohne den Wert selbst umzuschreiben - und dabei ginge die Form
+// verloren, die der Nutzer gewaehlt hat. opacity gehoert auf das Element,
+// also in eine Regel, also ins Stilziel.
+//
+// Gedaempft wird mit opacity, nicht mit einem Schleier darueber: Ein weisser
+// Schleier verfaelscht die Farben (alles wird milchig), opacity laesst die
+// Flaeche darunter durchscheinen - und das ist Home Assistants eigener
+// Grund, also genau das, was ohne Hintergrund zu sehen waere.
+
+export const DECKKRAFT_ID = "hintergrund-deckkraft";
+
+// In Prozent. 100 ist die Vorgabe und bedeutet "keine Regel schreiben" -
+// eine Vorlage, die nichts tut, waere Ballast in der Theme.
+export const DECKKRAFT_VORGABE = 100;
+export const DECKKRAFT = { min: 10, max: 100, schritt: 5 };
+
+function deckkraftWert(w) {
+  const z = Number(w);
+  if (!Number.isFinite(z)) return DECKKRAFT_VORGABE;
+  const gerastert = Math.round(z / DECKKRAFT.schritt) * DECKKRAFT.schritt;
+  return Math.min(DECKKRAFT.max, Math.max(DECKKRAFT.min, gerastert));
+}
+
+export function deckkraft(einstellung = {}) {
+  const wert = deckkraftWert(einstellung.deckkraft);
+  // 100 Prozent heisst: keine Vorlage. Der Aufrufer schaltet sie dann ab.
+  if (wert >= DECKKRAFT.max) return null;
+  const css = `/* Der Hintergrund gedaempft, ${wert} Prozent.
+
+   opacity auf hui-view-background, nicht ein Schleier darueber: Ein weisser
+   Schleier zieht alle Farben ins Milchige, opacity laesst Home Assistants
+   eigenen Grund durchscheinen - also genau das, was ohne Hintergrund da
+   waere. Das Bauteil traegt sonst nichts, deshalb trifft es nur ihn. */
+hui-view-background {
+  opacity: ${(wert / 100).toFixed(2)};
+}`;
+  return {
+    id: DECKKRAFT_ID,
+    gruppe: HINTERGRUND_GRUPPE,
+    ziel: HINTERGRUND_ZIEL,
+    de: "Hintergrund daempfen",
+    en: "Dim the background",
+    zweckDe: "Nimmt dem Hintergrund an Kraft, ohne seine Farben zu verfaelschen. Fuer Fotos und kraeftige Verlaeufe, die die Karten darauf erschlagen.",
+    zweckEn: "Takes power out of the background without distorting its colours. For photos and strong gradients that overwhelm the cards on top.",
+    einstellung: { deckkraft: wert },
+    css,
+  };
+}
+
+// Zuruecklesen, was im Theme steht. null heisst: keine Vorlage, also volle
+// Deckkraft.
+export function leseDeckkraft(text) {
+  const block = leseBlock(text, DECKKRAFT_ID);
+  if (block === null) return null;
+  const m = /opacity:\s*([\d.]+)/.exec(block);
+  if (!m) return null;
+  const z = Number(m[1]);
+  if (!Number.isFinite(z)) return null;
+  return { deckkraft: deckkraftWert(z * 100) };
+}

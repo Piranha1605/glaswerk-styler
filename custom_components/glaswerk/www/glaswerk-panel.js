@@ -270,6 +270,37 @@ const STUFEN = [
         { t: "Randbreite", art: "text", v: "--ha-card-border-width", ebene: "beide",
           platzhalter: "0" },
         { t: "Randfarbe", art: "farbe", v: "--ha-card-border-color", ebene: "getrennt" } ] },
+
+      /* Die gemeinsame Kette der Glaswerk Cards, angelegt am 16.10.2026.
+         Gesucht hatte Enrico sie unter "aktive Flaechen mit dem Verlauf
+         ausstatten" - und sie war nirgends: Die Karten LESEN
+         --karten-gewaehlt seit jeher, das Panel bot kein Feld dazu an.
+
+         Der Test in ha-karten sagt, wofuer sie da ist:
+           "Setzt die Theme --karten-gewaehlt, folgen alle Karten auf einmal."
+
+         Also der eine Schalter fuer jede aktive Flaeche im Paket - die
+         gewaehlte Zeile, der eingeschaltete Knopf, die Kapsel einer Leiste.
+         Jede Karte darf ihn mit --<karte>-gewaehlt ueberschreiben; ohne
+         beides faellt sie auf die Akzentfarbe zurueck.
+
+         FLAECHE DARF EIN VERLAUF SEIN. Die Heizungskarte liest die Kette
+         deshalb NICHT mehr: Sie mischt daraus Toenungen (color-mix) und
+         faerbt einen Bogen (stroke), und beides scheitert an einem
+         linear-gradient stumm - color-mix faellt aus, stroke wird "none",
+         der Ring ist unsichtbar. Wer dort umfaerben will, nimmt
+         --heizung-aktiv.
+
+         "getrennt" fuer die Flaeche: Ein Verlauf, der im Hellen traegt, ist
+         im Dunkeln meist zu hell. Schrift und Schatten gelten fuer beide -
+         Weiss auf dem Gewaehlten bleibt Weiss. */
+      { name: "Gewaehlte Flaechen", felder: [
+        { t: "Flaeche", art: "text", v: "--karten-gewaehlt", ebene: "getrennt",
+          platzhalter: "linear-gradient(135deg, #4f9df0, #7fd8f7)" },
+        { t: "Schrift darauf", art: "farbe", v: "--karten-gewaehlt-vorn", ebene: "beide" },
+        { t: "Schatten", art: "text", v: "--karten-gewaehlt-schatten", ebene: "beide",
+          platzhalter: "inset 0 1px 0 rgba(255,255,255,.5)" } ] },
+
       { name: "Dialoge", felder: [
         { t: "Dialogflaeche", art: "farbe", v: "--ha-dialog-surface-background", ebene: "getrennt",
           sync: { bubble: "--bubble-pop-up-main-background-color" } },
@@ -980,6 +1011,7 @@ const ZWECK = {
 
   "Grundflaechen": "Die drei Ebenen, auf denen alles liegt",
   "Karten": "Flaeche und Weichzeichnung jeder Karte",
+  "Gewaehlte Flaechen": "Der eine Schalter fuer alles Aktive in den Glaswerk Cards",
   "Dialoge": "Fenster, die sich ueber das Dashboard legen",
   "Leisten": "Seitenleiste und Kopfleiste",
 
