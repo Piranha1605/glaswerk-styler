@@ -27,7 +27,7 @@ try {
   // sobald ein Symbol seine Groesse nachtraeglich bekommt.
   const werkzeug = `${TIEF}
     window.__s = {
-      karte: () => tief(document.body, (e) => e.tagName === "HATS-CONTROL-CARD")[0],
+      karte: () => tief(document.body, (e) => e.tagName === "Glaswerk-CONTROL-CARD")[0],
       knopf: (f) => { const k = window.__s.karte(); if (!k) return null;
         return tief(k.shadowRoot, (e) => e.dataset && e.dataset.funktion === f)[0]
             || tief(k.shadowRoot, (e) => e.tagName === "BUTTON" && (e.getAttribute("title") || "").toLowerCase().includes(f))[0] || null; },
@@ -101,7 +101,7 @@ try {
   await warte(1200);
   const badge = await c.lies(`(() => {
     ${TIEF}
-    const b = tief(document.body, (e) => e.tagName === "HATS-CONTROL-BADGE")[0];
+    const b = tief(document.body, (e) => e.tagName === "Glaswerk-CONTROL-BADGE")[0];
     if (!b) return null; const q = b.getBoundingClientRect();
     return { x: Math.round(q.left), y: Math.round(q.top), width: Math.round(q.width), height: Math.round(q.height) };
   })()`);

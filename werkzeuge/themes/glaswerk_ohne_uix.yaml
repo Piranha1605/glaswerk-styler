@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 20:40:43
+# Erzeugt mit Glaswerk 0.2.0b5 am 14.10.2026, 20:40:43
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # OHNE UI eXtension. Dieselbe Theme wie glaswerk, aber ohne ein einziges
@@ -6,7 +6,7 @@
 # kein zweites Produkt.
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
-# gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit HATS' eigenen
+# gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit Glaswerk' eigenen
 # Funktionen.
 # 
 # Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk, Schrift

@@ -13,11 +13,11 @@
 //
 // DAS ERGEBNIS, am 14.10.2026 an macOS 26.5.2 gemessen: Alle dreizehn
 // Systemfarben sind Wert fuer Wert dieselben wie unter AppKit. Es gibt also
-// keine zweite Apple-Palette, und in HATS gibt es nur das eine Teil "macOS".
+// keine zweite Apple-Palette, und in Glaswerk gibt es nur das eine Teil "macOS".
 //
 // Was sich unterscheidet, ist die Graustufenleiter: systemGray2 bis
 // systemGray6 gibt es nur unter iOS (hell #aeaeb2 bis #f2f2f7, dunkel #636366
-// bis #1c1c1e). Fuer HATS ohne Belang - die Rolle "neutral" ist systemGray,
+// bis #1c1c1e). Fuer Glaswerk ohne Belang - die Rolle "neutral" ist systemGray,
 // und der ist auf beiden #8e8e93.
 //
 // VORSICHT bei den Hintergruenden: Unter Catalyst liefert systemBackground die

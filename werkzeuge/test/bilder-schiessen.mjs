@@ -34,7 +34,7 @@ const URL_ = /^HA_URL=(.*)$/m.exec(conf)[1].trim();
 const TOKEN = /^HA_TOKEN=(.*)$/m.exec(conf)[1].trim().replace(/^["']|["']$/g, "");
 
 mkdirSync(ZIEL, { recursive: true });
-const profil = mkdtempSync(path.join(tmpdir(), "hats-bilder-"));
+const profil = mkdtempSync(path.join(tmpdir(), "glaswerk-bilder-"));
 const chrome = spawn(CHROME, [
   "--headless=new", `--remote-debugging-port=${PORT}`, `--user-data-dir=${profil}`,
   "--no-first-run", "--no-default-browser-check", "--hide-scrollbars",
@@ -128,18 +128,18 @@ try {
 
   // --- die Werkzeuge in der Seite -----------------------------------------
   await lies(`
-    window.__hats = {};
+    window.__glaswerk = {};
     (async () => {
-      const B = await import("/hats_static/baukasten.js");
-      window.__hats.B = B;
-      window.__hats.stil = (id) => {
+      const B = await import("/glaswerk_static/baukasten.js");
+      window.__glaswerk.B = B;
+      window.__glaswerk.stil = (id) => {
         const t = B.KARTENSTILE.find((k) => k.id === id);
         const dunkel = document.querySelector("home-assistant").hass.themes.darkMode;
         const f = { ...t.flach, ...(dunkel ? t.dark : t.light) };
         for (const [k, v] of Object.entries(f)) document.documentElement.style.setProperty(k, v);
         return Object.keys(f).length;
       };
-      window.__hats.modus = (dunkel) => {
+      window.__glaswerk.modus = (dunkel) => {
         document.querySelector("home-assistant").dispatchEvent(
           new CustomEvent("settheme", { detail: { dark: dunkel }, bubbles: true, composed: true }));
       };
@@ -152,29 +152,29 @@ try {
   console.log("\\nRahmen 2 - die fuenf Handschriften");
   for (const [id, name] of [["glas", "glas"], ["liquid", "liquid-glass"], ["macos", "macos"],
                             ["gepraegt", "gepraegt"], ["kontur", "kontur"]]) {
-    const n = await lies(`window.__hats.stil(${JSON.stringify(id)})`);
+    const n = await lies(`window.__glaswerk.stil(${JSON.stringify(id)})`);
     await warte(1400);   // ha-card animiert jede Aenderung: transition all .3s
     await schuss(`02-handschrift-${name}`);
     if (!n) throw new Error("Kartenstil " + id + " hat nichts gesetzt");
   }
 
   console.log("\\nRahmen 3 - hell und dunkel");
-  await lies(`window.__hats.stil("glas")`);
+  await lies(`window.__glaswerk.stil("glas")`);
   await warte(1200);
   await schuss("03-dunkel");
-  await lies(`window.__hats.modus(false)`);
+  await lies(`window.__glaswerk.modus(false)`);
   await warte(2600);
-  await lies(`window.__hats.stil("glas")`);   // die Hellwerte desselben Teils
+  await lies(`window.__glaswerk.stil("glas")`);   // die Hellwerte desselben Teils
   await warte(1400);
   await schuss("03-hell");
-  await lies(`window.__hats.modus(true)`);
+  await lies(`window.__glaswerk.modus(true)`);
   await warte(2600);
 
   console.log("\\nRahmen 4 - der Knopf");
   await geh("/dashboard-vorschau/start", 8000);
   const lage = await lies(`(() => {
     const tief = (w, p, a = []) => { for (const e of w.querySelectorAll("*")) { if (p(e)) a.push(e); if (e.shadowRoot) tief(e.shadowRoot, p, a); } return a; };
-    const k = tief(document.body, (e) => e.tagName === "HATS-CONTROL-CARD")[0];
+    const k = tief(document.body, (e) => e.tagName === "Glaswerk-CONTROL-CARD")[0];
     if (!k) return null;
     const z = tief(k.shadowRoot, (e) => e.tagName === "HA-ICON" && /cog|settings/.test(e.getAttribute("icon") || ""))[0];
     const q = (z || k).getBoundingClientRect();
@@ -190,17 +190,17 @@ try {
   }
 
   console.log("\\nRahmen 5 - das Material des Feuerwerks");
-  await geh("/hats", 9000);
+  await geh("/glaswerk", 9000);
   await lies(`(() => {
     const tief = (w, p, a = []) => { for (const e of w.querySelectorAll("*")) { if (p(e)) a.push(e); if (e.shadowRoot) tief(e.shadowRoot, p, a); } return a; };
-    const sr = tief(document.body, (e) => e.tagName === "HATS-PANEL")[0].shadowRoot;
+    const sr = tief(document.body, (e) => e.tagName === "Glaswerk-PANEL")[0].shadowRoot;
     sr.querySelector('[data-start="baukasten"]')?.click();
     return true;
   })()`);
   await warte(3000);
   await lies(`(() => {
     const tief = (w, p, a = []) => { for (const e of w.querySelectorAll("*")) { if (p(e)) a.push(e); if (e.shadowRoot) tief(e.shadowRoot, p, a); } return a; };
-    const sr = tief(document.body, (e) => e.tagName === "HATS-PANEL")[0].shadowRoot;
+    const sr = tief(document.body, (e) => e.tagName === "Glaswerk-PANEL")[0].shadowRoot;
     const b = sr.querySelector(".bk-buehne");
     if (b) b.closest(".bk-sorte").scrollIntoView({ block: "start" });
     return !!b;

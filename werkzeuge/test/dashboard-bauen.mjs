@@ -1,4 +1,4 @@
-// Baut das Test-Dashboard auf der Testmaschine: ein Dashboard "HATS-Test" mit
+// Baut das Test-Dashboard auf der Testmaschine: ein Dashboard "Glaswerk-Test" mit
 // zwei Ansichten.
 //
 //   Vergleich   dieselbe Entitaet in allen drei Familien nebeneinander,
@@ -16,7 +16,7 @@
 import { verbinde } from "/Users/enricofischer/Projekte/haos-test/ws.mjs";
 
 const URL_PFAD = "hats-test";
-const TITEL = "HATS-Test";
+const TITEL = "Glaswerk-Test";
 
 // Drei Familien, eine Entitaet, untereinander - so sieht man Unterschiede
 // sofort, statt sie aus zwei Screenshots zusammenzusuchen.
@@ -53,7 +53,7 @@ const vergleich = {
   title: "Vergleich", path: "vergleich", icon: "mdi:compare-horizontal",
   type: "sections", max_columns: 3,
   // Die kleine Form der Steuerkarte, in der Badge-Reihe ueber den Abschnitten.
-  badges: [{ type: "custom:hats-control-badge" }],
+  badges: [{ type: "custom:glaswerk-bar-badge" }],
   sections: [
     reihe("Licht AN (mit Farbe)", "light.ceiling_lights", "slider"),
     reihe("Licht AUS",            "light.bed_light",      "slider"),
@@ -73,11 +73,11 @@ const alles = {
     // ha-control-select nachgebaut, und nur nebeneinander sieht man, ob das
     // stimmt.
     { type: "grid", cards: [
-      { type: "heading", heading: "HATS", heading_style: "title", icon: "mdi:palette-outline" },
-      { type: "custom:hats-control-card", controls: ["mode", "fullscreen"],
+      { type: "heading", heading: "Glaswerk", heading_style: "title", icon: "mdi:palette-outline" },
+      { type: "custom:glaswerk-bar", controls: ["mode", "fullscreen"],
         grid_options: { columns: 12, rows: 1 } },
-      { type: "custom:hats-control-card", controls: ["mode"] },
-      { type: "custom:hats-control-card", controls: ["fullscreen", "mode"], kiosk_only: true },
+      { type: "custom:glaswerk-bar", controls: ["mode"] },
+      { type: "custom:glaswerk-bar", controls: ["fullscreen", "mode"], kiosk_only: true },
       { type: "tile", entity: "climate.heatpump", features_position: "bottom",
         features: [{ type: "climate-hvac-modes" }] },
       { type: "tile", entity: "fan.living_room_fan", features_position: "bottom",

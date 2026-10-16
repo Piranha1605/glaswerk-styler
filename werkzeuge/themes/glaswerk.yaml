@@ -1,8 +1,8 @@
-# Erzeugt mit HATS 0.2.0b5 am 16.10.2026, 11:25:41
+# Erzeugt mit Glaswerk 0.2.0b5 am 16.10.2026, 11:25:41
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,
-# gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit HATS' eigenen
+# gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit Glaswerk' eigenen
 # Funktionen.
 # 
 # Alle sechs Teile kommen aus dem Baukasten: Farben glaswerk-orange,
@@ -255,7 +255,7 @@ glaswerk:
   text-light-primary-color: "#212121"
   text-primary-color: "#fff"
   uix-badge: |-
-    /* HATS:glas-badges:START */
+    /* Glaswerk:glas-badges:START */
     :host,
     .badge {
       backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));
@@ -263,9 +263,9 @@ glaswerk:
       border-radius: 999px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
     }
-    /* HATS:glas-badges:ENDE */
+    /* Glaswerk:glas-badges:ENDE */
   uix-card: |-
-    /* HATS:glas-karten:START */
+    /* Glaswerk:glas-karten:START */
     /* Nur die Karte selbst, nicht ihr Wirt.
 
        Auf einem Dashboard haengt eine Karte unter hui-card, und UIX patcht dann
@@ -372,8 +372,8 @@ glaswerk:
     ha-select.bubble-dropdown-select {
       background-color: transparent !important;
     }
-    /* HATS:glas-karten:ENDE */
-    /* HATS:glas-bubble:START */
+    /* Glaswerk:glas-karten:ENDE */
+    /* Glaswerk:glas-bubble:START */
     /* Bubble braucht BEIDES: Variablen und eine Regel.
 
        Flaeche, Rand und Schatten liest Bubble aus eigenen --bubble-*-Werten.
@@ -512,8 +512,8 @@ glaswerk:
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
-    /* HATS:glas-bubble:ENDE */
-    /* HATS:glas-nur-weichzeichnung:START */
+    /* Glaswerk:glas-bubble:ENDE */
+    /* Glaswerk:glas-nur-weichzeichnung:START */
     /* Nur die Karte selbst, nicht ihr Wirt: Ein backdrop-filter auf dem Wirt
        macht ihn zum Bezugsrahmen fuer position: fixed, und Bubble-Pop-ups fallen
        dann auf Hoehe 0 zusammen. */
@@ -571,8 +571,8 @@ glaswerk:
 
        Zweimal weichzeichnen kostet Rechenzeit und sieht etwas staerker aus. Das
        ist der Preis, und er ist kleiner als der andere. */
-    /* HATS:glas-nur-weichzeichnung:ENDE */
-    /* HATS:glas-symbolkachel:START */
+    /* Glaswerk:glas-nur-weichzeichnung:ENDE */
+    /* Glaswerk:glas-symbolkachel:START */
     /* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
        Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
        Kacheln, Mushroom, Zeilen und Glance auf einmal.
@@ -616,8 +616,8 @@ glaswerk:
       --mush-icon-border-radius: 28%;
       --bubble-icon-border-radius: 28%;
     }
-    /* HATS:glas-symbolkachel:ENDE */
-    /* HATS:sync-bedienelemente:START */
+    /* Glaswerk:glas-symbolkachel:ENDE */
+    /* Glaswerk:sync-bedienelemente:START */
     /* Alle drei Familien zeigen dieselbe Lampe verschieden. Am 13.10.2026 an
        einer Lampe in rgb(129,173,255) gemessen, bevor etwas angefasst wurde:
 
@@ -711,8 +711,8 @@ glaswerk:
       min-width: 36px !important;
       min-height: 36px !important;
     }
-    /* HATS:sync-bedienelemente:ENDE */
-    /* HATS:verlauf-kapsel:START */
+    /* Glaswerk:sync-bedienelemente:ENDE */
+    /* Glaswerk:verlauf-kapsel:START */
     /* Auf Ansage vom 14.10.2026, mit drei Bildern: "bekommen wir den
        farbverlauf aus dem kalender auf die aktiven buttons".
 
@@ -726,14 +726,14 @@ glaswerk:
        anfasst.
 
        WARUM HIER UND NICHT IN DER KARTE: Der Verlauf ist ein Aussehen dieser
-       Theme, keine Eigenschaft der Leiste. Wer HATS' Steuerleiste auf einer
+       Theme, keine Eigenschaft der Leiste. Wer Glaswerk' Steuerleiste auf einer
        fremden Theme benutzt, bekommt die flache Flaeche - und genau die ist
        dort richtig, weil es die Kalender-Kachel mit ihrem Verlauf daneben nicht
        gibt. UIX haengt seinen Knoten in den Shadow Root jedes Karten-Elements
        ein - gemessen, in der Steuerleiste liegen drei davon -, also ist beides
        von uix-card aus erreichbar.
 
-       (Hier stand bis zum 16.10.2026 ein anderer Grund: hats-control-card.js
+       (Hier stand bis zum 16.10.2026 ein anderer Grund: glaswerk-bar.js
        gehoere einer fremden Sitzung. Das stimmt seit der Verschmelzung nicht
        mehr. Der Grund darueber hat immer schon gegolten.)
 
@@ -758,7 +758,7 @@ glaswerk:
 
        DIE QUELLE IST EINE ANDERE, DIE FORMEL DIESELBE. Die Kapsel sagt "hier bist
        du" und nimmt den Akzent; ein Schalter sagt "das hier ist an" und nimmt die
-       Farbe der Lampe. Die Karte legt sie als --hats-flaeche ab, weil CSS die
+       Farbe der Lampe. Die Karte legt sie als --glaswerk-flaeche ab, weil CSS die
        eigene Flaechenfarbe nicht in ein linear-gradient() hineinlesen kann.
        Gemessen am 16.10.2026 an light.ruckwand_skadis: rgb(129, 173, 255), im
        Verlauf angekommen als color(srgb 0.505882 0.678431 1 / 0.48).
@@ -778,14 +778,14 @@ glaswerk:
     .knopf.gefuellt .flaeche {
       background-color: transparent !important;
       background-image: linear-gradient(150deg,
-        color-mix(in srgb, var(--hats-flaeche) 48%, transparent),
-        color-mix(in srgb, var(--hats-flaeche) 24%, transparent)) !important;
+        color-mix(in srgb, var(--glaswerk-flaeche) 48%, transparent),
+        color-mix(in srgb, var(--glaswerk-flaeche) 24%, transparent)) !important;
     }
     .knopf.gefuellt {
       color: var(--primary-text-color) !important;
     }
-    /* HATS:verlauf-kapsel:ENDE */
-    /* HATS:glas-knoepfe:START */
+    /* Glaswerk:verlauf-kapsel:ENDE */
+    /* Glaswerk:glas-knoepfe:START */
     /* Nur Variablen, keine Regeln auf das Innere des Knopfes.
 
        Der naheliegende Weg waere ha-icon-button::part(base) - das innere .button
@@ -799,9 +799,9 @@ glaswerk:
            -> gemessen: rgba(0, 0, 0, 0), also unveraendert
 
        In HATG geht das, weil dort eine Pfadangabe das CSS direkt in den Shadow
-       Root von ha-icon-button legt (uix-card-yaml mit "ha-icon-button $"). HATS
+       Root von ha-icon-button legt (uix-card-yaml mit "ha-icon-button $"). Glaswerk
        kennt diese Pfadform bewusst nicht - ein -yaml-Feld verdeckt sein einfaches
-       Feld vollstaendig, und das ist eine Falle, die HATS sich nicht einhandelt.
+       Feld vollstaendig, und das ist eine Falle, die Glaswerk sich nicht einhandelt.
 
        Was ohne Pfad geht, sind Variablen: Die erben durch jede Shadow-Grenze.
        Die Fuellung des Knopfes gehoert nicht dazu - ha-button steht auf
@@ -817,8 +817,8 @@ glaswerk:
       --ha-ripple-hover-opacity: 0.1;
       --ha-ripple-pressed-opacity: 0.16;
     }
-    /* HATS:glas-knoepfe:ENDE */
-    /* HATS:regler-gluehen:START */
+    /* Glaswerk:glas-knoepfe:ENDE */
+    /* Glaswerk:regler-gluehen:START */
     /* Die EINZIGE der gesammelten Spielereien, die bei allen drei Familien
        laeuft. Am 14.10.2026 an der Vergleichsseite gemessen, an 17 Karten.
 
@@ -862,8 +862,8 @@ glaswerk:
     .bubble-range-fill {
       filter: drop-shadow(0 0 7px color-mix(in srgb, var(--bubble-slider-fill-color, transparent) 58%, transparent));
     }
-    /* HATS:regler-gluehen:ENDE */
-    /* HATS:regler-schlank:START */
+    /* Glaswerk:regler-gluehen:ENDE */
+    /* Glaswerk:regler-schlank:START */
     /* Zwei von drei Familien, und das ist keine Nachlaessigkeit: Bei Bubble ist
        der Regler die Karte. Am 14.10.2026 gemessen - .bubble-range-slider,
        .bubble-container und die Karte selbst sind alle 56 px hoch. "Schlanker"
@@ -896,9 +896,9 @@ glaswerk:
       --control-height: 28px !important;
       --control-border-radius: 14px !important;
     }
-    /* HATS:regler-schlank:ENDE */
+    /* Glaswerk:regler-schlank:ENDE */
   uix-dialog: |-
-    /* HATS:glas-dialoge:START */
+    /* Glaswerk:glas-dialoge:START */
     /* KEIN backdrop-filter auf der Dialogflaeche.
 
        Ein Filter macht den Dialog zum Bezugsrahmen fuer position: fixed. Die
@@ -927,9 +927,9 @@ glaswerk:
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
-    /* HATS:glas-dialoge:ENDE */
+    /* Glaswerk:glas-dialoge:ENDE */
   uix-drawer: |-
-    /* HATS:grund-ueberall:START */
+    /* Glaswerk:grund-ueberall:START */
     /* Am 14.10.2026 gemessen, auf Ansage ("die ansichten unter einstellungen").
        Auf /config/dashboard stand der Befund so:
 
@@ -1011,9 +1011,9 @@ glaswerk:
          gegengesehen. */
       --primary-background-color: transparent;
     }
-    /* HATS:grund-ueberall:ENDE */
+    /* Glaswerk:grund-ueberall:ENDE */
   uix-grid-section: |-
-    /* HATS:abschnitte-trennen:START */
+    /* Glaswerk:abschnitte-trennen:START */
     /* Auf einem Sections-Dashboard stehen die Abschnitte in einem Raster und
        brechen um. Wo zwei Reihen aufeinandertreffen, laeuft der letzte Inhalt der
        oberen direkt in die Ueberschrift der unteren - gemeldet am 13.10.2026:
@@ -1050,9 +1050,9 @@ glaswerk:
       /* Die Linie liegt ueber der Flaeche und darf keine Klicks abfangen. */
       pointer-events: none;
     }
-    /* HATS:abschnitte-trennen:ENDE */
+    /* Glaswerk:abschnitte-trennen:ENDE */
   uix-more-info: |-
-    /* HATS:glas-more-info:START */
+    /* Glaswerk:glas-more-info:START */
     /* :host ist hier ha-more-info-dialog. Auch hier keine Weichzeichnung auf
        der Flaeche - aus demselben Grund wie bei den uebrigen Dialogen. */
     wa-dialog::part(dialog),
@@ -1063,9 +1063,9 @@ glaswerk:
         0 24px 70px rgba(0, 0, 0, .3),
         inset 0 1px 0 rgba(255, 255, 255, .45) !important;
     }
-    /* HATS:glas-more-info:ENDE */
+    /* Glaswerk:glas-more-info:ENDE */
   uix-root: |-
-    /* HATS:glas-kopfleiste:START */
+    /* Glaswerk:glas-kopfleiste:START */
     /* Das Ziel ist uix-root, NICHT uix-top-app-bar-fixed.
 
        Am 13.10.2026 an einem Dashboard gemessen: ha-top-app-bar-fixed existiert
@@ -1092,8 +1092,8 @@ glaswerk:
     .header {
       border-bottom: 1px solid rgba(255, 255, 255, .16);
     }
-    /* HATS:glas-kopfleiste:ENDE */
-    /* HATS:glas-leistenknoepfe:START */
+    /* Glaswerk:glas-kopfleiste:ENDE */
+    /* Glaswerk:glas-leistenknoepfe:START */
     /* Am 14.10.2026 gemessen, auf Ansage ("unsere knoepfe brauchen noch einen
        hauch von glas"): HAs Symbolknoepfe tragen im Ruhezustand GAR KEINE
        Flaeche - rgba(0,0,0,0), keine Weichzeichnung, nur das Symbol.
@@ -1150,8 +1150,8 @@ glaswerk:
          vier Knoepfe sieht statt einer Leiste. */
       margin-inline: 3px;
     }
-    /* HATS:glas-leistenknoepfe:ENDE */
-    /* HATS:hintergrund-bewegung:START */
+    /* Glaswerk:glas-leistenknoepfe:ENDE */
+    /* Glaswerk:hintergrund-bewegung:START */
     /* Treiben und Farbwechsel bewegen die Flaeche selbst, mit transform und
        filter - beides rechnet die Grafikkarte, ohne dass neu gemalt wird. */
     hui-view-background {
@@ -1163,16 +1163,16 @@ glaswerk:
       height: 128% !important;
       max-width: none !important;
       max-height: none !important;
-      animation: hats-hintergrund-drift 20s ease-in-out infinite alternate, hats-hintergrund-farbe 150s ease-in-out infinite alternate;
+      animation: glaswerk-hintergrund-drift 20s ease-in-out infinite alternate, glaswerk-hintergrund-farbe 150s ease-in-out infinite alternate;
       will-change: transform, filter;
     }
-    @keyframes hats-hintergrund-drift {
+    @keyframes glaswerk-hintergrund-drift {
       0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
       33% { transform: translate3d(-7%, 4%, 0) scale(1.08) rotate(-3deg); }
       66% { transform: translate3d(6%, -4%, 0) scale(1.04) rotate(2deg); }
       100% { transform: translate3d(-3%, 7%, 0) scale(1.12) rotate(-1.5deg); }
     }
-    @keyframes hats-hintergrund-farbe {
+    @keyframes glaswerk-hintergrund-farbe {
       from { filter: hue-rotate(-2.5deg); }
       to { filter: hue-rotate(2.5deg); }
     }
@@ -1180,9 +1180,9 @@ glaswerk:
     @media (prefers-reduced-motion: reduce) {
       hui-view-background { animation: none !important; }
     }
-    /* HATS:hintergrund-bewegung:ENDE */
+    /* Glaswerk:hintergrund-bewegung:ENDE */
   uix-sidebar: |-
-    /* HATS:glas-seitenleiste:START */
+    /* Glaswerk:glas-seitenleiste:START */
     /* Die Flaechenfarbe kommt aus dem Theme-Feld sidebar-background-color.
        Die Weichzeichnung bietet HA als Feld nicht an, sie steht deshalb als
        fester Wert hier - mit var() davor, falls es das Feld doch einmal gibt. */
@@ -1388,10 +1388,10 @@ glaswerk:
         color-mix(in srgb, var(--accent-color) 48%, transparent),
         color-mix(in srgb, var(--accent-color) 24%, transparent));
     }
-    /* HATS:glas-seitenleiste:ENDE */
+    /* Glaswerk:glas-seitenleiste:ENDE */
   uix-theme: "glaswerk"
   uix-toast: |-
-    /* HATS:glas-toast:START */
+    /* Glaswerk:glas-toast:START */
     :host,
     .toast,
     ha-toast {
@@ -1402,9 +1402,9 @@ glaswerk:
         0 12px 36px rgba(0, 0, 0, .22),
         inset 0 1px 0 rgba(255, 255, 255, .4);
     }
-    /* HATS:glas-toast:ENDE */
+    /* Glaswerk:glas-toast:ENDE */
   uix-top-app-bar-fixed: |-
-    /* HATS:glas-kopfleiste-einstellungen:START */
+    /* Glaswerk:glas-kopfleiste-einstellungen:START */
     /* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
        .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
        nimmt aelteren Instanzen die Vorlage weg. In 629 Elementen einer
@@ -1417,7 +1417,7 @@ glaswerk:
       box-shadow: none !important;
       border-bottom: 1px solid rgba(255, 255, 255, .16);
     }
-    /* HATS:glas-kopfleiste-einstellungen:ENDE */
+    /* Glaswerk:glas-kopfleiste-einstellungen:ENDE */
   wa-border-style: "solid"
   wa-color-brand-fill-loud: "color-mix(in srgb, var(--ha-color-fill-primary-loud-resting) 62%, transparent)"
   wa-color-brand-fill-normal: "color-mix(in srgb, var(--ha-color-fill-primary-normal-resting) 55%, transparent)"

@@ -12,7 +12,7 @@
 # passieren:
 #   1. Der Terminal verfremdet ein getipptes ";" zu "\;". Der erzeugte Befehl
 #      enthaelt deshalb KEINE Semikolons und KEINE Schleife, nur "&&".
-#   2. "Ist es angekommen?" war bisher Raten. /hats_static ist von hier aus
+#   2. "Ist es angekommen?" war bisher Raten. /glaswerk_static ist von hier aus
 #      ohne Anmeldung lesbar - das Skript vergleicht byteweise.
 #   3. Die Adresse des Panels traegt eine Pruefsumme, die nur beim SETUP der
 #      Integration gerechnet wird. Ohne Reload sieht der Browser die alte
@@ -23,7 +23,7 @@ cd "$(dirname "$0")/.."
 
 HOST=192.168.178.31
 PORT=8778
-ZIEL=/config/custom_components/hats
+ZIEL=/config/custom_components/glaswerk
 
 ip=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
 [ -n "$ip" ] || { echo "Keine LAN-Adresse gefunden."; exit 1; }
@@ -57,7 +57,7 @@ echo "Diesen Befehl in den Terminal des Studio Code Server:"
 echo
 befehl="cd $ZIEL"
 for f in "${dateien[@]}"; do
-  befehl="$befehl && curl -sSf -o $f http://$ip:$PORT/custom_components/hats/$f"
+  befehl="$befehl && curl -sSf -o $f http://$ip:$PORT/custom_components/glaswerk/$f"
 done
 befehl="$befehl && cd /config"
 printf "  %s\n\n" "$befehl"
@@ -67,12 +67,12 @@ for i in $(seq 1 90); do
   alle_gleich=1
   for f in "${dateien[@]}"; do
     case "$f" in
-      www/*) url="http://$HOST/hats_static/${f#www/}" ;;
+      www/*) url="http://$HOST/glaswerk_static/${f#www/}" ;;
       *)     continue ;;   # Python und JSON liefert HA nicht aus - nicht pruefbar
     esac
     tmp=$(mktemp)
     curl -s --max-time 5 -o "$tmp" "$url"
-    cmp -s "$tmp" "custom_components/hats/$f" || alle_gleich=0
+    cmp -s "$tmp" "custom_components/glaswerk/$f" || alle_gleich=0
     rm -f "$tmp"
   done
   if [ "$alle_gleich" = "1" ]; then

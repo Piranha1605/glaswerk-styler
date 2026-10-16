@@ -19,7 +19,7 @@
 //   Kopfkommentar  Zeitstempel und Version stehen darin
 
 import { readFileSync } from "node:fs";
-import { leseTheme } from "../../custom_components/hats/www/theme.js";
+import { leseTheme } from "../../custom_components/glaswerk/www/theme.js";
 
 const [sollPfad, istPfad] = process.argv.slice(2);
 if (!sollPfad || !istPfad) {

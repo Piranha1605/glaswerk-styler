@@ -24,7 +24,7 @@ export async function starteChrome({ port = 9333, breite = 1920, hoehe = 1080, d
   const TOKEN = /^HA_TOKEN=(.*)$/m.exec(conf)[1].trim().replace(/^["']|["']$/g, "");
   if (ziel) mkdirSync(ziel, { recursive: true });
 
-  const profil = mkdtempSync(path.join(tmpdir(), "hats-chrome-"));
+  const profil = mkdtempSync(path.join(tmpdir(), "glaswerk-chrome-"));
   const chrome = spawn(CHROME, [
     "--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profil}`,
     "--no-first-run", "--no-default-browser-check", "--hide-scrollbars",

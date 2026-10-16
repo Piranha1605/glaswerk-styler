@@ -1,0 +1,20 @@
+{
+  "domain": "glaswerk",
+  "name": "Glaswerk",
+  "codeowners": [
+    "@Piranha1605"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http",
+    "lovelace",
+    "panel_custom",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/Piranha1605/ha-theme-studio",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Piranha1605/ha-theme-studio/issues",
+  "requirements": [],
+  "version": "0.2.0b5"
+}

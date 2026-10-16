@@ -1,5 +1,5 @@
 #!/bin/sh
-# Spielt HATS auf die Testinstanz ein - die virtuelle Maschine auf dem Mac.
+# Spielt Glaswerk auf die Testinstanz ein - die virtuelle Maschine auf dem Mac.
 #
 #   werkzeuge/einspielen-test.sh              alles aus sync-dateien.txt
 #   werkzeuge/einspielen-test.sh www/theme.js nur diese
@@ -16,7 +16,7 @@ set -e
 cd "$(dirname "$0")/.." || exit 1
 PROJEKT="$(pwd)"
 VM=/Users/enricofischer/Projekte/haos-test
-ZIEL=/mnt/data/supervisor/homeassistant/custom_components/hats
+ZIEL=/mnt/data/supervisor/homeassistant/custom_components/glaswerk
 PORT=8778
 MAC_AUS_VM=10.0.2.2
 
@@ -60,7 +60,7 @@ schicke() {
   "$VM/konsole.py" "cd $ZIEL && $1" 90 >/dev/null
 }
 for f in $dateien; do
-  teil="curl -sSf --create-dirs -o $f http://$MAC_AUS_VM:$PORT/custom_components/hats/$f"
+  teil="curl -sSf --create-dirs -o $f http://$MAC_AUS_VM:$PORT/custom_components/glaswerk/$f"
   if [ -z "$block" ]; then block="$teil"; else block="$block && $teil"; fi
   anzahl=$((anzahl + 1))
   if [ $anzahl -ge 3 ]; then schicke "$block"; block=""; anzahl=0; printf "."; fi
@@ -74,8 +74,8 @@ fehler=0
 for f in $dateien; do
   case "$f" in www/*) ;; *) continue ;; esac   # nur was HA ausliefert
   tmp=$(mktemp)
-  curl -s --max-time 6 -o "$tmp" "http://localhost:8123/hats_static/${f#www/}" || true
-  if cmp -s "$tmp" "custom_components/hats/$f"; then
+  curl -s --max-time 6 -o "$tmp" "http://localhost:8123/glaswerk_static/${f#www/}" || true
+  if cmp -s "$tmp" "custom_components/glaswerk/$f"; then
     printf "  \033[32mangekommen\033[0m  %s\n" "$f"
   else
     printf "  \033[31mABWEICHEND\033[0m  %s\n" "$f"; fehler=1

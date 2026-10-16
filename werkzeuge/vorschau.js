@@ -13,7 +13,7 @@
 //
 // Geladen wird es so (die Datei liegt unter /local, nicht in der Integration):
 //
-//   const V = await import('/local/hats-vorschau.js?' + Date.now());
+//   const V = await import('/local/glaswerk-vorschau.js?' + Date.now());
 //   await V.an('liquid_glass', 'light');     // ansehen
 //   V.aus();                                 // alles zurueck
 //
@@ -54,15 +54,15 @@ function hass() {
   return document.querySelector("home-assistant").hass;
 }
 
-// Das Theme-YAML holen - ueber HATS' eigenen Websocket-Befehl.
+// Das Theme-YAML holen - ueber Glaswerk' eigenen Websocket-Befehl.
 export async function lies(name) {
   const r = await hass().connection.sendMessagePromise({
-    type: "hats/load_theme_file", filename: name.endsWith(".yaml") ? name : name + ".yaml",
+    type: "glaswerk/load_theme_file", filename: name.endsWith(".yaml") ? name : name + ".yaml",
   });
   return r.content ?? r.text ?? "";
 }
 
-// Gelesen wird mit HATS' EIGENEM Parser, nicht mit einem Nachbau.
+// Gelesen wird mit Glaswerk' EIGENEM Parser, nicht mit einem Nachbau.
 //
 // Der erste Anlauf hatte hier einen eigenen, schmalen YAML-Leser. Er hat die
 // Modi nicht getrennt: 153 Felder landeten unter light, 0 unter dark, und die
@@ -74,7 +74,7 @@ export async function lies(name) {
 let _leseTheme = null, _wirksam = null;
 async function parser() {
   if (!_leseTheme) {
-    const t = await import("/hats_static/theme.js?" + Date.now());
+    const t = await import("/glaswerk_static/theme.js?" + Date.now());
     _leseTheme = t.leseTheme;
     _wirksam = t.wirksam;
   }
@@ -176,7 +176,7 @@ export async function an(themeName, modus = "light") {
     const wirte = finde();
     for (const w of wirte) {
       const s = document.createElement("style");
-      s.setAttribute("data-hats-vorschau", ziel);
+      s.setAttribute("data-glaswerk-vorschau", ziel);
       s.textContent = css;
       w.shadowRoot.appendChild(s);
       KNOTEN.push(s);
@@ -194,7 +194,7 @@ export function aus() {
   for (const s of KNOTEN) s.remove();
   KNOTEN.length = 0;
   // Auch die, die ein frueherer Lauf hinterlassen hat.
-  for (const s of tiefeSuche(() => true).flatMap((e) => [...e.shadowRoot.querySelectorAll("style[data-hats-vorschau]")])) s.remove();
+  for (const s of tiefeSuche(() => true).flatMap((e) => [...e.shadowRoot.querySelectorAll("style[data-glaswerk-vorschau]")])) s.remove();
   return "zurueckgestellt";
 }
 
@@ -240,7 +240,7 @@ export async function nur(themeName, ids = [], modus = "light") {
     // Aus dem Feld nur die Bloecke der genannten Vorlagen herausschneiden.
     let css = "";
     for (const id of ids) {
-      const re = new RegExp(`/\\* HATS:${id}:START \\*/[\\s\\S]*?/\\* HATS:${id}:ENDE \\*/`);
+      const re = new RegExp(`/\\* Glaswerk:${id}:START \\*/[\\s\\S]*?/\\* Glaswerk:${id}:ENDE \\*/`);
       const t = ganz.match(re);
       if (t) css += t[0] + "\n";
     }
@@ -248,7 +248,7 @@ export async function nur(themeName, ids = [], modus = "light") {
     const wirte = finde();
     for (const w of wirte) {
       const st = document.createElement("style");
-      st.setAttribute("data-hats-vorschau", ziel);
+      st.setAttribute("data-glaswerk-vorschau", ziel);
       st.textContent = css;
       w.shadowRoot.appendChild(st);
       KNOTEN.push(st);
@@ -263,7 +263,7 @@ export async function nurVorlage(themeName, vorlagenId, modus = "light") {
   const { wirksam } = await parser();
   const m = await lese(await lies(themeName));
   const werte = wirksam(m, modus);
-  const re = new RegExp(`/\\* HATS:${vorlagenId}:START \\*/[\\s\\S]*?/\\* HATS:${vorlagenId}:ENDE \\*/`);
+  const re = new RegExp(`/\\* Glaswerk:${vorlagenId}:START \\*/[\\s\\S]*?/\\* Glaswerk:${vorlagenId}:ENDE \\*/`);
   for (const [k, v] of Object.entries(werte)) {
     if (!k.startsWith("uix-") || typeof v !== "string") continue;
     const t = v.match(re);
@@ -283,7 +283,7 @@ export async function nurVorlage(themeName, vorlagenId, modus = "light") {
 //   await kontraste('liquid_glass')
 //
 // WCAG AA verlangt 4.5 : 1 fuer Text, 3 : 1 fuer grafische Objekte und grossen
-// Text. In HATS ist schon einmal die Seitenleiste auf 1.19 : 1 gefallen, ohne
+// Text. In Glaswerk ist schon einmal die Seitenleiste auf 1.19 : 1 gefallen, ohne
 // dass es jemandem auffiel - die Symbole waren schlicht weg.
 function _lum(r, g, b) {
   const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };

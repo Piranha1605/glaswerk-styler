@@ -11,7 +11,7 @@ set -e
 QUELLE=/Users/enricofischer/Projekte/ha-karten/dist
 VM=/Users/enricofischer/Projekte/haos-test
 ZIEL=/mnt/data/supervisor/homeassistant/www/community/horizon-cards
-# Eigener Port: 8778 steht auf dem HATS-Projekt, 8779 auf demselben. Dieser
+# Eigener Port: 8778 steht auf dem Glaswerk-Projekt, 8779 auf demselben. Dieser
 # hier steht eine Ebene hoeher, damit beide Projekte erreichbar sind.
 PORT=8780
 MAC_AUS_VM=10.0.2.2

@@ -43,18 +43,18 @@
 // in Chromium, es steht in keiner Spezifikation, und Safari und Firefox fallen
 // stumm auf eine gewoehnliche Weichzeichnung zurueck.
 //
-// Und HATS kann es ohnehin nicht liefern: Eine Theme schreibt CSS, keine
+// Und Glaswerk kann es ohnehin nicht liefern: Eine Theme schreibt CSS, keine
 // Elemente. Ein SVG-Filter laesst sich mit keinem Stilziel in die Seite
 // bringen. Was bleibt - Weichzeichnung, Saettigung, Saum, Lichtstreifen,
 // Schatten - ist genau das, woraus die KARTEN in der Vorlage bestehen; der
 // Klotz daneben ist ein Render, keine Flaeche.
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/hats/www/theme.js";
-import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
+import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/glaswerk/www/theme.js";
+import { VORLAGEN } from "../custom_components/glaswerk/www/vorlagen.js";
 import { PALETTEN, KARTENSTILE, SCHRIFTEN, BAUKASTEN, teilAnwenden }
-  from "../custom_components/hats/www/baukasten.js";
-import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergrund.js";
+  from "../custom_components/glaswerk/www/baukasten.js";
+import { HINTERGRUENDE, bewegung } from "../custom_components/glaswerk/www/hintergrund.js";
 
 const OHNE_UIX = process.argv.includes("--ohne-uix");
 
@@ -277,8 +277,8 @@ for (const quelle of [SCHRIFT, SCHATTEN]) {
 
 // --- NOCH NICHT IM PANEL ---------------------------------------------------
 //
-// Ab hier stehen Felder, die HATS noch nicht anbietet. Normalerweise ist das
-// verboten (CLAUDE.md: "Nie ein Feld schreiben, das HATS nicht anbietet") -
+// Ab hier stehen Felder, die Glaswerk noch nicht anbietet. Normalerweise ist das
+// verboten (CLAUDE.md: "Nie ein Feld schreiben, das Glaswerk nicht anbietet") -
 // wer sie von Hand einträgt, bekommt sie im Panel nie wieder heraus.
 //
 // Auf Ansage vom 14.10.2026 gilt hier eine Ausnahme fuer die Bauphase: "du
@@ -398,10 +398,10 @@ if (!OHNE_UIX) vorlageAn(m, bewegung({ drift: 3, punkte: 0, farbe: 2, weite: 0 }
 
 // --- Der Kopf --------------------------------------------------------------
 const version = /VERSION = "([^"]+)"/.exec(
-  readFileSync("custom_components/hats/const.py", "utf8"))?.[1] ?? "0.0.0";
+  readFileSync("custom_components/glaswerk/const.py", "utf8"))?.[1] ?? "0.0.0";
 const heute = new Date().toLocaleString("de-DE");
 m.kopf = [
-  `Erzeugt mit HATS ${version} am ${heute}`,
+  `Erzeugt mit Glaswerk ${version} am ${heute}`,
   "Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)",
   "",
   ...(OHNE_UIX ? [
@@ -411,7 +411,7 @@ m.kopf = [
     "",
   ] : []),
   "Glaswerk. Glaskarten auf einem diagonalen Raster, hell und dunkel,",
-  "gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit HATS' eigenen",
+  "gebaut mit werkzeuge/glaswerk-bauen.mjs - also mit Glaswerk' eigenen",
   "Funktionen.",
   "",
   // GERECHNET, NICHT GETIPPT. Hier stand der Satz bis zum 14.10.2026
@@ -467,7 +467,7 @@ const idempotent = text === nochmal;
 // Die schaerfere der beiden. Trifft eine Sorte nicht, stimmt irgendwo ein
 // Wert nicht mit dem Teil ueberein - und der Nutzer saehe im Panel eine Theme
 // ohne Haken, ohne zu wissen, woran es liegt.
-const { erkenneTeil } = await import("../custom_components/hats/www/baukasten.js");
+const { erkenneTeil } = await import("../custom_components/glaswerk/www/baukasten.js");
 const zurueckM = zurueck.modell ?? zurueck;
 const lies = (name, ebene) => {
   const k = name.replace(/^--/, "");

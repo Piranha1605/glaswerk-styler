@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HATS – Prüfung</title>
+<title>Glaswerk – Prüfung</title>
 <!--
   Läuft IM BROWSER DES NUTZERS und schreibt hin, was dort ankommt.
 
@@ -36,7 +36,7 @@
 </style>
 </head>
 <body>
-<h1>HATS – Prüfung</h1>
+<h1>Glaswerk – Prüfung</h1>
 <p class="unter">Diese Seite lädt das Panel-Modul genauso, wie Home Assistant es lädt,
 und zeigt, was dabei wirklich passiert. Mach einen Screenshot davon.</p>
 <div id="aus"></div>
@@ -57,7 +57,7 @@ sag("warn", "Browser", navigator.userAgent);
 // 1) Kommt die Datei überhaupt an, und welche?
 let text = "";
 try {
-  const r = await fetch("/hats_static/hats-panel.js", { cache: "no-store" });
+  const r = await fetch("/glaswerk_static/glaswerk-panel.js", { cache: "no-store" });
   text = await r.text();
   sag(r.ok ? "gut" : "rot", `Datei geladen – Status ${r.status}`, `${text.length} Zeichen`);
 } catch (e) {
@@ -65,7 +65,7 @@ try {
 }
 
 // 2) Ist es der aktuelle Stand?
-const v = /const HATS_VERSION = "([^"]+)"/.exec(text);
+const v = /const GLASWERK_VERSION = "([^"]+)"/.exec(text);
 sag(v ? "gut" : "rot", "Version im ausgelieferten Code", v ? v[1] : "nicht gefunden");
 sag(text.includes("zeichneWirklich") ? "gut" : "rot",
     "Enthält die Fehleranzeige (zeichneWirklich)",
@@ -74,15 +74,15 @@ sag(text.includes("zeichneWirklich") ? "gut" : "rot",
 // 3) Lässt sich das Modul in DIESEM Browser ausführen?
 //    Hier zeigt sich ein Syntaxfehler oder eine fehlende Sprachfunktion.
 try {
-  await import("/hats_static/hats-panel.js?pruefung=" + Date.now());
+  await import("/glaswerk_static/glaswerk-panel.js?pruefung=" + Date.now());
   sag("gut", "Modul ausgeführt, ohne Fehler");
 } catch (e) {
   sag("rot", "Modul wirft beim Ausführen", String(e && e.stack || e));
 }
 
-sag(customElements.get("hats-panel") ? "gut" : "rot",
-    "Element hats-panel registriert",
-    customElements.get("hats-panel") ? "ja" : "nein");
+sag(customElements.get("glaswerk-panel") ? "gut" : "rot",
+    "Element glaswerk-panel registriert",
+    customElements.get("glaswerk-panel") ? "ja" : "nein");
 
 // 4) Der häufigste unsichtbare Übeltäter: ein Service Worker liefert eine
 //    alte Fassung aus, und kein Neuladen hilft dagegen.

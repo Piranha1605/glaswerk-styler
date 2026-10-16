@@ -1,8 +1,8 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 12:43:14
+# Erzeugt mit Glaswerk 0.2.0b5 am 14.10.2026, 12:43:14
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # macOS. Apples Systemfarben auf Home Assistant, gebaut mit
-# werkzeuge/macos-bauen.mjs - also mit HATS' eigenen Funktionen.
+# werkzeuge/macos-bauen.mjs - also mit Glaswerk' eigenen Funktionen.
 # 
 # Die Farben sind an macOS 26.5.2 ausgelesen, nicht abgeschrieben:
 # werkzeuge/test/macos-farben.swift. Mehrere bekannte Werte stimmen nicht
@@ -240,7 +240,7 @@ macos:
   text-light-primary-color: "#212121"
   text-primary-color: "#fff"
   uix-badge: |-
-    /* HATS:glas-badges:START */
+    /* Glaswerk:glas-badges:START */
     :host,
     .badge {
       backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));
@@ -248,9 +248,9 @@ macos:
       border-radius: 999px;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5);
     }
-    /* HATS:glas-badges:ENDE */
+    /* Glaswerk:glas-badges:ENDE */
   uix-card: |-
-    /* HATS:glas-karten:START */
+    /* Glaswerk:glas-karten:START */
     /* Nur die Karte selbst, nicht ihr Wirt.
 
        Auf einem Dashboard haengt eine Karte unter hui-card, und UIX patcht dann
@@ -315,8 +315,8 @@ macos:
     ha-select.bubble-dropdown-select {
       background-color: transparent !important;
     }
-    /* HATS:glas-karten:ENDE */
-    /* HATS:glas-bubble:START */
+    /* Glaswerk:glas-karten:ENDE */
+    /* Glaswerk:glas-bubble:START */
     /* Bubble braucht BEIDES: Variablen und eine Regel.
 
        Flaeche, Rand und Schatten liest Bubble aus eigenen --bubble-*-Werten.
@@ -455,8 +455,8 @@ macos:
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
-    /* HATS:glas-bubble:ENDE */
-    /* HATS:glas-symbolkachel:START */
+    /* Glaswerk:glas-bubble:ENDE */
+    /* Glaswerk:glas-symbolkachel:START */
     /* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
        Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
        Kacheln, Mushroom, Zeilen und Glance auf einmal.
@@ -500,8 +500,8 @@ macos:
       --mush-icon-border-radius: 28%;
       --bubble-icon-border-radius: 28%;
     }
-    /* HATS:glas-symbolkachel:ENDE */
-    /* HATS:sync-bedienelemente:START */
+    /* Glaswerk:glas-symbolkachel:ENDE */
+    /* Glaswerk:sync-bedienelemente:START */
     /* Alle drei Familien zeigen dieselbe Lampe verschieden. Am 13.10.2026 an
        einer Lampe in rgb(129,173,255) gemessen, bevor etwas angefasst wurde:
 
@@ -595,8 +595,8 @@ macos:
       min-width: 36px !important;
       min-height: 36px !important;
     }
-    /* HATS:sync-bedienelemente:ENDE */
-    /* HATS:glas-knoepfe:START */
+    /* Glaswerk:sync-bedienelemente:ENDE */
+    /* Glaswerk:glas-knoepfe:START */
     /* Nur Variablen, keine Regeln auf das Innere des Knopfes.
 
        Der naheliegende Weg waere ha-icon-button::part(base) - das innere .button
@@ -610,9 +610,9 @@ macos:
            -> gemessen: rgba(0, 0, 0, 0), also unveraendert
 
        In HATG geht das, weil dort eine Pfadangabe das CSS direkt in den Shadow
-       Root von ha-icon-button legt (uix-card-yaml mit "ha-icon-button $"). HATS
+       Root von ha-icon-button legt (uix-card-yaml mit "ha-icon-button $"). Glaswerk
        kennt diese Pfadform bewusst nicht - ein -yaml-Feld verdeckt sein einfaches
-       Feld vollstaendig, und das ist eine Falle, die HATS sich nicht einhandelt.
+       Feld vollstaendig, und das ist eine Falle, die Glaswerk sich nicht einhandelt.
 
        Was ohne Pfad geht, sind Variablen: Die erben durch jede Shadow-Grenze.
        Die Fuellung des Knopfes gehoert nicht dazu - ha-button steht auf
@@ -628,9 +628,9 @@ macos:
       --ha-ripple-hover-opacity: 0.1;
       --ha-ripple-pressed-opacity: 0.16;
     }
-    /* HATS:glas-knoepfe:ENDE */
+    /* Glaswerk:glas-knoepfe:ENDE */
   uix-dialog: |-
-    /* HATS:glas-dialoge:START */
+    /* Glaswerk:glas-dialoge:START */
     /* KEIN backdrop-filter auf der Dialogflaeche.
 
        Ein Filter macht den Dialog zum Bezugsrahmen fuer position: fixed. Die
@@ -659,9 +659,9 @@ macos:
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
     }
-    /* HATS:glas-dialoge:ENDE */
+    /* Glaswerk:glas-dialoge:ENDE */
   uix-grid-section: |-
-    /* HATS:abschnitte-trennen:START */
+    /* Glaswerk:abschnitte-trennen:START */
     /* Auf einem Sections-Dashboard stehen die Abschnitte in einem Raster und
        brechen um. Wo zwei Reihen aufeinandertreffen, laeuft der letzte Inhalt der
        oberen direkt in die Ueberschrift der unteren - gemeldet am 13.10.2026:
@@ -698,9 +698,9 @@ macos:
       /* Die Linie liegt ueber der Flaeche und darf keine Klicks abfangen. */
       pointer-events: none;
     }
-    /* HATS:abschnitte-trennen:ENDE */
+    /* Glaswerk:abschnitte-trennen:ENDE */
   uix-more-info: |-
-    /* HATS:glas-more-info:START */
+    /* Glaswerk:glas-more-info:START */
     /* :host ist hier ha-more-info-dialog. Auch hier keine Weichzeichnung auf
        der Flaeche - aus demselben Grund wie bei den uebrigen Dialogen. */
     wa-dialog::part(dialog),
@@ -711,9 +711,9 @@ macos:
         0 24px 70px rgba(0, 0, 0, .3),
         inset 0 1px 0 rgba(255, 255, 255, .45) !important;
     }
-    /* HATS:glas-more-info:ENDE */
+    /* Glaswerk:glas-more-info:ENDE */
   uix-root: |-
-    /* HATS:glas-kopfleiste:START */
+    /* Glaswerk:glas-kopfleiste:START */
     /* Das Ziel ist uix-root, NICHT uix-top-app-bar-fixed.
 
        Am 13.10.2026 an einem Dashboard gemessen: ha-top-app-bar-fixed existiert
@@ -740,24 +740,24 @@ macos:
     .header {
       border-bottom: 1px solid rgba(255, 255, 255, .16);
     }
-    /* HATS:glas-kopfleiste:ENDE */
-    /* HATS:hintergrund-bewegung:START */
+    /* Glaswerk:glas-kopfleiste:ENDE */
+    /* Glaswerk:hintergrund-bewegung:START */
     /* Treiben und Farbwechsel bewegen die Flaeche selbst, mit transform und
        filter - beides rechnet die Grafikkarte, ohne dass neu gemalt wird. */
     hui-view-background {
-      animation: hats-hintergrund-farbe 100s ease-in-out infinite alternate, hats-hintergrund-punkte 60s steps(150) infinite;
+      animation: glaswerk-hintergrund-farbe 100s ease-in-out infinite alternate, glaswerk-hintergrund-punkte 60s steps(150) infinite;
       will-change: filter;
     }
     /* Die Farbpunkte, jeder auf seinem eigenen Weg - in Schritten, zehnmal je
        Sekunde. Jeder Schritt malt die Flaeche neu, und jede Glaskarte darueber
        zeichnet mit; bei wenigen Pixeln in der Sekunde sieht man den Takt nicht. */
-    @keyframes hats-hintergrund-punkte {
+    @keyframes glaswerk-hintergrund-punkte {
       0%, 100% { background-position: left -413px top -310px, right -344px top -199px, right -123px bottom -270px, left -139px bottom -101px, 0 0; }
       25% { background-position: left -377px top -288px, right -314px top -169px, right -99px bottom -234px, left -105px bottom -81px, 0 0; }
       50% { background-position: left -395px top -262px, right -292px top -191px, right -135px bottom -218px, left -87px bottom -111px, 0 0; }
       75% { background-position: left -427px top -284px, right -324px top -217px, right -153px bottom -250px, left -119px bottom -131px, 0 0; }
     }
-    @keyframes hats-hintergrund-farbe {
+    @keyframes glaswerk-hintergrund-farbe {
       from { filter: hue-rotate(-20deg); }
       to { filter: hue-rotate(20deg); }
     }
@@ -765,9 +765,9 @@ macos:
     @media (prefers-reduced-motion: reduce) {
       hui-view-background { animation: none !important; }
     }
-    /* HATS:hintergrund-bewegung:ENDE */
+    /* Glaswerk:hintergrund-bewegung:ENDE */
   uix-sidebar: |-
-    /* HATS:glas-seitenleiste:START */
+    /* Glaswerk:glas-seitenleiste:START */
     /* Die Flaechenfarbe kommt aus dem Theme-Feld sidebar-background-color.
        Die Weichzeichnung bietet HA als Feld nicht an, sie steht deshalb als
        fester Wert hier - mit var() davor, falls es das Feld doch einmal gibt. */
@@ -836,10 +836,10 @@ macos:
     ha-list-item-button.selected ha-icon[slot="start"] {
       color: var(--text-accent-color, var(--text-primary-color)) !important;
     }
-    /* HATS:glas-seitenleiste:ENDE */
+    /* Glaswerk:glas-seitenleiste:ENDE */
   uix-theme: "macos"
   uix-toast: |-
-    /* HATS:glas-toast:START */
+    /* Glaswerk:glas-toast:START */
     :host,
     .toast,
     ha-toast {
@@ -850,9 +850,9 @@ macos:
         0 12px 36px rgba(0, 0, 0, .22),
         inset 0 1px 0 rgba(255, 255, 255, .4);
     }
-    /* HATS:glas-toast:ENDE */
+    /* Glaswerk:glas-toast:ENDE */
   uix-top-app-bar-fixed: |-
-    /* HATS:glas-kopfleiste-einstellungen:START */
+    /* Glaswerk:glas-kopfleiste-einstellungen:START */
     /* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
        .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
        nimmt aelteren Instanzen die Vorlage weg. In 629 Elementen einer
@@ -865,7 +865,7 @@ macos:
       box-shadow: none !important;
       border-bottom: 1px solid rgba(255, 255, 255, .16);
     }
-    /* HATS:glas-kopfleiste-einstellungen:ENDE */
+    /* Glaswerk:glas-kopfleiste-einstellungen:ENDE */
   wa-border-style: "solid"
   wa-focus-ring-offset: "2px"
   wa-focus-ring-style: "solid"

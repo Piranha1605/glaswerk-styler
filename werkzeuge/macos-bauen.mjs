@@ -4,7 +4,7 @@
 //
 // Schreibt werkzeuge/themes/macos.yaml.
 //
-// Wie liquid-glass-bauen.mjs mit HATS' eigenen Funktionen gebaut: Was hier
+// Wie liquid-glass-bauen.mjs mit Glaswerk' eigenen Funktionen gebaut: Was hier
 // herauskommt, kann das Panel auch. Farben und Hintergrund kommen aus dem
 // Baukasten, nicht aus dieser Datei - sonst stuenden dieselben Werte an zwei
 // Orten, und der Baukasten erkaennte seine eigene Theme nicht wieder.
@@ -31,17 +31,17 @@
 // sie einen Hintergrund.
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/hats/www/theme.js";
-import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
-import { PALETTEN, teilAnwenden } from "../custom_components/hats/www/baukasten.js";
-import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergrund.js";
+import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/glaswerk/www/theme.js";
+import { VORLAGEN } from "../custom_components/glaswerk/www/vorlagen.js";
+import { PALETTEN, teilAnwenden } from "../custom_components/glaswerk/www/baukasten.js";
+import { HINTERGRUENDE, bewegung } from "../custom_components/glaswerk/www/hintergrund.js";
 
 // Mit --ohne-uix entsteht dieselbe Theme ohne ein einziges Stilziel.
 //
 // Sie ist kein zweites Produkt, sondern das MITTLERE Bild eines Vergleichs:
 // vorher (Home Assistant pur), nur die Felder, und dann mit UIX. Ohne den
 // mittleren Schritt schreibt man den Vorlagen zu, was die Felder getan haben -
-// und das ist bei HATS der groessere Teil.
+// und das ist bei Glaswerk der groessere Teil.
 const OHNE_UIX = process.argv.includes("--ohne-uix");
 const NAME = OHNE_UIX ? "macos_ohne_uix" : "macos";
 
@@ -193,10 +193,10 @@ if (!OHNE_UIX) vorlageAn(m, bewegung({ drift: 0, punkte: 4, farbe: 3, weite: 40 
 
 // --- Der Kopf --------------------------------------------------------------
 const version = /VERSION = "([^"]+)"/.exec(
-  readFileSync("custom_components/hats/const.py", "utf8"))?.[1] ?? "0.0.0";
+  readFileSync("custom_components/glaswerk/const.py", "utf8"))?.[1] ?? "0.0.0";
 const heute = new Date().toLocaleString("de-DE");
 m.kopf = [
-  `Erzeugt mit HATS ${version} am ${heute}`,
+  `Erzeugt mit Glaswerk ${version} am ${heute}`,
   "Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)",
   "",
   ...(OHNE_UIX ? [
@@ -207,7 +207,7 @@ m.kopf = [
     "",
   ] : []),
   "macOS. Apples Systemfarben auf Home Assistant, gebaut mit",
-  "werkzeuge/macos-bauen.mjs - also mit HATS' eigenen Funktionen.",
+  "werkzeuge/macos-bauen.mjs - also mit Glaswerk' eigenen Funktionen.",
   "",
   "Die Farben sind an macOS 26.5.2 ausgelesen, nicht abgeschrieben:",
   "werkzeuge/test/macos-farben.swift. Mehrere bekannte Werte stimmen nicht",

@@ -1,4 +1,4 @@
-# Erzeugt mit HATS 0.2.0b5 am 14.10.2026, 12:43:14
+# Erzeugt mit Glaswerk 0.2.0b5 am 14.10.2026, 12:43:14
 # Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)
 # 
 # OHNE UI eXtension. Dieselbe Theme wie macos, aber ohne ein einziges
@@ -7,7 +7,7 @@
 # was die Felder getan haben.
 # 
 # macOS. Apples Systemfarben auf Home Assistant, gebaut mit
-# werkzeuge/macos-bauen.mjs - also mit HATS' eigenen Funktionen.
+# werkzeuge/macos-bauen.mjs - also mit Glaswerk' eigenen Funktionen.
 # 
 # Die Farben sind an macOS 26.5.2 ausgelesen, nicht abgeschrieben:
 # werkzeuge/test/macos-farben.swift. Mehrere bekannte Werte stimmen nicht

@@ -1,4 +1,4 @@
-// Baut die Theme "liquid_glass" - mit HATS' eigenen Funktionen, nicht von Hand.
+// Baut die Theme "liquid_glass" - mit Glaswerk' eigenen Funktionen, nicht von Hand.
 //
 // Der Punkt dabei: Was hier herauskommt, kann das Panel auch. Eine von Hand
 // geschriebene Theme waere kein Beweis dafuer, dass der Generator es kann.
@@ -9,9 +9,9 @@
 // sie nach /config/themes.
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/hats/www/theme.js";
-import { VORLAGEN } from "../custom_components/hats/www/vorlagen.js";
-import { HINTERGRUENDE, bewegung } from "../custom_components/hats/www/hintergrund.js";
+import { leseTheme, schreibeTheme, setze, vorlageAn } from "../custom_components/glaswerk/www/theme.js";
+import { VORLAGEN } from "../custom_components/glaswerk/www/vorlagen.js";
+import { HINTERGRUENDE, bewegung } from "../custom_components/glaswerk/www/hintergrund.js";
 
 // Der Hintergrund kommt aus dem Baukasten, nicht aus dieser Datei.
 //
@@ -142,11 +142,11 @@ const W = {
   "--accent-color": ["#6350e4", "#8f7dff"],
   // --primary-color steht hier bewusst NICHT.
   //
-  // HATS fuehrt es nicht als Feld - es gehoert zur alten Farbebene, und HATS
+  // Glaswerk fuehrt es nicht als Feld - es gehoert zur alten Farbebene, und Glaswerk
   // setzt auf --ha-color-*. Ein Feld in die Datei zu schreiben, das das Panel
   // nicht anbietet, ist die schlimmere Sorte Fehler: Es wirkt, aber niemand
   // bekommt es je wieder heraus oder kann es aendern. Der Bericht nannte es
-  // zu Recht "kennt HATS nicht".
+  // zu Recht "kennt Glaswerk nicht".
   //
   // Wenn sich zeigt, dass Karten es brauchen, gehoert es in die Feldliste -
   // nicht hierher.
@@ -178,7 +178,7 @@ for (const [name, wert] of Object.entries(W)) {
 // Der Haken ist nicht die Vorlage, sondern dass ein uix-Feld fuer Hell UND
 // Dunkel zugleich gilt. Modusabhaengige Werte muessen ueber ein Theme-Feld
 // laufen, und fuer einen Glas-Saum gibt es bei Home Assistant keinen Namen -
-// ein eigener waere ein Feld, das HATS nicht anbietet, und damit genau die
+// ein eigener waere ein Feld, das Glaswerk nicht anbietet, und damit genau die
 // Sorte Fehler, die oben beschrieben steht.
 //
 // Am 13.10.2026 gemeldet: "schau mal bei licht aus. bubble passt aber die
@@ -236,21 +236,21 @@ vorlageAn(m, bewegung({ drift: 0, punkte: 10, farbe: 8, weite: 90 }, { punkte: t
 // --- Der Kopf -------------------------------------------------------------
 //
 // Ohne ihn gilt die Datei dem Panel als "fremd": ws_list_themes meldet
-// hats: false, und die Datei landet in der Liste der Themes, die man nur
+// glaswerk: false, und die Datei landet in der Liste der Themes, die man nur
 // LESEN kann. Gemessen am 13.10.2026 - die erste Fassung hatte den Kopf von
-// ha-blanko geerbt und war in HATS nicht als eigene Theme zu oeffnen.
+// ha-blanko geerbt und war in Glaswerk nicht als eigene Theme zu oeffnen.
 //
 // Die Versionsnummer kommt aus const.py, nicht aus einer Kopie hier. Sie steht
 // an vier Stellen und muss ueberall gleich sein; eine fuenfte waere eine zu
 // viel.
 const version = /VERSION = "([^"]+)"/.exec(
-  readFileSync("custom_components/hats/const.py", "utf8"))?.[1] ?? "0.0.0";
+  readFileSync("custom_components/glaswerk/const.py", "utf8"))?.[1] ?? "0.0.0";
 const heute = new Date().toLocaleString("de-DE");
 m.kopf = [
-  `Erzeugt mit HATS ${version} am ${heute}`,
+  `Erzeugt mit Glaswerk ${version} am ${heute}`,
   "Grundlage: ha_blanko (HA 2026.10 ohne Altlasten)",
   "",
-  "Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit HATS'",
+  "Liquid Glass. Gebaut mit werkzeuge/liquid-glass-bauen.mjs, also mit Glaswerk'",
   "eigenen Funktionen - was hier herauskommt, kann das Panel auch.",
   "",
   "Ohne Hintergrund kein Glas: Eine durchscheinende Flaeche vor einer",

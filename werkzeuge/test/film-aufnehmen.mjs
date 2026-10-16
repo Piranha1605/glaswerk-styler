@@ -57,8 +57,8 @@ const URL_ = /^HA_URL=(.*)$/m.exec(conf)[1].trim();
 const TOKEN = /^HA_TOKEN=(.*)$/m.exec(conf)[1].trim().replace(/^["']|["']$/g, "");
 
 mkdirSync(ZIEL, { recursive: true });
-const profil = mkdtempSync(path.join(tmpdir(), "hats-film-"));
-const bilder = mkdtempSync(path.join(tmpdir(), "hats-bilder-"));
+const profil = mkdtempSync(path.join(tmpdir(), "glaswerk-film-"));
+const bilder = mkdtempSync(path.join(tmpdir(), "glaswerk-bilder-"));
 const chrome = spawn(CHROME, [
   "--headless=new", `--remote-debugging-port=${PORT}`, `--user-data-dir=${profil}`,
   "--no-first-run", "--no-default-browser-check", "--hide-scrollbars",
@@ -154,7 +154,7 @@ try {
   if (DURCHSCHALTEN === "stile") {
     await lies(`window.__f = {};
       (async () => {
-        const B = await import("/hats_static/baukasten.js");
+        const B = await import("/glaswerk_static/baukasten.js");
         window.__f.stil = (id) => {
           const t = B.KARTENSTILE.find((k) => k.id === id);
           const dunkel = document.querySelector("home-assistant").hass.themes.darkMode;
@@ -177,7 +177,7 @@ try {
     await lies(`window.__f = {
       karte: () => { const tief = (w, p, a = []) => { for (const e of w.querySelectorAll("*")) {
           if (p(e)) a.push(e); if (e.shadowRoot) tief(e.shadowRoot, p, a); } return a; };
-        return tief(document, (e) => e.tagName === "HATS-CONTROL-CARD")[0]; },
+        return tief(document, (e) => e.tagName === "Glaswerk-CONTROL-CARD")[0]; },
       // Gesucht wird das SYMBOL, nicht der Titel. Der heisst je nach
       // Sprache "Einstellungen" oder "Settings" - am 15.10.2026 ist der
       // Lauf daran gescheitert, nachdem die Oberflaeche auf Englisch stand.

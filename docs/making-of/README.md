@@ -17,7 +17,7 @@ Angelegt am 13.10.2026 fuer einen Film und eine Vorankuendigung.
 Dieselbe Ansicht, dieselbe Fenstergroesse (800 x 1171), dieselben Karten -
 nur die Theme wechselt. **Drei** Bilder, nicht zwei, und der mittlere ist der
 Punkt: Ohne ihn schreibt man den UIX-Vorlagen zu, was die FELDER getan haben,
-und das ist bei HATS der groessere Teil.
+und das ist bei Glaswerk der groessere Teil.
 
 Dafuer gibt es `macos_ohne_uix` - dieselbe Theme ohne ein einziges Stilziel,
 gebaut mit `node werkzeuge/macos-bauen.mjs --ohne-uix`. Kein zweites Produkt,

@@ -1,10 +1,10 @@
 #!/bin/sh
-# Laedt die HATS-Integration auf der Testinstanz neu und meldet den Stand.
+# Laedt die Glaswerk-Integration auf der Testinstanz neu und meldet den Stand.
 #
 #   werkzeuge/test-reload.sh            Integration neu laden (JS-Aenderungen)
 #   werkzeuge/test-reload.sh --neustart ganz neu starten (Python-Aenderungen)
 #
-# Warum ueberhaupt: /hats_static traegt kein Cache-Control, und dann darf ein
+# Warum ueberhaupt: /glaswerk_static traegt kein Cache-Control, und dann darf ein
 # Browser heuristisch cachen - Chrome tut das. Erst eine neue Pruefsumme in der
 # Adresse bringt den neuen Stand durch, und die wird nur beim Setup gerechnet.
 #
@@ -41,9 +41,9 @@ if isinstance(eintraege, dict) and eintraege.get("_fehler"):
     print(ha.ruf("/api/services/homeassistant/reload_config_entry",
                  {"entry_id": None}) if False else "  -> bitte ueber das Panel neu laden")
 else:
-    treffer = [e for e in eintraege if e.get("domain") == "hats"]
+    treffer = [e for e in eintraege if e.get("domain") == "glaswerk"]
     if not treffer:
-        print("Kein hats-Eintrag gefunden.")
+        print("Kein glaswerk-Eintrag gefunden.")
     else:
         for e in treffer:
             r = ha.ruf("/api/services/homeassistant/reload_config_entry", {"entry_id": e["entry_id"]})

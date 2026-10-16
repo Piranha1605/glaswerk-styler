@@ -35,7 +35,7 @@ import assert from "node:assert";
 import {
   bewegung, himmel, himmelLage, himmelLageVorlage, himmelLagen, HIMMEL_LAGEN,
   FARBVERLAEUFE, PUNKTE_VORGABE, ohneFest,
-} from "../../custom_components/hats/www/hintergrund.js";
+} from "../../custom_components/glaswerk/www/hintergrund.js";
 
 const HAOS = "/Users/enricofischer/Projekte/haos-test";
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -164,7 +164,7 @@ const SEITE = `(() => {
   // in das Koordinatensystem der Flaeche zurueckgerechnet - ein umschliessendes
   // Rechteck taete es nicht, eine gedrehte Flaeche hat keins, das stimmt.
   window.luecke = (anteil) => {
-    const lauf = hg.getAnimations().find((a) => a.animationName === "hats-hintergrund-drift");
+    const lauf = hg.getAnimations().find((a) => a.animationName === "glaswerk-hintergrund-drift");
     if (!lauf) return null;
     lauf.pause(); lauf.currentTime = lauf.effect.getTiming().duration * anteil;
     const c = getComputedStyle(hg);
@@ -198,7 +198,7 @@ const SEITE = `(() => {
   return true;
 })()`;
 
-const profil = mkdtempSync(path.join(tmpdir(), "hats-hintergrund-"));
+const profil = mkdtempSync(path.join(tmpdir(), "glaswerk-hintergrund-"));
 const chrome = spawn(CHROME, [
   "--headless=new", `--remote-debugging-port=${PORT}`, `--user-data-dir=${profil}`,
   "--no-first-run", "--no-default-browser-check", "--window-size=1024,768", "about:blank",
@@ -271,7 +271,7 @@ try {
     assert.ok(Math.abs(a.links + a.fenster[0] * 0.14) < 1 && Math.abs(a.oben + a.fenster[1] * 0.14) < 1, `Lage ${a.links}/${a.oben}`);
   });
   pruefe("Bewegung: beide Laeufe laufen, und zwar gleichzeitig", () => {
-    assert.deepStrictEqual(a.laeufe, ["hats-hintergrund-drift:running", "hats-hintergrund-farbe:running"]);
+    assert.deepStrictEqual(a.laeufe, ["glaswerk-hintergrund-drift:running", "glaswerk-hintergrund-farbe:running"]);
     assert.notStrictEqual(a.transform, b.transform, "die Flaeche bewegt sich nicht");
     assert.notStrictEqual(a.filter, b.filter, "die Farbe wechselt nicht");
     assert.match(b.filter, /^hue-rotate\(/);
@@ -322,7 +322,7 @@ try {
   pruefe("Farbwechsel allein laesst die Flaeche, wo Home Assistant sie hinstellt", () => {
     assert.strictEqual(f1.position, "absolute");
     assert.strictEqual(f1.breite, leer.breite);
-    assert.deepStrictEqual(f1.laeufe, ["hats-hintergrund-farbe:running"]);
+    assert.deepStrictEqual(f1.laeufe, ["glaswerk-hintergrund-farbe:running"]);
     assert.strictEqual(f1.transform, "none");
     assert.notStrictEqual(f1.filter, f2.filter);
   });
@@ -406,7 +406,7 @@ try {
   const beides = await lies("stand()"), scheinDabei = await lies("schein('::before')");
   await bild("hintergrund-himmel-bewegt");
   pruefe("Himmel und Bewegung vertragen sich im selben Stilziel", () => {
-    assert.deepStrictEqual(beides.laeufe, ["hats-hintergrund-drift:running"]);
+    assert.deepStrictEqual(beides.laeufe, ["glaswerk-hintergrund-drift:running"]);
     assert.strictEqual(beides.position, "fixed");
     assert.strictEqual(scheinDabei.inhalt, '""');
   });
@@ -448,7 +448,7 @@ try {
   const p2 = await lies("({ lagen: lagen(), stand: stand() })");
   await bild("hintergrund-farbpunkte-bewegt");
   pruefe("Farbpunkte: jeder Punkt bewegt sich, der Grund und die Flaeche bleiben stehen", () => {
-    assert.deepStrictEqual(p1.stand.laeufe, ["hats-hintergrund-punkte:running"]);
+    assert.deepStrictEqual(p1.stand.laeufe, ["glaswerk-hintergrund-punkte:running"]);
     for (let i = 0; i < 4; i++) assert.notStrictEqual(p1.lagen[i], p2.lagen[i], `Punkt ${i + 1} steht`);
     assert.strictEqual(p1.lagen[4], p2.lagen[4], "der Grundverlauf bewegt sich");
     assert.strictEqual(p2.stand.transform, "none");
@@ -473,7 +473,7 @@ try {
   await warte(1500);
   const v2 = await lies("stand()");
   pruefe("Die Vorgabe: Punkte und Farbwechsel laufen zusammen, die Flaeche bleibt", () => {
-    assert.deepStrictEqual(v1.laeufe, ["hats-hintergrund-farbe:running", "hats-hintergrund-punkte:running"]);
+    assert.deepStrictEqual(v1.laeufe, ["glaswerk-hintergrund-farbe:running", "glaswerk-hintergrund-punkte:running"]);
     assert.notStrictEqual(v1.filter, v2.filter);
     assert.strictEqual(v2.transform, "none");
   });

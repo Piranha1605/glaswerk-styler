@@ -1,11 +1,11 @@
-# HATS — Home Assistant Theme Studio
+# Glaswerk — Home Assistant Theme Studio
 
 Grafisches Panel für die Seitenleiste von Home Assistant, mit dem sich ein
 komplettes Theme visuell bauen lässt — aufgesetzt auf die Farbebene von
 HA 2026 (`--ha-color-*`), nicht auf die klassischen Einzelvariablen.
 Entwickelt von Enrico Fischer (GitHub `Piranha1605`), MIT-Lizenz.
 
-**Der Leitsatz: nur ändern, was man sieht.** HATG bietet 798 Variablen an. HATS
+**Der Leitsatz: nur ändern, was man sieht.** HATG bietet 798 Variablen an. Glaswerk
 soll mit 15 Entscheidungen dasselbe erreichen, weil Home Assistant seit 2026
 selbst so rechnet.
 
@@ -15,7 +15,7 @@ selbst so rechnet.
 
 ## Das Schwesterprojekt: HATG
 
-HATS entsteht **getrennt** von HATG, in einem eigenen Repository. Entschieden am
+Glaswerk entsteht **getrennt** von HATG, in einem eigenen Repository. Entschieden am
 12.10.2026, auf Ansage des Maintainers: ein Umbau über den Bestand wäre zu
 riskant. HATG bleibt in Betrieb und wird weiter gepflegt — die HACS-Einreichung
 läuft noch ([PR #9706](https://github.com/hacs/default/pull/9706)).
@@ -39,7 +39,7 @@ laufenden Instanz.
 | `werkzeuge/` | `kopflos.js`, `theme-pruefen.js`, `live-messung.js` — die Muster lohnen, der Code nicht |
 
 **Vor jeder Entscheidung dort nachsehen, nicht neu messen.** Fast jede Falle, in
-die HATS laufen kann, ist dort schon beschrieben. Was dort nicht steht, wird an
+die Glaswerk laufen kann, ist dort schon beschrieben. Was dort nicht steht, wird an
 der laufenden Instanz gemessen und danach **in beiden** Projekten notiert.
 
 ### Was aus HATG nicht übernommen wird
@@ -48,11 +48,11 @@ Vorlagen, Marker, Stilziele, `-yaml`-Felder, Shadow-DOM-Pfade. Am 12.10.2026
 gemessen: die Zuordnung auf die neue Ebene läuft über gewöhnliche Theme-Felder,
 weil CSS-Variablen durch jede Shadow-Grenze erben — ein Wert auf `html` kam
 zwölf Ebenen tief an. Damit entfällt der größte und fehleranfälligste Teil von
-HATG. **Solange es bei Rollen und Lautstärken bleibt, braucht HATS kein UIX.**
+HATG. **Solange es bei Rollen und Lautstärken bleibt, braucht Glaswerk kein UIX.**
 
 ### Eine Theme gehört einem Werkzeug
 
-Schickt man eine HATS-Theme durch HATGs Import, kommen dessen Vorgaben dazu —
+Schickt man eine Glaswerk-Theme durch HATGs Import, kommen dessen Vorgaben dazu —
 gemessen 140 → 358 Bubble- und Mushroom-Felder. Kaputt wird nichts, alle
 `var()`-Verweise überleben wörtlich, und von 57 Feldern, die HATG kennt, wurde
 keines überschrieben. Die Datei wird nur fett und zweideutig.
@@ -63,28 +63,28 @@ bloß: dieselbe Datei nicht in beiden bearbeiten.
 ## Aufbau
 
 ```
-custom_components/hats/
+custom_components/glaswerk/
 ├── __init__.py           Einstiegspunkt, Panel-Registrierung, Websocket
 ├── config_flow.py        Einrichtung über die Oberfläche
 ├── const.py              Domain, Version, Pfade
 ├── karte.py              traegt die Steuerkarte in HAs Ressourcenliste ein
-├── manifest.json         Domain hats
+├── manifest.json         Domain glaswerk
 ├── translations/         de.json und en.json
 └── www/
-    ├── hats-panel.js     das Panel
-    └── hats-control-card.js   die Steuerkarte fuer Dashboards, als Karte und als Badge
+    ├── glaswerk-panel.js     das Panel
+    └── glaswerk-bar.js   die Steuerkarte fuer Dashboards, als Karte und als Badge
 docs/beispiele/           Start-Themes
 werkzeuge/                Prüfwerkzeuge
 ```
 
-**Die Domain ist `hats`** — nicht `hatg`, sonst lassen sich beide Integrationen
+**Die Domain ist `glaswerk`** — nicht `hatg`, sonst lassen sich beide Integrationen
 nicht nebeneinander installieren. Sie steckt in `manifest.json`, `const.py`, der
 `panel_custom`-Registrierung und in HACS. Nachträglich zu ändern kostet die
 Konfigurationseinträge der Nutzer: **vor dem ersten Release festlegen, danach
 nicht mehr.** Bis dahin ist der Name frei verhandelbar.
 
 Die Versionsnummer steht an drei Stellen und muss überall gleich sein:
-`manifest.json`, `VERSION` in `const.py` und `HATS_VERSION` im Panel. Ein Test
+`manifest.json`, `VERSION` in `const.py` und `GLASWERK_VERSION` im Panel. Ein Test
 vergleicht sie.
 
 **Der Cache-Buster hängt am Inhalt, nicht nur an der Version.** HA liefert
@@ -150,7 +150,7 @@ Die 22 klassischen Töne (`--red-color` … `--blue-grey-color`) leben weiter, a
 12.10.2026 im inline-Stylesheet auf `html` gemessen, keiner leer.
 
 **Ein vollständiger harter Cut auf die neue Ebene geht deshalb nicht.** Die
-klassischen Töne gehören als eigene Gruppe für Zustandsfarben in HATS.
+klassischen Töne gehören als eigene Gruppe für Zustandsfarben in Glaswerk.
 
 ## Regeln, die ab Tag eins gelten
 
@@ -247,7 +247,7 @@ in beiden Modi dieselbe ist. Für alles mit modusabhängiger Quelle wäre er fal
 Dabei gefunden, beide stumm: `var(--ha-color-90)` statt `--ha-color-neutral-90`
 und `var(--ha-color-neutral-00)` — die Palette hat keine Stufe `00`, sie fängt
 bei `05` an. Beide lösen zu nichts auf, ohne Meldung.
-`tests/hats-blanko.test.js` hält alles fest, mit Gegenproben.
+`tests/glaswerk-blanko.test.js` hält alles fest, mit Gegenproben.
 
 **Den Modus von außen umzuschalten geht — der Satz, der hier stand, war
 falsch.** Er lautete „geht von außen nicht", und gemessen war er mit dem
@@ -290,7 +290,7 @@ Wahrnehmungshelligkeit, und eine HSL-Rampe gleicht das nicht aus.
 
 Die Unterscheidung macht der **Name des Ziels**, nicht der Wert:
 `bubble-button-background-color` auf `fill-neutral-quiet-resting` ist genau
-richtig. `tests/hats-zuordnung.test.js` prüft deshalb nur Namen mit „accent",
+richtig. `tests/glaswerk-zuordnung.test.js` prüft deshalb nur Namen mit „accent",
 mit Gegenprobe.
 
 **Und: der Ausweichwert steht im Bauteil, nicht in der Variablen.**
@@ -305,7 +305,7 @@ nicht geraten. `--ha-dialog-scrim-color` gibt es übrigens gar nicht; HA liest
 
 ### Zwei Felder, die nur auf Lovelace ankommen
 
-Am 12.10.2026 beim Bau von `hats_studio` gemessen, beide sehen gesetzt aus und
+Am 12.10.2026 beim Bau von `glaswerk_studio` gemessen, beide sehen gesetzt aus und
 wirken trotzdem nicht überall:
 
 **`--ha-font-family-body` erreicht `body` nicht.** Im globalen Stylesheet von
@@ -342,10 +342,10 @@ und das Panel war eine leere blaue Fläche. Dieselbe Quelle über stdin geprüft
 fällt sofort auf:
 
 ```bash
-node --input-type=module --check < custom_components/hats/www/hats-panel.js
+node --input-type=module --check < custom_components/glaswerk/www/glaswerk-panel.js
 ```
 
-`tests/hats-syntax.test.js` fährt das über alle Dateien, mit Gegenprobe — und
+`tests/glaswerk-syntax.test.js` fährt das über alle Dateien, mit Gegenprobe — und
 mit einer zweiten Prüfung, die festhält, dass `node --check` es wirklich nicht
 findet. Wird node irgendwann strenger, fällt die um, und der Umweg kann weg.
 
@@ -403,7 +403,7 @@ Versehen aus.
 
 ### Ein- und Ausgabe: der Bericht ist der eigentliche Teil
 
-Lesen konnte HATS fremde Themes immer — `leseTheme` legt jedes Feld ins
+Lesen konnte Glaswerk fremde Themes immer — `leseTheme` legt jedes Feld ins
 Modell, `schreibeTheme` gibt es wieder aus, ob die Oberfläche es kennt oder
 nicht. Was fehlte, war nicht die Fähigkeit, sondern die **Auskunft**: Ohne
 Bericht glaubt man, ein Feld sei weg, nur weil keine Kachel dafür da ist.
@@ -443,10 +443,10 @@ ein Abbruch mittendrin ließ eine halbe Datei im Themes-Ordner, also beim
 nächsten Start den Wiederherstellungsmodus.
 
 `datei.py` (ohne HA-Import, wie `karte.py`) schreibt jetzt erst in
-`.<name>.yaml.hats-neu` und setzt sie mit `os.replace` an ihren Platz. Vorher
-geht die alte Fassung nach `config/hats/sicherungen/<name>/<zeit>.yaml`, die
-letzten zehn je Theme. Zwei Befehle lesen sie: `hats/list_backups`,
-`hats/load_backup`. Zurückgeschrieben wird über `save_theme` — das sichert
+`.<name>.yaml.glaswerk-neu` und setzt sie mit `os.replace` an ihren Platz. Vorher
+geht die alte Fassung nach `config/glaswerk/sicherungen/<name>/<zeit>.yaml`, die
+letzten zehn je Theme. Zwei Befehle lesen sie: `glaswerk/list_backups`,
+`glaswerk/load_backup`. Zurückgeschrieben wird über `save_theme` — das sichert
 dabei die Fassung, die gerade gilt.
 
 **Drei Entscheidungen, jede mit einem Grund:**
@@ -472,7 +472,7 @@ dabei die Fassung, die gerade gilt.
 An der Testmaschine mit einer Wegwerf-Theme durchgespielt (danach gelöscht):
 neu angelegt ohne Sicherung, derselbe Text ohne Sicherung, überschrieben mit
 einer Sicherung der alten Fassung, `../../secrets` und `../x` abgewiesen, im
-Themes-Ordner keine Hilfsdatei. `tests/hats-datei.test.js`: zehn Prüfungen mit
+Themes-Ordner keine Hilfsdatei. `tests/glaswerk-datei.test.js`: zehn Prüfungen mit
 python3 gegen ein echtes Verzeichnis, fünf Mutationen gegengeprüft, darunter
 ein abgebrochenes `os.replace`.
 
@@ -533,7 +533,7 @@ Bubble liest es vor `lovelace-background` für seine Pop-ups.
 ### UIX: Stilziele an- und abschalten, mehr nicht
 
 Rechts, unter den Add-ons, stehen die **28 Stilziele** von UI eXtension, jedes
-mit einem Schalter und einem Feld für CSS. `custom_components/hats/www/uix.js`
+mit einem Schalter und einem Feld für CSS. `custom_components/glaswerk/www/uix.js`
 hält die Namen — zeichengenau aus HATG übernommen, denn es sind die Typnamen
 von UIX. Stimmt einer nicht, entsteht ein Feld, das nie gelesen wird; HATG hat
 das mit `uix-states-history-charts` teuer gelernt.
@@ -546,20 +546,20 @@ nie mehr gelesen. Wer Shadow-DOM-Pfade braucht, nimmt HATG.
 kommt beim Wiedereinschalten wortgetreu zurück — ein Schalter, der Arbeit
 vernichtet, ist kein Schalter.
 
-### Bilder liegen in `config/www/hats`
+### Bilder liegen in `config/www/glaswerk`
 
 Denselben Weg wie HATG, und aus demselben Grund. Sie kommen unter
-**`/local/hats/<name>`** von Home Assistant **selbst**.
+**`/local/glaswerk/<name>`** von Home Assistant **selbst**.
 
-**Warum das wichtig ist:** Eine Adresse, die nur HATS ausliefert, macht eine
+**Warum das wichtig ist:** Eine Adresse, die nur Glaswerk ausliefert, macht eine
 weitergegebene Theme unbrauchbar — beim Empfänger bliebe der Hintergrund leer,
 ohne Fehlermeldung, weil ein fehlendes Bild in CSS einfach nichts tut. HATG hat
 das am 2026-09-30 an einer weitergegebenen Theme gelernt. Das Versprechen „am
 Ende steht eine ganz normale Theme-Datei" gilt eben auch für die Werte, nicht
 nur für die Feldnamen.
 
-Drei Websocket-Befehle: `hats/list_images`, `hats/upload_image`,
-`hats/delete_image`. Am 13.10.2026 an der Instanz durchgespielt:
+Drei Websocket-Befehle: `glaswerk/list_images`, `glaswerk/upload_image`,
+`glaswerk/delete_image`. Am 13.10.2026 an der Instanz durchgespielt:
 
     probe bild!.png   ->  probe_bild.png      Name gesaeubert
     ganz anders.png   ->  probe_bild.png      doppelt erkannt, eine Datei
@@ -570,7 +570,7 @@ Drei Websocket-Befehle: `hats/list_images`, `hats/upload_image`,
 - **Inhaltsgleiche Bilder landen nicht doppelt auf der Platte.** Geprüft wird
   über die SHA-256 des Inhalts, nicht über den Namen; bei gleichem Namen und
   anderem Inhalt wird durchgezählt (`-2`, `-3`), nicht überschrieben.
-- **`/local` hängt an `config/www` zum Startzeitpunkt.** Legt HATS den Ordner
+- **`/local` hängt an `config/www` zum Startzeitpunkt.** Legt Glaswerk den Ordner
   gerade erst an, bleibt `/local` bis zum nächsten Neustart tot — das steht als
   Warnung im Log, sonst sucht man den Fehler in der Theme.
 
@@ -591,7 +591,7 @@ Sekunden** auf der Instanz — am 13.10.2026 gemessen. Sie holt ihre Dateiliste
 jede Runde neu (`werkzeuge/sync-dateien.txt`) und erneuert sich selbst, wenn
 das Skript sich ändert. Wie sie gestartet wird, steht in `werkzeuge/README.md`.
 
-**Ein Reload des Konfigurationseintrags bleibt trotzdem nötig.** `/hats_static`
+**Ein Reload des Konfigurationseintrags bleibt trotzdem nötig.** `/glaswerk_static`
 ist mit `cache_headers=False` registriert und trägt kein `Cache-Control` — aber
 genau dann darf ein Browser heuristisch cachen, und Chrome tut es. Die Datei lag
 byteweise neu auf der Instanz, und die Seite zeigte nach zwei vollen Reloads
@@ -610,7 +610,7 @@ den man vergisst; dann sucht man den Fehler im Code, und er liegt im Cache.
 
 - Der erzeugte Befehl enthält **keine Semikolons und keine Schleife** — der
   Terminal im Studio Code Server verfremdet ein getipptes `;` zu `\;`.
-- „Ist es angekommen?" war Raten. `/hats_static` ist vom Mac aus **ohne
+- „Ist es angekommen?" war Raten. `/glaswerk_static` ist vom Mac aus **ohne
   Anmeldung lesbar**, also wird byteweise verglichen statt gehofft.
 - `pruefen.sh` parst jede Datei **als Modul über stdin**, nicht mit
   `node --check` — das lässt eine doppelte Deklaration durch, und dann lädt das
@@ -627,7 +627,7 @@ Am 13.10.2026 gemeldet: *„ich habe immer noch den alten stand."* Am 14.10.2026
 behoben. Der Abschnitt steht ausfuehrlich da, weil die Diagnose teurer war als
 die Behebung.
 
-**Der Fehler.** `/hats_static` ist mit `cache_headers=False` registriert. Home
+**Der Fehler.** `/glaswerk_static` ist mit `cache_headers=False` registriert. Home
 Assistant setzt dann **gar kein** `Cache-Control`, nur `ETag` und
 `Last-Modified` — und ohne `Cache-Control` darf ein Browser **heuristisch**
 cachen. Chrome tut es. Die Pruefsumme hing als `?v=0.2.0b3.36cec128` an der
@@ -644,13 +644,13 @@ was der Nutzer im Baukasten sieht.
 
 **Die Behebung: die Summe in den Pfad.**
 
-    vorher   /hats_static/hats-panel.js?v=0.2.0b4.36cec128
-    nachher  /hats_static/deed68b7/hats-panel.js?v=0.2.0b5
+    vorher   /glaswerk_static/glaswerk-panel.js?v=0.2.0b4.36cec128
+    nachher  /glaswerk_static/deed68b7/glaswerk-panel.js?v=0.2.0b5
 
 Ein **relativer Import wird gegen die Adresse SEINES Moduls aufgeloest**. Liegt
 die Summe im Pfad, erbt sie damit jedes Modul, ohne dass eine einzige
 Importzeile sich aendert — und jedes kuenftige auch. Gemessen nach dem Umbau:
-zehn Dateien, alle unter `/hats_static/deed68b7/`.
+zehn Dateien, alle unter `/glaswerk_static/deed68b7/`.
 
 **Die Summe deckt den ganzen `www`-Ordner**, nicht nur die Einstiegsdatei —
 sonst liesse sie genau den Fall durch, der den Fehler ausgemacht hat. Der
@@ -660,8 +660,8 @@ ohne Cache-Buster ist besser als keines.
 
 **Angemeldet sind beide Pfade, mit verschiedenen Kopfzeilen** — gemessen:
 
-    /hats_static/<summe>/…   Cache-Control: public, max-age=2678400
-    /hats_static/…           keine Cache-Control-Kopfzeile
+    /glaswerk_static/<summe>/…   Cache-Control: public, max-age=2678400
+    /glaswerk_static/…           keine Cache-Control-Kopfzeile
 
 Der versionierte ist der Produktpfad, und einen Monat zu cachen ist dort
 **richtig**, weil jede Aenderung die Adresse aendert. Der unversionierte bleibt
@@ -670,8 +670,8 @@ die Summe kennen zu muessen.
 
 **Die Reihenfolge der Anmeldung ist egal.** Aus aiohttps `UrlDispatcher.resolve`
 gelesen: Es laeuft die Pfadteile von hinten nach vorn ab („to ensure the most
-explicit match is found first"), also gewinnt `/hats_static/<summe>` auch, wenn
-es spaeter dazukommt als `/hats_static`.
+explicit match is found first"), also gewinnt `/glaswerk_static/<summe>` auch, wenn
+es spaeter dazukommt als `/glaswerk_static`.
 
 **Was dabei beinahe kaputtgegangen waere: der Eintrag der Steuerkarte.**
 `karte.py` erkannte ihn an der Adresse ohne Abfrage, auf Gleichheit. Die aendert
@@ -679,7 +679,7 @@ sich jetzt bei **jeder** Aenderung irgendwo im www-Ordner — der Abgleich haett
 also jedes Mal einen **zweiten** Eintrag angelegt und den alten stehen lassen.
 Und weil der unversionierte Pfad weiter ausgeliefert wird, laedt Home Assistant
 die Karte dann zweimal. `_eigene()` vergleicht deshalb zweierlei: Der Pfad liegt
-unter `/hats_static/`, und die letzte Stelle ist `hats-control-card.js`. An der
+unter `/glaswerk_static/`, und die letzte Stelle ist `glaswerk-bar.js`. An der
 Instanz gegengeprueft: nach dem Umbau **ein** Eintrag, auf dem neuen Pfad, bei
 neun Ressourcen insgesamt wie vorher.
 
@@ -691,16 +691,16 @@ Mechanismus gar nicht gesehen haette:
     Datei zurueckgespielt
     99a9fe6a  ->  deed68b7      dieselbe Summe wieder - sie haengt am Inhalt
 
-`tests/hats-kartenanmeldung.test.js` haelt beides fest, 17 Pruefungen: dass die
+`tests/glaswerk-kartenanmeldung.test.js` haelt beides fest, 17 Pruefungen: dass die
 Summe im Pfad steht und ueber den Ordner geht, und dass ein Eintrag **von vor
 dem Umbau** wiedergefunden statt verdoppelt wird. Dazu die Gegenprobe, dass der
 weitere Vergleich nicht alles fasst — ein anderer Dateiname unter demselben
 Praefix ist nicht unserer, und unser Dateiname ausserhalb auch nicht.
 
-## Nie ein Feld schreiben, das HATS nicht anbietet
+## Nie ein Feld schreiben, das Glaswerk nicht anbietet
 
 Am 13.10.2026 beim Bau der Liquid-Glass-Theme aufgefallen: Das Build-Skript
-setzte `--primary-color`, und der Bericht meldete es zu Recht als „kennt HATS
+setzte `--primary-color`, und der Bericht meldete es zu Recht als „kennt Glaswerk
 nicht". Das Feld wäre in der Datei gelandet, hätte gewirkt — und niemand hätte
 es je wieder ändern oder entfernen können, weil es im Panel nicht vorkommt.
 
@@ -713,7 +713,7 @@ Dieselbe Falle hat HATG erlebt: `--ha-color-fill-primary-loud-*` und
 Theme schreibt, bekommt sie beim nächsten Speichern nicht wieder heraus.
 
 **Der Bericht ist die Prüfung dafür** — er zählt beim Einlesen jedes Feld, das
-HATS nicht kennt, und nennt es beim Namen. Wer eine Theme baut, liest ihn.
+Glaswerk nicht kennt, und nennt es beim Namen. Wer eine Theme baut, liest ihn.
 
 ## Ein Hintergrund an der Ansicht gewinnt über `lovelace-background`
 
@@ -777,9 +777,9 @@ Stilziel im Theme steht, und nimmt ihn wieder heraus, wenn die letzte Vorlage
 ausgeht. Vier Prüfungen halten es fest, Umbenennung eingeschlossen — ein
 `uix-theme`, das auf den alten Namen zeigt, schaltet nämlich auch nichts.
 
-### Was daraus für die Arbeit an HATS folgt
+### Was daraus für die Arbeit an Glaswerk folgt
 
-**Wenn HATS etwas nachbaut, was HATG schon kann, gehört HATGs AUSGABE daneben,
+**Wenn Glaswerk etwas nachbaut, was HATG schon kann, gehört HATGs AUSGABE daneben,
 nicht nur seine Dokumentation.** Der Schalter stand seit jeher in HATGs Code
 (`HATG_UIX_THEME_KEY`), und in HATGs CLAUDE.md wird `uix-theme` beiläufig
 erwähnt — aber nirgends steht, dass ohne ihn nichts funktioniert. Ein Blick in
@@ -851,16 +851,16 @@ dort ist eines, das die Theme schreibt und das Panel nicht anbietet. Am
 
 ## Vorlagen für UIX
 
-Seit dem 13.10.2026 bringt HATS zehn fertige CSS-Blöcke mit, Gruppe **Liquid
-Glass**. Sie stehen in `custom_components/hats/www/vorlagen.js`, die Mechanik
+Seit dem 13.10.2026 bringt Glaswerk zehn fertige CSS-Blöcke mit, Gruppe **Liquid
+Glass**. Sie stehen in `custom_components/glaswerk/www/vorlagen.js`, die Mechanik
 dazu in `theme.js`.
 
 **Eine Vorlage schreibt zwischen zwei Marker in das Feld ihres Stilziels:**
 
 ```
-/* HATS:glas-karten:START */
+/* Glaswerk:glas-karten:START */
 ha-card { … }
-/* HATS:glas-karten:ENDE */
+/* Glaswerk:glas-karten:ENDE */
 ```
 
 Drei Regeln, jede davon in HATG teuer gelernt:
@@ -883,7 +883,7 @@ Seitenleiste etwa), steht als fester Wert da, mit `var()` davor.
 Modi unterscheiden muss, gehört in ein Theme-Feld. `light-dark()` hilft nicht:
 Es folgt dem Betriebssystem, und HA setzt kein `color-scheme`.
 
-`tests/hats-vorlageninhalt.test.js` prüft die Vorlagen gegen die bekannten
+`tests/glaswerk-vorlageninhalt.test.js` prüft die Vorlagen gegen die bekannten
 Fallen — kein Filter auf blankem `:host` (das lässt Bubble-Pop-ups auf Höhe 0
 zusammenfallen), keine Weichzeichnung auf einer Dialogfläche (die legt die
 Auswahllisten darin neben den Bildschirm), beide Klassennamen der Kopfleiste,
@@ -981,13 +981,13 @@ dabei nötig, sonst lügt die Messung:
 
 ## Die Steuerkarte
 
-Seit dem 13.10.2026 bringt HATS eine Karte für Dashboards mit. Zuerst schaltete
+Seit dem 13.10.2026 bringt Glaswerk eine Karte für Dashboards mit. Zuerst schaltete
 sie zwei Dinge, den Modus und das Vollbild; am selben Abend ist die Menüleiste
 der Horizon-Cards dazugekommen (siehe *Zusammengefügt mit der Menüleiste*).
 Seitdem ist sie eine Leiste aus Knöpfen:
 
 ```yaml
-type: custom:hats-control-card
+type: custom:glaswerk-bar
 buttons:
   - name: Home                    # ein Ziel - die Kapsel zeigt, wo du bist
     icon: mdi:home-outline
@@ -1005,17 +1005,17 @@ kiosk_only: false                 # true: kein Vollbild des Browsers
 Die Kurzform von vorher gilt weiter: `controls: [mode, fullscreen]`, und ohne
 `buttons` und `controls` genau diese beiden.
 
-Sie liegt in `custom_components/hats/www/hats-control-card.js`. HATS trägt sie
+Sie liegt in `custom_components/glaswerk/www/glaswerk-bar.js`. Glaswerk trägt sie
 selbst in Home Assistants Ressourcenliste ein und nimmt sie beim Entfernen der
 Integration wieder heraus — warum so und nicht anders, steht weiter unten. Der
-Name `hats-control-card` steht in jedem Dashboard, das die Karte benutzt — wie
+Name `glaswerk-bar` steht in jedem Dashboard, das die Karte benutzt — wie
 die Domain ist er **bis zum ersten Release** frei, danach nicht.
 
 **Im Kartenwähler steht sie nur unter „Nach Karte".** Gemeldet am 13.10.2026:
 *„kannst du die karte hier einbauen ich find sie nicht"*. Der Dialog „Zum
 Dashboard hinzufügen" öffnet in 2026.10 auf dem Reiter „Nach Entität", und der
 schlägt nur Karten zu einer Entität vor — eine Karte ohne Entität kommt dort
-nie vor. Unter „Nach Karte" findet die Suche „hats" sie sofort, mit Vorschau.
+nie vor. Unter „Nach Karte" findet die Suche „glaswerk" sie sofort, mit Vorschau.
 Ändern lässt sich das an der Karte nicht; es gehört in die Anleitung.
 
 ### Die Regel: alles, was sie benutzt, stellt Home Assistant
@@ -1033,7 +1033,7 @@ eigene Farbe.
 | Meldung | das Ereignis `hass-notification` (HAs Toast) |
 | Editor | `ha-form` mit HAs Wählern — Home Assistant zeichnet Liste und Unterformulare selbst |
 
-`tests/hats-steuerkarte.test.js` hält das fest: nur diese drei Bauteile, nur
+`tests/glaswerk-bar.test.js` hält das fest: nur diese drei Bauteile, nur
 diese drei Ereignisse, keine Farbe außer dem Weiß, das auch in
 `ha-control-select` fest steht, und jede gelesene Variable muss in der Liste
 der gemessenen stehen.
@@ -1176,7 +1176,7 @@ jetzt auf den Zustand und stößt das Zeichnen mit einem Bildschirmfoto an. Und
 ein Klick auf eine ausgerechnete Stelle traf daneben — das Fenster ist 700
 Pixel hoch, der sichtbare Bereich nicht. Koordinaten kommen aus der Seite.
 
-`tests/hats-steuerkarte-vollbild.test.js` fährt dieselbe Kopplung ohne Browser
+`tests/glaswerk-bar-vollbild.test.js` fährt dieselbe Kopplung ohne Browser
 gegen ein nachgebautes `document`, zwölf Fälle. Dort stehen die, die sich an
 einem Browser nicht herstellen lassen: die Anfrage, die offen bleibt, und die
 Erlaubnis, die erst nach dem Abwählen kommt.
@@ -1257,13 +1257,13 @@ umgeschrieben):
 **Das Vollbild ist jetzt das der Menüleiste**, mit dem, was die Steuerkarte
 schon konnte:
 
-- **Die Kopfzeile geht mit**, über ein eingefügtes `<style data-hats-vollbild>`
+- **Die Kopfzeile geht mit**, über ein eingefügtes `<style data-glaswerk-vollbild>`
   in `hui-root`. Gemessen: `.header` auf `display: none`, `--header-height` von
   56px auf 0, die erste Karte rückt von y=114 auf y=58. Das ist die **zweite
   Ausnahme** von „alles von HA gestellt" — im Bearbeitungsmodus nie, sonst
   säße man fest.
 - **Die Wahl überlebt das Neuladen**, je Gerät im `localStorage`
-  (`hats-control:fullscreen`). Gemessen: neu geladen, Kiosk wieder an,
+  (`glaswerk-bar:fullscreen`). Gemessen: neu geladen, Kiosk wieder an,
   Kopfzeile weg. Einmal je Seite, und nur **ein** — ein „aus" löschte einen
   Kiosk-Modus, den jemand anders gesetzt hat.
 - **Wer von der Menüleiste kommt, startet weiter im Vollbild**: Ihr Schlüssel
@@ -1298,13 +1298,13 @@ führt ihren eigenen Vollbild-Zustand und wendet ihn bei jedem Durchlauf neu an.
 Aus dem Code gelesen, nicht gemessen — die Antwort ist ohnehin, die alte durch
 die neue zu ersetzen, nicht beide zu betreiben.
 
-`tests/hats-steuerleiste.test.js` trägt die Erwartungen aus den Tests der
+`tests/glaswerk-bar-leiste.test.js` trägt die Erwartungen aus den Tests der
 Menüleiste (`ha-karten`, `helpers.test.js`) als Maßstab: 21 Prüfungen, darunter
 die Leiste des Nutzers mit dem richtigen Knopf auf jeder Ansicht.
 
 ### Der Regler für die Bewegung: die Karte schreibt eine Theme
 
-Auf Ansage vom 13.10.2026, weitergegeben von „HATS Aufbau": *„das geben wir an
+Auf Ansage vom 13.10.2026, weitergegeben von „Glaswerk Aufbau": *„das geben wir an
 die theme steuerungskarte weiter. die soll dafuer gleich ein slider dafuer
 einbauen."* Auf die Frage, ob der Wert dauerhaft gelten soll oder nur bis zum
 Neuladen: *„soll dauerhaft gelten."*
@@ -1335,7 +1335,7 @@ Panels, das eine Theme schreibt. Drei Regeln, damit das nichts kostet:
 3. **Nur schreiben, wenn nichts verloren gehen kann.** Abgewiesen wird, mit dem
    Grund im Regler: kein Administrator; keine Datei `<name>.yaml` zur
    wirksamen Theme; ein anderer Theme-Name in der Datei; Zeilen, die
-   `leseTheme` nicht einordnen kann; kein „Erzeugt mit HATS" im Kopf.
+   `leseTheme` nicht einordnen kann; kein „Erzeugt mit Glaswerk" im Kopf.
 
 Gemessen an der Testmaschine, an der wirksamen Theme `macos`, mit einer zweiten
 Verbindung als Gegenprobe:
@@ -1360,7 +1360,7 @@ gehört ins Panel.
 
 **Nicht gemessen:** die Sperre für Nicht-Administratoren (auf der Testmaschine
 gibt es nur einen Nutzer) und eine Theme ohne Datei. Die Gründe selbst sind
-geprüft, `tests/hats-steuerkarte-bewegung.test.js` — elf Prüfungen mit den
+geprüft, `tests/glaswerk-bar-bewegung.test.js` — elf Prüfungen mit den
 echten Modulen und der echten Theme, fünf Mutationen gegengeprüft, und am Ende
 PyYAML: Was die Karte schreibt, liest Home Assistant.
 
@@ -1368,7 +1368,7 @@ PyYAML: Was die Karte schreibt, liest Home Assistant.
 
 ### Transparenz und Schrift: gewöhnliche Felder, und nur das gezogene
 
-Auf Ansage vom 14.10.2026, weitergegeben von „HATS Aufbau": *„er soll die
+Auf Ansage vom 14.10.2026, weitergegeben von „Glaswerk Aufbau": *„er soll die
 hintergrundtransparenz und und die schriftgröße als slieder darstellen"*.
 
 ```yaml
@@ -1379,7 +1379,7 @@ hintergrundtransparenz und und die schriftgröße als slieder darstellen"*.
 Dieselbe Strecke wie beim Bewegungsregler — dieselben Sperren, frisch lesen,
 schreiben, `frontend.reload_themes` —, mit einem Unterschied, der alles
 andere bestimmt: **Die beiden Felder stehen auch im Panel.** Der Bewegungsblock
-gehört HATS allein; `--ha-card-background` und `--ha-font-size-scale` stellt
+gehört Glaswerk allein; `--ha-card-background` und `--ha-font-size-scale` stellt
 der Nutzer auch dort ein. Daraus folgen zwei Regeln:
 
 - **Geschrieben wird nur das Feld, an dem gezogen wurde.** Wer an der Schrift
@@ -1409,7 +1409,7 @@ Die Karte schreibt deshalb **einmal**
 — bei Skala 1 genau Mushrooms Vorgaben, danach wachsen sie mit. Feste Pixel je
 Regler-Stellung wären drei Orte für dieselbe Zahl gewesen. Steht schon ein
 Wert, bleibt er; hängt er nicht an der Leiter (`15px`), sagt der Regler das.
-Die beiden Felder hat HATS Aufbau vorher ins Panel gelegt (`304c37a`), und
+Die beiden Felder hat Glaswerk Aufbau vorher ins Panel gelegt (`304c37a`), und
 ein Test liest die Feldliste **aus dem Panel**, nicht aus der Karte: Schreibt
 die Karte ein Feld, das dort fehlt, wird er rot.
 
@@ -1422,7 +1422,7 @@ Gemessen an der Testmaschine, Theme `glaswerk`, 1024 × 768:
     Bubble                 Namen 13 px (Knopf), 16 px (Trenner) - bei 1,0 wie bei 1,2
     zurück                 Sicherung eingespielt, dieselbe Prüfsumme
 
-**Bubbles Namen wachsen nicht mit.** HATS Aufbau hatte „14 → 16,8" gemessen;
+**Bubbles Namen wachsen nicht mit.** Glaswerk Aufbau hatte „14 → 16,8" gemessen;
 an `.bubble-name` sind es feste 13 und 16 px. Der Hinweis in der Doku sagt
 deshalb nur „Kacheln und Mushroom". Was Bubble dafür liest, ist nicht
 nachgesehen.
@@ -1439,7 +1439,7 @@ Bewegungsregler — gesetzt wurde es nur beim nächsten Zeichnen. Jetzt beim
 **Die Leiste des Nutzers lief danach über** — mit dem neunten Knopf 52 px
 breiter als die Karte. Behoben im nächsten Abschnitt.
 
-`tests/hats-steuerkarte-darstellung.test.js`: 22 Prüfungen mit dem echten
+`tests/glaswerk-bar-darstellung.test.js`: 22 Prüfungen mit dem echten
 `theme.js` und `glaswerk.yaml`. Die Erwartungen sind Textersetzungen in der
 Datei, keine Aufrufe der Module. Vier Mutationen gegengeprüft, dazu eine für
 die Feldliste des Panels. Am Ende PyYAML.
@@ -1463,7 +1463,7 @@ keinen Namen. Ohne `label_field` stünde `fullscreen · true` da: Eine Auswahl
 formatiert HA als rohen Wert, einen Schalter als `true`.
 
 Der Ausweg ist ein **dünner eigener Editor** um HAs `ha-form`
-(`hats-control-card-editor`). Er legt jedem Knopf zwei Anzeigefelder
+(`glaswerk-bar-editor`). Er legt jedem Knopf zwei Anzeigefelder
 `_zeile` und `_zeile_unter` bei, nur solange der Editor offen ist, und nimmt
 sie vor jedem `config-changed` wieder heraus. Ihr Wähler ist `constant` mit
 leerer Beschriftung: `ha-selector-constant` zeichnet `label ?? value`, und
@@ -1509,7 +1509,7 @@ Kapsel nachzieht, im nächsten Bild, damit der Neubau ihn nicht im selben
 Durchlauf wieder auslöst. Zurück zu weniger Liste geht es nur bei einer neuen
 Kartenbreite; wird ein Wert schmaler, bleibt es beim Plan.
 
-`tests/hats-steuerkarte-editor.test.js`: 12 Prüfungen, die Leiste des
+`tests/glaswerk-bar-editor.test.js`: 12 Prüfungen, die Leiste des
 Maintainers wörtlich, die Beschriftung nach HAs eigener Regel nachgebaut,
 mit der Gegenprobe, dass es vorher vier leere Zeilen waren. Fünf Mutationen
 gegengeprüft.
@@ -1535,7 +1535,7 @@ einzelnen Funktionen bleiben auch — die Steuerkarte im Panel benutzt sie.
 gezogen wurde, und die Darstellung nur für die gezogenen Felder.
 
 **Modus und Vollbild bleiben bedienbar, wenn die Datei gesperrt ist** — kein
-Administrator, keine HATS-Theme. Dann fallen nur die Regler weg, mit dem
+Administrator, keine Glaswerk-Theme. Dann fallen nur die Regler weg, mit dem
 Grund als Satz. Ein Fenster, das wegen einer Datei auch den Modus verweigert,
 wäre schlechter als die vier Knöpfe vorher.
 
@@ -1552,7 +1552,7 @@ neu geladen, Kiosk an, Kopfzeile weg.
 An der Testmaschine, auf der Leiste des Maintainers (vorher gesichert als
 `testmaschine-hats-test-2026-10-14-vor-einstellungen.json`): Fenster bei 693 px
 und bei 375 px, Modus hin und zurück, Vollbild an und aus, danach alles wie
-vorher. `tests/hats-steuerkarte-fenster.test.js`: neun Prüfungen mit
+vorher. `tests/glaswerk-bar-fenster.test.js`: neun Prüfungen mit
 `glaswerk.yaml`, drei Mutationen gegengeprüft.
 
 ### An Stelle von Home Assistants Kopfzeile: `replace_header`
@@ -1561,7 +1561,7 @@ Auf Ansage vom 14.10.2026: *„ja mach mal. wenn das geht bauen wir unser
 eigenes HA."* Auf die Frage, ob die Leiste HAs Kopfzeile ganz ersetzen kann.
 
 ```yaml
-type: custom:hats-control-card
+type: custom:glaswerk-bar
 replace_header: true
 ```
 
@@ -1612,7 +1612,7 @@ auf `eigene` wieder weg). Eine Leiste nimmt ihren Wunsch beim Aushängen zurück
 die Kopfzeile ausblendet, ist ein `<style>` in `hui-root`; baut Home Assistant
 die Kopfzeile um, muss `KOPF_REGELN` nachziehen.
 
-`tests/hats-steuerkarte-kopfzeile.test.js`: neun Prüfungen, darunter die
+`tests/glaswerk-bar-kopfzeile.test.js`: neun Prüfungen, darunter die
 Kapsel mit dem Knopf davor, mit Mutation gegengeprüft.
 
 ### Das Einstellungsfenster
@@ -1640,14 +1640,14 @@ Strecke wie das Panel. Ein Klick auf das Teil, das schon sitzt, schreibt
 nichts, wie dort.
 
 **In der Kartendatei, nicht in einem eigenen Modul.** Ein zweites Modul hätte
-die Karte über `./hats-control-card.js` ein zweites Mal geladen — HA lädt sie
+die Karte über `./glaswerk-bar.js` ein zweites Mal geladen — HA lädt sie
 mit `?v=…`, der relative Import ohne, also zwei Adressen, zwei Auswertungen,
 und die Lauscher fürs Vollbild doppelt.
 
 **Neu dabei:** die Weichzeichnung als Regler (nur die Zahl im `blur()`, der
-Rest der Filterkette bleibt), eigene Bilder aus `/local/hats` (geprüft gegen
+Rest der Filterkette bleibt), eigene Bilder aus `/local/glaswerk` (geprüft gegen
 `BILD_ADRESSE`, für hell und dunkel zugleich, fest am Fenster), die Wahl der
-Theme, und frühere Fassungen aus `hats/list_backups` — zurückgeholt wird über
+Theme, und frühere Fassungen aus `glaswerk/list_backups` — zurückgeholt wird über
 `save_theme`, das dabei die geltende Fassung sichert.
 
 **Gemessen, alles an der Testmaschine:**
@@ -1695,7 +1695,7 @@ gesetzt und gemessen, Menüknopf oben gegen die Symbole darunter:
     sehr weit    18 / 10     Zeilen 66 px
 
 Der Fehler steckt in den Teilen, nicht im Fenster — das Panel bietet sie
-genauso an. Gemeldet an HATS Aufbau. Zurück ins Fenster, sobald die Dichte nur
+genauso an. Gemeldet an Glaswerk Aufbau. Zurück ins Fenster, sobald die Dichte nur
 das Dashboard trifft.
 
 **Bearbeiten und Vollbild stehen oben im Fenster**, neben dem Schliessen —
@@ -1708,7 +1708,7 @@ sehen nur Administratoren, wie in HAs eigener Kopfzeile.
 Einspielen. Seitdem: `pruefen.sh` in eine Datei, Exit-Code prüfen, nur bei 0
 einspielen.
 
-`tests/hats-steuerkarte-fenster.test.js`: 17 Prüfungen, darunter die sechs
+`tests/glaswerk-bar-fenster.test.js`: 17 Prüfungen, darunter die sechs
 Teile von glaswerk — die Erwartung steht im Kopf der Datei selbst —, Teil,
 Bild und Weichzeichnung durch PyYAML. Vier Mutationen gegengeprüft; eine
 fünfte (leerer Wert geschrieben statt entfernt) ist gleichwertig, weil
@@ -1743,13 +1743,13 @@ Gemessen an der Testmaschine, `glaswerk` im Dunkelmodus:
     Lichtkante aus         die Datei Byte für Byte die von vorher
     Telefon 375 px         Zeilen umbrechen, Schalter bleiben rechts
 
-`tests/hats-steuerkarte-fenster.test.js`: sieben Prüfungen dazu. Das Orakel
+`tests/glaswerk-bar-fenster.test.js`: sieben Prüfungen dazu. Das Orakel
 sind die Marker im Text der Datei, nicht `vorlageIstAn`. Vier Mutationen
 gegengeprüft, am Ende PyYAML.
 
 ### Die Dialogfläche zieht mit der Transparenz mit
 
-Gemeldet über HATS Aufbau: *„im dunkelmodus stimmt die kartenfarbe von den
+Gemeldet über Glaswerk Aufbau: *„im dunkelmodus stimmt die kartenfarbe von den
 einstellungen nicht zur theme"*. Der Regler schrieb nur
 `--ha-card-background`; bei 76 Prozent waren die Karten durchsichtig, das
 Fenster davor blieb bei 0,9. Auf Ansage vom 15.10.2026 (*„ja bitte
@@ -1773,7 +1773,7 @@ Ein Test hält genau das fest, damit es niemand für einen neuen Fehler hält.
 Gemessen an der Testmaschine, glaswerk dunkel: 54 → 76 Prozent änderte genau
 zwei Zeilen (Karte 0,46 → 0,24, Fenster 0,9 → 0,68), das Fenster zeichnete
 sofort mit 0,68. Zurück auf 54: die Datei Byte für Byte die von vorher.
-`tests/hats-steuerkarte-darstellung.test.js`, drei Mutationen gegengeprüft.
+`tests/glaswerk-bar-darstellung.test.js`, drei Mutationen gegengeprüft.
 
 ### Ein Badge mit Fehlermeldung, von mir verursacht
 
@@ -1796,7 +1796,7 @@ Auf Ansage vom 13.10.2026, mit einem Bild des Badge-Wählers: *„kannst dafür
 auch noch eine kleine version bauen"*.
 
 ```yaml
-type: custom:hats-control-badge     # dieselben Felder wie die Karte
+type: custom:glaswerk-bar-badge     # dieselben Felder wie die Karte
 ```
 
 Dieselben Knöpfe, in Home Assistants eigener Badge-Pille. Beide Formen stehen
@@ -1858,7 +1858,7 @@ eine Zeile dafür.
 **In der Liste steht es über `window.customBadges`**, nicht über
 `customCards` — Home Assistant führt Badges getrennt. Und es gilt dieselbe
 Falle wie bei der Karte: Der Dialog öffnet auf „Nach Entität"; das Badge
-steht unter **„Nach Badge" → Community-Badges** als „HATS Steuerung".
+steht unter **„Nach Badge" → Community-Badges** als „Glaswerk Steuerung".
 
 **Dabei gefunden: `glas-badges` trifft den Wirt, nicht die Pille.** Bis zu
 diesem Badge gab es auf der Testmaschine kein einziges, die Vorlage war also
@@ -1882,14 +1882,14 @@ Zuerst war die Karte ein zusätzliches Modul der Oberfläche
 (`frontend.add_extra_js_url`), mit der Begründung, eine Ressource bliebe in der
 Konfiguration des Nutzers liegen. Eine Stunde später die Meldung, mit Bild:
 
-    Custom element doesn't exist: hats-control-card.
+    Custom element doesn't exist: glaswerk-bar.
 
 Der Server lieferte alles richtig aus, und in meinem Browser lief die Karte.
 **Der Unterschied war der Browser.** Ein zusätzliches Modul steht als Zeile
 **in der Seite**, die Home Assistant ausliefert:
 
 ```js
-import("/hats_static/hats-control-card.js?v=0.2.0b3.6fa5ce2e")
+import("/glaswerk_static/glaswerk-bar.js?v=0.2.0b3.6fa5ce2e")
 ```
 
 Und die Seite gibt Home Assistants Service Worker beim ersten Laden aus dem
@@ -1918,13 +1918,13 @@ Nutzers: Den sehe ich nicht. Die Erklärung passt auf alles, was zu sehen war.
 **Die Ressourcenliste holt die Oberfläche über den Websocket**
 (`lovelace/resources`), und der geht am Service Worker vorbei. Sie kann nicht
 veraltet sein; ein Neuladen genügt immer. Es ist der Weg, auf dem jede Karte
-aus HACS ankommt. `custom_components/hats/karte.py` gleicht ab:
+aus HACS ankommt. `custom_components/glaswerk/karte.py` gleicht ab:
 
     kein Eintrag         anlegen
     andere Prüfsumme     denselben Eintrag erneuern
     alles stimmt         nichts schreiben
     doppelt              einer bleibt
-    fremde Einträge      bleiben, auch `/local/hats-control-card.js`
+    fremde Einträge      bleiben, auch `/local/glaswerk-bar.js`
 
 An der Testmaschine: 8 Ressourcen vorher, 9 nachher, nach zwei Reloads der
 Integration immer noch 9, und in der Seite steht keine Zeile mehr.
@@ -1938,7 +1938,7 @@ Was dabei zu wissen ist:
   (`async_remove_entry`). Fiele er bei jedem Reload heraus, zeigte jedes offene
   Dashboard kurz einen Fehler. Wer nur den Ordner löscht, statt die Integration
   zu entfernen, behält den Eintrag; er lädt dann nichts mehr.
-- **`lovelace` steht in den Abhängigkeiten.** Sonst kann HATS vor Lovelace
+- **`lovelace` steht in den Abhängigkeiten.** Sonst kann Glaswerk vor Lovelace
   starten, und die Liste gibt es noch nicht.
 - **Stehen die Ressourcen in YAML**, ist die Liste nicht beschreibbar. Dann
   bleibt das zusätzliche Modul als Ausweg, mit dem Nachteil von oben; im Log
@@ -1949,7 +1949,7 @@ Was dabei zu wissen ist:
   Log und nimmt den Ausweg. Das Panel startet in jedem Fall.
 
 `karte.py` importiert Home Assistant absichtlich nicht.
-`tests/hats-kartenanmeldung.test.js` fährt den Abgleich mit python3 gegen einen
+`tests/glaswerk-kartenanmeldung.test.js` fährt den Abgleich mit python3 gegen einen
 Nachbau der Liste, vierzehn Prüfungen.
 
 **Zwei Fehler im Test, bevor er saß — beide im Nachbau, keiner im Abgleich.**
@@ -1989,7 +1989,7 @@ Wert trägt `fixed`.** Bei den Farbpunkten wegen ihrer Lage — die Begründung
 steht unter *Wer malt, und wie groß*. Beim ruhigen Verlauf wegen der
 Seitenleiste: Mitlaufend beginnt die Fläche erst rechts von ihr, und eine
 durchscheinende Leiste steht dann vor Home Assistants flachem `#111111` statt
-vor dem Verlauf. Von „HATS Aufbau" über `_applyTheme()` gemessen: ohne das Wort
+vor dem Verlauf. Von „Glaswerk Aufbau" über `_applyTheme()` gemessen: ohne das Wort
 658 × 2557 px ab x = 256, mit ihm 914 × 863 px ab x = 0.
 
 **Erkannt wird ein Hintergrund ohne Rücksicht auf `fixed`.** `erkenneTeil()`
@@ -2218,7 +2218,7 @@ Schicht liegt über `hui-view-background` und unter den Karten — und sie war d
 einzige, die auch hinter den **Einstellungsseiten** zu sehen war.
 
 Genau gesagt, weil der erste Satz hier ungenau war: `ha-drawer` selbst weiß
-davon nichts, in seinen `elementStyles` kommt der Name nicht vor (von „HATS
+davon nichts, in seinen `elementStyles` kommt der Name nicht vor (von „Glaswerk
 Aufbau" nachgemessen). Es ist der Aufsatz, den UIX auf dieses Bauteil setzt:
 Er fragt `getComputedStyle()` des Drawers. Richtig bleibt, dass die Variable
 nicht zu `hui-root` gehört.
@@ -2229,14 +2229,14 @@ die Seitenleiste zu bringen; das tut das Wort `fixed`. Im Bündel steht dazu ein
 Schalter: Hat `--uix-view-background-cover` den Wert `full`, setzt UIX oben und
 links auf 0. **Gelesen, nicht gemessen.**
 
-HATS benutzt die Schicht nicht. Der Name ist doppelt belegt:
+Glaswerk benutzt die Schicht nicht. Der Name ist doppelt belegt:
 `uix-view-background` ist zugleich das Stilziel dieser Schicht und ihr Wert.
 
 ### Messen
 
 ```bash
-node tests/hats-hintergrund.test.js            Farbverläufe und Vorlagen, ohne Instanz, 32 Prüfungen
-node tests/hats-hintergrund-seite.test.js      Hintergründe und Baukasten-Seite, 21 Prüfungen
+node tests/glaswerk-hintergrund.test.js            Farbverläufe und Vorlagen, ohne Instanz, 32 Prüfungen
+node tests/glaswerk-hintergrund-seite.test.js      Hintergründe und Baukasten-Seite, 21 Prüfungen
 node werkzeuge/test/hintergrund-messen.mjs     Testmaschine und Chrome, 28 Prüfungen
 node werkzeuge/test/hintergrund-messen.mjs --bilder <ordner>    dazu Bilder von jedem Schritt
 ```
@@ -2318,7 +2318,7 @@ volle Entitäts-ID als `data-entity`.
 Am 14.10.2026 gemessen, nachdem der Maintainer den
 [card-mod-Leitfaden](https://community.home-assistant.io/t/mushroom-cards-card-mod-styling-config-guide/600472)
 geschickt hat. Der arbeitet mit `$`, pierct also durch jede Shadow-Grenze.
-**Das kann HATS nicht** — UIX hängt sein `<style>` in den Shadow Root des
+**Das kann Glaswerk nicht** — UIX hängt sein `<style>` in den Shadow Root des
 Karten-Elements, und dort endet jeder Selektor an der nächsten Grenze.
 
 Was trotzdem geht, und zwar überraschend viel: **CSS-Variablen erben durch
@@ -2383,13 +2383,13 @@ direkt im Shadow Root der Karte. Dort greift `--shape-color !important`
 sofort, und `.shape` eine Grenze tiefer nimmt den Wert an. Dieselbe Mechanik,
 ein Element weniger dazwischen.
 
-**Was HATS damit NICHT kann:** alles, was kein Variablenende hat. Der
+**Was Glaswerk damit NICHT kann:** alles, was kein Variablenende hat. Der
 Leitfaden setzt etwa `.slider-track-active { border-radius }` direkt — dafür
 gibt es keine Variable, und dafür braucht man card-mod oder HATG.
 
 ## Die 86 Zustandsfarben sind keine Farben, sondern Verweise
 
-Am 14.10.2026 gemessen, auf die Frage, ob HATS sich aus der alten Ebene
+Am 14.10.2026 gemessen, auf die Frage, ob Glaswerk sich aus der alten Ebene
 holen soll, was fehlt. Die Antwort fiel kleiner aus als die Frage.
 
 Home Assistant definiert 86 Felder der Form `--state-<domaene>-<zustand>-color`.
@@ -2471,7 +2471,7 @@ gelassen, und Mushroom folgt mal der einen und mal keiner. In einer reinen
 Alt-Welt waeren die vier wahrscheinlich gleich gewesen — weil alle vier
 dieselbe eine Variable gelesen haetten.
 
-**Woran HATS das nicht aendert:** Die Richtung stimmt trotzdem. 15
+**Woran Glaswerk das nicht aendert:** Die Richtung stimmt trotzdem. 15
 Entscheidungen statt 798, und Ueberfahr- und Druckzustaende kommen von selbst.
 Nur darf man nicht behaupten, der neue Weg koenne alles, was der alte konnte.
 Einen Pixelwert festnageln kann er nicht.
@@ -2626,7 +2626,7 @@ Was card-mod dort mühsam durch zwei Shadow-Grenzen bohrt — schlanke Spur,
 größerer Daumen, Glühen im Ein-Zustand —, sind **gewöhnliche Theme-Felder**.
 Kein UIX, kein card-mod.
 
-**Die Ausweichwerte sind HAs neue Farbebene**, also genau HATS' Grundlage:
+**Die Ausweichwerte sind HAs neue Farbebene**, also genau Glaswerk' Grundlage:
 
     --ha-switch-checked-background-color  ->  --ha-color-fill-primary-normal-resting
     --ha-switch-checked-border-color      ->  --ha-color-border-primary-loud
@@ -2634,17 +2634,17 @@ Kein UIX, kein card-mod.
 
 Gemessen an glaswerk: keines der `--ha-switch-*` ist gesetzt, und der Schalter
 trägt trotzdem die Farben der Theme (`#dfeafc` aus der Rolle primary). Eine
-HATS-Theme steuert ihn also schon heute — über die Rolle, nicht über das Feld.
+Glaswerk-Theme steuert ihn also schon heute — über die Rolle, nicht über das Feld.
 
 **Keines der dreizehn Felder bietet das Panel an.** Und: **Mushroom und Bubble
 benutzen `ha-switch` nicht** (gemessen, beide false) — sie zeichnen ihre
 Schalter selbst. Der Schalter ist damit eine Sache für Home Assistant allein.
 
-## Die Regler der drei Familien: was von HATS aus geht
+## Die Regler der drei Familien: was von Glaswerk aus geht
 
 Am 14.10.2026 an der Vergleichsseite durchgemessen, nachdem der Maintainer
 zwei Sammlungen von card-mod-Rezepten geschickt hat. Die Rezepte greifen mit
-`$` durch jede Shadow-Grenze; HATS kann das nicht. **Trotzdem geht das
+`$` durch jede Shadow-Grenze; Glaswerk kann das nicht. **Trotzdem geht das
 meiste** — nur über andere Hebel, und für jede Familie über einen anderen.
 
 | | HA-Kachel | Mushroom | Bubble |
@@ -2752,7 +2752,7 @@ Testmaschine fuehrt sie in die Irre. Port 80 am Mac ist frei und soll es
 bleiben — ihn zu belegen braucht Admin-Rechte und bringt nichts.
 
 Eine QEMU-Maschine auf dem Mac, kein Container. HACS, UIX 8.4.0, Bubble Card,
-Mushroom, HATG und HATS sind installiert. Die Instanz im Heimnetz
+Mushroom, HATG und Glaswerk sind installiert. Die Instanz im Heimnetz
 (`192.168.178.31`) bleibt in Ruhe und wird nur noch angefasst, wenn
 ausdrücklich etwas **dort** zu prüfen ist.
 
@@ -2768,7 +2768,7 @@ ausdrücklich etwas **dort** zu prüfen ist.
 
 ### Die Werkzeuge der Maschine
 
-Sie liegen bei der Maschine, nicht im Projekt — sie gehören ihr, nicht HATS:
+Sie liegen bei der Maschine, nicht im Projekt — sie gehören ihr, nicht Glaswerk:
 
     ./starten.sh / ./stoppen.sh     Maschine an und aus
     ./konsole.py "<befehl>"         Shell in der Maschine, ueber die serielle Konsole
@@ -2794,7 +2794,7 @@ specified`, und sieben Dateien fehlten. Der Fehler sieht aus wie ein
 curl-Problem und ist ein Längenproblem. Deshalb geht das Einspielen in Blöcken
 zu drei Dateien.
 
-**Der Reload bleibt nötig**, aus demselben Grund wie im Heimnetz: `/hats_static`
+**Der Reload bleibt nötig**, aus demselben Grund wie im Heimnetz: `/glaswerk_static`
 trägt kein `Cache-Control`, und dann darf ein Browser heuristisch cachen. Erst
 eine neue Prüfsumme in der Adresse bringt den neuen Stand durch, und die wird
 nur beim Setup gerechnet. Für Python reicht ein Reload nicht — er ruft
@@ -2807,13 +2807,13 @@ Modul auf.
 Arbeitsplatz ist die Testinstanz oben.
 
 **Und seit dem 13.10.2026 gibt es dorthin keinen Dateizugang mehr.** HATG und
-HATS sind als Integration entfernt und ihre Ordner nach
-`/config/entfernt-2026-10-13/` verschoben (samt `sync-hats.sh`); das Add-on
+Glaswerk sind als Integration entfernt und ihre Ordner nach
+`/config/entfernt-2026-10-13/` verschoben (samt `sync-glaswerk.sh`); das Add-on
 Studio Code Server ist deinstalliert. Was bleibt, ist die Weboberflaeche und
 die Websocket-Schnittstelle — also Dashboards, Entitaeten und Einstellungen,
 aber **keine Datei**. Die Theme `liquid_glass` liegt dort autark und auf dem
 Stand vom 13.10.2026; sie braucht keinen Generator, es steht keine Adresse und
-kein `var(--hats-*)` darin.
+kein `var(--glaswerk-*)` darin.
 
 Wer dort wieder schreiben muss, braucht erst wieder ein Add-on (Studio Code
 Server oder File Editor) oder Samba. Das ist Absicht: Das Haus soll Ruhe

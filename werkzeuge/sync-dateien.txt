@@ -1,6 +1,6 @@
 # Erzeugt von werkzeuge/sync-liste-bauen.sh - nicht von Hand aendern.
 # Links der Pfad beim Entwicklungsrechner, rechts nach | das Ziel auf
-# der Instanz. Ohne | landet die Datei unter /config/custom_components/hats.
+# der Instanz. Ohne | landet die Datei unter /config/custom_components/glaswerk.
 
 __init__.py
 config_flow.py
@@ -13,8 +13,8 @@ translations/de.json
 translations/en.json
 www/baukasten.js
 www/bedienelemente.js
-www/hats-control-card.js
-www/hats-panel.js
+www/glaswerk-bar.js
+www/glaswerk-panel.js
 www/hintergrund-seite.js
 www/hintergrund.js
 www/palette.js
@@ -37,12 +37,12 @@ www/hilfe/meldungen.jpg
 www/hilfe/schalter-knoepfe.jpg
 www/hilfe/schrift.jpg
 
-werkzeuge/vorschau.js|/config/www/hats-vorschau.js
+werkzeuge/vorschau.js|/config/www/glaswerk-vorschau.js
 werkzeuge/themes/liquid_glass.yaml|/config/themes/liquid_glass.yaml
 werkzeuge/themes/macos.yaml|/config/themes/macos.yaml
 
-# Die Grundlage fuer jede neue Theme. HATS laedt sie ueber
-# hats/load_theme_file aus dem Themes-Ordner und erwartet den Namen MIT
+# Die Grundlage fuer jede neue Theme. Glaswerk laedt sie ueber
+# glaswerk/load_theme_file aus dem Themes-Ordner und erwartet den Namen MIT
 # Unterstrich - lokal heisst sie mit Bindestrich. Fehlt sie, meldet das
 # Panel nur "Grundlage nicht geladen" und jede neue Theme bleibt leer.
 docs/beispiele/ha-blanko.yaml|/mnt/data/supervisor/homeassistant/themes/ha_blanko.yaml

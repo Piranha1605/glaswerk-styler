@@ -1,10 +1,10 @@
-# HATS — Home Assistant Theme Studio
+# Glaswerk — Home Assistant Theme Studio
 
 A panel for the Home Assistant sidebar for building a complete theme visually —
 built on the colour layer of HA 2026 rather than on the classic individual
 variables.
 
-**Status: 0.2.0b5, work in progress.** HATS reads and writes themes, ships a
+**Status: 0.2.0b5, work in progress.** Glaswerk reads and writes themes, ships a
 kit of ready-made parts and a control card for dashboards. It is not released
 yet.
 
@@ -16,7 +16,7 @@ own: six roles (`primary`, `neutral`, `success`, `warning`, `danger`,
 (`resting`, `hover`, `active`). **15 decisions** produce 51 fill colours and 19
 text colours.
 
-HATS builds on exactly that. The guiding rule: **only change what you can see.**
+Glaswerk builds on exactly that. The guiding rule: **only change what you can see.**
 
 And because Bubble Card and Mushroom can read their variables from the same
 layer, one assignment covers light and dark at once — no UI eXtension, no CSS
@@ -28,16 +28,16 @@ What comes out at the end is an ordinary theme file.
 ## Relationship to HATG
 
 [HATG](https://github.com/Piranha1605/ha-theme-generator) stays in service and
-continues to be maintained. HATS does not replace it — it is a second, simpler
+continues to be maintained. Glaswerk does not replace it — it is a second, simpler
 route, deliberately in its own repository with its own integration domain so
 both can be installed side by side.
 
-One rule when running both: **a theme belongs to one tool.** A HATS theme
+One rule when running both: **a theme belongs to one tool.** A Glaswerk theme
 survives HATG's import intact — every reference stays verbatim — but HATG adds
 its own defaults. Don't edit the same file in both.
 
 The measured knowledge about Home Assistant, Bubble Card and Mushroom lives in
-HATG's `CLAUDE.md` and in `docs/uebergabe-neues-projekt.md`. HATS builds on it
+HATG's `CLAUDE.md` and in `docs/uebergabe-neues-projekt.md`. Glaswerk builds on it
 instead of working it out again.
 
 ## What comes out of it
@@ -50,7 +50,7 @@ with what the fields did.
 
 ![The same dashboard without a theme, in dark mode](docs/bilder/vergleich-1-vorher.jpg)
 
-**With a HATS theme — the fields alone.** Apple's system colours, glass on the
+**With a Glaswerk theme — the fields alone.** Apple's system colours, glass on the
 cards, corner radii, shadows, a background of four colour islands. This is an
 ordinary theme file: no UI eXtension, no CSS rule, no shadow DOM path.
 
@@ -89,14 +89,14 @@ matches in all six categories.
 
 ## The control card
 
-HATS ships a card for dashboards: a bar of buttons. Each one is a target, a
+Glaswerk ships a card for dashboards: a bar of buttons. Each one is a target, a
 switch or a built-in function — mode, light/dark, fullscreen, weather.
 
 ![The bar in dark mode](docs/bilder/steuerleiste-dunkel.jpg)
 ![The bar in light mode, in fullscreen](docs/bilder/steuerleiste-hell.jpg)
 
 ```yaml
-type: custom:hats-control-card
+type: custom:glaswerk-bar
 buttons:
   - name: Home
     icon: mdi:home-outline
@@ -139,11 +139,11 @@ Without `buttons` it shows mode and fullscreen — the short form:
 **The bar**
 
 It appears in the card picker as soon as the integration is set up and the
-page has been reloaded once — on the **"By card"** tab, search for "HATS". The
+page has been reloaded once — on the **"By card"** tab, search for "Glaswerk". The
 dialog opens on "By entity", and the card is not listed there: it has no
 entity.
 
-There is no resource to register. HATS adds the card to the list under
+There is no resource to register. Glaswerk adds the card to the list under
 Settings → Dashboards → Resources itself and removes it again when the
 integration is removed. Only if you keep your resources in YAML do you add it
 by hand; the log shows the line.
@@ -166,7 +166,7 @@ opens four sliders — drift, colour dots, colour shift and range:
 
 The values are permanent: on release the card writes them into the file of the
 active theme, using the same functions as the panel. This works for
-administrators only, and only for a theme created with HATS; otherwise the
+administrators only, and only for a theme created with Glaswerk; otherwise the
 slider says why not.
 
 **Transparency and text size** are set by a button with `function: appearance`,
@@ -194,7 +194,7 @@ Settings — sections on the left, choices on the right:
 | Section | contains |
 |---|---|
 | Appearance | mode, card style, colour palette, card transparency and blur |
-| Background | the kit's gradients and your own images from `config/www/hats` |
+| Background | the kit's gradients and your own images from `config/www/glaswerk` |
 | Text and size | size, typeface, corners |
 | Motion | drift, colour dots, colour shift, range |
 | UIX templates | every template from the panel with a switch, grouped by cards, interface and background — works only with UI eXtension |
@@ -231,7 +231,7 @@ button's name, or without one its target, entity or function:
 ![The editor with the list of buttons](docs/bilder/steuerleiste-editor.jpg)
 
 The fields are those of the menu card from the Horizon Cards. A bar from there
-keeps working once `type` is `custom:hats-control-card`. Not taken over yet:
+keeps working once `type` is `custom:glaswerk-bar`. Not taken over yet:
 `visibility`, `#anchor` links, `hold_action`, `double_tap_action` and
 `placement: bottom`.
 
@@ -243,15 +243,15 @@ The same control exists in a small form, for the badge row above the cards:
 ![The badge in dark mode](docs/bilder/steuerbadge-dunkel.jpg)
 
 ```yaml
-type: custom:hats-control-badge
+type: custom:glaswerk-bar-badge
 ```
 
 The badge is the small control, not the bar: it takes `controls` (`mode`,
 `fullscreen`) and `kiosk_only`. Targets, switches and weather belong in the
 card. In the badge picker it is listed on the **"By badge"** tab, section
-Community badges, as "HATS control":
+Community badges, as "Glaswerk control":
 
-![The badge picker showing the HATS control](docs/bilder/steuerbadge-waehler.jpg)
+![The badge picker showing the Glaswerk control](docs/bilder/steuerbadge-waehler.jpg)
 
 Everything the card uses is provided by Home Assistant: the elements, the
 icons, the colour variables and the two switches behind it. It therefore
@@ -273,7 +273,7 @@ Worth knowing:
 
 ## Installation
 
-Not via HACS yet. To try it, copy the `custom_components/hats` folder into
+Not via HACS yet. To try it, copy the `custom_components/glaswerk` folder into
 `config/custom_components/`, restart Home Assistant and add the integration
 under Settings → Devices & Services.
 
@@ -281,8 +281,8 @@ Requires Home Assistant 2026.10.0 or newer.
 
 ## Backups
 
-Before HATS overwrites a theme file — from the panel or from the control
-card — it stores the previous version under `config/hats/sicherungen/<name>/`,
+Before Glaswerk overwrites a theme file — from the panel or from the control
+card — it stores the previous version under `config/glaswerk/sicherungen/<name>/`,
 with date and time in the name. The last ten per theme are kept. The file is
 written to a helper file first and then renamed in one step; if something
 breaks off, the old file stays as it was.

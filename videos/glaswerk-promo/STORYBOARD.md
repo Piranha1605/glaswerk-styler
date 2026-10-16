@@ -24,7 +24,7 @@ laeuft **ein** Lichtstreifen — der traveling sheen aus `ambient-glow-bloom`,
 nicht blinkend, einmal.
 
 **NUR UNSERE KARTEN UND WIDGETS** — Horizon-Cards, Horizon-Widgets und die
-HATS-Steuerleiste. Kein Bubble, kein Mushroom.
+Glaswerk Bar. Kein Bubble, kein Mushroom.
 
 Hier stand bis zum 15.10.2026 das Gegenteil ("nur Karten, die Home Assistant
 selbst mitbringt"), und das war meine Fehllesung einer Ansage. Die Ansage

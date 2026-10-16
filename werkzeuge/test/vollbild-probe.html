@@ -37,7 +37,7 @@
 </div>
 <pre id="protokoll"></pre>
 <script type="module">
-  import "/custom_components/hats/www/hats-control-card.js";
+  import "/custom_components/glaswerk/www/glaswerk-bar.js";
 
   const stand = window.stand = { kiosk: [], vollbild: [] };
   const zeige = () => {
@@ -50,7 +50,7 @@
   let hass = { language: "de", kioskMode: false, selectedTheme: null,
                themes: { theme: "default", themes: {} } };
   const karten = [["beide", {}], ["nurkiosk", { kiosk_only: true }]].map(([wo, extra]) => {
-    const k = document.createElement("hats-control-card");
+    const k = document.createElement("glaswerk-bar");
     k.setConfig({ controls: ["fullscreen"], ...extra });
     k.hass = hass;
     document.getElementById(wo).append(k);

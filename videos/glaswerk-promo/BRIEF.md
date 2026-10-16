@@ -12,7 +12,7 @@ angle: product-promo
 
 ## Intent
 
-Werbevideo fuer **Glaswerk**, die Theme des HATS-Projekts (Home Assistant Theme
+Werbevideo fuer **Glaswerk**, die Theme des Glaswerk-Projekts (Home Assistant Theme
 Studio). Es soll zeigen, dass Glaswerk nicht eine Einstellung unter vielen ist,
 sondern eine durchgehende Handschrift: dieselbe Glasfläche auf dem Dashboard,
 in den Karten, in den Widgets und bis in die Einstellungsseiten hinein.
@@ -39,8 +39,8 @@ Komposition **aus den echten Theme-Werten nachgebaut** - dieselben
   kein Ueberblenden zweier Bilder.
 
 Quelle der Werte: `werkzeuge/themes/glaswerk.yaml` und
-`custom_components/hats/www/baukasten.js` (KARTENSTILE, HINTERGRUENDE) im
-HATS-Repository.
+`custom_components/glaswerk/www/baukasten.js` (KARTENSTILE, HINTERGRUENDE) im
+Glaswerk-Repository.
 
 ## Customizations
 
@@ -56,5 +56,5 @@ HATS-Repository.
 - Zuerst nur YouTube, 16:9. Eine hochkante Fassung kann spaeter folgen; der
   Text liegt deshalb in Variablen.
 - Deutsch. Eine englische Fassung ist vorgesehen, aber nicht Teil dieses Laufs.
-- Der Name im Bild ist **Glaswerk**, nicht HATS - HATS ist das Werkzeug, das
+- Der Name im Bild ist **Glaswerk** - der Styler ist das Werkzeug, das
   sie baut.

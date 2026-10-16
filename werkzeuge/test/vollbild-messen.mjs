@@ -35,7 +35,7 @@ try {
   process.exit(1);
 }
 
-const profil = mkdtempSync(path.join(tmpdir(), "hats-vollbild-"));
+const profil = mkdtempSync(path.join(tmpdir(), "glaswerk-vollbild-"));
 const chrome = spawn(CHROME, [
   "--headless=new", `--remote-debugging-port=${PORT}`, `--user-data-dir=${profil}`,
   "--no-first-run", "--no-default-browser-check", "--window-size=900,700", "about:blank",
@@ -81,10 +81,10 @@ try {
       await ruf("Input.dispatchMouseEvent", { type, x: p.x, y: p.y, button: "left", clickCount: 1 });
     }
   };
-  const klick = (wo) => klickAuf(`document.querySelector("#${wo} hats-control-card").shadowRoot.querySelector(".knopf")`);
+  const klick = (wo) => klickAuf(`document.querySelector("#${wo} glaswerk-bar").shadowRoot.querySelector(".knopf")`);
   const stand = () => lies(`({ kiosk: stand.kiosk.slice(), vollbild: stand.vollbild.slice(),
     element: document.fullscreenElement ? document.fullscreenElement.tagName : null,
-    gedrueckt: [...document.querySelectorAll("hats-control-card")].map((k) => k.shadowRoot.querySelector(".knopf").getAttribute("aria-pressed")) })`);
+    gedrueckt: [...document.querySelectorAll("glaswerk-bar")].map((k) => k.shadowRoot.querySelector(".knopf").getAttribute("aria-pressed")) })`);
   const leere = () => lies(`(stand.kiosk.length = 0, stand.vollbild.length = 0, true)`);
   // Warten, bis die Seite zur Ruhe gekommen ist - nicht eine feste Zeit.
   // fullscreenchange kommt erst mit dem naechsten gezeichneten Bild, und ein

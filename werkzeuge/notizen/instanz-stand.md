@@ -27,14 +27,14 @@ geaendert. Unter `selectedTheme` liegt seitdem ein Eintrag in den Nutzerdaten,
 den niemand liest; er stoert nicht. Angefasst habe ich die Instanz dafuer
 nicht noch einmal.
 
-Aktiv war zu dem Zeitpunkt uebrigens `hats_studio`, nicht `hats_test` - die
+Aktiv war zu dem Zeitpunkt uebrigens `glaswerk_studio`, nicht `hats_test` - die
 Profilwahl und das, was wirkt, koennen auseinanderlaufen. Gemessen wird deshalb
 immer mit `getComputedStyle`, nie am Theme-Objekt.
 
 **Neue Datei** `/config/themes/liquid_glass.yaml` (30 590 Bytes), erzeugt mit
 `werkzeuge/liquid-glass-bauen.mjs`. Sie ueberschreibt nichts.
 
-**Laufende Schleife** `/config/sync-hats.sh` (Log: `/config/sync-hats.log`).
+**Laufende Schleife** `/config/sync-glaswerk.sh` (Log: `/config/sync-glaswerk.log`).
 Holt alle drei Sekunden Aenderungen vom Entwicklungsrechner. Beenden mit
-`touch /config/sync-hats.stop`. Sie endet ausserdem von allein - nach acht
+`touch /config/sync-glaswerk.stop`. Sie endet ausserdem von allein - nach acht
 Stunden oder wenn der Entwicklungsrechner zwanzigmal nicht antwortet.

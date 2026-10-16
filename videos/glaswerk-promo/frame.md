@@ -1,8 +1,8 @@
 # Glaswerk — Gestaltungswahrheit
 
 Die Marke dieses Videos ist die Theme selbst. Jeder Wert hier steht so in
-`werkzeuge/themes/glaswerk.yaml` und in `custom_components/hats/www/baukasten.js`
-des HATS-Repositories. **Nichts davon wird nachempfunden** — es wird eingesetzt.
+`werkzeuge/themes/glaswerk.yaml` und in `custom_components/glaswerk/www/baukasten.js`
+des Glaswerk-Repositories. **Nichts davon wird nachempfunden** — es wird eingesetzt.
 
 ## Die Palette
 

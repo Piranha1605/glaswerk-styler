@@ -123,7 +123,7 @@ Bloecken zu drei Dateien.
 **Keine Semikolons, keine Schleifen, nur `&&`** — gilt hier wie im Terminal des
 Studio Code Server.
 
-**Der Reload bleibt noetig.** `/hats_static` traegt kein `Cache-Control`, und
+**Der Reload bleibt noetig.** `/glaswerk_static` traegt kein `Cache-Control`, und
 dann darf ein Browser heuristisch cachen. Erst eine neue Pruefsumme in der
 Adresse bringt den neuen Stand durch, und die wird nur beim Setup gerechnet.
 Fuer Python reicht ein Reload nicht — er ruft `async_unload_entry` und
@@ -168,7 +168,7 @@ cd /Users/enricofischer/Projekte/ha-theme-studio && python3 -m http.server 8778 
 ```
 2. Im Terminal des Studio Code Server, einmal am Tag, EINE Zeile:
 
-curl -sSf -o /config/sync-hats.sh http://192.168.178.47:8778/werkzeuge/sync-instanz.sh && chmod +x /config/sync-hats.sh && nohup /config/sync-hats.sh 192.168.178.47 > /config/sync-hats.log 2>&1 &
+curl -sSf -o /config/sync-glaswerk.sh http://192.168.178.47:8778/werkzeuge/sync-instanz.sh && chmod +x /config/sync-glaswerk.sh && nohup /config/sync-glaswerk.sh 192.168.178.47 > /config/sync-glaswerk.log 2>&1 &
 ```
 
 Danach holt die Instanz alle drei Sekunden, was sich geaendert hat. Die Liste
@@ -177,7 +177,7 @@ geholt** - eine neue Datei dort eingetragen wirkt sofort, ohne Neustart der
 Schleife.
 
 **Der Reload des Konfigurationseintrags bleibt noetig** - am 13.10.2026
-nachgemessen, nachdem ich das Gegenteil angenommen hatte. `/hats_static` ist
+nachgemessen, nachdem ich das Gegenteil angenommen hatte. `/glaswerk_static` ist
 zwar mit `cache_headers=False` registriert und die Antwort traegt kein
 `Cache-Control`, nur ETag und Last-Modified. Ohne `Cache-Control` darf ein
 Browser aber **heuristisch** cachen, und Chrome tut das: Die Datei lag
@@ -193,17 +193,17 @@ await hass.callService('homeassistant', 'reload_config_entry',
 ```
 
 Die entry_id holt man sich mit
-`await hass.connection.sendMessagePromise({type:'config_entries/get', domain:'hats'})`.
+`await hass.connection.sendMessagePromise({type:'config_entries/get', domain:'glaswerk'})`.
 Fuer jede Aenderung an Python reicht das nicht - dann `homeassistant.restart`.
 
 Pruefen, ob die Schleife laeuft (vom Mac aus, ohne Terminal):
 
 ```bash
-echo "// probe $(date +%s)" >> custom_components/hats/www/uix.js
-sleep 9 && curl -s http://192.168.178.31/hats_static/uix.js | tail -1
+echo "// probe $(date +%s)" >> custom_components/glaswerk/www/uix.js
+sleep 9 && curl -s http://192.168.178.31/glaswerk_static/uix.js | tail -1
 ```
 
-Die Panel-Adresse ist **`http://192.168.178.31/hats`** - nicht `/hats-studio`,
+Die Panel-Adresse ist **`http://192.168.178.31/glaswerk`** - nicht `/glaswerk-studio`,
 das gibt 404.
 
 ---
@@ -247,7 +247,7 @@ Vor dem Klicken einen frischen Screenshot.
 
 ### Der Cache-Buster wird nur beim Setup gerechnet
 
-`__init__.py` hängt eine Prüfsumme über `hats-panel.js` an die Adresse. Sie
+`__init__.py` hängt eine Prüfsumme über `glaswerk-panel.js` an die Adresse. Sie
 entsteht in `async_setup_entry` — wer die Datei danach austauscht, bekommt im
 Browser weiter die alte, obwohl auf der Platte die neue liegt.
 
@@ -290,10 +290,10 @@ Namen eines Parameters — kommt damit durch. Erst der Browser wirft dann
 Panel bleibt eine leere Fläche.
 
 ```bash
-node --input-type=module --check < custom_components/hats/www/hats-panel.js
+node --input-type=module --check < custom_components/glaswerk/www/glaswerk-panel.js
 ```
 
-`pruefen.sh` macht das für alle Dateien, `tests/hats-syntax.test.js` hält es
+`pruefen.sh` macht das für alle Dateien, `tests/glaswerk-syntax.test.js` hält es
 fest.
 
 ---
@@ -301,7 +301,7 @@ fest.
 ## Was vom Mac aus geht und was nicht
 
 ```
-Port 80    offen     HTTP, und /hats_static ist OHNE Anmeldung lesbar
+Port 80    offen     HTTP, und /glaswerk_static ist OHNE Anmeldung lesbar
 Port 4357  offen     Observer
 Port 22    zu        kein SSH
 Port 445   zu        kein Samba
@@ -312,7 +312,7 @@ Deshalb: **schreiben nur über den Terminal, lesen direkt vom Mac.**
 `einspielen.sh` nutzt genau das für die Gegenprobe:
 
 ```bash
-curl -s http://192.168.178.31/hats_static/hats-panel.js | cmp - custom_components/hats/www/hats-panel.js
+curl -s http://192.168.178.31/glaswerk_static/glaswerk-panel.js | cmp - custom_components/glaswerk/www/glaswerk-panel.js
 ```
 
 Wenn SSH oder Samba eingerichtet würden, fiele der Terminal-Umweg weg.
@@ -327,7 +327,7 @@ Wenn SSH oder Samba eingerichtet würden, fiele der Terminal-Umweg weg.
 const ha = document.querySelector('home-assistant');
 const p = ha.shadowRoot.querySelector('home-assistant-main').shadowRoot
   .querySelector('partial-panel-resolver').querySelector('ha-panel-custom')
-  .querySelector('hats-panel');
+  .querySelector('glaswerk-panel');
 const sr = p.shadowRoot;
 ```
 
