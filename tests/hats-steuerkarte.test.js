@@ -276,9 +276,16 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
 });
 
 pruefe("Keine eigene Farbe ausser HAs Weiss auf der Auswahl", () => {
-  // Alle drei Blaetter: das gemeinsame, das der Karte, das des Badges.
+  // Alle vier Blaetter: das gemeinsame, das der Karte, das des Fensters und
+  // das des Badges. STIL_FENSTER ist am 16.10.2026 aus STIL_KARTE
+  // herausgeloest worden - beide Formen brauchen es, seit das Badge einen
+  // Knopf mit der Funktion settings tragen kann.
   const blaetter = [...quelle.matchAll(/const (STIL_\w+) = `([\s\S]*?)`;/g)];
-  assert.deepStrictEqual(blaetter.map((b) => b[1]), ["STIL_GEMEINSAM", "STIL_KARTE", "STIL_BADGE"]);
+  assert.deepStrictEqual(blaetter.map((b) => b[1]),
+    ["STIL_GEMEINSAM", "STIL_KARTE", "STIL_FENSTER", "STIL_BADGE"]);
+  // Und beide Formen holen es sich auch wirklich.
+  assert.ok(/_stil\(\) \{ return STIL_KARTE \+ STIL_FENSTER; \}/.test(quelle));
+  assert.ok(/_stil\(\) \{ return STIL_BADGE \+ STIL_FENSTER; \}/.test(quelle));
   const stil = [null, blaetter.map((b) => b[2]).join("\n")];
   const farben = stil[1].match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/g) || [];
   // #fff steht in ha-control-select fest (.option.selected{color:#fff}); hier

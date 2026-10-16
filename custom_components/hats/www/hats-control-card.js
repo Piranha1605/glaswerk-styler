@@ -1528,6 +1528,17 @@ const STIL_KARTE = `
   .liste .knopf.nur-symbol { padding: 0 var(--_polster); }
   .liste .trenner { width: auto; height: 1px; margin: var(--ha-space-1, 4px) 0; }
 
+`;
+
+// ---- Das Fenster und die Regler --------------------------------------------
+//
+// Ein eigenes Stilblatt, weil BEIDE Formen es brauchen. Bis zum 16.10.2026
+// stand alles davon in STIL_KARTE - das Badge hatte keinen Einstellungsknopf,
+// also fiel es nicht auf. Seit das Badge die ganze Knopfliste nimmt, kann
+// dort ein Knopf mit der Funktion settings stehen, und dann ging das Fenster
+// ohne eine einzige Regel auf: eine senkrechte Liste aus allem, was darin an
+// Text steht. Gemeldet mit einem Bild aus der Hausinstallation.
+const STIL_FENSTER = `
   /* Die Regler fuer Bewegung, Transparenz und Schrift. Der Schieber ist der
      des Browsers, gefaerbt mit accent-color - wie die Knoepfe aus button
      gebaut sind statt aus einem Bauteil, das vielleicht nicht angemeldet ist. */
@@ -3317,7 +3328,7 @@ class HatsControlCard extends Steuerung {
   }
 
   _liesConfig(config) { return pruefeConfig(config); }
-  _stil() { return STIL_KARTE; }
+  _stil() { return STIL_KARTE + STIL_FENSTER; }
   _einklappbar() { return true; }
   _gruppenstrich() { return false; }
   _rahmen() {
@@ -3354,7 +3365,7 @@ class HatsControlBadge extends Steuerung {
   }
 
   _liesConfig(config) { return pruefeConfig(badgeConfig(config)); }
-  _stil() { return STIL_BADGE; }
+  _stil() { return STIL_BADGE + STIL_FENSTER; }
   // Ein Badge klappt nicht ein. Am 16.10.2026 stand hier kurz `true`, weil
   // ich den Ueberlauf in einem selbst gebauten 260-px-Rahmen gemessen hatte.
   // In HAs echter Badge-Zeile gibt es ihn nicht: Das Band bricht um, das
@@ -3365,9 +3376,13 @@ class HatsControlBadge extends Steuerung {
   _gruppenstrich() { return true; }
   // icon-only als ATTRIBUT: ha-badge fuehrt die Eigenschaft iconOnly unter
   // genau diesem Namen. "icononly" ohne Bindestrich tut nichts - gemessen.
+  // Der Behaelter der Regler gehoert dazu, seit das Badge die ganze Knopfliste
+  // nimmt: motion und appearance klappen ihn auf. Ohne ihn waeren das zwei
+  // Knoepfe, die sich druecken lassen und nichts zeigen.
   _rahmen() {
     return `<ha-badge icon-only><div class="leiste" slot="icon"><div class="reihe">`
-      + `<div class="kapsel"></div></div><div class="liste"></div></div></ha-badge>`;
+      + `<div class="kapsel"></div></div><div class="liste"></div>`
+      + `<div class="regler" role="group"></div></div></ha-badge>`;
   }
 }
 
