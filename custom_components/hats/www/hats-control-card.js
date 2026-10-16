@@ -142,7 +142,8 @@ export const TEXTE = {
       name: "Name", icon: "Symbol", link: "Ziel", entity: "Entität",
       function: "Eingebaute Funktion", temperature: "Temperatursensor (nur Wetter)",
       temperature_source: "Temperatur aus (nur Wetter)", tap_action: "Aktion beim Antippen",
-      align_end: "Ans Ende der Leiste", separator_before: "Trennstrich davor",
+      align_end: "Ans Ende der Leiste", in_menu: "Zum Menü hinzufügen",
+      separator_before: "Trennstrich davor",
     },
     funktion: { mode: "Modus (drei Knöpfe)", theme: "Hell / Dunkel", fullscreen: "Vollbild", weather: "Wetter",
                 motion: "Bewegung des Hintergrunds", appearance: "Transparenz und Schrift",
@@ -256,7 +257,8 @@ export const TEXTE = {
       name: "Name", icon: "Icon", link: "Target", entity: "Entity",
       function: "Built-in function", temperature: "Temperature sensor (weather only)",
       temperature_source: "Temperature from (weather only)", tap_action: "Tap action",
-      align_end: "At the end of the bar", separator_before: "Separator before",
+      align_end: "At the end of the bar", in_menu: "Add to the menu",
+      separator_before: "Separator before",
     },
     funktion: { mode: "Mode (three buttons)", theme: "Light / dark", fullscreen: "Fullscreen", weather: "Weather",
                 motion: "Background motion", appearance: "Transparency and text",
@@ -450,6 +452,13 @@ function einKnopf(b, index) {
     state_background: b.state_background !== false,
     light_background: b.light_background !== false,
     align_end: b.align_end === true,
+    // Ein Knopf, der IMMER unter dem Menueknopf steht, egal wie breit die
+    // Karte ist. Auf Ansage vom 16.10.2026: "könnten wir hier eine option
+    // einbauen zum menü hinzufügen. dann landen diese einträge im menü und
+    // der rest in der leiste". Das Einklappen entscheidet nach Platz, das
+    // hier entscheidet der Nutzer - beides zugleich ist kein Widerspruch:
+    // Was schon in der Liste steht, kann nicht noch einmal hineinwandern.
+    in_menu: b.in_menu === true,
     separator_before: b.separator_before === true,
     tap_action: b.tap_action,
   };
@@ -506,18 +515,25 @@ export function eingeklappt(einstellung, breite) {
 export function mehrInDieListe(plan, einstellung, einklappbar) {
   if (!einklappbar || einstellung.einklappen === "never") return null;
   const kn = einstellung.knoepfe;
-  if (!plan.zu && kn.some((k) => !k.align_end && k.function !== "sidebar")) return { zu: true, weg: plan.weg };
+  // `in_menu` zaehlt hier nicht mit: Was schon in der Liste steht, schafft
+  // keinen Platz mehr, wenn man einklappt. Ohne diese Bedingung klappte eine
+  // Leiste ein, die gar nichts zu gewinnen hat.
+  if (!plan.zu && kn.some((k) => !k.align_end && !k.in_menu && k.function !== "sidebar")) {
+    return { zu: true, weg: plan.weg };
+  }
   if (plan.weg < kn.filter((k) => k.align_end).length) return { zu: true, weg: plan.weg + 1 };
   return null;
 }
 
-// Welche Knoepfe in der Liste stehen: eingeklappt die Ziele, dazu die letzten
-// `weg` am Rand. Der Knopf der Seitenleiste nie - er ersetzt HAs Menueknopf
-// und muss immer zu sehen sein.
+// Welche Knoepfe in der Liste stehen: die mit `in_menu` immer, eingeklappt
+// dazu die Ziele und die letzten `weg` am Rand. Der Knopf der Seitenleiste
+// nie - er ersetzt HAs Menueknopf und muss immer zu sehen sein, auch wenn
+// jemand `in_menu` an ihn schreibt.
 export function inDieListe(knoepfe, zu, weg) {
-  if (!zu) return new Set();
+  const gewaehlt = knoepfe.filter((k) => k.in_menu && k.function !== "sidebar");
+  if (!zu) return new Set(gewaehlt);
   const amEnde = geordnet(knoepfe).filter((k) => k.align_end);
-  return new Set([...knoepfe.filter((k) => !k.align_end && k.function !== "sidebar"),
+  return new Set([...gewaehlt, ...knoepfe.filter((k) => !k.align_end && k.function !== "sidebar"),
     ...amEnde.slice(amEnde.length - weg)]);
 }
 
@@ -2179,10 +2195,13 @@ class Steuerung extends Basis {
     // in die Liste wandern, kein zweiter Satz: Aktionen, Zustand und
     // Lampenfarbe arbeiten dort weiter, ohne zu wissen, dass sie umgezogen
     // sind. Was ans Ende geschoben ist, bleibt in der Reihe.
-    let menueDa = !this._eingeklappt;
-
     const reihenfolge = geordnet(c.knoepfe);
     const liste = inDieListe(c.knoepfe, this._eingeklappt, this._weg || 0);
+    // Der Menueknopf steht da, sobald ueberhaupt etwas in der Liste liegt -
+    // nicht erst beim Einklappen. Mit `in_menu` gibt es eine Liste auch in
+    // einer Leiste, die bequem passt; ohne den Knopf waere sie nicht zu
+    // oeffnen, und die Eintraege waeren weg.
+    let menueDa = !liste.size;
 
     let fueller = false;
     let davor = null;
@@ -2448,16 +2467,19 @@ class Steuerung extends Basis {
     const kapsel = this._kapsel;
     if (!kapsel) return;
     const index = this._aktivIndex;
+    const aktiv = this._elemente.find((e) => e.tagName === "BUTTON" && e._k.index === index);
+    // Steht der aktive Knopf in der LISTE, traegt der Menueknopf die Marke -
+    // er nennt dann die Seite, auf der du bist. Das hing bis zum 16.10.2026
+    // am Einklappen; seit `in_menu` kann ein Ziel auch in einer ausgeklappten
+    // Leiste dort stehen, und die Kapsel saesse sonst auf einem Knopf, dessen
+    // offsetLeft in der Liste gemessen ist statt in der Reihe.
+    const imMenue = Boolean(aktiv?._inListe);
     for (const e of this._elemente) {
-      e.classList.toggle("aktiv", !this._eingeklappt && this._config.kapsel
+      e.classList.toggle("aktiv", !e._inListe && this._config.kapsel
         && e.tagName === "BUTTON" && e._k.index === index);
     }
-    // Eingeklappt haben die Ziele keinen Platz in der Reihe. Die Marke traegt
-    // dann der Menueknopf - er nennt die Seite, auf der du bist.
-    const ziel = this._eingeklappt
-      ? (index >= 0 ? this._menueknopf : null)
-      : this._elemente.find((e) => e.tagName === "BUTTON" && e._k.index === index);
-    this._menueknopf?.classList.toggle("aktiv", Boolean(ziel) && this._eingeklappt && this._config.kapsel);
+    const ziel = imMenue ? this._menueknopf : aktiv;
+    this._menueknopf?.classList.toggle("aktiv", Boolean(ziel) && imMenue && this._config.kapsel);
 
     if (!ziel || !this._config.kapsel || !ziel.offsetWidth) {
       kapsel.classList.remove("sichtbar");
@@ -2475,8 +2497,20 @@ class Steuerung extends Basis {
     const b = this._menueknopf;
     if (!b) return;
     const kn = this._config.knoepfe;
+    // Genannt wird nur, was WIRKLICH in der Liste steht. Eingeklappt sind das
+    // alle Ziele, also bleibt es dort beim alten Verhalten; mit `in_menu` in
+    // einer ausgeklappten Leiste behauptete der Knopf sonst "Home", waehrend
+    // Home danebensteht.
+    const inListe = (k) => this._elemente.some((e) => e._k === k && e._inListe);
     const aktiv = kn[this._aktivIndex];
-    const gezeigt = aktiv && !aktiv.align_end ? aktiv : kn.find((k) => !k.align_end);
+    // Der Rueckfall gilt nur EINGEKLAPPT. Dort vertritt der Menueknopf alle
+    // Ziele, also nennt er eines, auch wenn die Adresse auf keines zeigt. Mit
+    // `in_menu` in einer ausgeklappten Leiste vertritt er nur die gewaehlten -
+    // und hiesse sonst "Garten", waehrend man auf Home steht und Home
+    // danebensteht. Dann sagt er "Menue", und das ist die Wahrheit.
+    const gezeigt = aktiv && inListe(aktiv)
+      ? aktiv
+      : (this._eingeklappt ? kn.find((k) => !k.align_end && inListe(k)) : undefined);
     // Ein Menuesymbol sagt "dahinter ist eine Liste" besser als das Symbol der
     // Seite, auf der man zufaellig ist. Der Name sagt weiter, welche das ist.
     // Neben dem Knopf der Seitenleiste stuende sonst ein zweites mdi:menu.
@@ -3432,6 +3466,7 @@ export function kartenFormular(t, mitAnzeige, fuerBadge = false) {
             temperature: { label: t.knopffeld.temperature, selector: { entity: { domain: "sensor" } } },
             temperature_source: { label: t.knopffeld.temperature_source, selector: wahl(["sensor", "weather"]) },
             align_end: { label: t.knopffeld.align_end, selector: { boolean: {} } },
+            in_menu: { label: t.knopffeld.in_menu, selector: { boolean: {} } },
             separator_before: { label: t.knopffeld.separator_before, selector: { boolean: {} } },
             ...(mitAnzeige ? { [ZEILE]: anzeige, [ZEILE_UNTER]: anzeige } : {}),
           } } } },

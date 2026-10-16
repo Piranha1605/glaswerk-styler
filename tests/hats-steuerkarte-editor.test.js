@@ -122,6 +122,24 @@ pruefe("Jede Funktion hat in beiden Sprachen einen Namen fuer Zeile und Auswahl"
   }
 });
 
+pruefe("Die beiden Sprachbaeume tragen dieselben Schluessel", () => {
+  // "Alles, was nach aussen geht, immer in beiden Sprachen" - bis zum
+  // 16.10.2026 hat das niemand geprueft. Aufgefallen beim Gegenpruefen von
+  // `in_menu`: Die DEUTSCHE Beschriftung zu loeschen machte den Test rot (das
+  // Formular meldet ein Feld ohne Label), die ENGLISCHE nicht. Ein englischer
+  // Nutzer haette ein Feld ohne Namen gesehen, und niemand haette es gemerkt.
+  const wege = (o, vor = "") => Object.entries(o).flatMap(([k, v]) =>
+    (v && typeof v === "object" && !Array.isArray(v)) ? wege(v, `${vor}${k}.`) : [`${vor}${k}`]);
+  const de = wege(TEXTE.de).sort();
+  const en = wege(TEXTE.en).sort();
+  assert.deepStrictEqual(de.filter((k) => !en.includes(k)), [], "fehlt in TEXTE.en");
+  assert.deepStrictEqual(en.filter((k) => !de.includes(k)), [], "fehlt in TEXTE.de");
+  // Gegenprobe: Der Vergleich faendet ueberhaupt etwas - ohne sie waere ein
+  // leerer Baum auf beiden Seiten auch "gleich".
+  assert.ok(de.length > 100, `nur ${de.length} Schluessel gelesen - der Baum wird nicht gefunden`);
+  assert.ok(de.includes("knopffeld.in_menu") && en.includes("knopffeld.in_menu"));
+});
+
 pruefe("Das Unterformular bietet auch tap_action und die Quelle der Temperatur an", () => {
   const { fields } = knoepfeSchema(kartenFormular(de, true)).object;
   assert.deepStrictEqual(fields.tap_action.selector, { ui_action: {} });
@@ -159,6 +177,56 @@ pruefe("Was in der Liste steht: die Ziele, dazu die letzten am Rand - Darstellun
   // "Vom rechten Ende" heisst in der Reihenfolge, in der die Reihe sie zeigt.
   const rechts = geordnet(kn).filter((k) => k.align_end).at(-1);
   assert.ok(inDieListe(kn, true, 1).has(rechts));
+});
+
+pruefe("`in_menu` legt einen Knopf ins Menue, ohne dass die Leiste einklappt", () => {
+  // Auf Ansage vom 16.10.2026: "könnten wir hier eine option einbauen zum menü
+  // hinzufügen. dann landen diese einträge im menü und der rest in der
+  // leiste". Das Einklappen entscheidet nach PLATZ, `in_menu` entscheidet der
+  // Nutzer - und zwar auch dann, wenn alles bequem passt.
+  const e = einstellung({ collapse: "never", buttons: [
+    { name: "Home", link: "/home" },
+    { name: "Garten", link: "/garten", in_menu: true },
+    { entity: "light.kueche", in_menu: true },
+    { function: "fullscreen", align_end: true },
+  ] });
+  const kn = e.knoepfe;
+  const namen = (menge) => kn.filter((k) => menge.has(k)).map((k) => k.name || k.entity || k.function);
+  // Ausgeklappt steht genau das in der Liste, was gewaehlt wurde.
+  assert.deepStrictEqual(namen(inDieListe(kn, false, 0)), ["Garten", "light.kueche"]);
+  // Eingeklappt kommen die uebrigen Ziele dazu - und keines doppelt.
+  assert.deepStrictEqual(namen(inDieListe(kn, true, 0)), ["Home", "Garten", "light.kueche"]);
+  assert.deepStrictEqual(namen(inDieListe(kn, true, 1)), ["Home", "Garten", "light.kueche", "fullscreen"]);
+
+  // Gegenprobe: ohne das Feld bleibt die Liste ausgeklappt leer.
+  const ohne = einstellung({ collapse: "never", buttons: [
+    { name: "Home", link: "/home" }, { name: "Garten", link: "/garten" }] });
+  assert.deepStrictEqual(inDieListe(ohne.knoepfe, false, 0).size, 0);
+});
+
+pruefe("Die Seitenleiste bleibt in der Reihe, auch wenn jemand sie ins Menue schickt", () => {
+  // Sie ersetzt HAs Menueknopf. Am Telefon ist sie der einzige Weg in die
+  // Seitenleiste und damit zu den Einstellungen - in einer Liste, die man
+  // ueber einen zweiten Menueknopf aufklappen muesste, waere sie verloren.
+  const e = einstellung({ collapse: "never", buttons: [
+    { function: "sidebar", in_menu: true }, { name: "Home", link: "/home", in_menu: true }] });
+  const drin = inDieListe(e.knoepfe, false, 0);
+  assert.deepStrictEqual([...drin].map((k) => k.name || k.function), ["Home"]);
+  assert.ok(!inDieListe(e.knoepfe, true, 0).has(e.knoepfe[0]), "auch eingeklappt nicht");
+});
+
+pruefe("Was schon im Menue steht, ist kein Grund einzuklappen", () => {
+  // Sonst klappte eine Leiste ein, die dadurch keinen einzigen Pixel gewinnt:
+  // Der Eintrag liegt ja bereits in der Liste.
+  const nurGewaehlt = einstellung({ collapse: "narrow", buttons: [
+    { name: "Garten", link: "/garten", in_menu: true },
+    { function: "fullscreen", align_end: true } ] });
+  assert.deepStrictEqual(mehrInDieListe({ zu: false, weg: 0 }, nurGewaehlt, true), { zu: true, weg: 1 });
+  // Gegenprobe: dasselbe ohne in_menu klappt erst einmal nur ein.
+  const frei = einstellung({ collapse: "narrow", buttons: [
+    { name: "Garten", link: "/garten" },
+    { function: "fullscreen", align_end: true } ] });
+  assert.deepStrictEqual(mehrInDieListe({ zu: false, weg: 0 }, frei, true), { zu: true, weg: 0 });
 });
 
 pruefe("'nie' heisst nie, und das Badge klappt nicht ein", () => {
