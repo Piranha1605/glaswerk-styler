@@ -511,11 +511,22 @@ export function inDieListe(knoepfe, zu, weg) {
 //                    ueber den Stift, und den traegt die Kopfzeile.
 //   menu_shape       Die Form zeichnet ha-badge, nicht wir.
 //   menu_size
+//   collapse         Ein Badge klappt nicht ein, und zwar nicht aus
+//   collapse_width   Bequemlichkeit: Es KANN nicht. HAs Badge-Zeile ist ein
+//                    umbrechendes Flex-Band, und ein Badge waechst darin mit
+//                    seinem Inhalt - die Reihe IM Badge laeuft nie ueber,
+//                    also loest nichts das Einklappen aus. Gemessen am
+//                    16.10.2026 mit neun Knoepfen in der echten Badge-Zeile:
+//                    631 px breit, Ueberlauf 0, neun Knoepfe in der Reihe -
+//                    mit "narrow" genau wie mit "never". Auch am Telefon
+//                    (390 px) blieb der Ueberlauf 0; das Badge steht dort
+//                    einfach aus dem Bild heraus, und auch das aendert
+//                    collapse nicht.
 //
 // Die alte Kurzform `controls` gilt weiter: leseKnoepfe() kennt sie, und ein
 // Badge von gestern bleibt damit genau das, was es war.
 export function badgeConfig(config) {
-  const { replace_header, menu_shape, menu_size, ...rest } = config ?? {};
+  const { replace_header, menu_shape, menu_size, collapse, collapse_width, ...rest } = config ?? {};
   return rest;
 }
 
@@ -3210,9 +3221,9 @@ export function kartenFormular(t, mitAnzeige, fuerBadge = false) {
         { name: "replace_header", selector: { boolean: {} } },
         { name: "menu_shape", selector: wahl(FORMEN) },
         { name: "menu_size", selector: wahl(GROESSEN) },
+        { name: "collapse", selector: wahl(EINKLAPPEN) },
+        { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
       ]),
-      { name: "collapse", selector: wahl(EINKLAPPEN) },
-      { name: "collapse_width", selector: { number: { min: 200, max: 1200, step: 10, mode: "box" } } },
     ],
     computeLabel: (feld) => t.feld[feld.name],
     computeHelper: (feld) => t.hilfe[feld.name],
@@ -3327,14 +3338,8 @@ class HatsControlCard extends Steuerung {
 class HatsControlBadge extends Steuerung {
   // Der Waehler legt die Liste ausdruecklich an. Ohne das zeigte der Editor
   // ein leeres Auswahlfeld, waehrend beide Teile gezeichnet werden.
-  // Mit `collapse: "narrow"`, und das ist der Unterschied zur Karte: Eine
-  // Pille steht in der Badge-Zeile einer Ansicht und hat dort wenig Platz.
-  // Gemessen in einer 260 px breiten Spalte - ohne das Feld lief eine Leiste
-  // aus neun Knoepfen um 371 px ueber, mit ihm blieben drei in der Reihe und
-  // sieben wanderten in die Liste. Die VORGABE bleibt trotzdem "never", wie
-  // bei der Karte; hier legt nur der Waehler etwas Besseres an.
   static getStubConfig() {
-    return { buttons: BEDIENTEILE.map((funktion) => ({ function: funktion })), collapse: "narrow" };
+    return { buttons: BEDIENTEILE.map((funktion) => ({ function: funktion })) };
   }
 
   static getConfigForm() {
@@ -3350,11 +3355,11 @@ class HatsControlBadge extends Steuerung {
 
   _liesConfig(config) { return pruefeConfig(badgeConfig(config)); }
   _stil() { return STIL_BADGE; }
-  // Seit das Badge die ganze Knopfliste nimmt, MUSS es einklappen koennen:
-  // Neun Knoepfe in einer Pille laufen sonst aus dem Abschnitt. Mit den
-  // bisherigen zwei Teilen aendert sich dadurch nichts - 133 px laufen
-  // nirgends ueber, und was nicht ueberlaeuft, klappt auch nicht ein.
-  _einklappbar() { return true; }
+  // Ein Badge klappt nicht ein. Am 16.10.2026 stand hier kurz `true`, weil
+  // ich den Ueberlauf in einem selbst gebauten 260-px-Rahmen gemessen hatte.
+  // In HAs echter Badge-Zeile gibt es ihn nicht: Das Band bricht um, das
+  // Badge waechst mit seinem Inhalt, und die Reihe darin laeuft nie ueber.
+  _einklappbar() { return false; }
   // Zwischen der Modus-Gruppe und einem Knopf daneben steht im Badge von
   // selbst ein Strich: Dort gibt es keine Spur, die die Gruppe zusammenhaelt.
   _gruppenstrich() { return true; }

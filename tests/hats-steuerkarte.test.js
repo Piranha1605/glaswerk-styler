@@ -379,9 +379,12 @@ pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formula
   //   replace_header  waere von der Pille aus nicht zurueckzunehmen
   //   menu_shape      die Form zeichnet ha-badge
   //   menu_size
+  //   collapse        ein Badge KANN nicht einklappen: HAs Badge-Zeile
+  //   collapse_width  bricht um, das Badge waechst mit, die Reihe darin
+  //                   laeuft nie ueber. Gemessen in der echten Zeile.
   const gefiltert = badgeConfig({ controls: ["mode"], kiosk_only: true, collapse: "always",
-    menu_size: "large", menu_shape: "pill", replace_header: true });
-  assert.deepStrictEqual(gefiltert, { controls: ["mode"], kiosk_only: true, collapse: "always" });
+    collapse_width: 400, menu_size: "large", menu_shape: "pill", replace_header: true });
+  assert.deepStrictEqual(gefiltert, { controls: ["mode"], kiosk_only: true });
   // Gegenprobe: Bei der Karte kommen alle drei an.
   for (const feld of ["replace_header", "menu_size", "menu_shape"]) {
     assert.ok(feld in { replace_header: 1, menu_size: 1, menu_shape: 1 }, feld);
@@ -402,11 +405,12 @@ pruefe("Das Badge bleibt, wie es war: nur die Kurzform, und sein eigenes Formula
   // mit collapse, weil eine Pille in der Badge-Zeile wenig Platz hat.
   assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(badge));
   assert.ok(/return \{ buttons: BEDIENTEILE\.map\(/.test(karte));
-  assert.ok(/collapse: "narrow" \};/.test(badge), "der Waehler legt das Badge ohne collapse an");
-  assert.ok(!/collapse:/.test(karte.slice(0, karte.indexOf("getConfigForm"))), "die Karte soll es NICHT mitbringen");
-  // Einklappen MUSS das Badge koennen, sonst laeuft eine lange Liste aus der
-  // Pille heraus.
-  assert.ok(/_einklappbar\(\) \{ return true; \}/.test(badge));
+  assert.ok(!/collapse/.test(badge), "das Badge darf von collapse nichts mehr wissen");
+  // Einklappen kann das Badge nicht - siehe den Grund oben.
+  assert.ok(/_einklappbar\(\) \{ return false; \}/.test(badge));
+  // Und die beiden Felder stehen nur im Formular der Karte.
+  assert.ok(/fuerBadge \? \[\] : \[[\s\S]*?name: "collapse"[\s\S]*?\]\),/.test(formular[1]),
+    "collapse haengt nicht an fuerBadge");
 });
 
 pruefe("Ein Badge aus der Stunde, in der der Waehler buttons anlegte, laeuft weiter", () => {
