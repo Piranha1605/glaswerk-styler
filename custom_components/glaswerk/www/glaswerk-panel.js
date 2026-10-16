@@ -1038,6 +1038,45 @@ function ansichtSchreiben(v) {
   try { localStorage.setItem(ANSICHT_SPEICHER, v); } catch (e) { /* privates Fenster */ }
 }
 
+// Die zuletzt geoeffnete Theme, damit das Panel dort weitermacht, wo man
+// aufgehoert hat. Auf Ansage vom 16.10.2026: "als basis wird der letzte
+// arbeitsstand geladen. bei neuinstalation die blanko."
+//
+// Gemerkt wird nur der NAME, nicht der Inhalt. Die Datei ist die Wahrheit;
+// eine Kopie im Browser waere ein zweiter Stand, der still veraltet - und
+// beim naechsten Oeffnen saehe man Felder, die in der Datei nicht stehen.
+//
+// Je Geraet, wie die Ansicht. Wer an zwei Rechnern arbeitet, macht an jedem
+// dort weiter, wo er dort war.
+const LETZTE_SPEICHER = "glaswerk-letzte-theme";
+
+// Der Zwischenstand aus dem Speichermenue. Anders als LETZTE_SPEICHER liegt
+// hier das ganze Modell, nicht nur ein Name - das ist der Punkt: Es traegt
+// auch die Felder, die in einer fertigen Theme noch nicht stuenden.
+//
+// Bewusst NICHT im Themes-Ordner, anders als HATGs hatg-work-<name>.yaml:
+// Home Assistant laedt aus dem Ordner jede .yaml als Theme, ein
+// Zwischenstand stuende also in der Theme-Auswahl des Nutzers.
+const ZWISCHEN_SPEICHER = "glaswerk-zwischenstand";
+function zwischenLesen() {
+  try {
+    const t = localStorage.getItem(ZWISCHEN_SPEICHER);
+    return t ? JSON.parse(t) : null;
+  } catch (e) { return null; }   // kaputt gelesen ist wie nicht vorhanden
+}
+function zwischenLoeschen() {
+  try { localStorage.removeItem(ZWISCHEN_SPEICHER); } catch (e) { /* privates Fenster */ }
+}
+function letzteLesen() {
+  try { return localStorage.getItem(LETZTE_SPEICHER) || null; } catch (e) { return null; }
+}
+function letzteSchreiben(name) {
+  try {
+    if (name) localStorage.setItem(LETZTE_SPEICHER, name);
+    else localStorage.removeItem(LETZTE_SPEICHER);
+  } catch (e) { /* privates Fenster */ }
+}
+
 const STAND_TEXT = { fertig: "Fertig", offen: "In Arbeit", wartet: "Offen" };
 
 // Fuer Attribute. Die Texte sind zwar eigene Daten und keine Eingabe, aber ein
@@ -1146,8 +1185,6 @@ const TEXTE = {
     "Als Datei herunterladen": "Download as a file",
     "In die Zwischenablage": "Copy to the clipboard",
     "Eine Rolle setzt elf Palettenstufen und bleibt deshalb in beiden Modi gleich": "A role sets eleven palette steps and therefore stays the same in both modes",
-    "Womit faengst du an?": "Where do you want to start?",
-    "Eine neue Theme oder eine vorhandene weiterbauen": "A new theme, or carry on with an existing one",
     "Neue Theme": "New theme",
     "Leere Grundlage auf HA 2026.10, ohne Altlasten": "Blank base on HA 2026.10, no legacy fields",
     "Vorhandene oeffnen": "Open an existing one",
@@ -1158,7 +1195,6 @@ const TEXTE = {
     "Mit einem anderen Werkzeug gebaut - der Import dafuer kommt spaeter:": "Built with another tool - importing those comes later:",
     "Kein Glaswerk-Kopf in der Datei": "No Glaswerk header in the file",
     "Lade...": "Loading...",
-    "Dein Theme im Überblick": "Your theme at a glance",
     "Stufen fertig": "stages done",
     "brauchen noch Arbeit": "still need work",
     "Stufe": "Stage",
@@ -1204,7 +1240,20 @@ const TEXTE = {
     "Karte, Diagramme, Code-Editor, Glas": "Map, charts, code editor, glass",
     "Pruefen, Bericht, Theme schreiben": "Check, report, write the theme",
     "Start": "Start", "Farben": "Colours", "Textfarben": "Text colours", "Schrift": "Font",
-    "Name der Theme": "Theme name", "Grundlage": "Base", "Modus": "Mode",
+    "Name der Theme": "Theme name",
+    "Verwerfen": "Discard",
+    "Herunterladen": "Download",
+    "Kopieren": "Copy",
+    "Weitere Speicheroptionen": "More save options",
+    "Unter neuem Namen": "Save as",
+    "Als zweite Datei in config/themes/": "As a second file in config/themes/",
+    "Zwischenstand sichern": "Save work in progress",
+    "Nur im Browser - geht nicht in die Theme-Auswahl": "Browser only - stays out of the theme picker",
+    "Theme pruefen": "Check theme",
+    "Was gesetzt ist, was fehlt, was fremd ist": "What is set, what is missing, what is foreign",
+    "Name der neuen Theme": "Name of the new theme",
+    "Zwischenstand gesichert - im Browser, nicht in config/themes/": "Work saved - in the browser, not in config/themes/",
+    "Zwischenstand nicht gesichert: ": "Work not saved: ", "Grundlage": "Base", "Modus": "Mode",
     "Akzent": "Accent", "Primaerfarbe": "Primary colour", "Neutral": "Neutral", "Erfolg": "Success",
     "Warnung": "Warning", "Fehler": "Error",
     "Primaer": "Primary", "Sekundaer": "Secondary", "Deaktiviert": "Disabled", "Link": "Link",
@@ -1258,12 +1307,70 @@ class GlaswerkPanel extends HTMLElement {
       this._gezeichnet = true;
       this.zeichne();
       // Nur beim ersten Mal - ein Seitenwechsel darf die Arbeit nicht
-      // wegwerfen. Geladen wird jetzt nichts von allein: erst fragen, womit
-      // angefangen wird.
+      // wegwerfen.
       // Die Liste der Dateien wird IMMER gebraucht - der Weg "Vorhandene
-      // oeffnen" steht jetzt auf derselben Seite wie alles andere.
-      if (ZUSTAND.dateien === null) this.ladeListe();
+      // oeffnen" steht auf derselben Seite wie alles andere.
+      if (ZUSTAND.dateien === null) this.ladeStart();
     }
+  }
+
+  // Beim Oeffnen steht eine Theme da, nicht eine Frage.
+  //
+  // Bis zum 16.10.2026 startete das Panel leer und fragte, womit man
+  // anfangen will. Das war ein zweiter Anblick derselben Seite, und wer eine Theme
+  // verlor - etwa weil die Grundlage nicht lesbar war -, fiel dorthin
+  // zurueck. Es sah aus wie zwei Seiten, zwischen denen man schwebt.
+  //
+  // Ansage: "als basis wird der letzte arbeitsstand geladen. bei
+  // neuinstalation die blanko."
+  //
+  // Die Reihenfolge:
+  //   1. die zuletzt geoeffnete Datei, wenn es sie noch gibt
+  //   2. sonst die einzige vorhandene Theme, wenn es genau eine gibt
+  //   3. sonst ha_blanko - der Fall "frisch eingerichtet"
+  //
+  // Schritt 2 ist kein Komfort, sondern die Antwort auf den haeufigsten
+  // Fall nach einem Geraetewechsel: Die Datei ist da, der localStorage des
+  // neuen Browsers kennt sie nur nicht.
+  async ladeStart() {
+    await this.ladeListe();
+    const liste = ZUSTAND.dateien || [];
+    const vorhanden = liste.map((d) => (typeof d === "string" ? d : d.name));
+
+    // Ein Zwischenstand geht allem vor: Er ist juenger als jede Datei und
+    // traegt Felder, die noch nirgends geschrieben stehen. Er wird NICHT
+    // stillschweigend geladen - die Meldung sagt, dass hier ein gesicherter
+    // Stand liegt und von wann.
+    const z = zwischenLesen();
+    if (z && z.modell) {
+      ZUSTAND.modell = z.modell;
+      ZUSTAND.name = z.name || "";
+      if (z.meta) ZUSTAND.meta = z.meta;
+      this._grundlage = JSON.parse(JSON.stringify(z.modell));
+      ZUSTAND.geaendert.clear();
+      const wann = z.zeit ? new Date(z.zeit).toLocaleString("de-DE") : "";
+      ZUSTAND.meldung = { text: `Zwischenstand von ${wann} geladen`, art: "gut" };
+      this.zeichne();
+      return;
+    }
+
+    const letzte = letzteLesen();
+    if (letzte && vorhanden.includes(letzte)) return this.oeffneDatei(letzte);
+
+    // Eine einzige eigene Theme? Dann ist sie gemeint.
+    //
+    // Gezaehlt werden nur EIGENE: ha_blanko ist die Grundlage, keine Arbeit,
+    // und eine fremde Theme oeffnet man bewusst, nicht beilaeufig - sie kann
+    // anders aufgebaut sein, und der Bericht dazu will gelesen werden.
+    const eigene = liste
+      .filter((d) => typeof d !== "string" && d.glaswerk && d.name !== "ha_blanko.yaml")
+      .map((d) => d.name);
+    if (eigene.length === 1) return this.oeffneDatei(eigene[0]);
+
+    // Frisch eingerichtet, oder die Wahl ist nicht eindeutig: auf der
+    // Grundlage beginnen. Die Wege zu den anderen stehen auf derselben Seite.
+    letzteSchreiben(null);
+    return this.ladeGrundlage();
   }
 
   // Die Grundlage ist ha_blanko: HA 2026.10 ohne Altlasten. Alles, was der
@@ -2277,11 +2384,18 @@ class GlaswerkPanel extends HTMLElement {
       <section class="wegereihe">
         <h3>${r.titel}</h3>
         <div class="startwege">
+          <!-- Eine Zeile wie die Kennzahlen darueber, seit dem 16.10.2026:
+               das Symbol in einer weissen Pille, der Titel daneben. Auf
+               Ansage: "die felder sollst du optisch umbauen und die icons in
+               das weise feld wo die 0/8 im muster steht."
+               Der Hilfstext ist weg. Was er sagte, steht jetzt im title -
+               die Karten tragen sprechende Namen, und vier Saetze
+               untereinander waren mehr Flaeche als Auskunft. -->
           ${r.wege.map((w) => `
-          <button class="startweg" data-start="${w.id}" ${w.aus ? "disabled" : ""}>
-            <ha-icon icon="${w.icon}"></ha-icon>
+          <button class="startweg" data-start="${w.id}" ${w.aus ? "disabled" : ""}
+                  title="${w.p}">
+            <span class="wegsymbol"><ha-icon icon="${w.icon}"></ha-icon></span>
             <b>${w.t}</b>
-            <span>${w.p}</span>
           </button>`).join("")}
         </div>
       </section>`).join("");
@@ -2420,6 +2534,11 @@ class GlaswerkPanel extends HTMLElement {
       ZUSTAND.geaendert.clear();
       ZUSTAND.meldung = { text: `Geoeffnet: ${name}`, art: "gut" };
       ZUSTAND.bericht = berichtUeberTheme(m, BEKANNT, EIGENE_ZIELE);
+      // Hier weitermachen, wenn das Panel das naechste Mal aufgeht.
+      letzteSchreiben(name);
+      // Wer bewusst eine Datei oeffnet, will nicht den alten Zwischenstand -
+      // der laege sonst beim naechsten Start wieder obenauf.
+      zwischenLoeschen();
     } catch (e) {
       ZUSTAND.meldung = { text: "Nicht geoeffnet: " + (e.message || e.code || e), art: "fehler" };
     }
@@ -2517,6 +2636,10 @@ class GlaswerkPanel extends HTMLElement {
     ZUSTAND.name = "";
     ZUSTAND.meta.Grundlage = "ha_blanko";
     ZUSTAND.geaendert.clear();
+    // Die gemerkte Datei faellt weg: Wer neu beginnt, will beim naechsten
+    // Oeffnen nicht die alte Theme vorfinden. Gespeichert wird sie mit dem
+    // ersten Speichern wieder eingetragen.
+    letzteSchreiben(null);
     this.zeichne();
   }
 
@@ -2555,22 +2678,16 @@ class GlaswerkPanel extends HTMLElement {
 
   zeichneWirklich() {
     const T = (s) => t(s, this.spr);
-    const fertig = STUFEN.filter((s) => s.stand === "fertig").length;
-    const offen = STUFEN.length - fertig;
-    // Wie viele Felder DIESE Theme hat - nicht, wie viele das Panel anbieten
-    // koennte.
-    //
-    // Hier stand felderGesamt, also die Summe ueber alle acht Stufen: 413.
-    // Unter der Zeile "Dein Theme im Ueberblick", zwischen "0 Aenderungen" und
-    // "zuletzt geaendert" - zwei Zahlen ueber die Theme und eine ueber das
-    // Programm. Der Bericht beim Oeffnen sagte derweil 397, und wer beide sah,
-    // hielt eine fuer falsch. Am 14.10.2026 beim Durchgehen gemeldet.
-    //
-    // Was das Panel anbietet, steht ohnehin an jeder Stufe in der Liste
-    // darunter ("7 Gruppen, 90 Felder").
-    const felderImModell = ZUSTAND.modell
-      ? new Set(["flach", "light", "dark"].flatMap((e) => Object.keys(ZUSTAND.modell[e] || {}))).size
-      : 0;
+    /* Hier wurden bis zum 16.10.2026 vier Zahlen gerechnet: fertige und
+       offene Stufen, Felder im Modell, Felder im Panel. Sie trugen die drei
+       Kennzahlen unter dem Kopf, und die sind weggefallen.
+
+       Die Unterscheidung, die dort steckte, bleibt lesenswert: felderGesamt
+       ist, was das Panel ANBIETEN kann (413 ueber acht Stufen),
+       felderImModell, was DIESE Theme traegt. Beide nebeneinander zu zeigen
+       war der Fehler - der Bericht beim Oeffnen sagte 397, und wer beides
+       sah, hielt eine Zahl fuer falsch. Was das Panel anbietet, steht
+       ohnehin an jeder Stufe in der Liste darunter. */
 
     this.shadowRoot.innerHTML = `
       <style>${this.stil()}</style>
@@ -2603,39 +2720,96 @@ class GlaswerkPanel extends HTMLElement {
             <section class="inhalt">
             <header class="kopf">
               <div>
-                <h1>${ZUSTAND.modell ? T("Guten Tag") : T("Womit faengst du an?")}</h1>
-                <p>${ZUSTAND.modell ? T("Dein Theme im Überblick") : T("Eine neue Theme oder eine vorhandene weiterbauen")}</p>
+                <!-- Hier stand bis zum 16.10.2026 "Guten Tag", davor
+                     abwechselnd noch eine zweite Ueberschrift, solange keine
+                     Theme geladen war - es wirkte wie zwei Seiten.
+                     Jetzt steht hier das LOGO. Auf Ansage: "guten tag auch
+                     weg. da kommt das glaswerk logo."
+
+                     Solange es keine Datei gibt, steht der Schriftzug da.
+                     Das Logo kommt als glaswerk.svg in diesen Ordner; der
+                     Platz ist derselbe, nur der Inhalt wechselt. -->
+                <!-- Das Logo TRAEGT den Schriftzug (ein Glas-GLASWERK,
+                     1000x220). Der Text daneben steht deshalb nur da,
+                     solange das Bild fehlt: onerror nimmt das <img> aus dem
+                     Baum, und erst dann zeigt sich die Wortmarke. -->
+                <div class="marke">
+                  <img class="logo" src="/glaswerk_static/glaswerk.svg" alt="Glaswerk"
+                       onerror="this.remove(); this.parentNode.classList.add('ohne-logo')">
+                  <span class="wortmarke">Glaswerk</span>
+                </div>
               </div>
               ${!ZUSTAND.modell ? "" : `
               <div class="sichern">
                 <input class="namensfeld" type="text" value="${ZUSTAND.name || ""}"
                        placeholder="${T("Name der Theme")}" spellcheck="false">
-                <span class="zaehlerbox"><b class="zaehler">${ZUSTAND.geaendert.size}</b> ${T("Aenderungen")}</span>
+                <!-- Die vier Wege, seit dem 16.10.2026 wieder oben.
+                     Am 15.10. waren sie in die Seite gewandert, weil die
+                     Leiste neun unbeschriftete Symbole trug. Das Argument
+                     galt der LEISTE, nicht dem Ort: Jetzt sind es vier
+                     statt neun, die Kennzahlen darunter sind weg, und auf
+                     der Seite nahmen sie eine ganze Reihe fuer vier Woerter.
+                     Als Symbol mit Titel, nicht mit Text - sonst passt der
+                     Kopf auf keinen schmalen Schirm. -->
+                <span class="wegeoben">
+                  ${[
+                    { id: "neu",     icon: "mdi:file-plus-outline",   t: T("Neue Theme") },
+                    { id: "oeffnen", icon: "mdi:folder-open-outline", t: T("Vorhandene oeffnen") },
+                    { id: "lesen",   icon: "mdi:file-import-outline", t: T("Datei oder Text") },
+                    { id: "hilfe",   icon: "mdi:help-circle-outline", t: T("Was macht welche Variable?") },
+                  ].map((k) => `
+                  <button class="kopfknopf nur-symbol" data-schalter="${k.id}"
+                          title="${k.t}" aria-label="${k.t}">
+                    <ha-icon icon="${k.icon}"></ha-icon>
+                  </button>`).join("")}
+                </span>
+
                 <!-- Was zur DATEI gehoert, steht neben Speichern: verwerfen,
-                     herunterladen, kopieren - und der Weg zurueck zum Anfang.
-                     "Bis auf speichern" heisst nicht nur den einen Knopf,
-                     sondern das, was mit ihm zu tun hat.
-                     Das Haus-Symbol ist am 15.10.2026 wieder gegangen: Es
-                     fuehrte zur Startseite, und die gibt es nicht mehr. -->
+                     herunterladen, kopieren.
+                     Seit dem 16.10.2026 Knoepfe mit Text statt blosser
+                     Symbole ("bild drei bitte als button darstellen") - ein
+                     Symbol allein verlangt, dass man es kennt oder darauf
+                     zeigt. Der Aenderungszaehler daneben ist weggefallen: Ob
+                     etwas offen ist, sagt schon der Verwerfen-Knopf, der
+                     dann nicht mehr gesperrt ist.
+                     Das Haus-Symbol ist am 15.10.2026 gegangen: Es fuehrte
+                     zur Startseite, und die gibt es nicht mehr. -->
                 ${[
-                  { id: "verwerfen", icon: "mdi:undo-variant",     t: T("Aenderungen verwerfen"), aus: !ZUSTAND.geaendert.size },
-                  { id: "laden2",    icon: "mdi:download-outline", t: T("Als Datei herunterladen") },
-                  { id: "kopie2",    icon: "mdi:content-copy",     t: T("In die Zwischenablage") },
+                  { id: "verwerfen", icon: "mdi:undo-variant",     t: T("Verwerfen"),
+                    lang: T("Aenderungen verwerfen"), aus: !ZUSTAND.geaendert.size },
+                  { id: "laden2",    icon: "mdi:download-outline", t: T("Herunterladen"),
+                    lang: T("Als Datei herunterladen") },
+                  { id: "kopie2",    icon: "mdi:content-copy",     t: T("Kopieren"),
+                    lang: T("In die Zwischenablage") },
                 ].map((k) => `
                 <button class="kopfknopf" data-schalter="${k.id}"
-                        title="${k.t}" aria-label="${k.t}" ${k.aus ? "disabled" : ""}>
-                  <ha-icon icon="${k.icon}"></ha-icon>
+                        title="${k.lang}" ${k.aus ? "disabled" : ""}>
+                  <ha-icon icon="${k.icon}"></ha-icon><span>${k.t}</span>
                 </button>`).join("")}
-                <button class="speichern">${T("Speichern")}</button>
+                <!-- Speichern mit Menue, wie in HATG: der Knopf schreibt die
+                     Theme, der Pfeil daneben oeffnet, was es sonst noch
+                     gibt. Ein Zwischenstand ist etwas anderes als eine
+                     fertige Theme, und beides auf denselben Knopf zu legen
+                     hiesse, dass man vor jedem Klick nachdenkt. -->
+                <span class="speicherbox">
+                  <button class="speichern">${T("Speichern")}</button>
+                  <button class="speichern pfeil" data-schalter="speichermenue"
+                          title="${T("Weitere Speicheroptionen")}"
+                          aria-expanded="${this._speichermenue ? "true" : "false"}">
+                    <ha-icon icon="mdi:chevron-down"></ha-icon>
+                  </button>
+                  ${this._speichermenue ? this.speicherMenueHtml(T) : ""}
+                </span>
               </div>`}
             </header>
 
-            ${!ZUSTAND.modell ? "" : `
-            <div class="kennzahlen">
-              <div class="kennzahl"><b>${fertig}/${STUFEN.length}</b><span>${T("Stufen fertig")}</span></div>
-              <div class="kennzahl" title="${felderGesamt} ${T("bietet das Panel an")}"><b>${felderImModell}</b><span>${T("Felder")}</span></div>
-              <div class="kennzahl"><b>${T("gerade eben")}</b><span>${T("zuletzt geändert")}</span></div>
-            </div>`}
+            <!-- Hier standen bis zum 16.10.2026 drei Kennzahlen: Stufen
+                 fertig, Felder, zuletzt geaendert. Weggefallen auf Ansage.
+                 Was sie sagten, steht ohnehin woanders: Wie weit eine Stufe
+                 ist, zeigt die Liste darunter je Zeile; wie viele Felder
+                 gesetzt sind, steht in jeder Stufe daneben; und "gerade
+                 eben" war der am wenigsten tragfaehige Wert von dreien - er
+                 stand da, seit die Seite offen war. -->
 
             <p class="meldung ${ZUSTAND.meldung ? ZUSTAND.meldung.art : ""}">${ZUSTAND.ladefehler ? T("Grundlage nicht geladen: ") + ZUSTAND.ladefehler : (ZUSTAND.meldung ? ZUSTAND.meldung.text : "")}</p>
 
@@ -2654,8 +2828,10 @@ class GlaswerkPanel extends HTMLElement {
                  Die Reihenfolge ist die der Arbeit: erst woher die Theme
                  kommt (Datei), dann womit man sie baut (Werkzeuge), dann
                  worauf sie aufsetzt (Start), dann die acht Stufen. -->
+            <!-- "Anfangen" steht seit dem 16.10.2026 OBEN im Kopf, als vier
+                 Symbole - hier stuende es sonst ein zweites Mal. Die
+                 Werkzeuge bleiben unten, direkt ueber der Liste. -->
             ${!ZUSTAND.modell ? this.wegeHtml(T) : `
-            ${this.wegeHtml(T, "anfangen")}
             ${this.startFelder(T)}
             <!-- Die Werkzeuge stehen DIREKT ueber der Liste, seit dem
                  15.10.2026 - mit zwei Pfeilen angesagt, die von ihnen nach
@@ -2726,10 +2902,29 @@ class GlaswerkPanel extends HTMLElement {
       verwerfen: () => this.verwerfen(),
       laden2: () => this.herunterladen(),
       kopie2: () => this.kopieren(),
+      speichermenue: () => { this._speichermenue = !this._speichermenue; this.zeichne(); },
+      spUnterName: () => { this._speichermenue = false; this.speichernUnterName(); },
+      spZwischen: () => { this._speichermenue = false; this.zwischenstandSichern(); },
+      spPruefen: () => { this._speichermenue = false; this.zeigeBerichtJetzt(); },
     };
     this.shadowRoot.querySelectorAll("[data-schalter]").forEach((b) =>
-      b.addEventListener("click", () => schalter[b.dataset.schalter]?.())
+      b.addEventListener("click", (e) => {
+        // Der Klick darf nicht nach oben durchschlagen: Dort haengt der
+        // Schliesser des Speichermenues, und das Menue ginge im selben
+        // Augenblick wieder zu, in dem es aufgeht.
+        e.stopPropagation();
+        schalter[b.dataset.schalter]?.();
+      })
     );
+
+    // Ein Klick irgendwo sonst schliesst das Speichermenue. Ohne das bliebe
+    // es stehen, bis man den Pfeil noch einmal trifft.
+    if (this._speichermenue) {
+      this.shadowRoot.addEventListener("click", () => {
+        this._speichermenue = false;
+        this.zeichne();
+      }, { once: true });
+    }
 
     // Die grossen Karten auf der Startseite fuehren zu denselben Aktionen wie
     // die Symbolleiste - ein eigener Name, damit ein Klick nicht zweimal
@@ -3190,6 +3385,14 @@ class GlaswerkPanel extends HTMLElement {
         type: "glaswerk/save_theme", name: ZUSTAND.name, yaml, overwrite: true });
       await this._hass.callService("frontend", "reload_themes");
       ZUSTAND.geaendert.clear();
+      // Dieser Stand ist ab jetzt der letzte Arbeitsstand. Auch wenn unter
+      // neuem Namen gespeichert wurde - gearbeitet wird an dem, was zuletzt
+      // auf der Platte landete.
+      letzteSchreiben(`${ZUSTAND.name}.yaml`);
+      // Der Zwischenstand hat sich erledigt: Was er trug, steht jetzt in der
+      // Datei. Bliebe er liegen, ueberschriebe er beim naechsten Oeffnen
+      // genau das, was gerade gespeichert wurde.
+      zwischenLoeschen();
       melde(`Gespeichert: ${r.path}`, "gut");
       this.zeichne();
     } catch (e) {
@@ -3199,6 +3402,83 @@ class GlaswerkPanel extends HTMLElement {
     } finally {
       if (knopf) knopf.disabled = false;
     }
+  }
+
+  // Das Menue am Speichern-Knopf. Vorbild ist HATG, das dasselbe hinter
+  // einem Pfeil versammelt - dort heisst es "Theme als Datei speichern",
+  // "Zwischenstand sichern" und "Theme validieren".
+  //
+  // Der Unterschied: HATGs Zwischenstand schreibt eine Datei
+  // `hatg-work-<name>.yaml` nach config/themes/. Sie liegt damit im
+  // Themes-Ordner, und Home Assistant laedt aus dem Ordner JEDE .yaml als
+  // Theme - der Zwischenstand steht also in der Theme-Auswahl des Nutzers.
+  // Glaswerk schreibt ihn stattdessen in den Browser. Er ueberlebt damit
+  // keinen Geraetewechsel, aber er taucht auch nirgends auf, wo er nicht
+  // hingehoert.
+  speicherMenueHtml(T) {
+    const eintraege = [
+      { id: "spUnterName", icon: "mdi:content-save-edit-outline",
+        t: T("Unter neuem Namen"), p: T("Als zweite Datei in config/themes/") },
+      { id: "spZwischen", icon: "mdi:content-save-outline",
+        t: T("Zwischenstand sichern"), p: T("Nur im Browser - geht nicht in die Theme-Auswahl") },
+      { id: "spPruefen", icon: "mdi:shield-check-outline",
+        t: T("Theme pruefen"), p: T("Was gesetzt ist, was fehlt, was fremd ist") },
+    ];
+    return `
+      <div class="spmenue">
+        ${eintraege.map((e) => `
+        <button class="spzeile" data-schalter="${e.id}">
+          <ha-icon icon="${e.icon}"></ha-icon>
+          <span><strong>${e.t}</strong><small>${e.p}</small></span>
+        </button>`).join("")}
+      </div>`;
+  }
+
+  // Unter neuem Namen: dasselbe Speichern, nur mit einer Nachfrage davor.
+  // Der Name landet im Feld oben, damit danach sichtbar ist, woran man
+  // arbeitet - speichern() liest ihn ohnehin von dort.
+  speichernUnterName() {
+    const alt = ZUSTAND.name || "";
+    const neu = (prompt(t("Name der neuen Theme", this.spr), alt) || "").trim();
+    if (!neu || neu === alt) return;
+    const nf = this.shadowRoot.querySelector(".namensfeld");
+    if (nf) nf.value = neu;
+    ZUSTAND.name = neu;
+    this.speichern();
+  }
+
+  // Der Zwischenstand liegt im Browser, nicht im Themes-Ordner.
+  //
+  // Was gesichert wird, ist das MODELL, nicht die fertige Theme: Es traegt
+  // auch die Felder, die noch nicht geschrieben wuerden, und genau die will
+  // man zurueckhaben. Dazu Name und Zeitpunkt.
+  zwischenstandSichern() {
+    const melde = (txt, art) => {
+      ZUSTAND.meldung = { text: txt, art: art || "" };
+      this.zeichne();
+    };
+    const nf = this.shadowRoot.querySelector(".namensfeld");
+    if (nf) ZUSTAND.name = nf.value.trim();
+    try {
+      localStorage.setItem(ZWISCHEN_SPEICHER, JSON.stringify({
+        name: ZUSTAND.name,
+        modell: ZUSTAND.modell,
+        meta: ZUSTAND.meta,
+        zeit: new Date().toISOString(),
+      }));
+      melde(t("Zwischenstand gesichert - im Browser, nicht in config/themes/", this.spr), "gut");
+    } catch (e) {
+      // Ein privates Fenster oder ein voller Speicher. Beides sagen, nicht
+      // schlucken: Wer glaubt, gesichert zu haben, arbeitet sorgloser.
+      melde(t("Zwischenstand nicht gesichert: ", this.spr) + (e.message || e), "fehler");
+    }
+  }
+
+  // Den Bericht auf Verlangen zeigen. Beim Oeffnen einer fremden Datei
+  // kommt er von selbst; hier wird er nachgeschlagen.
+  zeigeBerichtJetzt() {
+    ZUSTAND.bericht = berichtUeberTheme(ZUSTAND.modell, BEKANNT, EIGENE_ZIELE);
+    this.zeigeBericht();
   }
 
   rampeHtml(f, basis) {
@@ -3382,8 +3662,12 @@ class GlaswerkPanel extends HTMLElement {
         /* Eigene Werte. Bewusst KEINE Theme-Variablen - siehe Kopf der Datei. */
         --s-tinte: #1b2430;
         --s-tinte-leise: #64707f;
-        --s-glas: rgba(255,255,255,.52);
-        --s-glas-innen: rgba(255,255,255,.72);
+        /* Weniger Deckung seit dem 16.10.2026: Der Verlauf der Buehne soll
+           durchkommen, auch in der Kopfzeile. Bei .52 war das Glas eine
+           weisse Wand mit blauem Rand drumherum - und seit das Fenster
+           randlos ist, saehe man den Verlauf sonst gar nicht mehr. */
+        --s-glas: rgba(255,255,255,.34);
+        --s-glas-innen: rgba(255,255,255,.58);
         --s-karte: #ffffff;
         --s-kante: rgba(255,255,255,.75);
         --s-linie: rgba(27,36,48,.10);
@@ -3430,8 +3714,11 @@ class GlaswerkPanel extends HTMLElement {
       *, *::before, *::after { box-sizing: border-box; }
 
       /* ---- Hintergrund und Glasfenster ---- */
+      /* Ohne Rand seit dem 16.10.2026: "diese ueber die ganze seite". Der
+         Verlauf laeuft bis an alle vier Kanten, und das Glas darauf ebenso -
+         kein blauer Saum mehr um ein schwebendes Fenster. */
       .buehne {
-        position: absolute; inset: 0; overflow: auto; padding: var(--s-rand);
+        position: absolute; inset: 0; overflow: auto;
         background: linear-gradient(160deg, #dcebfb 0%, #b9d6f4 45%, #8fbdea 100%);
       }
       .wolke { position: fixed; border-radius: 50%; filter: blur(70px); opacity: .55; pointer-events: none; }
@@ -3439,13 +3726,16 @@ class GlaswerkPanel extends HTMLElement {
       .wolke.b { width: 460px; height: 380px; right: -100px; top: -120px; background: #7fd8f7; }
 
       .fenster {
-        /* Keine linke Spalte mehr - die Leiste sitzt oben, im Inhalt. */
+        /* Keine linke Spalte mehr - die Leiste sitzt oben, im Inhalt.
+           Seit dem 16.10.2026 randlos: keine Ecken, kein Wurfschatten, kein
+           Abstand. Das Glas IST die Seite, es liegt nicht mehr darauf. Die
+           helle Kante oben bleibt - sie trennt das Panel von Home Assistants
+           eigener Kopfleiste. */
         position: relative; display: block; min-height: 100%;
-        border-radius: var(--s-r-gross); overflow: hidden;
         background: var(--s-glas);
         -webkit-backdrop-filter: blur(30px) saturate(1.6);
         backdrop-filter: blur(30px) saturate(1.6);
-        box-shadow: var(--s-schatten), inset 0 1px 0 var(--s-kante);
+        box-shadow: inset 0 1px 0 var(--s-kante);
       }
 
       /* ---- Die Menueleiste oben: HA ----
@@ -3473,17 +3763,63 @@ class GlaswerkPanel extends HTMLElement {
       /* Die Knoepfe neben Speichern. Dieselben Masse wie die alten
          Leistenknoepfe (40 px, Symbol 20) - sie sind dieselbe Sorte Knopf,
          nur an dem Ort, an den sie gehoeren. */
-      .kopfknopf { display: flex; align-items: center; justify-content: center; flex: none;
-                   width: 40px; height: 40px; border: 0; background: none;
-                   color: var(--s-tinte); cursor: pointer; border-radius: var(--s-r);
-                   transition: background .15s ease, box-shadow .15s ease; }
-      .kopfknopf ha-icon { --mdc-icon-size: 20px; color: var(--s-tinte-leise); flex: none; }
-      .kopfknopf:hover:not([disabled]) { background: var(--s-karte);
+      /* Knoepfe mit Text, seit dem 16.10.2026 ("bild drei bitte als button
+         darstellen"). Vorher drei blanke Symbole - wer sie nicht kannte,
+         musste darauf zeigen und warten. Jetzt Symbol UND Wort, in einer
+         Glasflaeche wie alles andere im Kopf. */
+      .kopfknopf { display: inline-flex; align-items: center; gap: 7px; flex: none;
+                   height: 38px; padding: 0 14px; border: 1px solid rgba(255,255,255,.5);
+                   background: rgba(255,255,255,.22);
+                   -webkit-backdrop-filter: blur(12px) saturate(1.4);
+                   backdrop-filter: blur(12px) saturate(1.4);
+                   color: var(--s-tinte); cursor: pointer; border-radius: 999px;
+                   font: inherit; font-size: 13px; white-space: nowrap;
+                   transition: background .15s ease, box-shadow .15s ease,
+                               border-color .15s ease; }
+      .kopfknopf ha-icon { --mdc-icon-size: 18px; color: var(--s-tinte-leise); flex: none; }
+      .kopfknopf:hover:not([disabled]) { background: rgba(255,255,255,.42);
+                                         border-color: rgba(255,255,255,.8);
                                          box-shadow: var(--s-schatten-klein); }
       /* Nicht verfuegbar heisst leiser, nicht unsichtbar - siehe die alte
          Schalterreihe, wo opacity .35 den Knopf verschwinden liess. */
-      .kopfknopf[disabled] { cursor: default; }
+      .kopfknopf[disabled] { cursor: default; color: rgba(27,36,48,.38); }
       .kopfknopf[disabled] ha-icon { color: rgba(27,36,48,.38); }
+
+      /* Die vier Wege oben: rund und ohne Wort. Mit Text waeren es vier
+         Knoepfe mehr in einer Zeile, die schon Marke, Namensfeld, drei
+         Dateiknoepfe und Speichern traegt - der Kopf fiele auf dem ersten
+         schmalen Schirm auseinander. Der Name steht im title. */
+      .kopfknopf.nur-symbol { width: 38px; padding: 0; justify-content: center; }
+      .wegeoben { display: inline-flex; gap: 6px; flex: none;
+                  padding-right: 10px; margin-right: 4px;
+                  border-right: 1px solid rgba(27,36,48,.12); }
+
+      /* ---- Speichern mit Menue ----
+         Der Knopf schreibt, der Pfeil daneben oeffnet den Rest. Beides sieht
+         aus wie ein Stueck: Die Trennlinie dazwischen ist eine Haarlinie,
+         keine Luecke. */
+      .speicherbox { position: relative; display: inline-flex; flex: none; }
+      .speicherbox .speichern { border-radius: 999px 0 0 999px; }
+      .speicherbox .pfeil { border-radius: 0 999px 999px 0; padding: 0 10px;
+                            border-left: 1px solid rgba(255,255,255,.22);
+                            display: inline-flex; align-items: center; }
+      .speicherbox .pfeil ha-icon { --mdc-icon-size: 18px; }
+      .spmenue { position: absolute; top: calc(100% + 8px); right: 0; z-index: 20;
+                 min-width: 290px; padding: 6px; border-radius: var(--s-r);
+                 background: rgba(255,255,255,.82);
+                 -webkit-backdrop-filter: blur(24px) saturate(1.6);
+                 backdrop-filter: blur(24px) saturate(1.6);
+                 border: 1px solid rgba(255,255,255,.6);
+                 box-shadow: 0 18px 44px rgba(10,22,40,.26), inset 0 1px 0 var(--s-kante); }
+      .spzeile { display: flex; align-items: flex-start; gap: 11px; width: 100%;
+                 padding: 10px 11px; border: 0; background: none; border-radius: var(--s-r-klein);
+                 font: inherit; color: var(--s-tinte); text-align: left; cursor: pointer;
+                 transition: background .12s ease; }
+      .spzeile:hover { background: rgba(27,36,48,.06); }
+      .spzeile ha-icon { --mdc-icon-size: 20px; color: var(--s-akzent); flex: none; margin-top: 1px; }
+      .spzeile strong { display: block; font-size: 13.5px; font-weight: 500; }
+      .spzeile small { display: block; margin-top: 1px; font-size: 11.5px;
+                       color: var(--s-tinte-leise); line-height: 1.35; }
 
 
       /* ---- Rumpf ---- */
@@ -3591,14 +3927,38 @@ class GlaswerkPanel extends HTMLElement {
                 font-size: 12px; line-height: 1.5; }
       .uixcss:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 1px rgba(27,36,48,.18); }
 
-      .kopf { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+      /* Mittig statt oben buendig, seit dem 16.10.2026: Unter der Marke steht
+         kein Untertitel mehr ("der text kann auch weg"), und flex-start
+         haengte sie dadurch ueber der Knopfreihe daneben. */
+      .kopf { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
       .kopf h1 { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; }
       .kopf p  { margin: 4px 0 0; color: var(--s-tinte-leise); font-size: 14px; }
+
+      /* Die Marke statt einer Ueberschrift, seit dem 16.10.2026.
+         Das Logo kommt als /glaswerk_static/glaswerk.svg - unversioniert und
+         ohne Cache-Kopfzeile, damit ein neues Bild sofort erscheint. Fehlt
+         die Datei, nimmt onerror das <img> aus dem Baum und der Schriftzug
+         steht allein da. Kein leerer Rahmen, kein kaputtes Bildsymbol. */
+      .marke { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+      /* 44px hoch bei 1000x220 im Bild - das ergibt rund 200px Breite. Mehr
+         traegt der Kopf nicht: Daneben stehen sieben Knoepfe und ein
+         Namensfeld. */
+      .marke .logo { height: 44px; width: auto; display: block; }
+      /* Der Schriftzug steht IM Logo. Das Wort daneben ist der Ersatz fuer
+         den Fall, dass die Datei fehlt - dann setzt onerror die Klasse. */
+      .marke .wortmarke { display: none; font-size: 30px; line-height: 1.15;
+                          letter-spacing: -.02em; font-weight: 600; color: var(--s-tinte); }
+      .marke.ohne-logo .wortmarke { display: block; }
       .hinweis { border-left: 3px solid #7bd14a; padding-left: 12px; }
       .hinweis b { display: block; font-size: 15px; }
       .hinweis span { color: var(--s-tinte-leise); font-size: 13px; }
 
-      .sichern { display: flex; align-items: center; gap: 10px; }
+      /* Umbrechen erlaubt, seit die vier Wege mit oben stehen (16.10.2026):
+         Marke, Namensfeld, vier Wege, drei Dateiknoepfe und Speichern passen
+         auf einem breiten Schirm in eine Zeile, auf einem engen nicht. Ohne
+         wrap schoebe sich Speichern aus dem Bild. */
+      .sichern { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+                 justify-content: flex-end; }
       /* Jedes Eingabefeld bekommt seine Schriftfarbe ausdruecklich. Ohne das
          erbt es aus Home Assistant - und in einem dunklen Theme ist das Weiss.
          Am 12.10.2026 stand der Hexwert #5468e0 weiss auf durchsichtigem Grund
@@ -3628,9 +3988,17 @@ class GlaswerkPanel extends HTMLElement {
          Karte noch laedt. */
 
       .kennzahlen { display: flex; gap: 14px; margin: 22px 0 18px; flex-wrap: wrap; }
+      /* Durchscheinend, nicht milchig: Seit dem 16.10.2026 soll der Verlauf
+         der Buehne auch hier zu sehen sein. Vorher lag .34 Weiss darauf und
+         das Blau darunter verschwand - die Kennzahlen sahen aus wie auf
+         Papier geklebt. Jetzt traegt die Flaeche eine eigene Weichzeichnung
+         und deutlich weniger Deckung. */
       .kennzahl { flex: 1 1 180px; display: flex; align-items: center; gap: 12px;
                   padding: 10px 14px; border-radius: var(--s-r);
-                  background: rgba(255,255,255,.34); border: 1px solid rgba(255,255,255,.5); }
+                  background: rgba(255,255,255,.18);
+                  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+                  backdrop-filter: blur(12px) saturate(1.4);
+                  border: 1px solid rgba(255,255,255,.45); }
       .kennzahl b { background: #fff; border-radius: 999px; padding: 7px 14px; font-size: 14px;
                     box-shadow: var(--s-schatten-klein); white-space: nowrap; }
       .kennzahl span { color: var(--s-tinte-leise); font-size: 12px; line-height: 1.3; text-transform: uppercase;
@@ -3805,17 +4173,24 @@ class GlaswerkPanel extends HTMLElement {
          sein Element zum Bezugsrahmen fuer alles, was darin position:fixed
          ist - in .dialog steht nichts dergleichen, und die Feldseite liegt
          NEBEN der Stufenseite, nicht darin. */
-      .schleier { position: absolute; inset: 0; background: rgba(16,28,45,.26); opacity: 0;
+      /* .34 seit dem 16.10.2026: Der Dialog deckt weniger (.66 statt .84),
+         und ohne den dichteren Schleier schiene die Stufenliste dahinter
+         durch. Immer noch hell genug, dass das Glas den Verlauf aufnimmt
+         und nicht grau wird - das war der Grund fuer .26. */
+      .schleier { position: absolute; inset: 0; background: rgba(16,28,45,.34); opacity: 0;
                   transition: opacity .18s ease; }
       .overlay.da .schleier { opacity: 1; }
-      /* .84, nicht --s-glas-innen (.72): Bei .72 las man in den Luecken
-         ZWISCHEN den Karten den Text der Seite dahinter mit - auf einer
-         Stufenseite steht dort die Stufenliste, und die geisterte durch die
-         Gruppen. Die Variable bleibt bei .72, weil sie an der Menueleiste und
-         an den Stilzielen richtig ist; ein Dialog deckt mehr, weil man darin
-         liest statt nur hinzusehen. */
+      /* .66 seit dem 16.10.2026, vorher .84. Der Dialog soll auf demselben
+         Niveau liegen wie die Seite dahinter ("kannst du das alles auf das
+         selbe nivau machen") - bei .84 war er eine weisse Flaeche, und der
+         Verlauf endete an seiner Kante.
+         Der Grund fuer die hohe Deckung bleibt richtig: In den Luecken
+         ZWISCHEN den Karten las man sonst die Stufenliste dahinter mit. Er
+         ist jetzt anders geloest - die Karten darin tragen selbst Glas und
+         decken, wo gelesen wird. Der Schleier darunter ist dafuer etwas
+         dichter geworden. */
       .dialog { position: relative; width: min(1180px, 100%); max-height: 100%; overflow: auto;
-                border-radius: var(--s-r-gross); background: rgba(255,255,255,.84);
+                border-radius: var(--s-r-gross); background: rgba(255,255,255,.66);
                 -webkit-backdrop-filter: blur(30px) saturate(1.6);
                 backdrop-filter: blur(30px) saturate(1.6);
                 box-shadow: 0 40px 90px rgba(10,22,40,.34), inset 0 1px 0 var(--s-kante);
@@ -3885,10 +4260,13 @@ class GlaswerkPanel extends HTMLElement {
       .bk-teile.mini .bk-tupfer i, .bk-teile.mini .bk-tupfer i:first-child {
         width: 18px; height: 18px; }
       .bk-teile.mini .bk-haken { top: 7px; right: 8px; --mdc-icon-size: 15px; }
-      /* Dieselbe Karte wie auf dem Startbild (.startweg): weiche Flaeche,
-         Haarlinie, kleiner Schatten, und beim Ueberfahren hebt sie sich einen
-         Pixel. Vorher fehlten Schatten und Bewegung - die Kacheln lagen flach
-         auf der Flaeche, waehrend jede andere Karte im Panel schwebt. */
+      /* Weiche Flaeche, Haarlinie, kleiner Schatten, und beim Ueberfahren
+         hebt sie sich einen Pixel. Vorher fehlten Schatten und Bewegung -
+         die Kacheln lagen flach auf der Flaeche, waehrend jede andere Karte
+         im Panel schwebt.
+         Bis zum 16.10.2026 stand hier "dieselbe Karte wie .startweg". Die
+         Wege sind seitdem flache Zeilen mit Symbol-Pille; eine
+         Baukasten-Kachel traegt Farbtupfer und bleibt eine Karte. */
       /* Drei Schatten statt einem: ein heller Saum oben innen (das Licht auf
          der Kante), ein kurzer harter darunter (die Kante selbst) und ein
          weiter weicher (der Wurf auf die Flaeche). Ein einzelner Schatten
@@ -4006,20 +4384,36 @@ class GlaswerkPanel extends HTMLElement {
       .startweg[disabled] { opacity: .45; cursor: default; transform: none; }
       .startweg[disabled]:hover { border-color: rgba(27,36,48,.08);
                                   box-shadow: var(--s-schatten-klein); }
+      /* 200 statt 240 px seit dem 16.10.2026: Die Wege sind flache Zeilen
+         geworden, kein Text mehr unter dem Titel - sie brauchen weniger
+         Breite, und vier passen damit auch auf einem engeren Schirm in eine
+         Reihe. gap wie bei den Kennzahlen darueber. */
       .startwege { display: grid; gap: 14px; margin-top: 8px;
-                   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
-      .startweg { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+                   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      /* Eine Zeile wie .kennzahl, seit dem 16.10.2026: Symbol in einer
+         weissen Pille, Titel daneben, sonst nichts. Vorher standen Symbol,
+         Titel und ein Satz untereinander in einer deckenden Karte - vier
+         davon nebeneinander waren mehr Flaeche als Auskunft, und sie
+         sahen aus wie Papier auf dem Glas. */
+      .startweg { display: flex; flex-direction: row; align-items: center; gap: 12px;
                   text-align: left; cursor: pointer; font: inherit; color: var(--s-tinte);
-                  background: var(--s-karte); background-image: var(--s-flaeche);
-                  border: 1px solid rgba(27,36,48,.08);
-                  border-radius: var(--s-r); padding: 20px 20px 18px;
-                  box-shadow: var(--s-schatten-klein);
-                  transition: border-color .15s, box-shadow .15s, transform .15s; }
-      .startweg:hover { border-color: var(--s-akzent); transform: translateY(-2px);
-                        box-shadow: var(--s-schatten-hoch); }
-      .startweg ha-icon { --mdc-icon-size: 26px; color: var(--s-akzent); margin-bottom: 2px; }
-      .startweg b { font-size: 15.5px; font-weight: 500; }
-      .startweg span { font-size: 12.5px; line-height: 1.45; color: var(--s-tinte-leise); }
+                  background: rgba(255,255,255,.18);
+                  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+                  backdrop-filter: blur(12px) saturate(1.4);
+                  border: 1px solid rgba(255,255,255,.45);
+                  border-radius: var(--s-r); padding: 10px 14px;
+                  transition: border-color .15s, box-shadow .15s, transform .15s,
+                              background .15s; }
+      .startweg:hover { border-color: rgba(255,255,255,.8); transform: translateY(-2px);
+                        background: rgba(255,255,255,.3);
+                        box-shadow: var(--s-schatten-klein); }
+      /* Die Pille: dieselbe Rechnung wie .kennzahl b - weiss, rund, mit den
+         drei Schatten. Dort steht eine Zahl, hier das Symbol. */
+      .wegsymbol { flex: none; display: grid; place-items: center;
+                   width: 38px; height: 38px; border-radius: 999px;
+                   background: #fff; box-shadow: var(--s-schatten-klein); }
+      .startweg ha-icon { --mdc-icon-size: 20px; color: var(--s-akzent); display: block; }
+      .startweg b { font-size: 13px; font-weight: 500; line-height: 1.3; min-width: 0; }
       .bk-zahl { font-size: 11px; font-weight: 400; letter-spacing: 0;
                  color: var(--s-tinte-leise); text-transform: none;
                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -4081,8 +4475,16 @@ class GlaswerkPanel extends HTMLElement {
       /* Gemischt: Ueberschrift wie in der Liste, Felder als Kacheln darunter. */
       .kachelraster { display: grid; gap: 10px;
                       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-      .karte { background: var(--s-karte); border-radius: var(--s-r); padding: 12px 13px;
-               box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
+      /* Glas, nicht Papier - seit dem 16.10.2026 auf dem Niveau der
+         Hauptseite. Vorher war die Kachel deckend weiss (--s-karte), und
+         eine Stufenseite sah dadurch aus wie ein anderes Programm: weisse
+         Karten auf grauem Grund, waehrend dahinter der blaue Verlauf lag.
+         Jetzt dieselbe Rechnung wie bei .kennzahl - wenig Deckung, eigene
+         Weichzeichnung, heller Saum. */
+      .karte { background: rgba(255,255,255,.44); border-radius: var(--s-r); padding: 12px 13px;
+               -webkit-backdrop-filter: blur(14px) saturate(1.5);
+               backdrop-filter: blur(14px) saturate(1.5);
+               box-shadow: var(--s-schatten-klein); border: 1px solid rgba(255,255,255,.55); }
       .karte b { display: block; font-size: 13.5px; margin-bottom: 2px; }
       /* Der Variablenname ist Beiwerk, nicht Inhalt - klein und leise. */
       .karte p { margin: 0 0 10px; color: var(--s-tinte-leise); font-size: 10.5px;
@@ -4261,8 +4663,13 @@ class GlaswerkPanel extends HTMLElement {
       .tupfer { width: 14px; height: 14px; border-radius: 4px;
                 box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
 
-      .feldliste { border-radius: var(--s-r); background: var(--s-karte); padding: 6px;
-                   box-shadow: var(--s-schatten-klein); border: 1px solid rgba(27,36,48,.05); }
+      /* Wie .karte: Glas statt Papier, seit dem 16.10.2026. Die Liste traegt
+         etwas mehr Deckung als eine einzelne Kachel - darin steht Zeile an
+         Zeile, und was man liest, braucht einen ruhigen Grund. */
+      .feldliste { border-radius: var(--s-r); background: rgba(255,255,255,.52); padding: 6px;
+                   -webkit-backdrop-filter: blur(14px) saturate(1.5);
+                   backdrop-filter: blur(14px) saturate(1.5);
+                   box-shadow: var(--s-schatten-klein); border: 1px solid rgba(255,255,255,.55); }
       .feld { display: flex; align-items: center; gap: 12px; padding: 10px 12px;
               border-radius: var(--s-r-klein); transition: background .15s ease; }
       .feld:hover { background: rgba(27,36,48,.04); }
@@ -4296,8 +4703,12 @@ class GlaswerkPanel extends HTMLElement {
         .railknopf { width: 34px; height: 34px; }
         .railfuss { margin-top: 0; margin-left: auto; }
         .inhalt { padding: 18px; }
-        .kopf { flex-direction: column; gap: 12px; }
+        /* Untereinander und linksbuendig - mittig waere hier falsch, weil
+           die Spalte die ganze Breite nimmt. */
+        .kopf { flex-direction: column; align-items: flex-start; gap: 12px; }
         .kopf h1 { font-size: 24px; }
+        .marke .wortmarke { font-size: 24px; }
+        .marke .logo { height: 34px; }
         .kennzahlen { gap: 10px; }
         .kennzahl { flex: 1 1 100%; }
         .zeile { gap: 10px; padding: 12px; }

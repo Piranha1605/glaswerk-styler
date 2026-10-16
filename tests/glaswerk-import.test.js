@@ -201,7 +201,9 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
   const schalterBlock = panel.slice(panel.indexOf("    const schalter = {"),
                                     panel.indexOf("querySelectorAll(\"[data-schalter]\")"));
   assert.ok(schalterBlock.length > 200, "der Schalterblock wurde nicht gefunden");
-  const aktionen = [...schalterBlock.matchAll(/^\s{6}([a-z0-9]+): \(\) =>/gm)].map((m) => m[1]);
+  // Grossbuchstaben erlaubt: Die Eintraege des Speichermenues heissen
+  // spUnterName, spZwischen, spPruefen - die Vorsilbe haelt sie beisammen.
+  const aktionen = [...schalterBlock.matchAll(/^\s{6}([a-zA-Z0-9]+): \(\) =>/gm)].map((m) => m[1]);
   assert.ok(aktionen.length >= 9, `nur ${aktionen.length} Aktionen gefunden`);
 
   // Wo sie im Markup vorkommen - seit dem 15.10.2026 noch drei Orte, aber
@@ -209,7 +211,12 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
   // "Datei" und "Werkzeuge".
   const teil = (von, bis) => panel.slice(panel.indexOf(von), panel.indexOf(bis, panel.indexOf(von)));
   const orte = {
-    kopf: teil('<div class="sichern">', '<button class="speichern">'),
+    // Bis zum Ende des Kopfes, nicht bis zum Speichern-Knopf: Seit dem
+    // 16.10.2026 steht dahinter das Speichermenue mit dem Pfeil, der es
+    // oeffnet.
+    kopf: teil('<div class="sichern">', "            </header>"),
+    // Und das Menue selbst - seine Eintraege sind Aktionen wie die anderen.
+    speichermenue: teil("  speicherMenueHtml(T) {", "  // Unter neuem Namen"),
     anfangen: teil('{ id: "anfangen", titel: T("Anfangen"), wege: [', '{ id: "werkzeuge"'),
     werkzeuge: teil('{ id: "werkzeuge", titel: T("Werkzeuge"), wege: [', "    ];"),
   };
@@ -218,9 +225,16 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
 
   // Die Reihen tragen selbst eine id ("anfangen", "werkzeuge") - die ist
   // keine Aktion. Gezaehlt wird erst ab "wege: [".
+  // Zwei Schreibweisen, seit dem 16.10.2026: Die Wege stehen als Datensaetze
+  // mit `id:`, die Knoepfe im Kopf und im Speichermenue tragen den Namen
+  // direkt im Markup als data-schalter. Beide zaehlen.
   const idsVon = (t) => {
     const ab = t.indexOf("wege: [");   // der Kopf hat keine - dann alles
-    return [...(ab > -1 ? t.slice(ab) : t).matchAll(/id: "([a-z0-9]+)"/g)].map((m) => m[1]);
+    const text = ab > -1 ? t.slice(ab) : t;
+    return [
+      ...[...text.matchAll(/id: "([a-zA-Z0-9]+)"/g)].map((m) => m[1]),
+      ...[...text.matchAll(/data-schalter="([a-zA-Z0-9]+)"/g)].map((m) => m[1]),
+    ];
   };
   const benutzt = new Set(Object.values(orte).flatMap(idsVon));
 
@@ -230,8 +244,17 @@ pruefe("Keine Leiste mehr - und keine Aktion dabei verloren", () => {
     assert.ok(aktionen.includes(b), `der Knopf "${b}" ruft eine Aktion auf, die es nicht gibt`);
 
   // Und jeder Ort traegt das, was dorthin gehoert.
-  assert.deepStrictEqual(idsVon(orte.kopf), ["verwerfen", "laden2", "kopie2"],
-    "im Kopf steht nicht mehr das, was zur Datei gehoert");
+  //
+  // Der Kopf traegt seit dem 16.10.2026 zweierlei, durch eine Linie
+  // getrennt: links die vier WEGE (neu, oeffnen, lesen, hilfe), rechts was
+  // zur DATEI gehoert. Dazu der Pfeil zum Speichermenue; was er oeffnet,
+  // steht in speicherMenueHtml und wird darunter geprueft.
+  assert.deepStrictEqual(idsVon(orte.kopf),
+    ["neu", "oeffnen", "lesen", "hilfe", "verwerfen", "laden2", "kopie2", "speichermenue"],
+    "im Kopf steht nicht mehr das, was dorthin gehoert");
+  assert.deepStrictEqual(idsVon(orte.speichermenue),
+    ["spUnterName", "spZwischen", "spPruefen"],
+    "das Speichermenue traegt andere Eintraege als erwartet");
   // Die Hilfe steht oben bei den Wegen zum Anfangen, nicht bei den
   // Werkzeugen: Sie fasst keine Theme an - und sie fuellt die vierte
   // Stelle, die sonst leer blieb.
@@ -253,12 +276,17 @@ pruefe("Die Hilfe gilt auch ohne offene Theme", () => {
   assert.doesNotMatch(eintrag[0], /aus:/, "die Hilfe wird gesperrt");
 });
 
-pruefe("Die Knoepfe im Kopf tragen Titel statt Beschriftung", () => {
-  // Gilt weiter: Der Name steht im title und im aria-label, nicht als Text
-  // daneben - vier Knoepfe neben Speichern muessen in jede Breite passen.
-  const kopf = panel.slice(panel.indexOf('<div class="sichern">'), panel.indexOf('<button class="speichern">'));
-  assert.match(kopf, /title="\$\{k\.t\}" aria-label="\$\{k\.t\}"/,
-    "ohne Beschriftung braucht es wenigstens title und aria-label");
+pruefe("Die Knoepfe im Kopf tragen eine Beschriftung und den langen Titel", () => {
+  // Umgekehrt seit dem 16.10.2026 ("bild drei bitte als button darstellen"):
+  // Der Knopf traegt jetzt ein kurzes Wort SICHTBAR, der ausfuehrliche Satz
+  // steht im title. Ein aria-label braucht er dadurch nicht mehr - der
+  // sichtbare Text ist der zugaengliche Name, und ein abweichendes Label
+  // daneben waere fuer Sprachsteuerung sogar hinderlich.
+  const kopf = panel.slice(panel.indexOf('<div class="sichern">'), panel.indexOf("            </header>"));
+  assert.match(kopf, /<ha-icon icon="\$\{k\.icon\}"><\/ha-icon><span>\$\{k\.t\}<\/span>/,
+    "die Knoepfe tragen keine sichtbare Beschriftung");
+  assert.match(kopf, /title="\$\{k\.lang\}"/,
+    "der ausfuehrliche Satz fehlt im title");
   assert.strictEqual((kopf.match(/class="kopfknopf"/g) || []).length, 1,
     "die Knoepfe werden nicht mehr aus EINER Vorlage erzeugt");
   // Die Wege dagegen tragen Namen - sie haben Platz und sind keine
@@ -300,18 +328,34 @@ pruefe("Eine Seite, von der alles weitergeht", () => {
   //   bis 15.10.  Karten, aber nur ohne offene Theme; sonst trug die
   //               Leiste oben dieselben Wege
   //   15.10.      Karten immer, auf einer eigenen Startseite
-  //   seit 15.10. EINE Seite: "wir haben zu viele seiten wo wir starten
+  //   bis 16.10.  EINE Seite: "wir haben zu viele seiten wo wir starten
   //               koennen. lass die letzte zu unser einzigen seite machen
   //               von wo alles weiter geht."
+  //   seit 16.10. "Anfangen" wieder OBEN, als vier Symbole im Kopf. Die
+  //               Reihe auf der Seite ist dafuer weg - zweimal dasselbe
+  //               war der Fehler, nicht der Ort.
+  //
+  // Das Argument von damals galt der LEISTE mit neun unbeschrifteten
+  // Symbolen, nicht dem Kopf: Jetzt sind es vier, und die Kennzahlen, die
+  // darunter standen, sind weggefallen.
+  //
   // Geprueft wird der AUFRUF, nicht das Wort: Im Kommentar steht noch,
   // dass hier einmal startbild() stand, und das soll es auch.
   assert.doesNotMatch(panel, /this\.startbild\(/, "die Startseite ist zurueck");
   assert.doesNotMatch(panel, /this\.zumStart\(/, "der Weg zur Startseite ist zurueck");
   const seite = panel.slice(panel.indexOf("            <!-- EINE SEITE,"), panel.indexOf("            </section>"));
   assert.ok(seite.length > 300, "der Rumpf der Seite wurde nicht gefunden");
-  // Die Wege stehen IMMER da, die Felder und die Stufen nur mit Theme.
+  // Ohne Theme stehen alle Wege auf der Seite - der Kopf traegt dann
+  // nichts, weil es nichts zu speichern gibt.
   assert.match(seite, /this\.wegeHtml\(T\)/, "die Wege fehlen, wenn keine Theme offen ist");
-  assert.match(seite, /this\.wegeHtml\(T, "anfangen"\)/, "die Reihe Anfangen fehlt");
+  // Mit Theme NICHT mehr: "Anfangen" steht oben im Kopf.
+  assert.doesNotMatch(seite, /this\.wegeHtml\(T, "anfangen"\)/,
+    "die Reihe Anfangen steht wieder auf der Seite - sie steht schon im Kopf");
+  const wegeoben = panel.slice(panel.indexOf('<span class="wegeoben">'),
+                               panel.indexOf("</span>", panel.indexOf('<span class="wegeoben">')));
+  assert.ok(wegeoben.length > 200, "die Wege stehen nicht im Kopf");
+  for (const id of ["neu", "oeffnen", "lesen", "hilfe"])
+    assert.ok(wegeoben.includes(`id: "${id}"`), `der Weg "${id}" fehlt im Kopf`);
   assert.match(seite, /this\.wegeHtml\(T, "werkzeuge"\)/, "die Reihe Werkzeuge fehlt");
   // Und die Werkzeuge stehen UNTER den Startfeldern, direkt ueber der Liste.
   assert.ok(seite.indexOf('wegeHtml(T, "werkzeuge")') > seite.indexOf("startFelder(T)"),
@@ -452,22 +496,31 @@ pruefe("Was begleiter() mitschreibt, gilt dem Bericht nicht als fremd", () => {
   }
 });
 
-pruefe("Die Kennzahl auf der Startseite zaehlt die Theme, nicht das Panel", () => {
-  // Hier stand felderGesamt - die Summe ueber alle acht Stufen, also was das
-  // Panel ANBIETEN kann. Unter "Dein Theme im Ueberblick", neben zwei Zahlen,
-  // die sich auf die Theme beziehen. Der Bericht beim Oeffnen sagte etwas
-  // anderes, und wer beide sah, hielt eine fuer falsch.
-  assert.match(panel, /const felderImModell = ZUSTAND\.modell/,
-    "die Kennzahl wird nicht aus dem Modell gerechnet");
-  assert.match(panel, /<b>\$\{felderImModell\}<\/b><span>\$\{T\("Felder"\)\}/,
-    "die Kachel zeigt nicht die Zahl aus dem Modell");
-  // Gegenprobe: felderGesamt steht noch da - aber nur noch als Hinweis am
-  // title, nicht mehr als die grosse Zahl.
-  assert.match(panel, /title="\$\{felderGesamt\} \$\{T\("bietet das Panel an"\)\}"/);
-  const kachel = /<div class="kennzahl"[^>]*><b>\$\{felderImModell\}/.exec(panel);
-  assert.ok(kachel, "die Kachel sieht anders aus als erwartet");
-  // Und der englische Text fehlt nicht - sonst stuende Deutsch im englischen Panel.
-  assert.match(panel, /"bietet das Panel an": "[^"]+"/);
+pruefe("Die Kennzahlen unter dem Kopf sind weg - samt ihrer Rechnung", () => {
+  // Bis zum 16.10.2026 standen dort drei: Stufen fertig, Felder, zuletzt
+  // geaendert. Auf Ansage weggefallen ("bild 1 und 2 kann weg").
+  //
+  // Der Test blieb stehen, weil die Unterscheidung dahinter lesenswert ist:
+  // felderGesamt war, was das Panel ANBIETEN kann, felderImModell, was die
+  // Theme traegt. Beide nebeneinander zu zeigen war der Fehler - der
+  // Bericht beim Oeffnen sagte eine dritte Zahl, und wer alle sah, hielt
+  // eine fuer falsch. Jetzt steht keine mehr dort.
+  assert.doesNotMatch(panel, /<div class="kennzahlen">/,
+    "die Kennzahlen sind zurueck");
+  assert.doesNotMatch(panel, /<div class="kennzahl"/,
+    "eine einzelne Kennzahl ist zurueck");
+
+  // Und ihre Rechnung ebenso - eine Variable, die niemand liest, ist eine
+  // Frage, die beim naechsten Lesen Zeit kostet.
+  //
+  // Gesucht wird NUR in zeichneWirklich: "offen" gibt es auch in
+  // vorlagenKarte und bei den UIX-Zielen, dort mit anderer Bedeutung und
+  // in Gebrauch. Ein Test ueber die ganze Datei schluege dort an.
+  const ab = panel.indexOf("  zeichneWirklich() {");
+  const zeichnen = panel.slice(ab, panel.indexOf("this.shadowRoot.innerHTML", ab));
+  assert.ok(zeichnen.length > 100, "zeichneWirklich wurde nicht gefunden");
+  for (const v of ["const fertig =", "const offen =", "const felderImModell ="])
+    assert.ok(!zeichnen.includes(v), `${v} wird gerechnet, aber nirgends benutzt`);
 });
 
 pruefe("Stufe 8 und der Bericht zaehlen dieselben Felder", () => {

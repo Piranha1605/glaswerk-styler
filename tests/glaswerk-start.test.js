@@ -68,16 +68,88 @@ pruefe("Die Dateiliste steht im Dialog, nicht auf der Startseite", () => {
   assert.doesNotMatch(wege, /liste schmal/, "die Liste steht wieder auf der Seite");
 });
 
-pruefe("Der Start laedt nicht von allein eine Grundlage", () => {
-  // Vorher eine Vorlage zu laden waere bequem und falsch: Wer danach eine
-  // Datei oeffnet, haette die Vorlage schon drunterliegen.
+pruefe("Der Start laedt den letzten Arbeitsstand, nicht blind die Grundlage", () => {
+  // Bis zum 16.10.2026 lud der Start GAR NICHTS, und das Panel fragte "Womit
+  // faengst du an?". Der Grund war richtig: Wer eine Vorlage unterlegt und
+  // danach eine Datei oeffnet, haette die Vorlage drunterliegen.
+  //
+  // Die Sorge bleibt, die Loesung ist eine andere. ladeStart geht der Reihe
+  // nach: zuletzt geoeffnete Datei, sonst die einzige eigene Theme, und erst
+  // wenn nichts davon zutrifft, die Grundlage. In jedem Fall setzt
+  // oeffneDatei _grundlage auf die Datei selbst - es liegt also nie eine
+  // Vorlage unter einer geoeffneten Theme.
+  //
+  // Ansage: "die guten tag. und als basis wird der letzte arbeitsstand
+  // geladen. bei neuinstalation die blanko."
   assert.doesNotMatch(panel, /if \(!ZUSTAND\.modell\) this\.ladeGrundlage\(\)/,
-    "Die Grundlage wird beim Oeffnen immer noch blind geladen");
-  // Geladen wird die Liste seit dem 15.10.2026 immer: Der Weg "Vorhandene
-  // oeffnen" steht auf derselben Seite wie alles andere, es gibt keine
-  // Startseite mehr, an der es haengen koennte.
-  assert.match(panel, /if \(ZUSTAND\.dateien === null\) this\.ladeListe\(\)/);
+    "Die Grundlage wird beim Oeffnen wieder blind geladen");
+  assert.match(panel, /if \(ZUSTAND\.dateien === null\) this\.ladeStart\(\)/,
+    "der Start ruft ladeStart nicht");
+  assert.match(panel, /async ladeStart\(\) \{/, "ladeStart fehlt");
+
+  // Die Reihenfolge steht im Code, nicht nur im Kommentar.
+  const start = panel.slice(panel.indexOf("  async ladeStart() {"),
+                            panel.indexOf("  // Die Grundlage ist ha_blanko"));
+  assert.ok(start.length > 200, "ladeStart wurde nicht gefunden");
+  let zuletzt = -1;
+  for (const teil of ["letzteLesen()", "eigene.length === 1", "this.ladeGrundlage()"]) {
+    const i = start.indexOf(teil);
+    assert.ok(i > zuletzt, `${teil} steht an der falschen Stelle`);
+    zuletzt = i;
+  }
+
   assert.doesNotMatch(panel, /ZUSTAND\.start/, "der Startseiten-Merker ist zurueck");
+});
+
+pruefe("Im Kopf steht die Marke, keine wechselnde Ueberschrift", () => {
+  // Zwei Schritte an einem Tag:
+  //   "die seite moechte ich nicht mehr. nur noch die von bild 2."
+  //     -> die zweite Ueberschrift faellt weg
+  //   "guten tag auch weg. da kommt das glaswerk logo."
+  //     -> auch die erste faellt weg, es bleibt die Marke
+  //
+  // Die zweite Seite war nie eine zweite Datei, sondern derselbe Kopf mit
+  // anderem Text, solange ZUSTAND.modell leer war.
+  assert.doesNotMatch(panel, /Womit faengst du an\?/,
+    "die zweite Ueberschrift steht wieder da");
+  assert.doesNotMatch(panel, /<h1>\$\{T\("Guten Tag"\)\}<\/h1>/,
+    "die Begruessung steht wieder im Kopf");
+  assert.match(panel, /<div class="marke">/, "die Marke fehlt im Kopf");
+  assert.match(panel, /src="\/glaswerk_static\/glaswerk\.svg"/,
+    "das Logo wird nicht geladen");
+
+  // Ohne Datei bleibt der Schriftzug - ein leerer Rahmen waere schlechter
+  // als ein Wort. Seit dem 16.10.2026 traegt das Logo den Schriftzug aber
+  // selbst (ein Glas-GLASWERK, 1000x220), deshalb steht das Wort daneben
+  // normalerweise auf display:none. Erst onerror macht es sichtbar.
+  assert.match(panel, /onerror="this\.remove\(\);\s*this\.parentNode\.classList\.add\('ohne-logo'\)"/,
+    "ein fehlendes Logo haengt als kaputtes Bild im Kopf");
+  assert.match(panel, /class="wortmarke">Glaswerk</, "der Schriftzug fehlt");
+  assert.match(panel, /\.marke \.wortmarke \{ display: none;/,
+    "der Schriftzug steht neben dem Logo, das ihn schon traegt");
+  assert.match(panel, /\.marke\.ohne-logo \.wortmarke \{ display: block; \}/,
+    "ohne Logo bleibt der Kopf leer");
+});
+
+pruefe("Die zuletzt geoeffnete Theme wird gemerkt - an jeder Stelle, die sie aendert", () => {
+  // Drei Stellen, und alle drei muessen es tun. Fehlt eine, oeffnet das Panel
+  // beim naechsten Mal etwas anderes als das, woran gearbeitet wurde.
+  assert.match(panel, /const LETZTE_SPEICHER = "glaswerk-letzte-theme"/);
+  assert.match(panel, /function letzteLesen\(\)/);
+  assert.match(panel, /function letzteSchreiben\(name\)/);
+
+  const stelle = (von, bis) => panel.slice(panel.indexOf(von), panel.indexOf(bis));
+  assert.match(stelle("  async oeffneDatei(name) {", "  // Dieselbe Strecke fuer eingefuegten Text"),
+    /letzteSchreiben\(name\)/, "oeffneDatei merkt sich die Datei nicht");
+  assert.match(stelle("  async neuBeginnen() {", "  get spr() {"),
+    /letzteSchreiben\(null\)/, "neuBeginnen vergisst die alte Datei nicht");
+  assert.match(panel, /letzteSchreiben\(`\$\{ZUSTAND\.name\}\.yaml`\)/,
+    "Speichern traegt den Namen nicht nach");
+
+  // Gegenprobe: Nur der NAME liegt im localStorage, nicht der Inhalt. Eine
+  // Kopie im Browser waere ein zweiter Stand, der still veraltet.
+  assert.doesNotMatch(panel, /setItem\(LETZTE_SPEICHER, JSON\.stringify/,
+    "da liegt mehr als der Name im localStorage");
 });
 
 pruefe("Oeffnen setzt den Vergleichsstand neu", () => {
@@ -96,8 +168,10 @@ pruefe("Die Texte des Startbilds stehen IM en-Block", () => {
   // nicht die Datei.
   const tabelle = panel.slice(panel.indexOf("const TEXTE = {"));
   const enBlock = tabelle.slice(tabelle.indexOf("en: {"), tabelle.indexOf("\n  },"));
+  // "Womit faengst du an?" stand hier bis zum 16.10.2026. Die zweite
+  // Ueberschrift ist weg, dafuer steht die eine jetzt immer da.
   const noetig = [
-    "Womit faengst du an?", "Neue Theme", "Vorhandene oeffnen",
+    "Guten Tag", "Neue Theme", "Vorhandene oeffnen",
     "Diese Dateien hat Glaswerk gebaut", "Mit Glaswerk gebaut", "Lade...",
     "Kein Glaswerk-Kopf in der Datei",
   ];
