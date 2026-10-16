@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GLASWERK C - von innen beleuchtet</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 3840px; height: 2160px;
+        display: grid; grid-template-columns: 1920px 1920px; grid-template-rows: 1080px 1080px;
+        background: #05080d; font-family: system-ui, ui-sans-serif, sans-serif;
+      }
+      .feld {
+        position: relative; overflow: hidden;
+        display: grid; place-items: center; align-content: center;
+        background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+        outline: 1px solid rgba(255,255,255,.06); outline-offset: -1px;
+      }
+      .marke { position: absolute; left: 48px; top: 40px; font-size: 26px; letter-spacing: .18em;
+               color: rgba(255,255,255,.3); font-weight: 600; }
+      .hinweis { position: absolute; left: 48px; bottom: 38px; font-size: 24px; line-height: 1.45;
+                 color: rgba(255,255,255,.34); max-width: 820px; }
+      .unten { margin-top: 44px; font-size: 44px; font-weight: 400; color: #a6b1c8; }
+      .klein { margin-top: 18px; font-size: 26px; letter-spacing: .08em; color: #6d7a93; }
+
+      /* DAS WORT IST EIN STAPEL, keine einzelne Schrift. Glas besteht aus
+         Dingen, die eine Schriftfarbe nicht kann: Licht, das austritt
+         (Halo), ein durchscheinender Koerper, ein Kern, der leuchtet, eine
+         geschliffene Kante und ein Glanz obendrauf. Jede Lage ist dasselbe
+         Wort an derselben Stelle - deshalb liegt eine davon im Fluss und
+         haelt den Platz, der Rest steht absolut darueber. */
+      .glas { position: relative; display: inline-block; line-height: 1; }
+      .glas .l { position: absolute; left: 0; top: 0; white-space: nowrap; }
+      .glas .platz { visibility: hidden; }
+      .glas, .glas span { font-size: 196px; font-weight: 800; letter-spacing: .022em; }
+
+      /* ---- C0  wie bisher: geschliffen, ohne Licht ---------------------- */
+      #c0 .platz { visibility: visible; color: #121c2f;
+        text-shadow: 0 2px 0 rgba(255,255,255,.42), 0 4px 5px rgba(255,255,255,.12),
+                     0 -1.5px 0 rgba(0,0,0,.85), 0 -4px 10px rgba(0,0,0,.6); }
+
+      /* ---- C1  Kernlicht ------------------------------------------------
+         Das Licht sitzt IM Buchstaben und faellt zu den Raendern ab. Von
+         den dreien die ruhigste: Das Wort bleibt dunkel genug, um auf
+         einem hellen Dashboard-Bild noch zu tragen. */
+      #c1 .halo   { color: #a9ccff; filter: blur(26px); opacity: .46; }
+      #c1 .koerper{ color: rgba(150,190,240,.12); }
+      #c1 .kern   { color: transparent; -webkit-background-clip: text; background-clip: text;
+        background-image: radial-gradient(ellipse 58% 68% at 50% 58%,
+          rgba(255,255,255,.90) 0%, rgba(198,228,255,.52) 36%, rgba(140,190,250,.07) 72%, transparent 86%); }
+      #c1 .kante  { color: transparent; -webkit-text-stroke: 1.6px rgba(214,235,255,.52); }
+      #c1 .glanz  { color: transparent; -webkit-background-clip: text; background-clip: text;
+        background-image: linear-gradient(180deg, rgba(255,255,255,.80) 6%, rgba(255,255,255,.12) 26%,
+          rgba(255,255,255,0) 40%); }
+
+      /* ---- C2  Kante ----------------------------------------------------
+         Der Koerper bleibt fast dunkel, das Licht steht nur auf dem
+         Schliff. Am naechsten an "geschliffen", aber das Glas ist jetzt zu
+         sehen. Die Variante, die auf jedem Grund funktioniert. */
+      #c2 .halo   { color: #7fb4f5; filter: blur(16px); opacity: .34; }
+      #c2 .koerper{ color: rgba(14,22,38,.92); }
+      #c2 .kern   { color: transparent; -webkit-background-clip: text; background-clip: text;
+        background-image: linear-gradient(180deg,
+          rgba(226,242,255,.72) 0%, rgba(120,170,230,.10) 22%,
+          rgba(120,170,230,.10) 76%, rgba(190,224,255,.46) 100%); }
+      #c2 .kante  { color: transparent; -webkit-text-stroke: 2.2px rgba(236,247,255,.78); }
+      #c2 .glanz  { color: transparent; -webkit-background-clip: text; background-clip: text;
+        background-image: linear-gradient(104deg, rgba(255,255,255,0) 38%,
+          rgba(255,255,255,.55) 46%, rgba(255,255,255,0) 54%); }
+
+      /* ---- C3  Durchleuchtet --------------------------------------------
+         Die Lampe steht hinter der Scheibe. Mit Farbsaum: zwei Kopien um
+         zwei Pixel versetzt, warm und kalt - das ist, was Glas mit Licht
+         macht, und es ist der Unterschied zwischen "leuchtende Schrift"
+         und "Glas". */
+      #c3 .halo   { color: #cfe6ff; filter: blur(42px); opacity: .72; }
+      #c3 .halo2  { color: #6fa8ef; filter: blur(84px); opacity: .55; }
+      #c3 .chromaA{ color: rgba(255,146,110,.30); filter: blur(3px); transform: translate(-3px, 1px); }
+      #c3 .chromaB{ color: rgba(104,206,255,.30); filter: blur(3px); transform: translate(3px, -1px); }
+      #c3 .koerper{ color: rgba(190,222,255,.16); }
+      #c3 .kern   { color: transparent; -webkit-background-clip: text; background-clip: text;
+        background-image: radial-gradient(ellipse 70% 86% at 50% 54%,
+          rgba(255,255,255,.98) 0%, rgba(255,255,255,.86) 26%, rgba(206,232,255,.44) 58%,
+          rgba(150,196,252,.10) 84%, transparent 96%); }
+      #c3 .kante  { color: transparent; -webkit-text-stroke: 1.4px rgba(255,255,255,.62); }
+      #c3 .glanz  { color: transparent; -webkit-background-clip: text; background-clip: text;
+        background-image: linear-gradient(180deg, rgba(255,255,255,.95) 4%, rgba(255,255,255,0) 30%); }
+    </style>
+  </head>
+  <body>
+    <div class="feld">
+      <div class="marke">C0 &nbsp; GESCHLIFFEN (wie bisher)</div>
+      <div class="glas" id="c0"><span class="platz">GLASWERK</span></div>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+      <div class="hinweis">Zum Vergleich: in die Flaeche geschnitten, kein Licht darin.</div>
+    </div>
+
+    <div class="feld">
+      <div class="marke">C1 &nbsp; KERNLICHT</div>
+      <div class="glas" id="c1">
+        <span class="l halo">GLASWERK</span>
+        <span class="l koerper">GLASWERK</span>
+        <span class="l kern">GLASWERK</span>
+        <span class="l kante">GLASWERK</span>
+        <span class="l glanz">GLASWERK</span>
+        <span class="platz">GLASWERK</span>
+      </div>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+      <div class="hinweis">Licht sitzt im Buchstaben und faellt zum Rand ab. Die ruhigste.</div>
+    </div>
+
+    <div class="feld">
+      <div class="marke">C2 &nbsp; KANTE</div>
+      <div class="glas" id="c2">
+        <span class="l halo">GLASWERK</span>
+        <span class="l koerper">GLASWERK</span>
+        <span class="l kern">GLASWERK</span>
+        <span class="l kante">GLASWERK</span>
+        <span class="l glanz">GLASWERK</span>
+        <span class="platz">GLASWERK</span>
+      </div>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+      <div class="hinweis">Dunkler Koerper, Licht nur auf dem Schliff. Traegt auf jedem Grund.</div>
+    </div>
+
+    <div class="feld">
+      <div class="marke">C3 &nbsp; DURCHLEUCHTET</div>
+      <div class="glas" id="c3">
+        <span class="l halo2">GLASWERK</span>
+        <span class="l halo">GLASWERK</span>
+        <span class="l chromaA">GLASWERK</span>
+        <span class="l chromaB">GLASWERK</span>
+        <span class="l koerper">GLASWERK</span>
+        <span class="l kern">GLASWERK</span>
+        <span class="l kante">GLASWERK</span>
+        <span class="l glanz">GLASWERK</span>
+        <span class="platz">GLASWERK</span>
+      </div>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+      <div class="hinweis">Die Lampe steht hinter der Scheibe, mit Farbsaum aus der Brechung.</div>
+    </div>
+  </body>
+</html>

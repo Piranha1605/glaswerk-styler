@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GLASWERK - vier Richtungen</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 3840px; height: 2160px;
+        display: grid; grid-template-columns: 1920px 1920px; grid-template-rows: 1080px 1080px;
+        background: #05080d;
+        font-family: system-ui, ui-sans-serif, sans-serif;
+      }
+      .feld {
+        position: relative; overflow: hidden;
+        display: grid; place-items: center; align-content: center;
+        background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+        outline: 1px solid rgba(255,255,255,.06); outline-offset: -1px;
+      }
+      .marke { position: absolute; left: 48px; top: 40px; font-size: 26px; letter-spacing: .18em;
+               color: rgba(255,255,255,.3); font-weight: 600; }
+      .unten { margin-top: 30px; font-size: 44px; font-weight: 400; color: #a6b1c8; text-align: center; }
+      .klein { margin-top: 18px; font-size: 26px; font-weight: 400; letter-spacing: .08em;
+               color: #6d7a93; text-align: center; }
+
+      /* ---------- A  Die Scheibe ------------------------------------------
+         Die heutige Fassung, zu Ende gebaut: Das Wort sitzt AUF dem Glas,
+         die Platte traegt Lichtkante, Tiefe und einen Streifen, der einmal
+         darueberlaeuft. Am naechsten an dem, was der Film schon zeigt. */
+      #a-platte {
+        padding: 40px 76px 48px; border-radius: 34px; position: relative; overflow: hidden;
+        background: linear-gradient(150deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.015) 58%),
+                    rgba(20, 26, 44, 0.52);
+        backdrop-filter: blur(30px) saturate(180%);
+        box-shadow: inset 0 1.6px 0 0 rgba(255,255,255,.30),
+                    inset 0 0 0 1px rgba(255,255,255,.10),
+                    inset 0 -1.6px 0 0 rgba(0,0,0,.42),
+                    0 34px 80px rgba(0,0,0,.62), 0 3px 8px rgba(0,0,0,.4);
+      }
+      #a-wort { font-size: 184px; font-weight: 800; letter-spacing: .012em; line-height: 1;
+                color: #eef3fc; display: block; }
+      #a-sheen { position: absolute; top: -40%; left: 4%; width: 26%; height: 180%;
+                 transform: rotate(16deg); pointer-events: none;
+                 background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.16) 48%,
+                             rgba(255,255,255,.26) 52%, rgba(255,255,255,0) 100%); }
+
+      /* ---------- B  Zeichen und Wort -------------------------------------
+         Mit einem ZEICHEN, das allein steht: drei versetzte Scheiben - das
+         Produkt selbst, Karten uebereinander. Das ist die Richtung, die ein
+         Symbol fuer HACS, die Seitenleiste und ein Favicon hergibt; ein
+         Schriftzug allein tut das nicht. */
+      #b-reihe { display: flex; align-items: center; gap: 58px; }
+      #b-zeichen { position: relative; width: 218px; height: 218px; flex: none; }
+      .b-pane { position: absolute; border-radius: 30px;
+                background: linear-gradient(150deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.02) 60%),
+                            rgba(22, 30, 52, 0.62);
+                box-shadow: inset 0 1.4px 0 rgba(255,255,255,.34), inset 0 0 0 1px rgba(255,255,255,.10),
+                            0 16px 34px rgba(0,0,0,.52); }
+      #b-p1 { left: 0;    top: 56px;  width: 150px; height: 150px; transform: rotate(-9deg); opacity: .62; }
+      #b-p2 { left: 34px; top: 30px;  width: 150px; height: 150px; transform: rotate(3deg); opacity: .8;
+              background: linear-gradient(150deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.04) 60%),
+                          rgba(34, 46, 76, 0.8); }
+      #b-p3 { left: 68px; top: 2px;   width: 150px; height: 150px; transform: rotate(14deg);
+              background: linear-gradient(150deg, rgba(255,255,255,.34) 0%, rgba(150,198,255,.16) 62%),
+                          rgba(48, 66, 108, 0.9);
+              box-shadow: inset 0 2px 0 rgba(255,255,255,.52), inset 0 0 0 1px rgba(255,255,255,.18),
+                          0 18px 40px rgba(0,0,0,.6); }
+      #b-wort { font-size: 140px; font-weight: 800; letter-spacing: .015em; line-height: 1; color: #eef3fc; }
+      #b-unten { margin-top: 40px; }
+
+      /* ---------- C  Geschliffen ------------------------------------------
+         Das Wort ist NICHT aufgetragen, sondern in die Flaeche geschnitten:
+         Licht faengt sich an der unteren Kante, oben steht der Schatten.
+         Ein Glaswerk schleift Glas - das ist die woertliche Lesart, und sie
+         ist die ruhigste von den vieren. */
+      #c-wort { font-size: 192px; font-weight: 800; letter-spacing: .02em; line-height: 1;
+                color: #121c2f;
+                text-shadow: 0 2px 0 rgba(255,255,255,.42), 0 4px 5px rgba(255,255,255,.12),
+                             0 -1.5px 0 rgba(0,0,0,.85), 0 -4px 10px rgba(0,0,0,.6); }
+      #c-strich { width: 760px; height: 1px; margin-top: 44px;
+                  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.26) 50%, rgba(255,255,255,0)); }
+
+      /* ---------- D  Prisma ------------------------------------------------
+         Durch das Wort laeuft ein Spektrum - die sieben klassischen Toene,
+         aus denen Home Assistant seine 86 Zustandsfarben rechnet. Dieselbe
+         Palette wie das Feuerwerk im Film; das Zeichen wuerde also sagen,
+         worauf HATS aufsetzt. */
+      #d-wort { font-size: 184px; font-weight: 800; letter-spacing: .012em; line-height: 1;
+                background-image: linear-gradient(97deg,
+                  #eef3fc 0%, #eef3fc 41%,
+                  #ef7a6f 44.5%, #f3b765 46.5%, #e9d27a 48.5%, #7fc98c 50.5%, #6fc8da 52.5%, #7cb0e8 54.5%, #a893cf 56.5%,
+                  #eef3fc 60%, #eef3fc 100%);
+                -webkit-background-clip: text; background-clip: text; color: transparent;
+                filter: drop-shadow(0 6px 26px rgba(0,0,0,.6)); }
+      #d-streifen { position: absolute; left: 50%; top: 50%; width: 1500px; height: 3px;
+                    margin: -150px 0 0 -750px; transform: rotate(-7deg); pointer-events: none;
+                    background: linear-gradient(90deg, rgba(255,255,255,0),
+                      rgba(244,67,54,.55) 38%, rgba(255,193,7,.55) 46%, rgba(0,188,212,.55) 56%,
+                      rgba(146,107,199,.55) 64%, rgba(255,255,255,0));
+                    filter: blur(2px); }
+    </style>
+  </head>
+  <body>
+    <div class="feld">
+      <div class="marke">A &nbsp; DIE SCHEIBE</div>
+      <div id="a-platte"><span id="a-wort">GLASWERK</span><i id="a-sheen"></i></div>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+    </div>
+
+    <div class="feld">
+      <div class="marke">B &nbsp; ZEICHEN UND WORT</div>
+      <div id="b-reihe">
+        <div id="b-zeichen">
+          <i class="b-pane" id="b-p1"></i><i class="b-pane" id="b-p2"></i><i class="b-pane" id="b-p3"></i>
+        </div>
+        <span id="b-wort">GLASWERK</span>
+      </div>
+      <div class="unten" id="b-unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+    </div>
+
+    <div class="feld">
+      <div class="marke">C &nbsp; GESCHLIFFEN</div>
+      <span id="c-wort">GLASWERK</span>
+      <i id="c-strich"></i>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+    </div>
+
+    <div class="feld">
+      <div class="marke">D &nbsp; PRISMA</div>
+      <i id="d-streifen"></i>
+      <span id="d-wort">GLASWERK</span>
+      <div class="unten">Theme. App. Cards. Widgets.</div>
+      <div class="klein">HOME ASSISTANT THEME STUDIO</div>
+    </div>
+  </body>
+</html>

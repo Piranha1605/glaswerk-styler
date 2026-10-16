@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #0a111a;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        /* Der Grund der Theme steht auch im Wurzelbild: Zwischen zwei Szenen
+           blitzt sonst Schwarz durch, und Schwarz kommt in Glaswerk nicht
+           vor (frame.md: "kein reines #000"). */
+        background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+      }
+      .szene {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- GLASWERK - 30 Sekunden, sieben Rahmen.
+         Der Ablauf steht in STORYBOARD.md, die Gestaltungswahrheit in
+         frame.md. Jede Szene ist eine eigene Datei: Sieben harte Schnitte
+         sind der Fall, fuer den es Unterkompositionen gibt.
+
+             0,0   Aufsicht                5,0 s
+             5,0   Die Handschrift         6,0 s
+            11,0   Hell und dunkel         4,0 s
+            15,0   Der Zoom auf den Knopf  6,0 s
+            21,0   WAS DER KNOPF TUT      12,0 s
+            33,0   Das Feuerwerk           4,5 s
+            37,5   Der Rest laeuft mit     7,0 s
+            44,5   Der Name                3,5 s
+                                         --------
+                                           48,0 s
+
+         Die 30 s vom ersten Entwurf waren eine Idee, kein Mass - am
+         15.10.2026 ausdruecklich freigegeben: "die zeit kann auch laenger
+         die 30 sec waren nur eine idee". Dazugekommen ist der Teil, der
+         vorher fehlte: der Knopf wurde gezeigt und nie benutzt. -->
+    <div data-hf-id="hf-j7pz"
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="48"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div data-hf-id="hf-mcw6"
+        class="szene"
+        id="szene-f1-aufsicht"
+        data-composition-id="f1-aufsicht"
+        data-composition-src="compositions/frames/01-aufsicht.html"
+        data-start="0"
+        data-duration="5"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <div data-hf-id="hf-098u"
+        class="szene"
+        id="szene-f2-handschrift"
+        data-composition-id="f2-handschrift"
+        data-composition-src="compositions/frames/02-handschrift.html"
+        data-start="5"
+        data-duration="6"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <div data-hf-id="hf-3yox"
+        class="szene"
+        id="szene-f3-modi"
+        data-composition-id="f3-modi"
+        data-composition-src="compositions/frames/03-modi.html"
+        data-start="11"
+        data-duration="4"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <div data-hf-id="hf-i8z0"
+        class="szene"
+        id="szene-f4-zoom"
+        data-composition-id="f4-zoom"
+        data-composition-src="compositions/frames/04-zoom.html"
+        data-start="15"
+        data-duration="6"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Der wichtigste Teil: eine echte Aufnahme der Testmaschine, in der
+           das Zahnrad gedrueckt und die Theme umgebaut wird. -->
+      <div
+        class="szene"
+        id="szene-f5-der-knopf"
+        data-composition-id="f5-der-knopf"
+        data-composition-src="compositions/frames/05-der-knopf.html"
+        data-start="21"
+        data-duration="12"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <div data-hf-id="hf-sbsc"
+        class="szene"
+        id="szene-f6-feuerwerk"
+        data-composition-id="f6-feuerwerk"
+        data-composition-src="compositions/frames/06-feuerwerk.html"
+        data-start="33"
+        data-duration="4.5"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <div data-hf-id="hf-ltu3"
+        class="szene"
+        id="szene-f7-der-rest"
+        data-composition-id="f7-der-rest"
+        data-composition-src="compositions/frames/07-der-rest.html"
+        data-start="37.5"
+        data-duration="7"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <div data-hf-id="hf-9suq"
+        class="szene"
+        id="szene-f8-name"
+        data-composition-id="f8-name"
+        data-composition-src="compositions/frames/08-name.html"
+        data-start="44.5"
+        data-duration="3.5"
+        data-track-index="0"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+
+      <!-- ================= DAS BETT ==========================================
+           Aus HeyGens Musikkatalog, gesucht und dann GEMESSEN statt nach dem
+           Namen genommen (ffmpeg astats, Fenster 2 s):
+
+               0 - 31 s   ruhiger Flaechenklang, -25 bis -30 dB
+              31,0 - 31,5 faellt auf -53 dB ab: eine Atempause
+              31,9 s      setzt ein, -7 dB
+              32 - 64 s   voll und gleichmaessig
+              66 s        Ende, danach Stille
+
+           DER EINSATZ BEI 31,9 s IST DER GRUND FUER DIESEN START: Laeuft das
+           Stueck ab Filmsekunde 1,6, faellt sein Einsatz auf Sekunde 33,5 -
+           der Moment, in dem das Feuerwerk zuendet. Und die Atempause davor
+           faellt auf den Druck des Knopfes.
+
+           Zuerst stand der Start auf 3,0, weil ich den Einsatz mit Fenstern
+           von 2 s auf "30 s" geschaetzt hatte. Im fertigen Film kam das Bett
+           dann anderthalb Sekunden nach dem Einschlag. Fein gemessen liegt
+           er bei 31,9.
+
+           Vier andere Stuecke standen zur Wahl; drei waren von der ersten
+           Sekunde an gleich laut. Ein Bett ohne Verlauf haette den Film
+           flachgedrueckt, und das sieht man einem Suchergebnis nicht an -
+           nur seiner Huellkurve.
+
+           Die Lautstaerke faehrt ueber eine Automationsspur: zwei Sekunden
+           Einblende, voll bis zum Endbild, dort etwas zurueck, damit der
+           Schimmer im Glas noch zu hoeren ist, dann aus. -->
+      <audio id="ton-bett" src=".media/audio/bgm/bgm_002.wav"
+             data-start="1.6" data-duration="46.4" data-volume="0.42" data-track-index="9"
+             data-automation='{"version":1,"lanes":[{"target":"volume","points":[
+               {"t":0,"v":0},{"t":2.9,"v":1},{"t":42.9,"v":1},
+               {"t":43.8,"v":0.66},{"t":45,"v":0.6},{"t":46.4,"v":0}]}]}'></audio>
+
+      <!-- ================= TON =================================================
+           Fuenf Klaenge aus HeyGens SFX-Katalog. Der Katalog nennt zu jedem
+           seinen GIPFEL (peak_offset) - damit entfaellt das Ausmessen, und
+           damit entfaellt auch der Fehler, den ich mir mit der lokalen
+           Bibliothek eingebaut hatte: Dort hatte ich den Gipfel eines Risers
+           mit Fenstern von 50 ms bestimmt und 0,8 s danebengelegen, hoerbar
+           im fertigen Film.
+
+               sfx_006  5,71 s  Riser,     Gipfel 5,29 s
+               sfx_007  5,87 s  Einschlag, Gipfel 0,18 s
+               sfx_008  4,18 s  Glas,      Gipfel 0,12 s
+               sfx_009  0,24 s  Klick,     Gipfel 0,09 s
+               sfx_010  1,42 s  Whoosh,    Gipfel 0,45 s
+
+           DIE REGEL FUER JEDEN EINZELNEN: start = Zeitpunkt - Gipfel. Ein
+           Klang wird auf den Moment gesetzt, an dem er am lautesten ist,
+           nicht auf den, an dem er anfaengt.
+
+           Der Riser gipfelt fast an seinem Ende (5,29 von 5,71 s) - genau
+           richtig fuer einen Schnitt: Die Energie faellt hinein, statt
+           danach noch zu klingeln.
+
+           Die Toene liegen in der WURZEL und nicht in den Szenen: Beide
+           Riser laufen ueber eine Szenengrenze, und ein data-start in einer
+           Szene ist szenenlokal - der Riser waere dort abgeschnitten. -->
+
+      <!-- Die kleinen Schnitte: Stile, Modi, der Zoom, der Rest. -->
+      <audio id="ton-cut-stile" src=".media/audio/sfx/sfx_010.mp3"
+             data-start="4.55" data-duration="1.42" data-volume="0.34" data-track-index="6"></audio>
+      <audio id="ton-cut-modi" src=".media/audio/sfx/sfx_010.mp3"
+             data-start="10.55" data-duration="1.42" data-volume="0.34" data-track-index="6"></audio>
+      <audio id="ton-cut-zoom" src=".media/audio/sfx/sfx_010.mp3"
+             data-start="14.55" data-duration="1.42" data-volume="0.38" data-track-index="6"></audio>
+      <audio id="ton-cut-rest" src=".media/audio/sfx/sfx_010.mp3"
+             data-start="37.05" data-duration="1.42" data-volume="0.34" data-track-index="6"></audio>
+
+      <!-- Die beiden grossen Schnitte tragen einen Riser statt eines Whoosh. -->
+      <audio id="ton-riser-knopf" src=".media/audio/sfx/sfx_006.mp3"
+             data-start="15.71" data-duration="5.71" data-volume="0.5" data-track-index="5"></audio>
+      <audio id="ton-riser-name" src=".media/audio/sfx/sfx_006.mp3"
+             data-start="39.21" data-duration="5.71" data-volume="0.54" data-track-index="5"></audio>
+
+      <!-- Der Griff zum Zahnrad und die Klicks im Fenster. Die Zeitpunkte
+           kommen aus der Aufnahme: Schritt bei x s der Quelle, geteilt durch
+           1,5 (das Tempo des Clips), plus 21,0 - und davon der Gipfel ab. -->
+      <audio id="ton-klick-zahnrad" src=".media/audio/sfx/sfx_009.mp3"
+             data-start="21.64" data-duration="0.24" data-volume="0.55" data-track-index="7"></audio>
+      <audio id="ton-klick-1" src=".media/audio/sfx/sfx_009.mp3"
+             data-start="22.98" data-duration="0.24" data-volume="0.46" data-track-index="7"></audio>
+      <audio id="ton-klick-2" src=".media/audio/sfx/sfx_009.mp3"
+             data-start="24.31" data-duration="0.24" data-volume="0.46" data-track-index="7"></audio>
+      <audio id="ton-klick-3" src=".media/audio/sfx/sfx_009.mp3"
+             data-start="25.64" data-duration="0.24" data-volume="0.46" data-track-index="7"></audio>
+      <audio id="ton-klick-hell" src=".media/audio/sfx/sfx_009.mp3"
+             data-start="30.91" data-duration="0.24" data-volume="0.5" data-track-index="7"></audio>
+
+      <!-- Der Einschlag sitzt auf der Rueckfederung des Knopfes, nicht auf
+           dem Druck: Dort zuendet das Feuerwerk. Sein langer Nachhall traegt
+           die 4,5 s der Szene. -->
+      <audio id="ton-einschlag" src=".media/audio/sfx/sfx_007.mp3"
+             data-start="33.32" data-duration="5.87" data-volume="0.55" data-track-index="8"></audio>
+
+      <!-- Und der Glasklang auf dem Moment, in dem das Licht im Wort angeht. -->
+      <audio id="ton-glas-name" src=".media/audio/sfx/sfx_008.mp3"
+             data-start="44.76" data-duration="3.24" data-volume="0.6" data-track-index="8"></audio>
+
+    </div>
+
+    <script>
+      // Die Wurzel haelt nur die Zeit. Jede Szene bringt ihre eigene
+      // Zeitleiste mit; das Geruest haengt sie selbst ein.
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GLASWERK - Thumbnail</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { width: 1280px; background: #05080d; font-family: system-ui, ui-sans-serif, sans-serif; }
+
+      /* 1280 x 720 - die Groesse, in der ein Thumbnail geliefert wird. Die
+         Probe liegt daneben bei 320 px: Was dort nicht mehr zu lesen ist,
+         ist im Feed nicht zu lesen. */
+      .karte { position: relative; width: 1280px; height: 720px; overflow: hidden;
+               background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%); }
+      .marke { position: absolute; left: 26px; top: 20px; z-index: 9; font-size: 20px;
+               letter-spacing: .18em; color: rgba(255,255,255,.34); font-weight: 600; }
+
+      /* Die Wortmarke, Richtung C1: ein Stapel aus Halo, Koerper, Kern,
+         Schliff und Glanz. Dieselbe Rezeptur wie im Endbild des Films. */
+      .glas { position: relative; display: inline-block; line-height: 1; }
+      .glas .l { position: absolute; left: 0; top: 0; white-space: nowrap; }
+      .glas .platz { visibility: hidden; }
+      .halo    { color: #a9ccff; filter: blur(22px); opacity: .55; }
+      .koerper { color: rgba(150,190,240,.13); }
+      .kern    { color: transparent; -webkit-background-clip: text; background-clip: text;
+                 background-image: radial-gradient(ellipse 58% 68% at 50% 58%,
+                   rgba(255,255,255,.95) 0%, rgba(206,232,255,.6) 36%,
+                   rgba(140,190,250,.08) 72%, transparent 86%); }
+      .glanz   { color: transparent; -webkit-text-stroke: 1.5px rgba(214,235,255,.55);
+                 -webkit-background-clip: text; background-clip: text;
+                 background-image: linear-gradient(180deg, rgba(255,255,255,.85) 6%,
+                   rgba(255,255,255,.14) 26%, rgba(255,255,255,0) 40%); }
+
+      /* ====== A - Wortmarke ueber der Aufsicht ========================== */
+      #a-buehne { position: absolute; inset: 0; perspective: 1600px; perspective-origin: 50% 46%; }
+      #a-bild { position: absolute; left: 50%; top: 50%; width: 1500px; height: 844px;
+                margin: -422px 0 0 -750px; object-fit: cover; border-radius: 18px;
+                transform: rotateX(40deg) rotateZ(-2deg) translateY(60px);
+                box-shadow: 0 60px 140px rgba(0,0,0,.7); }
+      #a-schleier { position: absolute; inset: 0;
+                    background: radial-gradient(120% 90% at 50% 46%, rgba(5,9,16,.18) 36%, rgba(5,9,16,.88) 100%),
+                                linear-gradient(180deg, rgba(5,9,16,.5) 0%, rgba(5,9,16,.1) 40%, rgba(5,9,16,.78) 100%); }
+      #a-band { position: absolute; left: 0; right: 0; top: 196px; height: 330px;
+                background: linear-gradient(180deg, rgba(5,9,16,0) 0%, rgba(5,9,16,.88) 26%,
+                            rgba(5,9,16,.92) 68%, rgba(5,9,16,0) 100%);
+                filter: blur(2px); }
+      #a-text { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; }
+      #a-text .glas, #a-text .glas span { font-size: 170px; font-weight: 800; letter-spacing: .015em; }
+      #a-unten { margin-top: 24px; font-size: 42px; font-weight: 500; color: #c3d2e8;
+                 text-shadow: 0 2px 18px rgba(0,0,0,.9); }
+
+      /* ====== B - Geteilt: Name links, Produkt rechts =================== */
+      #b-bild { position: absolute; left: 612px; top: -70px; width: 1180px; height: 860px;
+                object-fit: cover; object-position: left top; border-radius: 22px;
+                transform: rotate(-7deg); box-shadow: 0 50px 120px rgba(0,0,0,.75); }
+      #b-schleier { position: absolute; inset: 0;
+                    background: linear-gradient(100deg, rgba(5,9,16,.99) 0%, rgba(5,9,16,.98) 38%,
+                                rgba(5,9,16,.72) 50%, rgba(5,9,16,0) 66%); }
+      #b-text { position: absolute; left: 62px; top: 50%; transform: translateY(-50%); }
+      #b-text .glas, #b-text .glas span { font-size: 96px; font-weight: 800; letter-spacing: .01em; }
+      #b-zeile { margin-top: 20px; font-size: 40px; font-weight: 500; color: #c3d2e8; max-width: 460px; line-height: 1.22; }
+      #b-klein { margin-top: 22px; font-size: 23px; letter-spacing: .09em; color: #7b8aa3; }
+
+      /* ====== C - Der Knopf ============================================= */
+      #c-leiste { position: absolute; left: -811px; top: 86px; width: 1760px; height: 137px;
+                  object-fit: cover; object-position: right center; border-radius: 16px;
+                  box-shadow: 0 30px 70px rgba(0,0,0,.7); }
+      #c-ring { position: absolute; left: 818px; top: 93px; width: 124px; height: 124px;
+                border-radius: 50%; border: 5px solid rgba(120,190,255,.92);
+                box-shadow: 0 0 0 8px rgba(80,150,230,.2), 0 0 40px rgba(110,180,255,.6); }
+      #c-schleier { position: absolute; inset: 0;
+                    background: radial-gradient(90% 70% at 50% 72%, rgba(5,9,16,.0) 30%, rgba(5,9,16,.72) 100%); }
+      #c-text { position: absolute; left: 0; right: 0; bottom: 86px; display: grid; place-items: center; }
+      #c-text .glas, #c-text .glas span { font-size: 152px; font-weight: 800; letter-spacing: .015em; }
+      #c-oben { position: absolute; left: 0; right: 0; top: 300px; text-align: center;
+                font-size: 54px; font-weight: 600; color: #e8edf7; text-shadow: 0 3px 24px rgba(0,0,0,.95); }
+    </style>
+  </head>
+  <body>
+    <!-- A -->
+    <div class="karte">
+      <div class="marke">A &nbsp; WORTMARKE UEBER DEM PRODUKT</div>
+      <div id="a-buehne"><img id="a-bild" src="../bilder/01-aufsicht.png" alt="" /></div>
+      <div id="a-schleier"></div>
+      <div id="a-band"></div>
+      <div id="a-text">
+        <div class="glas">
+          <span class="l halo">GLASWERK</span><span class="l koerper">GLASWERK</span>
+          <span class="l kern">GLASWERK</span><span class="l glanz">GLASWERK</span>
+          <span class="platz">GLASWERK</span>
+        </div>
+        <div id="a-unten">Home Assistant, in glass.</div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="karte">
+      <div class="marke">B &nbsp; GETEILT</div>
+      <img id="b-bild" src="../bilder/01-aufsicht.png" alt="" />
+      <div id="b-schleier"></div>
+      <div id="b-text">
+        <div class="glas">
+          <span class="l halo">GLASWERK</span><span class="l koerper">GLASWERK</span>
+          <span class="l kern">GLASWERK</span><span class="l glanz">GLASWERK</span>
+          <span class="platz">GLASWERK</span>
+        </div>
+        <div id="b-zeile">One theme.<br />Every card.</div>
+        <div id="b-klein">HOME ASSISTANT THEME STUDIO</div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="karte">
+      <div class="marke">C &nbsp; DER KNOPF</div>
+      <img id="c-leiste" src="../bilder/steuerkarte/01-leiste.png" alt="" />
+      <div id="c-ring"></div>
+      <div id="c-schleier"></div>
+      <div id="c-oben">All from one button.</div>
+      <div id="c-text">
+        <div class="glas">
+          <span class="l halo">GLASWERK</span><span class="l koerper">GLASWERK</span>
+          <span class="l kern">GLASWERK</span><span class="l glanz">GLASWERK</span>
+          <span class="platz">GLASWERK</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

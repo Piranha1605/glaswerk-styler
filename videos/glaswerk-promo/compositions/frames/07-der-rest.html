@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Rahmen 6 - Der Rest laeuft mit. 7 s.
+         Auf Ansage vom 15.10.2026: "am ende Blenden wir ein paar sekunden den
+         rest ein mit dem zusatz die laufen natuerlich auch." - und am selben
+         Tag nachgeschaerft: "und was sonst noch laeuft kann auch laenger und
+         ausfuehrlicher".
+
+         Vorher waren es 2 s und nur die Blende: Man sah, DASS da andere
+         Karten sind, nicht WELCHE. Jetzt faehrt die Kamera danach in die
+         linke Spalte der Vergleichsseite, und ein Scheinwerfer geht
+         dieselbe Lampe dreimal durch - als HA-Kachel, als Mushroom-Karte,
+         als Bubble Card. Die Namen stehen auf der Seite selbst, ueber jeder
+         Karte; ich schreibe also keine Beschriftung daneben, die spaeter
+         nicht mehr stimmt. -->
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+          font-family: system-ui, ui-sans-serif, sans-serif;
+        }
+        .f7-lage {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          object-fit: cover;
+        }
+        /* Die Kamera traegt den Druck in die linke Spalte. Der Ursprung
+           liegt in der Ecke, nicht in der Mitte: Dann ist der Endzustand
+           genau "Bild doppelt so gross, um 218 / 82 verschoben", und die
+           Kaesten des Scheinwerfers lassen sich als feste Zahlen hinlegen
+           statt sie aus einer Skalierung zurueckzurechnen. */
+        #f7-kamera {
+          position: absolute;
+          inset: 0;
+          transform-origin: 0 0;
+        }
+        /* DER SCHEINWERFER IST EIN LOCH, kein Fleck: Der Schatten mit
+           9999px Streuung dunkelt alles AUSSERHALB des Kastens ab. EIN
+           Element, das wandert - drei, die sich abloesen, dunkelten sich
+           beim Ueberblenden gegenseitig doppelt ab. */
+        #f7-licht {
+          position: absolute;
+          left: 375px;
+          top: 265px;
+          width: 530px;
+          height: 255px;
+          border-radius: 18px;
+          box-shadow: 0 0 0 9999px rgba(4, 9, 16, 0.74);
+          outline: 2px solid rgba(255, 255, 255, 0.22);
+          display: block;
+          pointer-events: none;
+        }
+        #f7-zeile {
+          position: absolute;
+          left: 96px;
+          bottom: 110px;
+          font-size: 46px;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+        }
+
+        /* DIE GLASPLATTE unter jeder Beschriftung. Auf Ansage vom
+           15.10.2026: "leg die overlays auf eine glasplatte und macht die
+           schriftfarbe auch zum glaslook".
+
+           Sie loest nebenbei ein Problem, das zweimal gemessen wurde: Die
+           Theme schaltet im Film auf Hell, und weisse Schrift auf hellem
+           Grund faellt der Kontrastpruefung nicht auf, weil ein Bild oder
+           ein Video dahinterliegt und kein Farbwert. Auf einer dunklen
+           Platte traegt die Schrift in beiden Modi, ohne Tricks. */
+        .glasplatte {
+          padding: 16px 32px;
+          border-radius: 18px;
+          /* 0,84 statt 0,62: Bei 0,62 zog der backdrop-filter auf dem HELLEN
+             Theme so viel Helligkeit herauf, dass die Platte hellblau wurde
+             und die helle Glasschrift darauf verschwand - gemessen bei 13 s.
+             Die Platte muss dunkel sein, egal was dahinterliegt; die
+             Weichzeichnung macht die Kanten, nicht die Farbe. */
+          background: linear-gradient(150deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.012) 58%),
+            rgba(10, 15, 26, 0.84);
+          backdrop-filter: blur(28px) saturate(180%);
+          box-shadow: inset 0 1.5px 0 0 rgba(255, 255, 255, 0.26),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+            inset 0 -1.5px 0 0 rgba(0, 0, 0, 0.4),
+            0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+        }
+        /* UND DIE SCHRIFT SELBST IST GLAS: hell an der Oberkante, matter im
+           Bauch, wieder hell an der Unterkante - so faengt eine geschliffene
+           Kante das Licht. Dazu ein feiner Schliff als Strich und ein Schein
+           nach aussen.
+
+           Die Fuellung ist durchsichtig und kommt aus dem Verlauf. Das ist
+           der Fall, den die Layoutpruefung als beabsichtigt kennt
+           (background-clip: text) - eine durchsichtige Schrift OHNE ihn
+           meldet sie zu Recht als nicht gemalt. */
+        .glasschrift {
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 255, 0.92) 30%,
+            rgba(198, 224, 252, 0.86) 60%, rgba(236, 246, 255, 0.99) 100%);
+          -webkit-text-stroke: 0.9px rgba(226, 243, 255, 0.38);
+          filter: drop-shadow(0 0 16px rgba(150, 200, 255, 0.38))
+            drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+        }
+      </style>
+
+      <div id="root" data-composition-id="f7-der-rest" data-width="1920" data-height="1080">
+        <!-- Dieselbe Geometrie wie Rahmen 1, nur andere Karten: Bubble,
+             Mushroom und HAs eigene. Sie tragen dieselbe Glasflaeche - das
+             ist der ganze Punkt. -->
+        <img class="f7-lage clip" id="f7-unsere" src="bilder/01-aufsicht.png" alt=""
+             data-start="0" data-duration="7" data-track-index="0" />
+        <div id="f7-kamera" data-layout-allow-overflow>
+          <img class="f7-lage clip" id="f7-fremde" src="bilder/06-der-rest.png" alt=""
+               data-layout-allow-overflow data-start="0" data-duration="7" data-track-index="1" />
+        </div>
+        <div id="f7-licht" class="clip" data-layout-allow-overflow
+             data-start="2.6" data-duration="4.4" data-track-index="2"></div>
+        <div id="f7-zeile" class="clip glasplatte" data-start="0.5" data-duration="2.3" data-track-index="3"><span class="glasschrift">And whatever else you use comes along.</span></div>
+      </div>
+
+      <script>
+        const tl = gsap.timeline({ paused: true });
+
+        // Die drei Kaesten. Jeder schliesst die Beschriftung UEBER der Karte
+        // mit ein - "Home Assistant", "Mushroom", "Bubble Card" stehen auf
+        // der Seite. Bubble ist breiter, weil die Karte breiter ist.
+        const HA       = { left: 375, top: 265, width: 530,  height: 255 };
+        const MUSHROOM = { left: 375, top: 542, width: 530,  height: 252 };
+        const BUBBLE   = { left: 375, top: 816, width: 1035, height: 155 };
+
+        // 1. Eine Blende, kein Schnitt: Die Aussage ist "dasselbe Glas,
+        //    andere Karten" - und die sieht man nur, wenn die beiden
+        //    ineinander uebergehen.
+        tl.fromTo("#f7-fremde", { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "power2.inOut" }, 0.15);
+        tl.fromTo("#f7-zeile", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.5);
+        tl.to("#f7-zeile", { opacity: 0, duration: 0.4, ease: "power2.in" }, 2.3);
+
+        // 2. Der Druck in die Spalte. Endzustand: doppelte Groesse, um
+        //    218 / 82 verschoben - siehe die Kaesten oben.
+        tl.fromTo(
+          "#f7-kamera",
+          { scale: 1, x: 0, y: 0 },
+          { scale: 2, x: -218, y: -82, duration: 1.4, ease: "power2.inOut" },
+          1.3
+        );
+
+        // 3. Der Scheinwerfer geht auf der HA-Kachel auf und wandert dann
+        //    nach unten. left/top/width/height statt transform, damit das
+        //    Loch seine Form behaelt - ein skalierter Kasten zoege die
+        //    Rundung mit in die Breite.
+        gsap.set("#f7-licht", { ...HA, opacity: 0 });
+        tl.to("#f7-licht", { opacity: 1, duration: 0.45, ease: "power2.out" }, 2.6);
+        tl.to("#f7-licht", { ...MUSHROOM, duration: 0.6, ease: "power2.inOut" }, 3.9);
+        tl.to("#f7-licht", { ...BUBBLE, duration: 0.6, ease: "power2.inOut" }, 5.2);
+        tl.to("#f7-licht", { opacity: 0, duration: 0.5, ease: "power2.in" }, 6.5);
+
+        window.__timelines["f7-der-rest"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

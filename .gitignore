@@ -4,3 +4,17 @@ __pycache__/
 
 # Dashboard-Sicherungen: Entitaeten, Raeume, Geraete des Nutzers - nichts fuers Repository
 werkzeuge/sicherungen/
+
+# Der Film: Quellen ja, Zwischenstaende nein.
+#   bilder/ und filme/ sind Aufnahmen einer laufenden Instanz zu einem
+#   bestimmten Zeitpunkt - die bekommt niemand zurueck, die gehoeren hinein.
+#   renders/ sind daraus gerechnet; sieben Fassungen desselben Films waren
+#   198 MB. Nur die ausgelieferte bleibt, der Rest ist jederzeit neu zu
+#   rechnen. .hyperframes/ ist Zwischenspeicher.
+#   Die ausgelieferte Fassung kommt mit `git add -f` hinein - eine Ausnahme
+#   als Negation war hier mehrdeutig, und bei .gitignore ist mir eindeutig
+#   lieber als kurz.
+videos/*/renders/
+videos/*/.hyperframes/
+videos/*/.thumbnails/
+videos/*/.waveform-cache/
