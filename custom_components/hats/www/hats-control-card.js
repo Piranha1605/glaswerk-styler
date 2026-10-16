@@ -87,6 +87,12 @@ export const EINKLAPPEN = ["never", "narrow", "always"];
 // der Menueleiste der Horizon-Cards (resolvePlacement in helpers.js), mit
 // ihrer Rechnung fuer die Raender.
 export const PLATZIERUNGEN = ["inline", "bottom"];
+// Was in der LEISTE steht. Die Liste traegt immer Text - ein Eintrag ohne
+// Beschriftung ist ein Raetsel, und Platz ist dort kein Argument.
+//   auto   wie eingetragen: Text, wo ein Name steht   (wie bisher)
+//   icons  nie Text
+//   text   immer Text, notfalls der abgeleitete Titel
+export const BESCHRIFTUNGEN = ["auto", "icons", "text"];
 
 // Unter dieser KARTENBREITE wandern die Ziele in eine Liste. Gemessen wird die
 // Karte, nicht das Fenster: Eine Leiste in einer von zwei Spalten ist auf dem
@@ -116,11 +122,13 @@ export const TEXTE = {
       menu_shape: "Form", menu_size: "Größe", collapse: "Ziele einklappen",
       placement: "Lage der Leiste",
       hide_sidebar_button: "Knopf für die Seitenleiste weglassen",
+      labels: "Beschriftung in der Leiste",
       collapse_width: "Einklappen unter dieser Kartenbreite", show_highlight: "Kapsel auf der aktuellen Ansicht",
     },
     hilfe: {
       buttons: "Ein Ziel, ein Schalter oder eine Funktion - in dieser Reihenfolge.",
       controls: "Angezeigt in dieser Reihenfolge.",
+      labels: "Gilt nur für die Leiste. Das aufklappende Menü trägt immer Text.",
       kiosk_only: "Blendet nur Seitenleiste und Kopfzeile aus. Das Browserfenster bleibt, wie es ist.",
       replace_header: "Auf diesem Dashboard steht die Leiste an Stelle der Kopfzeile und bleibt beim Rollen oben. "
         + "Ein Knopf für die Seitenleiste kommt dazu. Im Bearbeitungsmodus ist die Kopfzeile wieder da.",
@@ -199,6 +207,7 @@ export const TEXTE = {
     },
     wahl: {
       inline: "im Raster", bottom: "am unteren Bildschirmrand",
+      auto: "wie eingetragen", icons: "nur Symbole", text: "Symbole und Text",
       theme: "Rundung der Theme", pill: "ganz rund",
       small: "klein", normal: "normal", large: "groß",
       never: "nie", narrow: "wenn es eng wird", always: "immer",
@@ -227,6 +236,7 @@ export const TEXTE = {
       menu_shape: "Shape", menu_size: "Size", collapse: "Collapse targets",
       placement: "Placement",
       hide_sidebar_button: "Leave out the sidebar button",
+      labels: "Labels in the bar",
       collapse_width: "Collapse below this card width", show_highlight: "Pill on the current view",
     },
     hilfe: {
@@ -240,6 +250,7 @@ export const TEXTE = {
         + "In edit mode it sits in the grid again.",
       hide_sidebar_button: "Only with \"Replace header\". Careful: on a phone it is the only way "
         + "into the sidebar and therefore to the settings.",
+      labels: "Applies to the bar only. The menu that folds out always carries text.",
     },
     knopffeld: {
       name: "Name", icon: "Icon", link: "Target", entity: "Entity",
@@ -308,6 +319,7 @@ export const TEXTE = {
     },
     wahl: {
       inline: "in the grid", bottom: "at the bottom edge",
+      auto: "as entered", icons: "icons only", text: "icons and text",
       theme: "theme radius", pill: "fully round",
       small: "small", normal: "normal", large: "large",
       never: "never", narrow: "when it gets narrow", always: "always",
@@ -586,6 +598,7 @@ export function pruefeConfig(config) {
     // Leer ('') heisst: das Symbol der aktuellen Seite.
     einklappsymbol: config?.collapse_icon,
     platzierung: PLATZIERUNGEN.includes(config?.placement) ? config.placement : "inline",
+    beschriftung: BESCHRIFTUNGEN.includes(config?.labels) ? config.labels : "auto",
     form: FORMEN.includes(config?.menu_shape) ? config.menu_shape : "theme",
     groesse: GROESSEN.includes(config?.menu_size) ? config.menu_size : "normal",
     kapsel: config?.show_highlight !== false,
@@ -1378,6 +1391,17 @@ export function randUnten(flaeche, fensterbreite, rtl = false) {
     start: Math.max(0, Math.round(rtl ? fensterbreite - r.right : r.left)),
     ende: Math.max(0, Math.round(rtl ? r.left : fensterbreite - r.right)),
   };
+}
+
+// Ein Ziel ohne Namen traegt sonst sein Symbol als Text ("mdi:menu"). Home
+// Assistant kennt den Titel des Dashboards - am 16.10.2026 an der
+// Hausinstallation gemessen: hass.panels["dashboard-glaswerk"].title ist
+// "Glaswerk". Genommen wird der ERSTE Pfadteil; der Titel einer einzelnen
+// Ansicht steht nicht in den Panels, sondern in der Lovelace-Konfiguration.
+export function zielTitel(link, hass) {
+  if (typeof link !== "string") return "";
+  const erstes = link.replace(/^\/+/, "").split("/")[0];
+  return (erstes && hass?.panels?.[erstes]?.title) || "";
 }
 
 function wirdBearbeitet() {
@@ -2307,7 +2331,8 @@ class Steuerung extends Basis {
         e._symbol.stateObj = zustand ?? undefined;
       }
       this._beschrifte(e, e._symbol.tagName === "HA-ICON" ? k.icon : null, k.name,
-        k.name || zustand?.attributes?.friendly_name || k.icon || t.knopf(k.index + 1));
+        k.name || zustand?.attributes?.friendly_name || zielTitel(k.link, hass)
+          || k.icon || t.knopf(k.index + 1));
 
       const an = istAn(zustand);
       const gefuellt = an && k.state_background;
@@ -2374,7 +2399,13 @@ class Steuerung extends Basis {
   // Symbolen sagt nicht, was hinter jedem steckt, und einen title sieht auf
   // dem Tablett niemand.
   _beschrifte(e, symbol, name, titel) {
-    if (!name && e._inListe && e._k?.function) name = titel;
+    // DIE LISTE TRAEGT IMMER TEXT. Dort ist Platz kein Argument, und ein
+    // Eintrag, der nur ein Symbol zeigt, ist ein Raetsel - am 16.10.2026
+    // gemeldet, mit einem Bild einer Liste aus einem einzigen Hamburger.
+    // In der LEISTE entscheidet das Feld `labels`.
+    if (e._inListe) name = name || titel;
+    else if (this._config?.beschriftung === "icons") name = "";
+    else if (this._config?.beschriftung === "text") name = name || titel;
     if (e._symbol.tagName === "HA-ICON") {
       if (symbol) e._symbol.setAttribute("icon", symbol);
       e._symbol.hidden = !symbol;
@@ -3398,6 +3429,7 @@ export function kartenFormular(t, mitAnzeige, fuerBadge = false) {
         { name: "replace_header", selector: { boolean: {} } },
         { name: "hide_sidebar_button", selector: { boolean: {} } },
         { name: "placement", selector: wahl(PLATZIERUNGEN) },
+        { name: "labels", selector: wahl(BESCHRIFTUNGEN) },
         { name: "menu_shape", selector: wahl(FORMEN) },
         { name: "menu_size", selector: wahl(GROESSEN) },
         { name: "collapse", selector: wahl(EINKLAPPEN) },

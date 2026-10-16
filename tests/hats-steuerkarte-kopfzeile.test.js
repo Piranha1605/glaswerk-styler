@@ -11,6 +11,7 @@ import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import {
   pruefeConfig, mitKopfKnoepfen, inDieListe, mehrInDieListe, badgeConfig, aktiverIndex, FUNKTIONEN, TEXTE,
+  BESCHRIFTUNGEN, zielTitel,
 } from "../custom_components/hats/www/hats-control-card.js";
 
 let n = 0;
@@ -89,6 +90,35 @@ pruefe("Der Seitenleisten-Knopf laesst sich ablehnen, der Stift nicht aus Verseh
   assert.deepStrictEqual(nur({ ...leiste, hide_sidebar_button: true }), ["", "settings"]);
   // Und ohne replace_header aendert das Feld gar nichts.
   assert.deepStrictEqual(nur({ buttons: leiste.buttons, hide_sidebar_button: true }), ["", "settings"]);
+});
+
+pruefe("Die Liste traegt immer Text, die Leiste nach Wahl", () => {
+  const quelle = readFileSync(new URL("../custom_components/hats/www/hats-control-card.js", import.meta.url), "utf8");
+  // Die Liste zuerst und ohne Bedingung - ein Eintrag aus einem einzigen
+  // Symbol ist ein Raetsel. Gemeldet am 16.10.2026 mit einem Bild.
+  assert.ok(/if \(e\._inListe\) name = name \|\| titel;/.test(quelle));
+  assert.ok(/else if \(this\._config\?\.beschriftung === "icons"\) name = "";/.test(quelle));
+  assert.ok(/else if \(this\._config\?\.beschriftung === "text"\) name = name \|\| titel;/.test(quelle));
+  // Drei Werte, und "auto" ist die Vorgabe - eine bestehende Leiste aendert
+  // sich also nicht.
+  assert.deepStrictEqual(BESCHRIFTUNGEN, ["auto", "icons", "text"]);
+  assert.strictEqual(pruefeConfig({}).beschriftung, "auto");
+  assert.strictEqual(pruefeConfig({ labels: "icons" }).beschriftung, "icons");
+  assert.strictEqual(pruefeConfig({ labels: "quatsch" }).beschriftung, "auto");
+});
+
+pruefe("Ein Ziel ohne Namen bekommt den Titel seines Dashboards", () => {
+  // Sonst stuende dort sein Symbol als Text ("mdi:menu"). Gemessen an der
+  // Hausinstallation: hass.panels["dashboard-glaswerk"].title ist "Glaswerk".
+  const hass = { panels: { "dashboard-glaswerk": { title: "Glaswerk" }, lovelace: { title: null } } };
+  assert.strictEqual(zielTitel("/dashboard-glaswerk", hass), "Glaswerk");
+  // Auch mit Ansicht dahinter - genommen wird der erste Pfadteil.
+  assert.strictEqual(zielTitel("/dashboard-glaswerk/0", hass), "Glaswerk");
+  // Und sauber leer, wo nichts zu holen ist.
+  assert.strictEqual(zielTitel("/lovelace", hass), "");
+  assert.strictEqual(zielTitel("/gibtsnicht", hass), "");
+  assert.strictEqual(zielTitel(undefined, hass), "");
+  assert.strictEqual(zielTitel("/dashboard-glaswerk", undefined), "");
 });
 
 pruefe("Ohne Namen traegt der Menueknopf keinen Pfeil", () => {
