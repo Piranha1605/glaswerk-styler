@@ -1603,6 +1603,11 @@ const STIL_KARTE = `
     border: 1px solid var(--divider-color);
     box-shadow: var(--ha-card-box-shadow, none);
   }
+  /* Unten geheftet geht die Liste NACH OBEN auf. Nach unten waere sie hinter
+     dem Bildschirmrand - die Leiste steht ja schon 16 px davor. */
+  :host([unten][offen="liste"]) .liste {
+    top: auto; bottom: calc(100% + var(--ha-space-3, 12px));
+  }
   .liste .knopf { width: 100%; justify-content: flex-start; }
   .liste .knopf.nur-symbol { padding: 0 var(--_polster); }
   .liste .trenner { width: auto; height: 1px; margin: var(--ha-space-1, 4px) 0; }
@@ -1630,6 +1635,12 @@ const STIL_FENSTER = `
     border: 1px solid var(--divider-color);
     box-shadow: var(--ha-card-box-shadow, none);
     color: var(--primary-text-color); font-size: var(--ha-font-size-m, 14px);
+  }
+  /* Und die Regler genauso. Das Badge ist nie unten geheftet, fuer das aendert
+     die Regel also nichts - sie steht hier, weil beide Formen dieses Blatt
+     bekommen. */
+  :host([unten][offen="bewegung"]) .regler, :host([unten][offen="darstellung"]) .regler {
+    top: auto; bottom: calc(100% + var(--ha-space-3, 12px));
   }
   .rtitel { font-weight: var(--ha-font-weight-medium, 500); }
   .rzeile {
