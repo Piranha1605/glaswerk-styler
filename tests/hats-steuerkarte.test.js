@@ -214,9 +214,11 @@ pruefe("Nur Bauteile, die Home Assistant auf jedem Dashboard anmeldet", () => {
   // Badge angemeldet. Ob das auf jeder Instanz so ist, ist nicht bewiesen -
   // fehlt es, zeichnet die Reihe sich trotzdem, nur ohne Pille darum.
   const angelegt = ["ha-badge", "ha-card", "ha-icon", "ha-ripple", "ha-state-icon"];
-  // Diese beiden legt die Leiste nicht an. Sie SUCHT sie, von sich aus nach
-  // oben, um die Kopfzeile im Vollbild wegzunehmen.
-  const gesucht = ["ha-top-app-bar-fixed", "hui-root"];
+  // Diese legt die Leiste nicht an. Sie SUCHT sie, von sich aus nach oben:
+  // die ersten beiden, um die Kopfzeile im Vollbild wegzunehmen, die anderen
+  // beiden fuer die schwebende Leiste am unteren Rand - an der Flaeche der
+  // Ansicht wird gemessen, wie weit sie von den Raendern wegbleiben muss.
+  const gesucht = ["ha-panel-lovelace", "ha-top-app-bar-fixed", "hui-root", "hui-view-container"];
   // Und diese vier sind keine Bauteile, sondern Theme-Felder: Die Regler fuer
   // Transparenz und Schrift lesen und schreiben sie in der Datei. Die
   // Dialogflaeche zieht seit dem 15.10.2026 mit der Transparenz mit.
@@ -253,8 +255,12 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
     "--ha-card-backdrop-filter", "--mdc-dialog-scrim-color", "--ha-dialog-surface-background"];
   // Home Assistant liest die Namen (hui-card-features, ha-badge, hui-root),
   // belegt sie aber nicht - oder nur auf Geraeten mit Aussparung.
+  // --ha-sidebar-width und --safe-area-inset-bottom kommen mit der
+  // schwebenden Leiste dazu. Die Breite ist dabei NUR der Ausweichwert fuer
+  // das erste Bild: Sie traegt eine Breite, aber nie eine Sichtbarkeit -
+  // gemessen wird danach an der Flaeche der Ansicht.
   const nurGelesen = ["--ha-card-features-border-radius", "--ha-badge-icon-size",
-    "--safe-area-inset-top"];
+    "--safe-area-inset-top", "--safe-area-inset-bottom", "--ha-sidebar-width"];
   // Leben nur in der Leiste selbst und kommen in keiner Theme vor. "--state-"
   // ist der Anfang von --state-<domaene>-active-color: Der Name wird zur
   // Laufzeit aus der Entitaet gebaut, so wie Home Assistant ihn selbst baut.
@@ -263,8 +269,10 @@ pruefe("Jede gelesene Variable ist an der Instanz gemessen", () => {
   // ihren Stilblaettern und liest ihn fuer den Kasten des Symbols zurueck.
   // --_fest-links und --_fest-breite setzt die Leiste selbst an ihren Wirt,
   // wenn sie an Stelle der Kopfzeile oben festklebt.
+  // --_unten-start und --_unten-ende setzt sie genauso an ihren Wirt, wenn
+  // sie ueber dem unteren Bildschirmrand schwebt.
   const eigen = ["--_rund", "--_knopfrund", "--_h", "--_polster", "--state-", "--mdc-icon-size",
-    "--_fest-links", "--_fest-breite"];
+    "--_fest-links", "--_fest-breite", "--_unten-start", "--_unten-ende"];
 
   const gelesen = [...new Set([...quelle.matchAll(/var\(\s*(--[a-z0-9_-]+)/g)].map((m) => m[1]))];
   assert.ok(gelesen.length >= 8, `nur ${gelesen.length} Variablen gefunden - der Ausdruck greift nicht`);

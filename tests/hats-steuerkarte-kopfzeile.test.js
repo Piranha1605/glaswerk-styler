@@ -8,6 +8,7 @@
 // in den Bearbeitungsmodus. Die Pruefungen halten fest, dass beide nie fehlen.
 
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
 import {
   pruefeConfig, mitKopfKnoepfen, inDieListe, mehrInDieListe, badgeConfig, aktiverIndex, FUNKTIONEN, TEXTE,
 } from "../custom_components/hats/www/hats-control-card.js";
@@ -72,6 +73,18 @@ pruefe("Eine Leiste mit nur Seitenleiste und Rand hat keine Ziele zum Einklappen
   const e = pruefeConfig({ replace_header: true, collapse: "narrow", buttons: [{ function: "settings", align_end: true }] });
   // Der erste Schritt nimmt gleich einen Knopf vom Rand - "Ziele" gibt es keine.
   assert.deepStrictEqual(mehrInDieListe({ zu: false, weg: 0 }, e, true), { zu: true, weg: 1 });
+});
+
+pruefe("Unten geheftet klebt die Leiste nicht zusaetzlich oben fest", () => {
+  // Beide setzen position: fixed an dieselbe ha-card - der eine top, der
+  // andere bottom. Zusammen zerrten sie die Leiste ueber die ganze Hoehe.
+  const quelle = readFileSync(new URL("../custom_components/hats/www/hats-control-card.js", import.meta.url), "utf8");
+  assert.ok(/const untenGeheftet = this\._config\.platzierung === "bottom";/.test(quelle));
+  assert.ok(/this\._klebe\(this\._config\.kopf && !bearbeiten && !untenGeheftet\);/.test(quelle));
+  // Und beide Lagen gibt es wirklich.
+  assert.strictEqual(pruefeConfig({ placement: "bottom" }).platzierung, "bottom");
+  assert.strictEqual(pruefeConfig({}).platzierung, "inline");
+  assert.strictEqual(pruefeConfig({ placement: "quatsch" }).platzierung, "inline");
 });
 
 pruefe("Das Badge ersetzt keine Kopfzeile", () => {

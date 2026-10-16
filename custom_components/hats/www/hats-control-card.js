@@ -82,6 +82,11 @@ export const FUNKTIONEN = ["mode", "theme", "fullscreen", "weather", "motion", "
 export const GROESSEN = ["small", "normal", "large"];
 export const FORMEN = ["theme", "pill"];
 export const EINKLAPPEN = ["never", "narrow", "always"];
+// "inline" ist eine Karte im Raster wie jede andere; "bottom" loest sie heraus
+// und laesst sie ueber dem unteren Bildschirmrand schweben - uebernommen aus
+// der Menueleiste der Horizon-Cards (resolvePlacement in helpers.js), mit
+// ihrer Rechnung fuer die Raender.
+export const PLATZIERUNGEN = ["inline", "bottom"];
 
 // Unter dieser KARTENBREITE wandern die Ziele in eine Liste. Gemessen wird die
 // Karte, nicht das Fenster: Eine Leiste in einer von zwei Spalten ist auf dem
@@ -109,6 +114,7 @@ export const TEXTE = {
       buttons: "Knöpfe", controls: "Bedienteile", kiosk_only: "Vollbild nur in Home Assistant",
       replace_header: "Kopfzeile von Home Assistant ersetzen",
       menu_shape: "Form", menu_size: "Größe", collapse: "Ziele einklappen",
+      placement: "Lage der Leiste",
       collapse_width: "Einklappen unter dieser Kartenbreite", show_highlight: "Kapsel auf der aktuellen Ansicht",
     },
     hilfe: {
@@ -118,6 +124,8 @@ export const TEXTE = {
       replace_header: "Auf diesem Dashboard steht die Leiste an Stelle der Kopfzeile und bleibt beim Rollen oben. "
         + "Ein Knopf für die Seitenleiste kommt dazu. Im Bearbeitungsmodus ist die Kopfzeile wieder da.",
       collapse_width: "Gemessen wird die Karte, nicht das Fenster.",
+      placement: "Am unteren Rand schwebt die Leiste über dem Dashboard und rollt nicht mit. "
+        + "Im Bearbeitungsmodus steht sie wieder im Raster.",
     },
     knopffeld: {
       name: "Name", icon: "Symbol", link: "Ziel", entity: "Entität",
@@ -187,6 +195,7 @@ export const TEXTE = {
       bild: (was) => `Kein Bild aus /local/hatg: ${was}`,
     },
     wahl: {
+      inline: "im Raster", bottom: "am unteren Bildschirmrand",
       theme: "Rundung der Theme", pill: "ganz rund",
       small: "klein", normal: "normal", large: "groß",
       never: "nie", narrow: "wenn es eng wird", always: "immer",
@@ -213,6 +222,7 @@ export const TEXTE = {
       buttons: "Buttons", controls: "Controls", kiosk_only: "Fullscreen in Home Assistant only",
       replace_header: "Replace Home Assistant's header",
       menu_shape: "Shape", menu_size: "Size", collapse: "Collapse targets",
+      placement: "Placement",
       collapse_width: "Collapse below this card width", show_highlight: "Pill on the current view",
     },
     hilfe: {
@@ -222,6 +232,8 @@ export const TEXTE = {
       replace_header: "On this dashboard the bar takes the header's place and stays at the top while scrolling. "
         + "A sidebar button is added. In edit mode the header is back.",
       collapse_width: "The card is measured, not the window.",
+      placement: "At the bottom edge the bar floats above the dashboard and does not scroll with it. "
+        + "In edit mode it sits in the grid again.",
     },
     knopffeld: {
       name: "Name", icon: "Icon", link: "Target", entity: "Entity",
@@ -289,6 +301,7 @@ export const TEXTE = {
       bild: (was) => `Not an image from /local/hatg: ${was}`,
     },
     wahl: {
+      inline: "in the grid", bottom: "at the bottom edge",
       theme: "theme radius", pill: "fully round",
       small: "small", normal: "normal", large: "large",
       never: "never", narrow: "when it gets narrow", always: "always",
@@ -522,11 +535,14 @@ export function inDieListe(knoepfe, zu, weg) {
 //                    (390 px) blieb der Ueberlauf 0; das Badge steht dort
 //                    einfach aus dem Bild heraus, und auch das aendert
 //                    collapse nicht.
+//   placement        Ein Badge steht in der Badge-Zeile einer Ansicht. Es
+//                    ueber den Bildschirmrand zu heften hiesse, es aus
+//                    seiner Zeile zu reissen.
 //
 // Die alte Kurzform `controls` gilt weiter: leseKnoepfe() kennt sie, und ein
 // Badge von gestern bleibt damit genau das, was es war.
 export function badgeConfig(config) {
-  const { replace_header, menu_shape, menu_size, collapse, collapse_width, ...rest } = config ?? {};
+  const { replace_header, menu_shape, menu_size, collapse, collapse_width, placement, ...rest } = config ?? {};
   return rest;
 }
 
@@ -558,6 +574,7 @@ export function pruefeConfig(config) {
     einklappbreite: Number(config?.collapse_width) || EINKLAPPBREITE,
     // Leer ('') heisst: das Symbol der aktuellen Seite.
     einklappsymbol: config?.collapse_icon,
+    platzierung: PLATZIERUNGEN.includes(config?.placement) ? config.placement : "inline",
     form: FORMEN.includes(config?.menu_shape) ? config.menu_shape : "theme",
     groesse: GROESSEN.includes(config?.menu_size) ? config.menu_size : "normal",
     kapsel: config?.show_highlight !== false,
@@ -1320,6 +1337,38 @@ function kopfWirt(start) {
 
 // Im Bearbeitungsmodus traegt genau diese Leiste den Knopf, mit dem man ihn
 // verlaesst. Sie dort zu verstecken hiesse, das Dashboard zu verriegeln.
+// Die Flaeche des Dashboards, gefunden durch Hochgehen von der Karte durch
+// die Shadow Roots, in denen sie steckt. Die Karte liegt IN der Ansicht, also
+// liegt die Ansicht darueber - kein Suchen, und keine Gefahr, die Flaeche von
+// etwas anderem zu messen. Uebernommen aus der Menueleiste der Horizon-Cards.
+const ANSICHTSFLAECHEN = new Set(["hui-view-container", "hui-root", "ha-panel-lovelace"]);
+
+export function ansichtsflaeche(von) {
+  let k = von;
+  while (k) {
+    if (ANSICHTSFLAECHEN.has(k.tagName?.toLowerCase?.())) return k;
+    if (k.parentNode) { k = k.parentNode; continue; }
+    const wurzel = k.getRootNode?.();
+    k = wurzel instanceof ShadowRoot ? wurzel.host : null;
+  }
+  return null;
+}
+
+// Wie weit die schwebende Leiste von den Raendern wegbleiben muss. Gemessen an
+// der Ansicht, in der die Karte steckt, nicht an einem Token:
+// --ha-sidebar-width traegt eine Breite, aber nie eine Sichtbarkeit.
+//
+//   zurueck  { start, ende } in Pixeln, oder null wenn nichts zu messen ist
+export function randUnten(flaeche, fensterbreite, rtl = false) {
+  if (!flaeche || !fensterbreite) return null;
+  const r = flaeche.getBoundingClientRect();
+  if (!r.width) return null;
+  return {
+    start: Math.max(0, Math.round(rtl ? fensterbreite - r.right : r.left)),
+    ende: Math.max(0, Math.round(rtl ? r.left : fensterbreite - r.right)),
+  };
+}
+
 function wirdBearbeitet() {
   try {
     return new URLSearchParams(globalThis.location.search).get("edit") === "1";
@@ -1507,6 +1556,36 @@ const STIL_KARTE = `
     /* ha-card nimmt sonst height: 100% - fest heisst das: des Fensters. Am
        14.10.2026 so gesehen, eine Glasflaeche ueber dem ganzen Bildschirm. */
     height: auto;
+  }
+
+  /* AM UNTEREN RAND. Die Karte wird aus dem Raster geloest und steht fest
+     ueber dem unteren Bildschirmrand - wie die Menueleiste der Horizon-Cards
+     es macht, und aus demselben Grund an der ha-card statt an der Leiste:
+     Herausgeloest werden muss die KARTE.
+
+     Die beiden Raender kommen gemessen aus _randUnten(); die Kette dahinter
+     ist nur der Ausweichwert fuer das erste Bild, bevor etwas gemessen ist.
+     --ha-sidebar-width traegt eine Breite, aber nie eine Sichtbarkeit - wer
+     sich allein darauf verlaesst, schiebt die Leiste unter eine Seitenleiste,
+     die niemand sieht.
+
+     Logisch, nicht physisch: inset-inline-start folgt der Schreibrichtung. */
+  :host([unten]) {
+    --_unten-start: var(--ha-sidebar-width, 0px);
+    --_unten-ende: 0px;
+    display: contents;
+  }
+  :host([unten]) ha-card {
+    position: fixed; z-index: 6; box-sizing: border-box; height: auto;
+    bottom: calc(16px + var(--safe-area-inset-bottom, 0px));
+    inset-inline-start: calc(var(--_unten-start) + 8px);
+    inset-inline-end: calc(var(--_unten-ende) + 8px);
+  }
+  /* Im Bearbeitungsmodus bleibt sie im Raster - schwebend laege sie ueber dem
+     Dialog, in dem sie gerade bearbeitet wird, und waere nicht zu erreichen. */
+  :host([unten][bearbeiten]) { display: block; }
+  :host([unten][bearbeiten]) ha-card {
+    position: relative; inset-inline-start: 0; inset-inline-end: 0; bottom: 0; z-index: auto;
   }
 
   /* Eingeklappt: die Ziele haengen als Liste unter dem Menueknopf. Offen
@@ -1820,6 +1899,7 @@ class Steuerung extends Basis {
     // Eine Ansicht ohne die Leiste haette sonst weder Kopfzeile noch Leiste -
     // und keinen Weg mehr hinaus.
     this._klebe(false);
+    this._hefteUnten(true);
     kopfzeile(this, false);
   }
 
@@ -1829,6 +1909,59 @@ class Steuerung extends Basis {
   // Fenster, und ueber der Karte faengt nichts ein position: fixed ab - kein
   // transform, kein filter, kein contain. Also bleibt der Wirt im Raster und
   // haelt den Platz, und nur ha-card wird fest, sobald er oben hinausrollt.
+  // Am unteren Bildschirmrand. Anders als beim Kleben haengt hier nichts am
+  // Rollen - die Leiste steht fest, egal wo die Seite gerade ist. Gemessen
+  // wird nur, wenn sich das Fenster oder die Ansicht aendert.
+  _hefteUnten(bearbeiten) {
+    const unten = this._config?.platzierung === "bottom";
+    this.toggleAttribute("unten", unten);
+    this.toggleAttribute("bearbeiten", unten && bearbeiten);
+    if (!unten || bearbeiten) {
+      if (this._beimMessen) {
+        window.removeEventListener("resize", this._beimMessen);
+        this._beimMessen = null;
+      }
+      this._platzUnten(false);
+      return;
+    }
+    if (!this._beimMessen) {
+      this._beimMessen = () => this._messeUnten();
+      window.addEventListener("resize", this._beimMessen, { passive: true });
+    }
+    this._messeUnten();
+    this._platzUnten(true);
+  }
+
+  _messeUnten() {
+    const rtl = (globalThis.document?.dir || "").toLowerCase() === "rtl";
+    const rand = randUnten(ansichtsflaeche(this), globalThis.document?.documentElement?.clientWidth, rtl);
+    if (!rand) return;
+    // Nur bei einer Aenderung schreiben: Dieselbe Eigenschaft noch einmal zu
+    // setzen macht den Stil trotzdem ungueltig.
+    const marke = `${rand.start}|${rand.ende}`;
+    if (this._randUnten === marke) return;
+    this._randUnten = marke;
+    this.style.setProperty("--_unten-start", `${rand.start}px`);
+    this.style.setProperty("--_unten-ende", `${rand.ende}px`);
+  }
+
+  // Eine schwebende Leiste deckt zu, womit die Ansicht endet. Der Platz wird
+  // an der Ansicht reserviert, nicht an der eigenen Zelle: Die Leiste steht
+  // oben im Raster, der Platz wird unten gebraucht.
+  _platzUnten(an) {
+    const flaeche = ansichtsflaeche(this);
+    if (!flaeche) return;
+    if (an) {
+      if (!this._platzGesetzt && !flaeche.style.paddingBottom) {
+        flaeche.style.paddingBottom = "80px";
+        this._platzGesetzt = flaeche;
+      }
+    } else if (this._platzGesetzt) {
+      this._platzGesetzt.style.paddingBottom = "";
+      this._platzGesetzt = null;
+    }
+  }
+
   _klebe(an) {
     if (an && !this._beimRollen) {
       this._beimRollen = () => {
@@ -2175,7 +2308,13 @@ class Steuerung extends Basis {
     if (mitVollbild || this._config.kopf) {
       kopfzeile(this, (mitVollbild && hass.kioskMode === true) || this._config.kopf);
     }
-    this._klebe(this._config.kopf && !wirdBearbeitet());
+    const bearbeiten = wirdBearbeitet();
+    // Wer unten schwebt, klebt nicht auch noch oben fest: Beide setzen
+    // position: fixed an dieselbe ha-card, der eine top, der andere bottom -
+    // zusammen zerrten sie die Leiste ueber die ganze Hoehe.
+    const untenGeheftet = this._config.platzierung === "bottom";
+    this._klebe(this._config.kopf && !bearbeiten && !untenGeheftet);
+    this._hefteUnten(bearbeiten);
 
     if (this.getAttribute?.("offen") === "fenster" && this._regler?.art === "fenster") this._stelleFenster(t);
     this._folgeModus();
@@ -3230,6 +3369,7 @@ export function kartenFormular(t, mitAnzeige, fuerBadge = false) {
       // gestern mit full_width bezahlt hat.
       ...(fuerBadge ? [] : [
         { name: "replace_header", selector: { boolean: {} } },
+        { name: "placement", selector: wahl(PLATZIERUNGEN) },
         { name: "menu_shape", selector: wahl(FORMEN) },
         { name: "menu_size", selector: wahl(GROESSEN) },
         { name: "collapse", selector: wahl(EINKLAPPEN) },
