@@ -876,8 +876,8 @@ ha-user-badge {
     ziel: "card",
     de: "Aktiver Knopf mit Farbverlauf",
     en: "Active button with a gradient",
-    zweckDe: "Die Kapsel der HATS-Steuerleiste bekommt denselben Verlauf wie das Datumsfeld der Kalender-Kachel.",
-    zweckEn: "The pill in the HATS control bar gets the same gradient as the calendar tile's date box.",
+    zweckDe: "Kapsel und eingeschaltete Schalter der HATS-Steuerleiste bekommen denselben Verlauf wie das Datumsfeld der Kalender-Kachel.",
+    zweckEn: "The pill and switched-on buttons in the HATS control bar get the same gradient as the calendar tile's date box.",
     css: `/* Auf Ansage vom 14.10.2026, mit drei Bildern: "bekommen wir den
    farbverlauf aus dem kalender auf die aktiven buttons".
 
@@ -890,14 +890,20 @@ ha-user-badge {
    eine Formel - sonst laufen sie auseinander, sobald jemand einen davon
    anfasst.
 
-   WARUM HIER UND NICHT IN DER KARTE: hats-control-card.js gehoert der
-   Sitzung, die die Steuerkarte baut. UIX haengt seinen Knoten in den Shadow
-   Root jedes Karten-Elements ein - gemessen, in der Steuerleiste liegen drei
-   davon -, also ist die Kapsel von uix-card aus erreichbar, ohne eine fremde
-   Datei anzufassen.
+   WARUM HIER UND NICHT IN DER KARTE: Der Verlauf ist ein Aussehen dieser
+   Theme, keine Eigenschaft der Leiste. Wer HATS' Steuerleiste auf einer
+   fremden Theme benutzt, bekommt die flache Flaeche - und genau die ist
+   dort richtig, weil es die Kalender-Kachel mit ihrem Verlauf daneben nicht
+   gibt. UIX haengt seinen Knoten in den Shadow Root jedes Karten-Elements
+   ein - gemessen, in der Steuerleiste liegen drei davon -, also ist beides
+   von uix-card aus erreichbar.
 
-   .kapsel gibt es nur in der Steuerleiste. Die Regel laeuft in jeder anderen
-   Karte ins Leere, und das kostet nichts.
+   (Hier stand bis zum 16.10.2026 ein anderer Grund: hats-control-card.js
+   gehoere einer fremden Sitzung. Das stimmt seit der Verschmelzung nicht
+   mehr. Der Grund darueber hat immer schon gegolten.)
+
+   .kapsel und .flaeche gibt es nur in der Steuerleiste. Die Regel laeuft in
+   jeder anderen Karte ins Leere, und das kostet nichts.
 
    ES WIRD DADURCH LESBARER. Gemessen: weisse Schrift auf der bisherigen
    Kapsel (#f47a16, das ist --primary-color) ergab 2,75 : 1 - unter dem, was
@@ -908,6 +914,31 @@ ha-user-badge {
   background-image: linear-gradient(150deg,
     color-mix(in srgb, var(--accent-color) 48%, transparent),
     color-mix(in srgb, var(--accent-color) 24%, transparent)) !important;
+}
+
+/* UND DERSELBE VERLAUF AUF DEM EINGESCHALTETEN SCHALTER. Auf Ansage vom
+   16.10.2026, mit einem Bild der aufgeklappten Liste: "also das licht ist an
+   und der schalter blau soweit schon richtig. nur soll er den selben
+   Farbverlauf bekommen wie unsere andern schalter und button".
+
+   DIE QUELLE IST EINE ANDERE, DIE FORMEL DIESELBE. Die Kapsel sagt "hier bist
+   du" und nimmt den Akzent; ein Schalter sagt "das hier ist an" und nimmt die
+   Farbe der Lampe. Die Karte legt sie als --hats-flaeche ab, weil CSS die
+   eigene Flaechenfarbe nicht in ein linear-gradient() hineinlesen kann.
+   Gemessen am 16.10.2026 an light.ruckwand_skadis: rgb(129, 173, 255), im
+   Verlauf angekommen als color(srgb 0.505882 0.678431 1 / 0.48).
+
+   DIE SCHRIFT STELLT SICH VON SELBST UM. Die Karte liest die BERECHNETE
+   Flaechenfarbe, um zwischen schwarzer und weisser Schrift zu waehlen. Durch
+   das transparent kommt dort rgba(0, 0, 0, 0) an - also weisse Schrift, und
+   die ist auf dem durchscheinenden Verlauf richtig. Ohne das transparent
+   bliebe die volle Lampenfarbe stehen, der Verlauf waere unsichtbar, und die
+   Schrift bliebe schwarz. */
+.knopf.gefuellt .flaeche {
+  background-color: transparent !important;
+  background-image: linear-gradient(150deg,
+    color-mix(in srgb, var(--hats-flaeche) 48%, transparent),
+    color-mix(in srgb, var(--hats-flaeche) 24%, transparent)) !important;
 }`,
   },
 

@@ -2340,10 +2340,24 @@ class Steuerung extends Basis {
       e.classList.toggle("gefuellt", gefuellt);
       let hell = false;
       if (gefuellt) {
-        e._flaeche.style.backgroundColor = flaechenfarbe(k, zustand);
+        const farbe = flaechenfarbe(k, zustand);
+        // Dieselbe Farbe steht AUCH als Eigenschaft da. CSS kann die
+        // Flaechenfarbe eines Elements nicht in ein linear-gradient()
+        // hineinlesen - eine Theme, die aus ihr einen Verlauf bauen will,
+        // braucht sie als Variable. Die Vorlage `verlauf-kapsel` tut genau
+        // das, mit derselben Formel wie Kapsel, Kalenderkachel und
+        // Seitenleiste. Ohne eine solche Vorlage aendert die Zeile nichts.
+        e._flaeche.style.setProperty("--hats-flaeche", farbe);
+        e._flaeche.style.backgroundColor = farbe;
         // Eine Lampenfarbe ist oft eine blasse, und Weiss darauf ist nicht zu
         // lesen. Gefragt wird die BERECHNETE Farbe - eine Variable laesst sich
         // nicht ausrechnen, bevor der Browser sie aufgeloest hat.
+        //
+        // UND DAS TRAEGT DEN THEME-FALL GLEICH MIT: Raeumt eine Vorlage die
+        // Flaeche ab (background-color: transparent !important) und malt
+        // einen durchscheinenden Verlauf, kommt hier rgba(0, 0, 0, 0) an -
+        // also "nicht hell", also weisse Schrift. Das ist auf dem Verlauf
+        // richtig, und es ist, was die Kapsel seit dem 14.10.2026 tut.
         const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(e._flaeche).backgroundColor);
         hell = Boolean(m) && istHell(Number(m[1]), Number(m[2]), Number(m[3]));
       }

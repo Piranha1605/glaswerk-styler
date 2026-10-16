@@ -7,6 +7,7 @@
 // antwortet wie die alte. Wo sie mit Absicht ANDERS antwortet, steht es dabei.
 
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
 import {
   leseKnoepfe, pruefeConfig, knopfAktion, knopfPfad, normPfad, pfadwert, aktiverIndex,
   geordnet, einklappArt, eingeklappt, istAn, istHell, flaechenfarbe, wetterText, FUNKTIONEN,
@@ -176,6 +177,40 @@ pruefe("Die Lampenfarbe gewinnt, sonst Home Assistants Zustandsfarbe der Domaene
   assert.strictEqual(flaechenfarbe(knoepfe({ entity: "light.kueche", light_background: false })[0], lampe), hausfarbe);
   assert.strictEqual(flaechenfarbe(knoepfe({ entity: "switch.luefter" })[0], { state: "on", attributes: {} }),
     "var(--state-switch-active-color, var(--state-active-color))");
+});
+
+pruefe("Die Flaechenfarbe steht auch als Eigenschaft da - sonst verschwindet der Schalter", () => {
+  // Am 16.10.2026 auf Ansage: "nur soll er den selben Farbverlauf bekommen
+  // wie unsere andern schalter und button". Die Vorlage `verlauf-kapsel` baut
+  // den Verlauf aus --hats-flaeche; CSS kann die Flaechenfarbe eines Elements
+  // nicht selbst in ein linear-gradient() hineinlesen.
+  //
+  // WARUM DAS EIN TEST IST UND KEINE NOTIZ: Faellt die Zeile in der Karte weg,
+  // ist --hats-flaeche nicht gesetzt, color-mix() damit ungueltig, und
+  // background-image faellt auf `none` zurueck - waehrend das
+  // `background-color: transparent !important` der Vorlage stehen BLEIBT. Der
+  // eingeschaltete Schalter waere dann nicht flach, sondern UNSICHTBAR. Am
+  // 16.10.2026 an Chrome nachgemessen, mit und ohne Eigenschaft:
+  //
+  //     ohne   background-color rgba(0, 0, 0, 0)   background-image none
+  //     mit    background-color rgba(0, 0, 0, 0)   background-image der Verlauf
+  //
+  // Geprueft wird der Quelltext, weil die Stelle kein eigener Aufruf ist.
+  const karte = readFileSync(new URL("../custom_components/hats/www/hats-control-card.js", import.meta.url), "utf8");
+  const stelle = karte.slice(karte.indexOf("const farbe = flaechenfarbe("), karte.indexOf("e.classList.toggle(\"hell\""));
+  assert.ok(stelle.length > 0 && stelle.length < 2000, "die Stelle, an der gefuellt wird, ist nicht mehr zu finden");
+  assert.match(stelle, /setProperty\("--hats-flaeche", farbe\)/,
+    "die Karte legt die Flaechenfarbe nicht mehr als --hats-flaeche ab");
+  assert.match(stelle, /backgroundColor = farbe/,
+    "die Eigenschaft und die Flaeche tragen nicht mehr denselben Wert");
+
+  // Und die Gegenseite: die Vorlage muss genau diesen Namen lesen. Ein
+  // Tippfehler auf einer der beiden Seiten faellt sonst nirgends auf.
+  const vorlagen = readFileSync(new URL("../custom_components/hats/www/vorlagen.js", import.meta.url), "utf8");
+  const v = vorlagen.slice(vorlagen.indexOf('id: "verlauf-kapsel"'));
+  const block = v.slice(0, v.indexOf("\n  },"));
+  assert.strictEqual((block.match(/var\(--hats-flaeche\)/g) || []).length, 2,
+    "verlauf-kapsel liest --hats-flaeche nicht zweimal");
 });
 
 pruefe("Auf einer hellen Flaeche steht dunkle Schrift", () => {

@@ -369,21 +369,36 @@ pruefe("Jeder aktive Knopf traegt DENSELBEN Verlauf, aus dem Akzent", () => {
   };
   const stellen = [hol("glas-seitenleiste"), hol("verlauf-kapsel")];
   const alle = stellen.flatMap(({ v, bloecke }) => bloecke.map((b) => [v.id, b]));
-  assert.strictEqual(alle.length, 4,
-    `vier Stellen erwartet, gefunden ${alle.length} - Pille, Zahl, Nutzerbild, Kapsel`);
+  assert.strictEqual(alle.length, 5,
+    `fuenf Stellen erwartet, gefunden ${alle.length} - Pille, Zahl, Nutzerbild, Kapsel, Schalter`);
 
   // !important faellt beim Vergleich weg: Es sagt, ob die Regel sich gegen
   // eine von HA durchsetzen muss - die Pille und die Ziffer muessen das, der
   // Wirt des Nutzerbilds nicht. Der VERLAUF selbst muss derselbe sein.
+  //
+  // UND DIE QUELLE FAELLT AUCH WEG. Seit dem 16.10.2026 nimmt eine der fuenf
+  // Stellen nicht den Akzent, sondern die Farbe der Lampe (--hats-flaeche):
+  // Die Kapsel sagt "hier bist du", ein Schalter sagt "das hier ist an". Was
+  // gleich bleiben MUSS, ist die Rechnung - Winkel, 48 Prozent, 24 Prozent,
+  // color-mix gegen transparent. Verglichen wird deshalb die Form, und dass
+  // beide Stufen aus DERSELBEN Variablen kommen, prueft die Schleife darunter.
   const ohneLeerraum = (t) => t.replace(/\s*!important\s*$/, "").replace(/\s+/g, " ").trim();
+  const ohneQuelle = (t) => ohneLeerraum(t).replace(/var\(--[a-z-]+\)/g, "var(--QUELLE)");
   for (const [id, block] of alle.slice(1))
-    assert.strictEqual(ohneLeerraum(block), ohneLeerraum(alle[0][1]),
+    assert.strictEqual(ohneQuelle(block), ohneQuelle(alle[0][1]),
       `${id}: dieser Verlauf ist nicht mehr derselbe wie die anderen`);
 
+  // Der Schalter ist die eine Stelle mit der anderen Quelle - ausgeschrieben,
+  // damit ein Tippfehler darin nicht als "neue Stelle" durchgeht.
+  const quellen = alle.map(([, b]) => (b.match(/var\(--[a-z-]+\)/g) || [])[0]);
+  assert.strictEqual(quellen.filter((q) => q === "var(--hats-flaeche)").length, 1,
+    "genau eine Stelle haengt an der Lampenfarbe - der eingeschaltete Schalter");
+
   for (const [id, block] of alle) {
-    // Beide Stufen kommen aus --accent-color.
-    assert.strictEqual((block.match(/var\(--accent-color\)/g) || []).length, 2,
-      `${id}: nicht beide Stufen haengen am Akzent`);
+    // Beide Stufen kommen aus EINER Variablen, nicht aus zweien.
+    const [quelle] = block.match(/var\(--[a-z-]+\)/g) || [];
+    assert.strictEqual((block.match(new RegExp(quelle.replace(/[()\-]/g, "\\$&"), "g")) || []).length, 2,
+      `${id}: nicht beide Stufen haengen an derselben Farbe`);
     // Keine festen Farben - der Nutzer aendert den Akzent, der Verlauf geht mit.
     assert.doesNotMatch(block, /#[0-9a-f]{3,8}\b/i, `${id}: feste Hexfarbe im Verlauf`);
     assert.doesNotMatch(block, /\brgba?\(/i, `${id}: feste rgb-Farbe im Verlauf`);
@@ -399,14 +414,14 @@ pruefe("Jeder aktive Knopf traegt DENSELBEN Verlauf, aus dem Akzent", () => {
   // Geprueft wird jede Regel, die einen Verlauf traegt. Wo Home Assistant
   // selbst eine Flaeche malt - die Pille, die Zahl -, muss sie ausdruecklich
   // geraeumt sein; das Nutzerbild hat gar keine und braucht es nicht.
-  const malenSelbst = [".selected::before", ".badge"];
+  const malenSelbst = [".selected::before", ".badge", ".flaeche"];
   for (const { v, bloecke } of stellen) {
     let ab = v.css.indexOf("background-image: linear-gradient");
     while (ab > -1) {
       const regel = v.css.slice(v.css.lastIndexOf("{", ab), v.css.indexOf("}", ab));
       const waehler = v.css.slice(v.css.lastIndexOf("*/", ab) + 2, v.css.lastIndexOf("{", ab));
-      assert.doesNotMatch(regel, /background-color:\s*var\(--accent-color\)/,
-        `${v.id}: deckende Akzentflaeche unter dem Verlauf - er wird unsichtbar`);
+      assert.doesNotMatch(regel, /background-color:\s*var\(--(accent-color|hats-flaeche)\)/,
+        `${v.id}: deckende Flaeche unter dem Verlauf - er wird unsichtbar`);
       if (malenSelbst.some((w) => waehler.includes(w)))
         assert.match(regel, /background-color:\s*transparent/,
           `${v.id} (${waehler.trim().split("\n").pop()}): background-color muss ausdruecklich transparent sein`);
