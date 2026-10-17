@@ -24,6 +24,7 @@ import {
 import { BAUKASTEN, HINTERGRUENDE as AUS_BAUKASTEN, teilAnwenden, erkenneTeil } from "../custom_components/glaswerk/www/baukasten.js";
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
+const panel = readFileSync(path.join(hier, "../custom_components/glaswerk/www/glaswerk-panel.js"), "utf8");
 let n = 0;
 function pruefe(was, fn) { fn(); n++; console.log("ok", was); }
 
@@ -542,3 +543,31 @@ pruefe("Das Panel zieht die Bewegung nach und zeigt die Farben auf der Kachel", 
 });
 
 console.log(`\n${n} Pruefungen bestanden`);
+
+pruefe("Ein Bild bekommt Groesse, Lage und kein Kacheln mit", () => {
+  // Am 17.10.2026 in Enricos Haus zu sehen: Das Hintergrundbild fuellte den
+  // Bereich nicht, brach unten hart ab, und darunter begann die naechste
+  // Kachel. Die Theme trug nur `url(...)` - ohne weitere Angaben gilt der
+  // CSS-Standard: Originalgroesse, wiederholt, mitrollend.
+  //
+  // Die Leiste machte es laengst richtig. Nur das Panel nicht, und das Panel
+  // ist der Weg, den jeder geht.
+  const block = panel.slice(panel.indexOf("  _bildWert(wert) {"), panel.indexOf("  setzeBild(ziel, modus, wert) {"));
+  assert.ok(block.length > 100, "_bildWert fehlt");
+
+  // Die Logik wirklich laufen lassen, nicht ihre Schreibweise wiedererkennen.
+  const fn = new Function("wert", block.slice(block.indexOf("{") + 1, block.lastIndexOf("}")));
+  const faelle = [
+    ["url(/local/bild.jpg)", "url(/local/bild.jpg) center / cover no-repeat fixed", "nackte Adresse"],
+    ["url(/local/a.jpg) center / cover no-repeat", "url(/local/a.jpg) center / cover no-repeat", "schon gesetzt - bleibt"],
+    ["linear-gradient(90deg, #fff, #000)", "linear-gradient(90deg, #fff, #000)", "Verlauf regelt sich selbst"],
+    ["", "", "leer bleibt leer"],
+  ];
+  for (const [ein, soll, was] of faelle) {
+    assert.strictEqual(fn(ein), soll, `${was}: ${JSON.stringify(fn(ein))}`);
+  }
+
+  // Und setzeBild muss sie auch benutzen - sonst liegt sie nur herum.
+  const sb = panel.slice(panel.indexOf("  setzeBild(ziel, modus, wert) {"), panel.indexOf("ZUSTAND.geaendert.add(name);"));
+  assert.match(sb, /wert = this\._bildWert\(wert\)/, "setzeBild ruft _bildWert nicht");
+});

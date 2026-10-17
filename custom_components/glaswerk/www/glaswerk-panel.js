@@ -1703,9 +1703,32 @@ class GlaswerkPanel extends HTMLElement {
     requestAnimationFrame(() => o.classList.add("da"));
   }
 
+  // Ein Bild braucht mehr als seine Adresse.
+  //
+  // Bis zum 17.10.2026 schrieb das Panel nur `url(...)` in die Theme. Ohne
+  // weitere Angaben gilt der CSS-Standard: Originalgroesse, GEKACHELT, und es
+  // rollt mit. Auf Enricos Hausinstallation sah das so aus, dass das Bild den
+  // Bereich nicht fuellte, unten hart abbrach und darunter die naechste Kachel
+  // begann. Die Leiste machte es laengst richtig (glaswerk-bar.js: "center /
+  // cover no-repeat"), nur das Panel nicht - und das Panel ist der Weg, den
+  // jeder geht.
+  //
+  // `fixed` kommt dazu, weil die Flaeche sonst so hoch wird wie der ganze
+  // Inhalt und beim Rollen wandert; dieselbe Begruendung steht schon bei den
+  // Farbverlaeufen. Nur fuer eine Adresse, nicht fuer Verlaeufe: Die tragen
+  // ihre Groessenangaben selbst.
+  _bildWert(wert) {
+    if (typeof wert !== "string" || !wert.trim()) return wert;
+    const glatt = wert.trim();
+    if (!/^url\(/.test(glatt)) return glatt;          // ein Verlauf regelt sich selbst
+    if (/\b(cover|contain|repeat|center)\b/.test(glatt)) return glatt;  // schon gesetzt
+    return `${glatt} center / cover no-repeat fixed`;
+  }
+
   setzeBild(ziel, modus, wert) {
     if (!ZUSTAND.modell) return;
     const name = ziel.replace(/^--/, "");
+    wert = this._bildWert(wert);
     if (wert) setze(ZUSTAND.modell, name, wert, modus === "dark" ? "dark" : "light");
     else delete ZUSTAND.modell[modus === "dark" ? "dark" : "light"][name];
     ZUSTAND.geaendert.add(name);
