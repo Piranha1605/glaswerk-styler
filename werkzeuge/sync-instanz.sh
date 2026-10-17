@@ -16,8 +16,11 @@
 # Beenden: eine Datei /config/sync-glaswerk.stop anlegen, oder den Prozess killen.
 # Sie endet ausserdem von allein - nach MAX_LAEUFE oder wenn der Server
 # zwanzig Mal hintereinander nicht antwortet.
+#
+# Die IP ist Pflicht und steht absichtlich nicht im Skript: welche Adresse der
+# Entwicklungsrechner hat, weiss nur das jeweilige Netz.
 
-IP="${1:-192.168.178.47}"
+IP="${1:?IP des Entwicklungsrechners angeben: sync-instanz.sh <IP> [PORT]}"
 PORT="${2:-8778}"
 BASIS="http://$IP:$PORT"
 QUELLE="$BASIS/custom_components/glaswerk"

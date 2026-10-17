@@ -160,15 +160,19 @@ Am 13.10.2026 so eingerichtet und gemessen: eine lokale Aenderung liegt nach
 
 Zwei Dinge muessen laufen:
 
+`<MAC>` ist die LAN-Adresse des Entwicklungsrechners (`ipconfig getifaddr en0`),
+`<INSTANZ>` die der Home-Assistant-Instanz. Beide stehen absichtlich nicht hier -
+sie gehoeren dem Netz, in dem gearbeitet wird, nicht dem Projekt.
+
 ```bash
 # 1. Auf dem Mac, einmal am Tag - liefert das Projekt ins LAN
-cd /Users/enricofischer/Projekte/ha-theme-studio && python3 -m http.server 8778 --bind 0.0.0.0
+cd <projektordner> && python3 -m http.server 8778 --bind 0.0.0.0
 ```
 
 ```
 2. Im Terminal des Studio Code Server, einmal am Tag, EINE Zeile:
 
-curl -sSf -o /config/sync-glaswerk.sh http://192.168.178.47:8778/werkzeuge/sync-instanz.sh && chmod +x /config/sync-glaswerk.sh && nohup /config/sync-glaswerk.sh 192.168.178.47 > /config/sync-glaswerk.log 2>&1 &
+curl -sSf -o /config/sync-glaswerk.sh http://<MAC>:8778/werkzeuge/sync-instanz.sh && chmod +x /config/sync-glaswerk.sh && nohup /config/sync-glaswerk.sh <MAC> > /config/sync-glaswerk.log 2>&1 &
 ```
 
 Danach holt die Instanz alle drei Sekunden, was sich geaendert hat. Die Liste
@@ -200,10 +204,10 @@ Pruefen, ob die Schleife laeuft (vom Mac aus, ohne Terminal):
 
 ```bash
 echo "// probe $(date +%s)" >> custom_components/glaswerk/www/uix.js
-sleep 9 && curl -s http://192.168.178.31/glaswerk_static/uix.js | tail -1
+sleep 9 && curl -s http://<INSTANZ>/glaswerk_static/uix.js | tail -1
 ```
 
-Die Panel-Adresse ist **`http://192.168.178.31/glaswerk`** - nicht `/glaswerk-studio`,
+Die Panel-Adresse ist **`http://<INSTANZ>/glaswerk`** - nicht `/glaswerk-studio`,
 das gibt 404.
 
 ---
@@ -312,7 +316,7 @@ Deshalb: **schreiben nur über den Terminal, lesen direkt vom Mac.**
 `einspielen.sh` nutzt genau das für die Gegenprobe:
 
 ```bash
-curl -s http://192.168.178.31/glaswerk_static/glaswerk-panel.js | cmp - custom_components/glaswerk/www/glaswerk-panel.js
+curl -s http://<INSTANZ>/glaswerk_static/glaswerk-panel.js | cmp - custom_components/glaswerk/www/glaswerk-panel.js
 ```
 
 Wenn SSH oder Samba eingerichtet würden, fiele der Terminal-Umweg weg.

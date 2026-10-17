@@ -18,3 +18,7 @@ videos/*/renders/
 videos/*/.hyperframes/
 videos/*/.thumbnails/
 videos/*/.waveform-cache/
+
+# Interne Arbeitsanweisung: Instanzen, Ports, Entscheidungswege.
+# Bleibt lokal.
+CLAUDE.md

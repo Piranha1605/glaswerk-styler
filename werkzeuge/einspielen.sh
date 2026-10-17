@@ -21,7 +21,21 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-HOST=192.168.178.31
+# Die Adresse der Instanz steht nicht im Repository - sie gehoert dem Netz, in
+# dem gearbeitet wird, nicht dem Projekt. Dieselbe Quelle wie fuer die
+# Testwerkzeuge: zugang.conf mit einer Zeile HA_HOST=<adresse>.
+# Ueberschreiben geht ueber die Umgebung: HA_HOST=1.2.3.4 werkzeuge/einspielen.sh
+ZUGANG="${ZUGANG_CONF:-$HOME/Projekte/haos-test/zugang.conf}"
+HOST="${HA_HOST:-}"
+if [ -z "$HOST" ] && [ -f "$ZUGANG" ]; then
+  HOST=$(sed -n 's/^HA_HOST=//p' "$ZUGANG" | tr -d '"'"'"' \r' | head -1)
+fi
+[ -n "$HOST" ] || {
+  echo "Keine Adresse der Instanz gefunden."
+  echo "Entweder HA_HOST=<adresse> setzen oder eine Zeile HA_HOST=<adresse>"
+  echo "in $ZUGANG eintragen."
+  exit 1
+}
 PORT=8778
 ZIEL=/config/custom_components/glaswerk
 
