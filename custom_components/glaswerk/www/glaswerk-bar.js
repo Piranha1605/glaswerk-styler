@@ -330,6 +330,16 @@ export const TEXTE = {
   },
 };
 
+// `alles` traegt die Palette und nicht das Zahnrad: In Home Assistant fuehrt
+// das Zahnrad in der Seitenleiste zu den Systemeinstellungen. Ein zweites im
+// Dashboard, das woanders hinfuehrt, ist eine Fehlfaehrte - und das Fenster
+// stellt ohnehin das Aussehen ein, nicht die Anlage. Die runde Palette, nicht
+// die palette-swatch: die markiert im Fenster schon den Bereich Erscheinungs-
+// bild, und dasselbe Symbol aussen wie innen fuer einen von sechs Bereichen
+// waere verwirrend. Ansage von Enrico am 17.10.2026.
+//
+// Kommentare gehoeren NICHT in den Block: glaswerk-bar.test.js liest jede
+// Zeichenkette darin als Symbol und prueft sie gegen mdi:.
 const SYMBOL = {
   auto: "mdi:theme-light-dark",
   light: "mdi:white-balance-sunny",
@@ -342,7 +352,7 @@ const SYMBOL = {
   pfeil: "mdi:chevron-down",
   bewegung: "mdi:motion-play-outline",
   darstellung: "mdi:tune-variant",
-  alles: "mdi:cog-outline",
+  alles: "mdi:palette-outline",
   // Dieselben Symbole wie in HAs Kopfzeile.
   seitenleiste: "mdi:menu",
   assist: "mdi:comment-processing-outline",
