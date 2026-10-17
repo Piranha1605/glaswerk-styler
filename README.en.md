@@ -48,20 +48,14 @@ with what the fields did.
 
 **Home Assistant as shipped.**
 
-![The same dashboard without a theme, in dark mode](docs/bilder/vergleich-1-vorher.jpg)
-
 **With a Glaswerk theme — the fields alone.** Apple's system colours, glass on the
 cards, corner radii, shadows, a background of four colour islands. This is an
 ordinary theme file: no UI eXtension, no CSS rule, no shadow DOM path.
-
-![The same dashboard with the macos theme, without UIX](docs/bilder/vergleich-2-nur-felder.jpg)
 
 **The same theme with UI eXtension.** The sidebar turns translucent and the
 active row into a pill in the accent colour; plus divider lines between the
 sections. UIX is the finishing touch — the larger part is already in the
 picture before it.
-
-![The same dashboard with the macos theme and UIX](docs/bilder/vergleich-3-mit-uix.jpg)
 
 ## The kit
 
@@ -92,9 +86,6 @@ matches in all six categories.
 Glaswerk ships a card for dashboards: a bar of buttons. Each one is a target, a
 switch or a built-in function — mode, light/dark, fullscreen, weather.
 
-![The bar in dark mode](docs/bilder/steuerleiste-dunkel.jpg)
-![The bar in light mode, in fullscreen](docs/bilder/steuerleiste-hell.jpg)
-
 ```yaml
 type: custom:glaswerk-bar
 buttons:
@@ -117,10 +108,7 @@ buttons:
 collapse: narrow
 ```
 
-Without `buttons` it shows mode and fullscreen — the short form:
-
-![The short form in light mode](docs/bilder/steuerkarte-hell.jpg)
-![The short form in dark mode](docs/bilder/steuerkarte-dunkel.jpg)
+Without `buttons` it shows mode and fullscreen — the short form.
 
 **Buttons**
 
@@ -160,9 +148,7 @@ by hand; the log shows the line.
 | `controls` | `[mode, fullscreen]` | the short form, when there are no `buttons` |
 
 **The background motion** is set by a button with `function: motion`. It
-opens four sliders — drift, colour dots, colour shift and range:
-
-![The sliders for the background motion](docs/bilder/steuerleiste-bewegung.jpg)
+opens four sliders — drift, colour dots, colour shift and range.
 
 The values are permanent: on release the card writes them into the file of the
 active theme, using the same functions as the panel. This works for
@@ -170,9 +156,7 @@ administrators only, and only for a theme created with Glaswerk; otherwise the
 slider says why not.
 
 **Transparency and text size** are set by a button with `function: appearance`,
-the same way and under the same conditions:
-
-![The sliders for transparency and text size](docs/bilder/steuerleiste-darstellung.jpg)
+the same way and under the same conditions.
 
 - **Transparency** (0 to 80 %) changes the card surface. If the theme keeps it
   apart for light and dark, the slider applies to the mode currently shown. If
@@ -216,8 +200,6 @@ scrolling, and it brings what the header had: a sidebar button and — if there
 is no settings window — the pencil for editing. In the settings window the
 pencil sits at the far right. Assist is available as `function: assist`.
 
-![The bar in place of the header](docs/bilder/steuerleiste-kopfzeile.jpg)
-
 Good to know:
 
 - The bar belongs on **every** view of the dashboard. On a view without it,
@@ -226,9 +208,7 @@ Good to know:
 - Settings, energy, map and the other pages keep their own header.
 
 The editor lets you add, sort and edit the buttons. Each row shows the
-button's name, or without one its target, entity or function:
-
-![The editor with the list of buttons](docs/bilder/steuerleiste-editor.jpg)
+button's name, or without one its target, entity or function.
 
 The fields are those of the menu card from the Horizon Cards. A bar from there
 keeps working once `type` is `custom:glaswerk-bar`. Not taken over yet:
@@ -249,9 +229,7 @@ type: custom:glaswerk-bar-badge
 The badge is the small control, not the bar: it takes `controls` (`mode`,
 `fullscreen`) and `kiosk_only`. Targets, switches and weather belong in the
 card. In the badge picker it is listed on the **"By badge"** tab, section
-Community badges, as "Glaswerk control":
-
-![The badge picker showing the Glaswerk control](docs/bilder/steuerbadge-waehler.jpg)
+Community badges, as "Glaswerk control".
 
 Everything the card uses is provided by Home Assistant: the elements, the
 icons, the colour variables and the two switches behind it. It therefore

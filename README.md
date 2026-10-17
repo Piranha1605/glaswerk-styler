@@ -49,21 +49,15 @@ UIX-Vorlagen zu, was die Felder getan haben.
 
 **Home Assistant, wie es ausgeliefert wird.**
 
-![Dasselbe Dashboard ohne Theme, im dunklen Modus](docs/bilder/vergleich-1-vorher.jpg)
-
 **Mit einer Glaswerk-Theme — nur die Felder.** Apples Systemfarben, Glas auf den
 Karten, Rundungen, Schatten, ein Hintergrund aus vier Farbinseln. Das ist eine
 gewöhnliche Theme-Datei: kein UI eXtension, keine CSS-Regel, kein
 Shadow-DOM-Pfad.
 
-![Dasselbe Dashboard mit der Theme macos, ohne UIX](docs/bilder/vergleich-2-nur-felder.jpg)
-
 **Dieselbe Theme mit UI eXtension.** Die Seitenleiste wird durchscheinend und
 die aktive Zeile zur Pille im Akzent; dazu Trennlinien zwischen den
 Abschnitten. UIX ist der Feinschliff — der größere Teil steht schon im Bild
 davor.
-
-![Dasselbe Dashboard mit der Theme macos und UIX](docs/bilder/vergleich-3-mit-uix.jpg)
 
 ## Der Baukasten
 
@@ -95,9 +89,6 @@ Glaswerk bringt eine Karte für Dashboards mit: eine Leiste aus Knöpfen. Jeder 
 ein Ziel, ein Schalter oder eine eingebaute Funktion — Modus, Hell/Dunkel,
 Vollbild, Wetter.
 
-![Die Leiste im dunklen Modus](docs/bilder/steuerleiste-dunkel.jpg)
-![Die Leiste im hellen Modus, im Vollbild](docs/bilder/steuerleiste-hell.jpg)
-
 ```yaml
 type: custom:glaswerk-bar
 buttons:
@@ -120,10 +111,7 @@ buttons:
 collapse: narrow
 ```
 
-Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form:
-
-![Die kurze Form im hellen Modus](docs/bilder/steuerkarte-hell.jpg)
-![Die kurze Form im dunklen Modus](docs/bilder/steuerkarte-dunkel.jpg)
+Ohne `buttons` zeigt sie Modus und Vollbild — die kurze Form.
 
 **Knöpfe**
 
@@ -163,9 +151,7 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 | `controls` | `[mode, fullscreen]` | die kurze Form, wenn es keine `buttons` gibt |
 
 **Die Bewegung des Hintergrunds** stellt ein Knopf mit `function: motion`. Er
-klappt vier Regler auf — Treiben, Farbpunkte, Farbwechsel und Ausschlag:
-
-![Die Regler für die Bewegung des Hintergrunds](docs/bilder/steuerleiste-bewegung.jpg)
+klappt vier Regler auf — Treiben, Farbpunkte, Farbwechsel und Ausschlag.
 
 Die Werte gelten dauerhaft: Die Karte schreibt sie beim Loslassen in die Datei
 der wirksamen Theme, mit denselben Funktionen wie das Panel. Das geht nur als
@@ -173,9 +159,7 @@ Administrator und nur bei einer Theme, die mit Glaswerk erzeugt wurde; sonst sag
 der Regler, warum nicht.
 
 **Transparenz und Schrift** stellt ein Knopf mit `function: appearance`, auf
-dieselbe Weise und mit denselben Bedingungen:
-
-![Die Regler für Transparenz und Schrift](docs/bilder/steuerleiste-darstellung.jpg)
+dieselbe Weise und mit denselben Bedingungen.
 
 - **Transparenz** (0 bis 80 %) ändert die Kartenfläche. Steht sie in der Theme
   für hell und dunkel getrennt, gilt der Regler für den Modus, der gerade
@@ -221,8 +205,6 @@ Seitenleiste und — wenn kein Einstellungsfenster da ist — den Stift zum
 Bearbeiten. Im Einstellungsfenster steht der Stift ganz rechts. Assist
 gibt es als `function: assist`.
 
-![Die Leiste an Stelle der Kopfzeile](docs/bilder/steuerleiste-kopfzeile.jpg)
-
 Zu wissen:
 
 - Die Leiste gehört auf **jede** Ansicht des Dashboards. Auf einer Ansicht
@@ -233,9 +215,7 @@ Zu wissen:
 
 Im Editor lassen sich die Knöpfe anlegen, sortieren und bearbeiten. Jede Zeile
 nennt den Knopf beim Namen, und ohne Namen beim Ziel, der Entität oder der
-Funktion:
-
-![Der Editor mit der Liste der Knöpfe](docs/bilder/steuerleiste-editor.jpg)
+Funktion.
 
 Die Felder sind die der Menü-Karte aus den Horizon-Cards. Eine Leiste von dort
 läuft weiter, wenn `type` auf `custom:glaswerk-bar` steht. Noch nicht
@@ -256,9 +236,7 @@ type: custom:glaswerk-bar-badge
 Das Badge ist die kleine Steuerung, nicht die Leiste: Es kennt `controls`
 (`mode`, `fullscreen`) und `kiosk_only`. Ziele, Schalter und Wetter gehören in
 die Karte. Im Badge-Wähler steht es unter **„Nach Badge"**, Abschnitt
-Community-Badges, als „Glaswerk Steuerung":
-
-![Der Badge-Wähler mit Glaswerk Steuerung](docs/bilder/steuerbadge-waehler.jpg)
+Community-Badges, als „Glaswerk Steuerung".
 
 Alles, was die Karte benutzt, stellt Home Assistant: die Bauteile, die Symbole,
 die Farbvariablen und die beiden Schalter dahinter. Sie passt sich deshalb jeder
