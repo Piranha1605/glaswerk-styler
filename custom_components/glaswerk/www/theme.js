@@ -204,6 +204,32 @@ export function setze(modell, name, wert, ebene = "beide") {
 // stilziele: die Kennungen aus UIX_ZIELE (ohne Vorsilbe). Ohne sie kann der
 // Bericht nicht unterscheiden, ob ein uix-Feld Glaswerk gehoert oder einem anderen
 // Werkzeug - und meldete dann die eigenen als fremd.
+// Hintergrundbilder, die nur aus ihrer Adresse bestehen.
+//
+// `url(...)` allein heisst in CSS: Originalgroesse, GEKACHELT, mitrollend. Bei
+// einem 7 kB kleinen Bild sieht man das sofort - es fuellt die Flaeche nicht,
+// bricht ab, und darunter beginnt die naechste Kachel. Genau so stand es am
+// 17.10.2026 in Enricos hats_test, einer Theme aus HATG.
+//
+// Glaswerk schreibt seit dem 17.10.2026 selbst "center / cover no-repeat
+// fixed" dazu. Fremde Dateien bleiben aber, wie sie sind - das ist das
+// Versprechen, das diese Funktion nicht bricht: Sie FINDET nur, geaendert wird
+// auf Ansage.
+export const BILD_ZUSATZ = "center / cover no-repeat fixed";
+
+export function bilderOhneMass(modell) {
+  const treffer = [];
+  for (const ebene of ["flach", "light", "dark"]) {
+    for (const [k, v] of Object.entries(modell?.[ebene] || {})) {
+      if (typeof v !== "string") continue;
+      if (!/^\s*url\(/.test(v)) continue;                       // ein Verlauf regelt sich selbst
+      if (/\b(cover|contain|repeat|center|top|bottom|left|right)\b/.test(v)) continue;
+      treffer.push({ ebene, feld: k, wert: v.trim() });
+    }
+  }
+  return treffer;
+}
+
 export function berichtUeberTheme(modell, bekannt, stilziele = null) {
   const zaehl = { bedienbar: [], mitgenommen: [] };
   const gesehen = new Set();
@@ -238,6 +264,8 @@ export function berichtUeberTheme(modell, bekannt, stilziele = null) {
     dunkel: Object.keys(modell.dark || {}).length,
     bedienbar: zaehl.bedienbar,
     mitgenommen: zaehl.mitgenommen,
+    // Bilder, die nur ihre Adresse tragen - siehe bilderOhneMass.
+    bilderOhneMass: bilderOhneMass(modell),
     // Zeilen, die der Leser nicht einordnen konnte. Die stehen danach NICHT
     // mehr in der Datei - als einziges geht hier etwas verloren, und deshalb
     // wird es beim Namen genannt.

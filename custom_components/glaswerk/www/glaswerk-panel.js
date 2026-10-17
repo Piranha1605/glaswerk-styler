@@ -22,7 +22,7 @@
 
 import { fuerFeld, binde, infostreifen } from "./bedienelemente.js";
 import { rampe, begleiter, STUFEN as PALETTENSTUFEN } from "./palette.js";
-import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme,
+import { leseTheme, schreibeTheme, leeresModell, wirksam, setze, entferne, teileAuf, fuehreZusammen, loeseFarbe, berichtUeberTheme, BILD_ZUSATZ,
          vorlageAn, vorlageAus, vorlageIstAn, vereinheitlicheVorlagen, vorlagenImTheme } from "./theme.js";
 import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
@@ -1246,6 +1246,10 @@ const TEXTE = {
     "flach": "flat", "hell": "light", "dunkel": "dark",
     "Felder kannst du hier einstellen": "fields you can set here",
     "Felder kennt Glaswerk nicht. Sie bleiben unveraendert in der Datei, lassen sich hier aber nicht aendern.": "fields Glaswerk does not know. They stay untouched in the file but cannot be changed here.",
+    "Hintergrundbilder tragen nur ihre Adresse. Ohne Groessenangabe zeigt der Browser sie in Originalgroesse und KACHELT sie.": "background images carry only their address. Without a size the browser shows them at original size and TILES them.",
+    "Anpassen": "Adjust",
+    "Die Fassung davor bleibt als Sicherung - im Einstellungsfenster unter \u201eFruehere Fassungen\u201c.": "The previous version is kept as a backup - in the settings window under \u201cEarlier versions\u201d.",
+    "Hintergrundbilder angepasst - noch nicht geschrieben": "background images adjusted - not written yet",
     "Stilziele von HATG oder card-mod. Die pflegt Glaswerk nicht - bearbeite so eine Theme besser dort.": "style targets from HATG or card-mod. Glaswerk does not maintain those - better edit such a theme there.",
     "Zeilen konnte ich nicht einordnen. Die sind nach dem Speichern WEG:": "lines could not be placed. They are GONE once you save:",
     "Datei waehlen...": "Choose a file...",
@@ -2518,10 +2522,34 @@ class GlaswerkPanel extends HTMLElement {
           <div class="berichtnamen">${b.unklar.slice(0, 8).map((x) => `<code>${String(x).replace(/</g, "&lt;")}</code>`).join(" ")}</div>
         </div>` : ""}
 
+        ${b.bilderOhneMass?.length ? `
+        <div class="berichtzeile warnung">
+          <b>${b.bilderOhneMass.length}</b> ${T("Hintergrundbilder tragen nur ihre Adresse. Ohne Groessenangabe zeigt der Browser sie in Originalgroesse und KACHELT sie.")}
+          <div class="berichtnamen">${b.bilderOhneMass.map((x) => `<code>${x.ebene}: ${x.feld}</code>`).join(" ")}</div>
+          <button class="bildermass">${T("Anpassen")} (${BILD_ZUSATZ})</button>
+          <p class="noch">${T("Die Fassung davor bleibt als Sicherung - im Einstellungsfenster unter „Fruehere Fassungen“.")}</p>
+        </div>` : ""}
+
         <p class="noch">${T("Geaendert wird im Fenster, geschrieben noch nicht.")}</p>
       </div>`;
 
     d.querySelector(".zu").addEventListener("click", () => this.schliesseFeld());
+    // Hintergrundbilder anheben - auf Klick, nicht von selbst. Glaswerk aendert
+    // fremde Werte sonst nirgends, und das soll so bleiben: Der Bericht zeigt,
+    // der Nutzer entscheidet. Die Fassung davor sichert theme_schreiben beim
+    // naechsten Speichern ohnehin.
+    d.querySelector(".bildermass")?.addEventListener("click", () => {
+      const treffer = ZUSTAND.bericht?.bilderOhneMass || [];
+      for (const { ebene, feld, wert } of treffer) {
+        const ziel = ebene === "flach" ? "beide" : ebene;
+        setze(ZUSTAND.modell, feld, `${wert} ${BILD_ZUSATZ}`, ziel);
+        ZUSTAND.geaendert.add(feld);
+      }
+      ZUSTAND.bericht = berichtUeberTheme(ZUSTAND.modell, BEKANNT, EIGENE_ZIELE);
+      ZUSTAND.meldung = { text: `${treffer.length} ${t("Hintergrundbilder angepasst - noch nicht geschrieben", this.spr)}`, art: "gut" };
+      this.schliesseFeld();
+      this.zeichne();
+    });
     const o = this.shadowRoot.querySelector(".overlay.zwei");
     o.hidden = false;
     requestAnimationFrame(() => o.classList.add("da"));
@@ -4498,6 +4526,12 @@ class GlaswerkPanel extends HTMLElement {
       .berichtnamen code { font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
                            background: rgba(255,255,255,.7); padding: 2px 6px; border-radius: 6px; }
       .berichtnamen em { font-size: 11px; color: var(--s-tinte-leise); align-self: center; }
+      /* Der Knopf zum Anheben der Hintergrundbilder. Steht in der Warnzeile,
+         also sichtbar, aber nicht als Hauptweg - gedrueckt wird er einmal. */
+      .bildermass { margin-top: 10px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+                    border: 1px solid var(--s-rand); background: rgba(255,255,255,.7);
+                    font: inherit; font-size: 12px; color: inherit; }
+      .bildermass:hover { background: rgba(255,255,255,.95); }
 
       /* ---- Datei oder Text ---- */
       .importwege { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }

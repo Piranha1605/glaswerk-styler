@@ -11,7 +11,7 @@ import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { leeresModell, setze, schreibeTheme, leseTheme, vorlageAn } from "../custom_components/glaswerk/www/theme.js";
+import { leeresModell, setze, schreibeTheme, leseTheme, vorlageAn, bilderOhneMass, berichtUeberTheme } from "../custom_components/glaswerk/www/theme.js";
 import {
   HINTERGRUENDE, ohneFest, stelleFest, bewegung, himmel, leseBewegung, leseHimmel,
   istPunkteBild, PUNKTE_VORGABE, punkteDauer,
@@ -570,4 +570,32 @@ pruefe("Ein Bild bekommt Groesse, Lage und kein Kacheln mit", () => {
   // Und setzeBild muss sie auch benutzen - sonst liegt sie nur herum.
   const sb = panel.slice(panel.indexOf("  setzeBild(ziel, modus, wert) {"), panel.indexOf("ZUSTAND.geaendert.add(name);"));
   assert.match(sb, /wert = this\._bildWert\(wert\)/, "setzeBild ruft _bildWert nicht");
+});
+
+pruefe("Fremde Bilder werden gemeldet, nicht still geaendert", () => {
+  // Enricos Vorgabe am 17.10.2026: "wenn wir den user darauf hinweisen und ein
+  // backup seiner anlegen". Also melden und fragen - nicht von selbst anfassen.
+  // Glaswerk aendert fremde Werte sonst nirgends, und das Versprechen steht in
+  // der README.
+  const probe = {
+    light: { "lovelace-background": "url(/local/a.webp)" },
+    dark: { "lovelace-background": "url(/local/b.jpg) center / cover no-repeat" },
+    flach: { "x": "linear-gradient(90deg, #fff, #000)", "y": "rgba(1,2,3,.4)" },
+  };
+  const t = bilderOhneMass(probe);
+  assert.strictEqual(t.length, 1, "genau die nackte Adresse, sonst nichts");
+  assert.strictEqual(t[0].ebene, "light");
+  assert.strictEqual(t[0].feld, "lovelace-background");
+
+  // Der Bericht traegt sie mit.
+  const b = berichtUeberTheme({ ...probe, name: "p", unklar: [] }, new Set(), null);
+  assert.strictEqual(b.bilderOhneMass.length, 1, "der Bericht meldet sie nicht");
+
+  // Und das Panel zeigt sie samt Knopf - aber aendert nichts beim Oeffnen.
+  assert.match(panel, /b\.bilderOhneMass\?\.length \?/, "die Berichtszeile fehlt");
+  assert.match(panel, /class="bildermass"/, "der Knopf fehlt");
+  assert.match(panel, /\.bildermass"\)\?\.addEventListener/, "der Knopf tut nichts");
+  // Gegenprobe: Das Anheben darf NICHT in oeffneDatei stehen.
+  const oeffnen = panel.slice(panel.indexOf("async oeffneDatei(name) {"), panel.indexOf("async neuBeginnen("));
+  assert.doesNotMatch(oeffnen, /BILD_ZUSATZ/, "beim Oeffnen wird ungefragt angehoben");
 });
