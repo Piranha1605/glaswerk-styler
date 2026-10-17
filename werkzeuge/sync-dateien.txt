@@ -43,6 +43,9 @@ werkzeuge/themes/macos.yaml|/config/themes/macos.yaml
 
 # Die Grundlage fuer jede neue Theme. Glaswerk laedt sie ueber
 # glaswerk/load_theme_file aus dem Themes-Ordner und erwartet den Namen MIT
-# Unterstrich - lokal heisst sie mit Bindestrich. Fehlt sie, meldet das
-# Panel nur "Grundlage nicht geladen" und jede neue Theme bleibt leer.
-docs/beispiele/ha-blanko.yaml|/mnt/data/supervisor/homeassistant/themes/ha_blanko.yaml
+# Die Grundlage liegt seit dem 17.10.2026 IN der Integration und wird von
+# dort gelesen, wenn in config/themes keine liegt. Sie faehrt deshalb als
+# gewoehnliche Datei mit, nicht mehr mit eigenem Ziel - und kommt damit auch
+# bei einer HACS-Installation an. Vorher fehlte sie dort, und das Panel
+# begann mit einem leeren Modell: jede neue Theme blieb leer.
+vorlagen/ha_blanko.yaml

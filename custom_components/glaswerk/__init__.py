@@ -237,12 +237,28 @@ async def ws_load_theme_file(hass: HomeAssistant, connection, msg) -> None:
         return
 
     pfad = Path(hass.config.path(THEMES_SUBDIR)) / name
+    # Die Grundlage liefert die Integration mit - sie gehoert nicht dem Nutzer.
+    #
+    # Bis zum 17.10.2026 lag ha_blanko.yaml NUR im Entwicklungsbaum unter
+    # docs/beispiele/ und kam allein ueber eine Sonderzeile in sync-dateien.txt
+    # an ihren Platz. Auf der Testmaschine war sie dadurch da, bei jeder
+    # HACS-Installation nicht. Was dann passiert, war in Enricos Haus zu
+    # besichtigen: Das Panel konnte die Grundlage nicht laden, begann mit einem
+    # leeren Modell und schrieb beim Speichern eine Theme von 116 Bytes - nur
+    # der Name, kein Inhalt. Also genau die leere Theme, an der Home Assistant
+    # beim Laden ALLER Themes scheitert.
+    #
+    # Eine Datei in config/themes geht weiterhin vor: Wer seine eigene
+    # ha_blanko pflegt, behaelt sie.
+    mitgeliefert = Path(__file__).parent / "vorlagen" / name
 
     def _lies() -> str | None:
-        try:
-            return pfad.read_text(encoding="utf-8")
-        except OSError:
-            return None
+        for p in (pfad, mitgeliefert):
+            try:
+                return p.read_text(encoding="utf-8")
+            except OSError:
+                continue
+        return None
 
     inhalt = await hass.async_add_executor_job(_lies)
     if inhalt is None:

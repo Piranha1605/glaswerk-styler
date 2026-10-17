@@ -127,5 +127,24 @@ pruefe("Flach heisst: in beiden Modi gleich", () => {
   assert.deepStrictEqual(doppelt, []);
 });
 
+pruefe("Die Grundlage faehrt mit der Integration mit", () => {
+  // Am 17.10.2026 in Enricos Haus aufgeschlagen: ha_blanko.yaml lag NUR unter
+  // docs/beispiele/ und kam allein ueber ein Entwicklungsskript an ihren Platz.
+  // Bei einer HACS-Installation fehlte sie deshalb. Das Panel meldete
+  // "Grundlage nicht geladen", begann mit einem leeren Modell - und schrieb
+  // beim Speichern eine Theme von 116 Bytes, nur der Name. Genau die leere
+  // Theme, an der HA beim Laden aller Themes scheitert.
+  const inPaket = path.join(hier, "../custom_components/glaswerk/vorlagen/ha_blanko.yaml");
+  const paket = readFileSync(inPaket, "utf8");
+  assert.ok(paket.length > 10000, `die mitgelieferte Grundlage ist zu klein: ${paket.length} Zeichen`);
+  // Und sie muss dieselbe sein - zwei Staende waeren schlimmer als einer.
+  assert.strictEqual(paket, text, "docs/beispiele und custom_components/vorlagen laufen auseinander");
+
+  // Der Server muss sie auch von dort lesen, sonst liegt sie nur herum.
+  const py = readFileSync(path.join(hier, "../custom_components/glaswerk/__init__.py"), "utf8");
+  assert.match(py, /Path\(__file__\)\.parent \/ "vorlagen" \/ name/,
+    "der Server liest die mitgelieferte Grundlage nicht");
+});
+
 console.log(`\n${n} Pruefungen bestanden.`);
 if (n === 0) { console.error("Keine Pruefung gelaufen."); process.exit(1); }
