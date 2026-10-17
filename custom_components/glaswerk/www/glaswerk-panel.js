@@ -1561,6 +1561,14 @@ class GlaswerkPanel extends HTMLElement {
       const m = leseTheme(r.content || "");
       ZUSTAND.modell = m.fehler ? leeresModell("neu") : m;
       this._grundlage = JSON.parse(JSON.stringify(ZUSTAND.modell));
+      // Geglueckt heisst: die alte Klage verstummt. Ohne diese Zeile blieb ein
+      // einmaliger Fehler fuer immer stehen - ZUSTAND.ladefehler wurde gesetzt
+      // und nirgends zurueckgenommen. Am 17.10.2026 bei Enrico gesehen: Das
+      // Panel klagte ueber ha_blanko.yaml, waehrend die Datei laengst wieder
+      // gelesen wurde (17554 Zeichen, nachgemessen). Schlimmer noch - die
+      // Anzeige gibt dem Ladefehler den Vorrang vor JEDER anderen Meldung, also
+      // kam auch kein "gespeichert" mehr durch.
+      ZUSTAND.ladefehler = null;
     } catch (e) {
       // Ohne Grundlage wird nicht geraten, sondern leer begonnen - und gesagt.
       ZUSTAND.modell = leeresModell("neu");
@@ -2749,6 +2757,9 @@ class GlaswerkPanel extends HTMLElement {
     try {
       const r = await this._hass.connection.sendMessagePromise({ type: "glaswerk/list_themes" });
       ZUSTAND.dateien = r.dateien || [];
+      // Dasselbe wie in ladeGrundlage: Was wieder geht, darf nicht weiter
+      // angeklagt werden.
+      ZUSTAND.ladefehler = null;
     } catch (e) {
       // Ohne Liste bleibt der Weg ueber die Vorlage offen - das wird gesagt,
       // nicht verschwiegen.
