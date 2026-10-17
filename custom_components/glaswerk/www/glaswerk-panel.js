@@ -1107,6 +1107,33 @@ function zwischenLesen() {
 function zwischenLoeschen() {
   try { localStorage.removeItem(ZWISCHEN_SPEICHER); } catch (e) { /* privates Fenster */ }
 }
+
+// Den Zwischenstand schreiben. EINE Stelle fuer beide Wege - den Knopf im
+// Speichermenue und den Autosave -, damit beide dasselbe Format ablegen.
+// Zwei Schreiber, die sich im Format unterscheiden, faellt niemandem auf,
+// bis einer den Stand des anderen nicht mehr lesen kann.
+//
+// Gibt zurueck, ob es geklappt hat: Der Knopf sagt es dem Nutzer, der
+// Autosave traegt es in den Zustand. Ein Fehler ist fast immer ein privates
+// Fenster oder ein voller Speicher.
+function zwischenSchreiben(stand) {
+  try {
+    localStorage.setItem(ZWISCHEN_SPEICHER, JSON.stringify(stand));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, fehler: e.message || String(e) };
+  }
+}
+
+// Wie lange Ruhe herrschen muss, bevor der Autosave schreibt.
+//
+// Nicht bei jeder Aenderung: Wer an einem Farbregler zieht, loest Dutzende
+// Ereignisse je Sekunde aus, und JSON.stringify ueber ein Modell mit 400
+// Feldern ist nicht umsonst. Eine Sekunde ist kurz genug, dass ein
+// geschlossener Tab nichts Nennenswertes kostet, und lang genug, dass das
+// Ziehen am Regler fluessig bleibt.
+const AUTO_RUHE = 1000;
+
 function letzteLesen() {
   try { return localStorage.getItem(LETZTE_SPEICHER) || null; } catch (e) { return null; }
 }
@@ -1302,6 +1329,8 @@ const TEXTE = {
     "Was gesetzt ist, was fehlt, was fremd ist": "What is set, what is missing, what is foreign",
     "Name der neuen Theme": "Name of the new theme",
     "Zwischenstand gesichert - im Browser, nicht in config/themes/": "Work saved - in the browser, not in config/themes/",
+    "Zwischenstand ": "Work saved ",
+    "Autosave aus: ": "Autosave off: ",
     "Zwischenstand nicht gesichert: ": "Work not saved: ", "Grundlage": "Base", "Modus": "Mode",
     "Akzent": "Accent", "Primaerfarbe": "Primary colour", "Neutral": "Neutral", "Erfolg": "Success",
     "Warnung": "Warning", "Fehler": "Error",
@@ -1337,7 +1366,93 @@ const ZUSTAND = {
   ladefehler: null,
   meldung: null,     // { text, art } - ueberlebt das Neuzeichnen
   meta: { Grundlage: "ha_blanko", Modus: "beide" },
+  // Wann der Autosave zuletzt geschrieben hat, und ob es schiefging.
+  // Der Kopf zeigt beides an - ein Autosave, von dem man nicht weiss, ob er
+  // laeuft, ist so gut wie keiner.
+  autoZeit: null,
+  autoFehler: null,
 };
+
+// --- Autosave --------------------------------------------------------------
+//
+// WARUM HIER UND NICHT AN DEN AUFRUFSTELLEN. ZUSTAND.geaendert wird an
+// fuenfzehn Stellen gefuellt, verteilt ueber die ganze Datei - Regler,
+// Baukasten, UIX-Schalter, Hintergrundseite, Zuordnung. Jede davon einzeln
+// um einen Aufruf zu ergaenzen hiesse, dass die sechzehnte ihn vergisst.
+//
+// Deshalb haengt der Autosave am Set selbst: Wer etwas als geaendert
+// meldet, loest ihn aus, ohne davon zu wissen. Das gilt auch fuer Stellen,
+// die es noch nicht gibt.
+//
+// Gesichert wird NACH Ruhe, nicht bei jeder Aenderung - siehe AUTO_RUHE.
+let autoUhr = null;
+function autoSichern() {
+  clearTimeout(autoUhr);
+  autoUhr = setTimeout(() => {
+    // Ohne Modell gibt es nichts zu sichern, und ohne Aenderung auch nicht:
+    // Sonst ueberschriebe ein frisch geoeffnetes Panel den Stand, den der
+    // Nutzer beim letzten Mal zurueckgelassen hat.
+    if (!ZUSTAND.modell || !ZUSTAND.geaendert.size) return;
+    const r = zwischenSchreiben({
+      name: ZUSTAND.name,
+      modell: ZUSTAND.modell,
+      meta: ZUSTAND.meta,
+      zeit: new Date().toISOString(),
+      auto: true,          // vom Autosave, nicht vom Knopf - fuer die Meldung
+    });
+    ZUSTAND.autoZeit = r.ok ? new Date() : ZUSTAND.autoZeit;
+    ZUSTAND.autoFehler = r.ok ? null : r.fehler;
+    // Den Kopf nachziehen, falls das Panel noch steht. Ueber das Ereignis,
+    // nicht ueber eine Instanzreferenz: Der Zustand liegt neben der Instanz,
+    // und welche gerade lebt, weiss er nicht.
+    window.dispatchEvent(new CustomEvent("glaswerk-auto-gesichert"));
+  }, AUTO_RUHE);
+}
+
+// Das Set so verpacken, dass jedes add() den Autosave anstoesst. delete und
+// clear bleiben still: Sie entstehen beim Oeffnen, Speichern und Verwerfen,
+// und dort ist der Zwischenstand entweder gewollt weg oder gerade erst
+// geschrieben.
+{
+  const echtesAdd = ZUSTAND.geaendert.add.bind(ZUSTAND.geaendert);
+  ZUSTAND.geaendert.add = (wert) => {
+    const r = echtesAdd(wert);
+    autoSichern();
+    return r;
+  };
+}
+
+// Die Sekunde Ruhe hilft nicht, wenn der Tab SOFORT zugeht. Dann muss
+// geschrieben werden, solange die Seite noch lebt.
+//
+// pagehide und nicht beforeunload: beforeunload feuert auf Mobilgeraeten
+// oft gar nicht, und ein Browser darf die Seite daraufhin im Cache halten
+// statt sie zu entladen. pagehide kommt in beiden Faellen.
+//
+// Geschrieben wird SYNCHRON, ohne den Timer - ein setTimeout in einem
+// pagehide-Horcher laeuft nie. Deshalb hier der direkte Aufruf und nicht
+// autoSichern().
+//
+// visibilitychange kommt dazu, weil das Wegschalten des Tabs auf dem
+// Handy der haeufigere Fall ist als das Schliessen: Dort gilt der Tab als
+// verborgen, und ob die Seite danach ueberhaupt noch laeuft, entscheidet
+// das Betriebssystem.
+for (const ereignis of ["pagehide", "visibilitychange"]) {
+  window.addEventListener(ereignis, () => {
+    if (ereignis === "visibilitychange" && document.visibilityState !== "hidden") return;
+    if (!ZUSTAND.modell || !ZUSTAND.geaendert.size) return;
+    clearTimeout(autoUhr);   // der Timer braucht jetzt nicht mehr zu feuern
+    const r = zwischenSchreiben({
+      name: ZUSTAND.name,
+      modell: ZUSTAND.modell,
+      meta: ZUSTAND.meta,
+      zeit: new Date().toISOString(),
+      auto: true,
+    });
+    if (r.ok) ZUSTAND.autoZeit = new Date();
+    else ZUSTAND.autoFehler = r.fehler;
+  });
+}
 
 class GlaswerkPanel extends HTMLElement {
   constructor() {
@@ -1348,6 +1463,20 @@ class GlaswerkPanel extends HTMLElement {
     this._ansicht = ansichtLesen();
     this._feld = null;
 
+    // Der Autosave liegt neben der Instanz und weiss nicht, welches Panel
+    // gerade lebt. Er ruft, dieses Panel hoert zu und zieht seinen Kopf nach.
+    //
+    // Ohne removeEventListener sammelten sich die Horcher: Home Assistant
+    // erzeugt das Panel bei JEDEM Seitenwechsel neu, und jeder alte Horcher
+    // zeigte auf ein totes Shadow-DOM. zeichneAutoStand() faellt dort zwar
+    // still durch (querySelector liefert null), aber die Liste waechst
+    // unbegrenzt.
+    this._aufAutoSave = () => this.zeichneAutoStand();
+    window.addEventListener("glaswerk-auto-gesichert", this._aufAutoSave);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener("glaswerk-auto-gesichert", this._aufAutoSave);
   }
 
   set hass(hass) {
@@ -2929,6 +3058,7 @@ class GlaswerkPanel extends HTMLElement {
                  stand da, seit die Seite offen war. -->
 
             <p class="meldung ${ZUSTAND.meldung ? ZUSTAND.meldung.art : ""}">${ZUSTAND.ladefehler ? T("Grundlage nicht geladen: ") + ZUSTAND.ladefehler : (ZUSTAND.meldung ? ZUSTAND.meldung.text : "")}</p>
+            <p class="autostand"></p>
 
             <!-- EINE SEITE, von der alles weitergeht.
                  Auf Ansage vom 15.10.2026: "wir haben zu viele seiten wo wir
@@ -3507,6 +3637,31 @@ class GlaswerkPanel extends HTMLElement {
     if (z) z.textContent = ZUSTAND.geaendert.size;
     const m = this.shadowRoot.querySelector(".meldung");
     if (m && ZUSTAND.meldung) { m.textContent = ZUSTAND.meldung.text; m.className = "meldung " + ZUSTAND.meldung.art; }
+    this.zeichneAutoStand();
+  }
+
+  // Was der Autosave zuletzt getan hat.
+  //
+  // Nur was WIRKLICH passiert ist: eine Uhrzeit, wenn geschrieben wurde,
+  // sonst nichts. Hier stand einmal ein "gerade eben", das dastand, seit die
+  // Seite offen war (siehe Kommentar beim Kopf) - ein Stand, der immer gut
+  // aussieht, sagt nichts.
+  //
+  // Der Fehlerfall ist der wichtigere: Ein privates Fenster nimmt nichts
+  // entgegen, und wer das nicht sieht, arbeitet sorgloser als er darf.
+  zeichneAutoStand() {
+    const el = this.shadowRoot.querySelector(".autostand");
+    if (!el) return;
+    if (ZUSTAND.autoFehler) {
+      el.textContent = t("Autosave aus: ", this.spr) + ZUSTAND.autoFehler;
+      el.className = "autostand fehler";
+      return;
+    }
+    if (!ZUSTAND.autoZeit) { el.textContent = ""; el.className = "autostand"; return; }
+    const uhr = ZUSTAND.autoZeit.toLocaleTimeString(this.spr === "en" ? "en-GB" : "de-DE",
+      { hour: "2-digit", minute: "2-digit" });
+    el.textContent = t("Zwischenstand ", this.spr) + uhr;
+    el.className = "autostand";
   }
 
   async speichern() {
@@ -3614,18 +3769,23 @@ class GlaswerkPanel extends HTMLElement {
     };
     const nf = this.shadowRoot.querySelector(".namensfeld");
     if (nf) ZUSTAND.name = nf.value.trim();
-    try {
-      localStorage.setItem(ZWISCHEN_SPEICHER, JSON.stringify({
-        name: ZUSTAND.name,
-        modell: ZUSTAND.modell,
-        meta: ZUSTAND.meta,
-        zeit: new Date().toISOString(),
-      }));
+    // Dieselbe Schreibstelle wie der Autosave - nur das Melden ist anders.
+    // Der Knopf sagt es laut, der Autosave traegt es in den Kopf.
+    const r = zwischenSchreiben({
+      name: ZUSTAND.name,
+      modell: ZUSTAND.modell,
+      meta: ZUSTAND.meta,
+      zeit: new Date().toISOString(),
+    });
+    if (r.ok) {
+      ZUSTAND.autoZeit = new Date();
+      ZUSTAND.autoFehler = null;
       melde(t("Zwischenstand gesichert - im Browser, nicht in config/themes/", this.spr), "gut");
-    } catch (e) {
+    } else {
       // Ein privates Fenster oder ein voller Speicher. Beides sagen, nicht
       // schlucken: Wer glaubt, gesichert zu haben, arbeitet sorgloser.
-      melde(t("Zwischenstand nicht gesichert: ", this.spr) + (e.message || e), "fehler");
+      ZUSTAND.autoFehler = r.fehler;
+      melde(t("Zwischenstand nicht gesichert: ", this.spr) + r.fehler, "fehler");
     }
   }
 
@@ -4128,6 +4288,11 @@ class GlaswerkPanel extends HTMLElement {
       .namensfeld::placeholder { color: var(--s-tinte-leise); }
       .zaehlerbox { font-size: 12px; color: var(--s-tinte-leise); white-space: nowrap; }
       .zaehlerbox b { font-size: 14px; color: var(--s-tinte); }
+      /* Der Autosave-Stand steht leise unter der Meldung. Leer heisst: noch
+         nichts geschrieben - dann nimmt die Zeile auch keinen Platz weg. */
+      .autostand { margin: 2px 0 0; font-size: 12px; color: var(--s-tinte-leise); min-height: 0; }
+      .autostand:empty { display: none; }
+      .autostand.fehler { color: var(--s-rot, #b3261e); }
       .speichern { border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 500;
                    padding: 10px 20px; border-radius: 999px; background: var(--s-tinte);
                    color: #fff; box-shadow: var(--s-schatten-klein); }
