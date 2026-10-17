@@ -16,7 +16,6 @@ import {
   HINTERGRUENDE, ohneFest, stelleFest, bewegung, himmel, leseBewegung, leseHimmel,
   istPunkteBild, PUNKTE_VORGABE, punkteDauer,
   BEWEGUNG_ID, HIMMEL_ID, HIMMEL_VORGABE,
-  deckkraft, leseDeckkraft, DECKKRAFT_ID, DECKKRAFT, DECKKRAFT_VORGABE,
 } from "../custom_components/glaswerk/www/hintergrund.js";
 import {
   hintergrundStand, hintergrundAendern, hintergrundSeiteHtml, bindeHintergrundSeite,
@@ -265,14 +264,10 @@ pruefe("Die Seite sperrt, was nichts tun wuerde, und sagt, was stoert", () => {
   assert.match(leer, /data-hg="fest"[^>]*disabled/, "fest ist ohne Hintergrund schaltbar");
   assert.match(leer, /Erst einen Hintergrund waehlen/);
   assert.match(leer, /data-hg="staerke"[^>]*disabled/);
-  assert.match(leer, /data-hg="deckkraft"[^>]*disabled/,
-    "die Deckkraft ist ohne Hintergrund schaltbar - es gaebe nichts zu daempfen");
   // Ohne offene Theme ist alles gesperrt, nicht versteckt.
-  // Acht seit dem 16.10.2026: fest, deckkraft, drift, punkte, farbe, weite,
-  // wetter, staerke.
   const ohne = hintergrundSeiteHtml({ modell: null, spr: "de", wetter: WETTER });
-  assert.strictEqual((ohne.match(/data-hg="/g) || []).length, 8);
-  assert.strictEqual((ohne.match(/data-hg="[a-z]+"[^>]*disabled/g) || []).length, 8);
+  assert.strictEqual((ohne.match(/data-hg="/g) || []).length, 7);
+  assert.strictEqual((ohne.match(/data-hg="[a-z]+"[^>]*disabled/g) || []).length, 7);
   // Die Stoerung steht mit Zeile und Text da.
   const m = leeresModell("t");
   setze(m, "uix-root", ".a { color: red; }\n@media (max-width: 870px) {#view { padding: 0; }}", "beide");
@@ -544,69 +539,6 @@ pruefe("Das Panel zieht die Bewegung nach und zeigt die Farben auf der Kachel", 
   // Gegenprobe: "Keiner" und der ruhige Verlauf haben keine - sie sind keine
   // Farbpunkte, und ein Streifen aus vier Farben waere dort gelogen.
   assert.ok(!HINTERGRUENDE.find((h) => h.id === "keiner").vorschau);
-});
-
-// ---------------------------------------------------------------------------
-// Die Deckkraft, seit dem 16.10.2026
-
-pruefe("Volle Deckkraft schreibt keine Vorlage", () => {
-  // Eine Regel mit opacity: 1 waere Ballast - und stuende spaeter im Weg,
-  // wenn jemand sucht, warum der Hintergrund blasser aussieht als sein Wert.
-  assert.strictEqual(deckkraft({ deckkraft: DECKKRAFT.max }), null);
-  assert.strictEqual(deckkraft({ deckkraft: 100 }), null);
-  // Und was die Seite daraus macht: die Vorlage faellt weg.
-  const m = leeresModell("t");
-  vorlageAn(m, deckkraft({ deckkraft: 50 }));
-  assert.ok(m.flach["uix-root"].includes(DECKKRAFT_ID), "die Vorlage wurde nicht geschrieben");
-  hintergrundAendern(m, "deckkraft", 100);
-  assert.ok(!(m.flach["uix-root"] || "").includes(DECKKRAFT_ID),
-    "bei voller Deckkraft bleibt die Vorlage stehen");
-});
-
-pruefe("Jede Stufe kommt aus dem Theme so zurueck, wie sie hineinging", () => {
-  let geprueft = 0;
-  for (let w = DECKKRAFT.min; w < DECKKRAFT.max; w += DECKKRAFT.schritt) {
-    const m = leeresModell("t");
-    hintergrundAendern(m, "deckkraft", w);
-    const zurueck = leseDeckkraft(m.flach["uix-root"]);
-    assert.ok(zurueck, `${w}: nichts zurueckgelesen`);
-    assert.strictEqual(zurueck.deckkraft, w, `${w} kam als ${zurueck.deckkraft} zurueck`);
-    geprueft++;
-  }
-  assert.ok(geprueft >= 10, `nur ${geprueft} Stufen geprueft`);
-});
-
-pruefe("Werte ausserhalb der Grenzen werden eingefangen, nicht uebernommen", () => {
-  // Ein Regler liefert nichts Falsches - eine von Hand bearbeitete Theme
-  // schon, und 0 Prozent waere ein unsichtbarer Hintergrund ohne Weg zurueck.
-  assert.strictEqual(deckkraft({ deckkraft: 0 }).einstellung.deckkraft, DECKKRAFT.min);
-  assert.strictEqual(deckkraft({ deckkraft: -40 }).einstellung.deckkraft, DECKKRAFT.min);
-  assert.strictEqual(deckkraft({ deckkraft: 140 }), null);   // ueber max = aus
-  assert.strictEqual(deckkraft({ deckkraft: "dreissig" }), null);  // keine Zahl = Vorgabe = aus
-  // Zwischenwerte rasten ein, damit Lesen und Schreiben dasselbe ergeben.
-  assert.strictEqual(deckkraft({ deckkraft: 63 }).einstellung.deckkraft, 65);
-});
-
-pruefe("Der Stand nennt die Deckkraft auch ohne Vorlage", () => {
-  // Der Regler muss irgendwo stehen - ohne Vorlage auf voll.
-  const leer = hintergrundStand(leeresModell("t"));
-  assert.strictEqual(leer.deckkraft, DECKKRAFT_VORGABE);
-  const m = leeresModell("t");
-  hintergrundAendern(m, "deckkraft", 40);
-  assert.strictEqual(hintergrundStand(m).deckkraft, 40);
-});
-
-pruefe("Die Anzeige sagt bei voll ein Wort, sonst Prozent", () => {
-  assert.strictEqual(anzeige("deckkraft", 100, "de"), "voll");
-  assert.strictEqual(anzeige("deckkraft", 100, "en"), "full");
-  assert.strictEqual(anzeige("deckkraft", 45, "de"), "45 %");
-});
-
-pruefe("Gegenprobe: eine fremde Vorlage im Stilziel wird nicht mitgelesen", () => {
-  const m = leeresModell("t");
-  setze(m, "uix-root", "/* HORIZON:fremd:START */\nhui-view-background { opacity: 0.3; }\n/* HORIZON:fremd:ENDE */", "beide");
-  assert.strictEqual(leseDeckkraft(m.flach["uix-root"]), null,
-    "eine fremde Vorlage mit opacity wird fuer die eigene gehalten");
 });
 
 console.log(`\n${n} Pruefungen bestanden`);

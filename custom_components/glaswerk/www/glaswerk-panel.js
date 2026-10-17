@@ -1200,6 +1200,9 @@ const TEXTE = {
     "Herkunft": "Source",
     "Hintergrundbild": "Background image",
     "Pop-up-Hintergrund": "Pop-up background",
+    "Bild entfernen": "Remove image",
+    "Deckkraft": "Opacity",
+    "voll": "full",
     "Hell + dunkel": "Light + dark", "Nur hell": "Light only", "Nur dunkel": "Dark only",
     "Diese Dateien hat Glaswerk gebaut - oder oben eine neue beginnen": "These files were built with Glaswerk - or start a new one above",
     "Noch keine Theme - oben eine neue beginnen oder eine Datei einlesen": "No theme yet - start a new one above, or read in a file",
@@ -2502,18 +2505,57 @@ class GlaswerkPanel extends HTMLElement {
            ["--popup-custom-wallpaper", T("Pop-up-Hintergrund")]].map(([v, n]) => `
         <div class="sezeile zwei">
           <label>${n}</label>
-          ${["light", "dark"].map((mo) => `
+          ${["light", "dark"].map((mo) => {
+            const wert = ZUSTAND.modell?.[mo === "dark" ? "dark" : "light"]?.[v.slice(2)] ?? "";
+            return `
           <span class="bildfeld">
             <input class="se-bild" data-v="${v}" data-modus="${mo}" type="text"
-                   value="${(ZUSTAND.modell?.[mo === "dark" ? "dark" : "light"]?.[v.slice(2)] ?? "").replace(/"/g, "&quot;")}"
+                   value="${String(wert).replace(/"/g, "&quot;")}"
                    placeholder="${mo === "dark" ? T("dunkel") : T("hell")}" spellcheck="false"
                   >
             <button class="bildknopf" data-galerie="${v}" data-galerie-modus="${mo}"
                     title="${T("Bild waehlen")}">
               <ha-icon icon="mdi:image-outline"></ha-icon>
             </button>
-          </span>`).join("")}
+            <!-- Leeren per Knopf, seit dem 16.10.2026. Vorher musste man das
+                 Textfeld von Hand freiraeumen - bei einer url(...) mit
+                 fuenfzig Zeichen ist das kein Weg. Gesperrt, wenn nichts
+                 drinsteht: ein Knopf, der nichts tun kann, soll es zeigen. -->
+            <button class="bildknopf weg" data-bild-leeren="${v}" data-bild-modus="${mo}"
+                    title="${T("Bild entfernen")}" ${wert ? "" : "disabled"}>
+              <ha-icon icon="mdi:close"></ha-icon>
+            </button>
+          </span>`;
+          }).join("")}
         </div>`).join("")}
+
+        <!-- Die Deckkraft des Hintergrunds.
+             --view-background-opacity ist HOME ASSISTANTS EIGENE Variable,
+             am 16.10.2026 an der laufenden Instanz aus
+             hui-view-background.elementStyles gelesen:
+
+               :host { background: var(--view-background, ...);
+                       opacity: var(--view-background-opacity); }
+
+             Also ein gewoehnliches Theme-Feld, keine UIX-Vorlage. Der
+             Regler auf der Hintergrund-Seite schreibt dieselbe Eigenschaft
+             ueber eine Regel - das ist der Umweg, und er faellt weg.
+
+             Gilt fuer HELL UND DUNKEL getrennt: Ein Foto, das im Hellen bei
+             60 Prozent traegt, ist im Dunkeln meist schon zu viel. -->
+        <div class="sezeile zwei">
+          <label>${T("Deckkraft")}</label>
+          ${["light", "dark"].map((mo) => {
+            const roh = ZUSTAND.modell?.[mo]?.["view-background-opacity"];
+            const z = Math.round((Number(roh) || 1) * 100);
+            return `
+          <span class="bildfeld">
+            <input class="se-deckkraft" type="range" min="10" max="100" step="5"
+                   data-deckkraft-modus="${mo}" value="${z}">
+            <b class="sedk-wert" data-deckkraft-wert="${mo}">${z === 100 ? T("voll") : z + " %"}</b>
+          </span>`;
+          }).join("")}
+        </div>
       </div>
       </section>`;
   }
@@ -2964,6 +3006,44 @@ class GlaswerkPanel extends HTMLElement {
         this.zeichneZaehler();
       })
     );
+
+    // Das Kreuz neben dem Bildfeld. Neu gezeichnet wird ganz, nicht nur das
+    // Feld geleert: Der Knopf selbst muss danach gesperrt sein, und das
+    // sieht man sonst erst beim naechsten Zeichnen.
+    this.shadowRoot.querySelectorAll("[data-bild-leeren]").forEach((el) =>
+      el.addEventListener("click", () => {
+        if (!ZUSTAND.modell) return;
+        const name = el.dataset.bildLeeren.replace(/^--/, "");
+        const ebene = el.dataset.bildModus === "dark" ? "dark" : "light";
+        if (ZUSTAND.modell[ebene]) delete ZUSTAND.modell[ebene][name];
+        ZUSTAND.geaendert.add(name);
+        this.zeichne();
+      })
+    );
+
+    // Die Deckkraft. Ein Theme-Feld, kein UIX-Umweg: HA liest
+    // --view-background-opacity selbst, siehe den Kommentar bei den
+    // Startfeldern.
+    this.shadowRoot.querySelectorAll(".se-deckkraft").forEach((el) => {
+      const anzeige = this.shadowRoot.querySelector(
+        `[data-deckkraft-wert="${el.dataset.deckkraftModus}"]`);
+      const T = (x) => t(x, this.spr);
+      el.addEventListener("input", () => {
+        if (anzeige) anzeige.textContent = Number(el.value) >= 100 ? T("voll") : el.value + " %";
+      });
+      el.addEventListener("change", () => {
+        if (!ZUSTAND.modell) return;
+        const ebene = el.dataset.deckkraftModus === "dark" ? "dark" : "light";
+        const z = Number(el.value);
+        // Volle Deckkraft heisst: Feld weg. Ein "1" in der Theme ist
+        // dasselbe wie nichts, steht aber in jeder Datei und laedt zur
+        // Frage ein, was es dort tut.
+        if (z >= 100) { if (ZUSTAND.modell[ebene]) delete ZUSTAND.modell[ebene]["view-background-opacity"]; }
+        else setze(ZUSTAND.modell, "view-background-opacity", (z / 100).toFixed(2), ebene);
+        ZUSTAND.geaendert.add("view-background-opacity");
+        this.zeichneZaehler();
+      });
+    });
     this.shadowRoot.querySelectorAll("[data-galerie]").forEach((b) =>
       b.addEventListener("click", () => this.zeigeGalerie(b.dataset.galerie, b.dataset.galerieModus))
     );
@@ -4119,6 +4199,15 @@ class GlaswerkPanel extends HTMLElement {
       .bildknopf ha-icon { --mdc-icon-size: 18px; color: var(--s-tinte-leise); }
       .bildknopf:hover:not([disabled]) { background: #fff; box-shadow: var(--s-schatten-klein); }
       .bildknopf[disabled] { cursor: default; opacity: .5; }
+      /* Das Kreuz nimmt etwas weg - beim Ueberfahren in Rot, damit man es
+         nicht fuer das Bildsymbol daneben haelt. */
+      .bildknopf.weg:hover:not([disabled]) ha-icon { color: var(--error-color, #d33); }
+
+      /* Der Deckkraft-Regler steht in derselben Zeile wie die Bildfelder
+         und soll deren Breite haben - der Wert rechts bleibt schmal. */
+      .se-deckkraft { flex: 1; min-width: 0; accent-color: var(--s-tinte); }
+      .sedk-wert { flex: none; min-width: 52px; text-align: right; font-size: 12.5px;
+                   color: var(--s-tinte-leise); font-variant-numeric: tabular-nums; }
 
       /* ---- Galerie ---- */
       .galeriekopf { display: flex; gap: 8px; margin-bottom: 14px; }

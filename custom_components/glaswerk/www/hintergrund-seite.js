@@ -22,7 +22,6 @@ import {
   istPunkteBild,
   BEWEGUNG_ID, BEWEGUNG_STUFEN, BEWEGUNG_VORGABE,
   himmel, leseHimmel, istWetterEntitaet, HIMMEL_ID, HIMMEL_STUFEN, HIMMEL_VORGABE,
-  deckkraft, leseDeckkraft, DECKKRAFT_ID, DECKKRAFT, DECKKRAFT_VORGABE,
   vertraegtVorlage, HINTERGRUND_ZIEL,
 } from "./hintergrund.js";
 
@@ -59,9 +58,6 @@ export function hintergrundStand(modell) {
     punkteMoeglich: gesetzt.length > 0 && gesetzt.every(istPunkteBild),
     bewegung: leseBewegung(text),
     himmel: leseHimmel(text),
-    // Keine Vorlage heisst volle Deckkraft - die Zahl steht dann nirgends,
-    // und der Regler muss trotzdem irgendwo stehen.
-    deckkraft: (leseDeckkraft(text) || { deckkraft: DECKKRAFT_VORGABE }).deckkraft,
     stoerungen: vertraegtVorlage(text),
   };
 }
@@ -115,13 +111,6 @@ export function hintergrundAendern(modell, was, wert) {
     const v = bewegung({ ...alt, [was]: Number(wert) }, { punkte: hintergrundStand(modell).punkteMoeglich });
     if (v) vorlageAn(modell, v);
     else vorlageAus(modell, { id: BEWEGUNG_ID, ziel: HINTERGRUND_ZIEL });
-  } else if (was === "deckkraft") {
-    // Volle Deckkraft heisst: keine Vorlage. Eine Regel mit opacity: 1 waere
-    // Ballast in der Theme und stuende spaeter im Weg, wenn jemand sucht,
-    // warum der Hintergrund blasser aussieht als sein Wert.
-    const v = deckkraft({ deckkraft: Number(wert) });
-    if (v) vorlageAn(modell, v);
-    else vorlageAus(modell, { id: DECKKRAFT_ID, ziel: HINTERGRUND_ZIEL });
   } else if (was === "wetter" || was === "staerke") {
     const alt = leseHimmel(vorher) || { wetter: "", staerke: HIMMEL_VORGABE.staerke };
     const neu = { ...alt, [was]: was === "staerke" ? Number(wert) : String(wert ?? "") };
@@ -205,10 +194,6 @@ const TEXTE = {
   himmel: ["Himmel", "Sky"],
   wetter: ["Wetter", "Weather"],
   staerke: ["Staerke", "Strength"],
-  deckkraft: ["Deckkraft", "Opacity"],
-  deckkraftZweck: ["Nimmt dem Hintergrund an Kraft, ohne seine Farben zu verfaelschen - er wird durchsichtig, nicht milchig. Fuer Fotos und kraeftige Verlaeufe, die die Karten darauf erschlagen.",
-    "Takes power out of the background without distorting its colours - it becomes transparent, not milky. For photos and strong gradients that overwhelm the cards on top."],
-  voll: ["voll", "full"],
   aus: ["aus", "off"],
   kreis: ["Kreis", "full"],
   nichtHier: ["nicht auf dieser Instanz", "not on this instance"],
@@ -233,9 +218,6 @@ export function anzeige(was, wert, spr) {
   if (was === "punkte") return z ? punkteDauer(z) + " s" : T("aus", spr);
   if (was === "farbe") return z ? farbDauer(z) + " s" : T("aus", spr);
   if (was === "weite") { const g = AUSSCHLAEGE[z] ?? AUSSCHLAEGE[1]; return g === 360 ? T("kreis", spr) : g + "°"; }
-  // 100 Prozent heisst "keine Vorlage" - das steht als Wort da, nicht als
-  // Zahl: Sonst sucht man nach dem Unterschied zwischen 100 und voll.
-  if (was === "deckkraft") return z >= DECKKRAFT.max ? T("voll", spr) : z + " %";
   return String(wert);
 }
 
@@ -250,9 +232,9 @@ export function hintergrundSeiteHtml({ modell, spr = "de", wetter = [] } = {}) {
   const zu = modell ? "" : "disabled";
   const b = s.bewegung || { drift: 0, punkte: 0, farbe: 0, weite: BEWEGUNG_VORGABE.weite };
   const h = s.himmel || { wetter: "", staerke: HIMMEL_VORGABE.staerke };
-  // schritt kam am 16.10.2026 dazu, fuer die Deckkraft: Sie laeuft von 10
-  // bis 100, und 90 Stellungen waeren neunzig Mal dasselbe Bild. In
-  // Fuenferschritten sind es achtzehn, und jede ist zu sehen.
+  // schritt ist vorerst immer 1 - die Regler hier zaehlen in Stufen. Der
+  // Parameter steht da, weil ein Regler mit vielen Werten groebere Schritte
+  // braucht: 90 Stellungen waeren neunzig Mal fast dasselbe Bild.
   const regel = (was, min, max, wert, sperre = "", schritt = 1) => `
             <label class="bk-regel">
               <span>${T(was, spr)}</span>
@@ -284,17 +266,6 @@ export function hintergrundSeiteHtml({ modell, spr = "de", wetter = [] } = {}) {
           </div>
           ${s.unerkannt ? `<p class="bk-hinweis">${T("festUnerkannt", spr)}</p>` : ""}
           ${s.teilsFest ? `<p class="bk-hinweis">${T("festTeils", spr)}</p>` : ""}
-        </section>
-
-        <!-- Die Deckkraft steht bei der LAGE, nicht bei der Bewegung: Sie
-             sagt, wie stark der Hintergrund da ist, nicht was er tut.
-             Gesperrt ohne Hintergrund - es gaebe nichts zu daempfen. -->
-        <section class="bk-sorte">
-          <h3>${T("deckkraft", spr)} <span class="bk-zahl">${T("brauchtUix", spr)}</span></h3>
-          <div class="bk-regler">${regel("deckkraft", DECKKRAFT.min, DECKKRAFT.max,
-            s.deckkraft, s.hatHintergrund ? "" : "disabled", DECKKRAFT.schritt)}
-          </div>
-          <p class="bk-zweck">${T("deckkraftZweck", spr)}</p>
         </section>
 
         <section class="bk-sorte">
