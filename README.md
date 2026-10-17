@@ -148,6 +148,7 @@ trägt sie von Hand ein; die Zeile dafür steht im Log.
 | `show_highlight` | `true` | die Kapsel auf der aktuellen Ansicht |
 | `kiosk_only` | `false` | `true`: Vollbild nur in Home Assistant, das Browserfenster bleibt |
 | `replace_header` | `false` | `true`: die Leiste ersetzt auf diesem Dashboard die Kopfzeile von Home Assistant |
+| `placement` | `inline` | `bottom`: die Leiste schwebt am unteren Rand über dem Dashboard und rollt nicht mit. Im Bearbeitungsmodus steht sie wieder im Raster |
 | `controls` | `[mode, fullscreen]` | die kurze Form, wenn es keine `buttons` gibt |
 
 **Die Bewegung des Hintergrunds** stellt ein Knopf mit `function: motion`. Er
@@ -219,8 +220,12 @@ Funktion.
 
 Die Felder sind die der Menü-Karte aus den Horizon-Cards. Eine Leiste von dort
 läuft weiter, wenn `type` auf `custom:glaswerk-bar` steht. Noch nicht
-übernommen sind `visibility`, `#anker`-Links, `hold_action`,
-`double_tap_action` und `placement: bottom`.
+übernommen sind `#anker`-Links, `hold_action` und `double_tap_action`.
+
+`visibility` dagegen wirkt, ohne dass die Karte etwas dafür tut: Home Assistant
+wertet es in seiner Kartenhülle aus, bevor die Karte gebaut wird — am 17.10.2026
+an HA 2026.10 nachgemessen. Damit gelten auch die Bedingungen, die 2026.10 neu
+gebracht hat: `template`, `sun`, `zone` und `device`.
 
 ### Als Badge
 

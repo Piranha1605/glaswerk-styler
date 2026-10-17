@@ -145,6 +145,7 @@ by hand; the log shows the line.
 | `show_highlight` | `true` | the pill on the current view |
 | `kiosk_only` | `false` | `true`: fullscreen in Home Assistant only, the browser window stays |
 | `replace_header` | `false` | `true`: on this dashboard the bar replaces Home Assistant's header |
+| `placement` | `inline` | `bottom`: the bar floats at the bottom edge above the dashboard and does not scroll with it. In edit mode it sits in the grid again |
 | `controls` | `[mode, fullscreen]` | the short form, when there are no `buttons` |
 
 **The background motion** is set by a button with `function: motion`. It
@@ -212,8 +213,12 @@ button's name, or without one its target, entity or function.
 
 The fields are those of the menu card from the Horizon Cards. A bar from there
 keeps working once `type` is `custom:glaswerk-bar`. Not taken over yet:
-`visibility`, `#anchor` links, `hold_action`, `double_tap_action` and
-`placement: bottom`.
+`#anchor` links, `hold_action` and `double_tap_action`.
+
+`visibility` works without the card doing anything for it: Home Assistant
+evaluates it in its card wrapper, before the card is even built — measured
+against HA 2026.10 on 17 Oct 2026. That includes the conditions 2026.10 added:
+`template`, `sun`, `zone` and `device`.
 
 ### As a badge
 
