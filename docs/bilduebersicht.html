@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<title>Glaswerk — alle Bilder und ihr Einsatzort</title>
+<style>
+  :root {
+    --grund: #0f1319; --flaeche: #171c25; --rand: #2a3240;
+    --tinte: #e8edf7; --leise: #97a3b8; --akzent: #ffb34d; --warn: #ff7a6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--grund); color: var(--tinte);
+         font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  header { padding: 40px 32px 24px; border-bottom: 1px solid var(--rand); }
+  h1 { margin: 0 0 6px; font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+  .unter { color: var(--leise); font-size: 14px; }
+  main { padding: 0 32px 64px; max-width: 1500px; }
+  h2 { margin: 44px 0 4px; font-size: 19px; font-weight: 620; }
+  h2 .zahl { color: var(--leise); font-weight: 400; font-size: 15px; margin-left: 8px; }
+  .zweck { color: var(--leise); margin: 0 0 4px; font-size: 14px; }
+  .pfad { color: var(--leise); font-size: 12.5px; font-family: ui-monospace, Menlo, monospace; margin-bottom: 18px; }
+
+  .bilanz { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 0; }
+  .kachel { background: var(--flaeche); border: 1px solid var(--rand); border-radius: 12px;
+            padding: 12px 16px; min-width: 128px; }
+  .kachel b { display: block; font-size: 22px; font-weight: 650; }
+  .kachel span { color: var(--leise); font-size: 12.5px; }
+  .kachel.warn b { color: var(--warn); }
+
+  .raster { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
+  .karte { background: var(--flaeche); border: 1px solid var(--rand); border-radius: 14px;
+           overflow: hidden; display: flex; flex-direction: column; }
+  .karte img { width: 100%; display: block; background: #0a0d12; }
+  .text { padding: 12px 14px; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+  .name { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; word-break: break-all; }
+  .wo { font-size: 13px; }
+  .wo b { color: var(--akzent); font-weight: 600; }
+  .meta { color: var(--leise); font-size: 12px; margin-top: auto; padding-top: 4px; }
+  .marke { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px;
+           border: 1px solid var(--rand); color: var(--leise); margin-right: 5px; }
+  .marke.frei { border-color: #7a5a1e; color: var(--akzent); }
+  .marke.alt { border-color: #6b3028; color: var(--warn); }
+  .marke.ok { border-color: #2d5a34; color: #6ec77f; }
+
+  /* Die Vorher/Nachher-Paare genau so wie im Panel: uebereinander,
+     beim Ueberfahren blendet das obere weg. */
+  .paar { position: relative; aspect-ratio: 440 / 275; background: #0a0d12; }
+  .paar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .paar .nachher { transition: opacity .22s ease; }
+  .paar:hover .nachher { opacity: 0; }
+  .paar .hinweis { position: absolute; left: 8px; bottom: 8px; font-size: 11px;
+                   background: rgba(0,0,0,.6); padding: 2px 8px; border-radius: 99px;
+                   color: #fff; pointer-events: none; }
+  .paar:hover .hinweis::after { content: " — vorher"; }
+
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--rand); }
+  th { color: var(--leise); font-weight: 600; font-size: 12.5px; }
+  td code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  .hinw { background: var(--flaeche); border: 1px solid var(--rand); border-left: 3px solid var(--akzent);
+          border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 20px 0; font-size: 14px; }
+  .hinw.warn { border-left-color: var(--warn); }
+  .hinw p { margin: 0 0 6px; } .hinw p:last-child { margin: 0; }
+</style>
+
+<header>
+  <h1>Glaswerk — alle Bilder und ihr Einsatzort</h1>
+  <div class="unter">Erzeugt am 17.10.2026, 17:27:42 aus dem echten Bestand.
+    Die Seite liest Dateien, Maße, Datum und die Fundstellen in README.md selbst ein.</div>
+  <div class="bilanz">
+    <div class="kachel"><b>25</b><span>README-Bilder</span></div>
+    <div class="kachel"><b>16</b><span>davon eingebunden</span></div>
+    <div class="kachel warn"><b>9</b><span>ohne Fundstelle</span></div>
+    <div class="kachel"><b>8</b><span>UIX-Paare</span></div>
+    <div class="kachel warn"><b>11</b><span>Vorlagen ohne Bild</span></div>
+    <div class="kachel warn"><b>3</b><span>zeigen „HATS“</span></div>
+    <div class="kachel"><b>20</b><span>noch nicht angesehen</span></div>
+  </div>
+</header>
+
+<main>
+
+<div class="hinw warn">
+  <p><b>Alle 25 Bilder stammen von vor dem 2026-10-16</b> — dem Tag, an dem HATS zu Glaswerk wurde (Commit <code>bb09026</code>). Das Datum allein sagt aber nichts: Nur ein Teil zeigt den alten Namen wirklich <i>im Bild</i>.</p>
+  <p><b>Durchgesehen:</b> 3 zeigen „HATS“ und müssen neu —
+     <code>glaswerk-dunkel.jpg</code>, <code>glaswerk-hell.jpg</code>, <code>vergleich-3-mit-uix.jpg</code>.
+     2 sind geprüft und sauber.
+     <b>20 sind noch nicht angesehen.</b></p>
+  <p>Die Durchsicht steht in <code>werkzeuge/bilduebersicht.mjs</code> unter <code>GEPRUEFT</code> —
+     wer ein Bild ansieht, trägt das Ergebnis dort ein, damit es nicht zweimal geöffnet wird.</p>
+</div>
+
+<h2>1 · README-Bilder <span class="zahl">25 Stück</span></h2>
+<p class="zweck">Was im README steht - die Bilder, die ein Besucher auf GitHub sieht.</p>
+<p class="pfad">docs/bilder/</p>
+
+<div class="raster">
+  <div class="karte">
+    <img src="../docs/bilder/baukasten-farben.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">baukasten-farben.jpg</div>
+      <div class="wo">steht unter <b>Der Baukasten</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        800×964 · 61 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/glaswerk-dunkel.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">glaswerk-dunkel.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke alt">zeigt HATS — Seitenleiste</span>
+        800×317 · 48 kB · 2026-10-14
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/glaswerk-hell.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">glaswerk-hell.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke alt">zeigt HATS — Seitenleiste</span>
+        800×317 · 48 kB · 2026-10-14
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/hintergrund-farbverlaeufe-dunkel.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">hintergrund-farbverlaeufe-dunkel.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        1600×500 · 38 kB · 2026-10-13
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/hintergrund-farbverlaeufe-hell.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">hintergrund-farbverlaeufe-hell.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        1600×500 · 36 kB · 2026-10-13
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/kartenstil-liquid-glass-mit.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">kartenstil-liquid-glass-mit.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        460×288 · 38 kB · 2026-10-14
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/kartenstil-liquid-glass-ohne.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">kartenstil-liquid-glass-ohne.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        460×288 · 34 kB · 2026-10-14
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/liquid-glass-dunkel.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">liquid-glass-dunkel.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        900×733 · 104 kB · 2026-10-13
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/liquid-glass-hell.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">liquid-glass-hell.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        900×733 · 93 kB · 2026-10-13
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerbadge-dunkel.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerbadge-dunkel.jpg</div>
+      <div class="wo">steht unter <b>Als Badge</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        200×55 · 4 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerbadge-hell.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerbadge-hell.jpg</div>
+      <div class="wo">steht unter <b>Als Badge</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        200×55 · 3 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerbadge-waehler.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerbadge-waehler.jpg</div>
+      <div class="wo">steht unter <b>Als Badge</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        760×300 · 33 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerkarte-dunkel.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerkarte-dunkel.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        280×236 · 15 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerkarte-einstellungsfenster.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerkarte-einstellungsfenster.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke ok">geprüft, sauber</span>
+        598×462 · 33 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerkarte-hell.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerkarte-hell.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        280×236 · 18 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerkarte-uix-vorlagen.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerkarte-uix-vorlagen.jpg</div>
+      <div class="wo"><span class="marke frei">ohne Fundstelle</span></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        800×478 · 37 kB · 2026-10-15
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerleiste-bewegung.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerleiste-bewegung.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        570×190 · 22 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerleiste-darstellung.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerleiste-darstellung.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        560×166 · 21 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerleiste-dunkel.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerleiste-dunkel.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        570×310 · 35 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerleiste-editor.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerleiste-editor.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        750×450 · 42 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerleiste-hell.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerleiste-hell.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke ok">geprüft, sauber</span>
+        770×312 · 39 kB · 2026-10-13 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/steuerleiste-kopfzeile.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">steuerleiste-kopfzeile.jpg</div>
+      <div class="wo">steht unter <b>Die Steuerkarte</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        798×260 · 38 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/vergleich-1-vorher.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">vergleich-1-vorher.jpg</div>
+      <div class="wo">steht unter <b>Was dabei herauskommt</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        538×378 · 36 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/vergleich-2-nur-felder.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">vergleich-2-nur-felder.jpg</div>
+      <div class="wo">steht unter <b>Was dabei herauskommt</b></div>
+      <div class="meta">
+        <span class="marke">noch nicht angesehen</span>
+        538×378 · 41 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+  <div class="karte">
+    <img src="../docs/bilder/vergleich-3-mit-uix.jpg" alt="" loading="lazy">
+    <div class="text">
+      <div class="name">vergleich-3-mit-uix.jpg</div>
+      <div class="wo">steht unter <b>Was dabei herauskommt</b></div>
+      <div class="meta">
+        <span class="marke alt">zeigt HATS — Seitenleiste, Dashboard-Titel, zwei Eintraege</span>
+        538×378 · 42 kB · 2026-10-14 · auch EN
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>2 · UIX-Vorschaubilder <span class="zahl">8 Paare</span></h2>
+<p class="zweck">Im Panel unter UIX. Beim Überfahren blendet das Nachher-Bild weg und gibt das Vorher frei. <b>Fahr mit der Maus darüber</b> — genau wie im Panel.</p>
+<p class="pfad">custom_components/glaswerk/www/vorschau/</p>
+
+<div class="raster">
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/glas-kopfleiste-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/glas-kopfleiste-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">glas-kopfleiste</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~9 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/glas-leistenknoepfe-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/glas-leistenknoepfe-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">glas-leistenknoepfe</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~7 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/glas-lichtkante-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/glas-lichtkante-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">glas-lichtkante</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~15 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/glas-seitenleiste-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/glas-seitenleiste-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">glas-seitenleiste</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~22 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/grund-ueberall-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/grund-ueberall-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">grund-ueberall</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~19 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/regler-gluehen-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/regler-gluehen-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">regler-gluehen</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~12 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/regler-schlank-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/regler-schlank-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">regler-schlank</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~11 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+  <div class="karte">
+    <div class="paar">
+      <img class="vorher" src="../custom_components/glaswerk/www/vorschau/verlauf-kapsel-vorher.jpg" alt="" loading="lazy">
+      <img class="nachher" src="../custom_components/glaswerk/www/vorschau/verlauf-kapsel-nachher.jpg" alt="" loading="lazy">
+      <span class="hinweis">nachher</span>
+    </div>
+    <div class="text">
+      <div class="name">verlauf-kapsel</div>
+      <div class="wo">Panel → UIX → Vorlagen</div>
+      <div class="meta">440×275 · ~21 kB je Bild · 2026-10-17</div>
+    </div>
+  </div>
+</div>
+
+
+<h2>3 · Vorlagen ohne Bild <span class="zahl">11 Stück</span></h2>
+<p class="zweck">Im Panel steht dort „noch kein Bild“. Jede Zeile trägt den <b>gemessenen</b> Grund —
+  kein Bild ist besser als eines, auf dem man nichts erkennt.</p>
+<table>
+  <tr><th>Vorlage</th><th>warum kein Bild</th></tr>
+  <tr><td><code>glas-bubble</code></td><td>Bubble Card ist auf der Testmaschine nicht installiert</td></tr>
+  <tr><td><code>sync-bedienelemente</code></td><td>braucht Bubble Card und Mushroom zum Vergleich</td></tr>
+  <tr><td><code>glas-karten</code></td><td>0,0 % sichtbar - vier Pixel Radiusunterschied gehen in 440x275 unter</td></tr>
+  <tr><td><code>abschnitte-trennen</code></td><td>0,6 % sichtbar - nur ein Radiusunterschied am Abschnitt</td></tr>
+  <tr><td><code>glas-toast</code></td><td>0,5 % sichtbar - die Weichzeichnung hat auf ruhigem Grund nichts zu zeigen</td></tr>
+  <tr><td><code>glas-badges</code></td><td>ha-badge traegt unter keiner Theme eine Flaeche</td></tr>
+  <tr><td><code>glas-symbolkachel</code></td><td>ha-tile-icon traegt unter keiner Theme eine Flaeche</td></tr>
+  <tr><td><code>glas-knoepfe</code></td><td>ha-icon-button traegt unter keiner Theme eine Flaeche</td></tr>
+  <tr><td><code>glas-nur-weichzeichnung</code></td><td>hui-markdown-card traegt unter keiner Theme eine Flaeche</td></tr>
+  <tr><td><code>glas-more-info</code></td><td>der Radius kommt aus der Theme, nicht aus der Vorlage</td></tr>
+  <tr><td><code>glas-kopfleiste-einstellungen</code></td><td>0,1 % sichtbar</td></tr>
+</table>
+
+
+<h2>4 · Videos <span class="zahl">7 Renders</span></h2>
+<p class="zweck">Aus <code>videos/glaswerk-promo/</code>. Der jüngste Render ist der aktuelle Stand.</p>
+<table>
+  <tr><th>Datei</th><th>Größe</th><th>erzeugt</th></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_21-17-52.mp4</code> <span class="marke frei">aktuell</span></td><td>31 MB</td><td>2026-10-15 19:18</td></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_20-55-05.mp4</code></td><td>31 MB</td><td>2026-10-15 18:55</td></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_20-53-00.mp4</code></td><td>31 MB</td><td>2026-10-15 18:53</td></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_20-40-05.mp4</code></td><td>30 MB</td><td>2026-10-15 18:40</td></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_20-38-08.mp4</code></td><td>30 MB</td><td>2026-10-15 18:38</td></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_20-22-56.mp4</code></td><td>29 MB</td><td>2026-10-15 18:23</td></tr>
+  <tr><td><code>glaswerk-promo_2026-10-15_19-44-08.mp4</code></td><td>16 MB</td><td>2026-10-15 17:44</td></tr>
+</table>
+
+<h2>5 · Was für die Veröffentlichung fehlt</h2>
+<div class="hinw">
+  <p><b>Schau-Dashboard.</b> Die vorhandene Musterseite (<code>/glaswerk-muster</code>) ist auf den
+     Nachweis der Vorlagen gebaut, nicht aufs Vorzeigen — sie zeigt vier Lampen, vier Regler und
+     eine Markdown-Karte nebeneinander. Für das README braucht es eine Ansicht, die aussieht wie
+     bei einem echten Nutzer.</p>
+  <p><b>Bar und Styler zusammen.</b> Beide gehören in ein Repository: Die Bar liegt ohnehin in
+     <code>custom_components/glaswerk/www/</code> und wird von <code>karte.py</code> selbst in
+     Home Assistants Ressourcenliste eingetragen.</p>
+  <p><b>Die Karten bleiben unerwähnt.</b> Sie dürfen im Video zu sehen sein, stehen aber in keinem
+     Text, keinem Repository-Namen und keinem HACS-Eintrag.</p>
+  <p><b>Hell/Dunkel im README</b> geht über <code>&lt;picture&gt;</code> mit
+     <code>prefers-color-scheme</code> — am 17.10.2026 an GitHubs Markdown-API geprüft. Ein
+     Hover-Wechsel geht dort <i>nicht</i>: <code>onmouseover</code> wird entfernt, eigenes CSS
+     escaped. Im Panel dagegen funktioniert der Hover (siehe Abschnitt 2).</p>
+</div>
+
+</main>
+</html>
