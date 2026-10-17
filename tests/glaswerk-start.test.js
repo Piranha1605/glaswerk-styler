@@ -7,6 +7,7 @@
 
 import assert from "node:assert";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -271,4 +272,35 @@ pruefe("Der Infostreifen zeigt den tatsaechlichen Modus", () => {
   assert.doesNotMatch(block, /modus: beide \? "beide" : "light"/,
     "Der Streifen steht wieder fest auf hell");
   assert.match(block, /this\._feldModus === "dark"/);
+});
+
+pruefe("Eine leere Theme wird nicht geschrieben", () => {
+  // Am 17.10.2026 in Enricos Haus: NewHome.yaml mit 116 Bytes, nur "NewHome:"
+  // ohne Inhalt. Gueltiges YAML, wird zu None - und Home Assistant verweigert
+  // daraufhin den GANZEN frontend->themes-Block. Nicht nur diese Theme: alle.
+  //
+  // Geprueft wird die Logik selbst, nicht ihre Schreibweise: Der Ausdruck aus
+  // __init__.py laeuft hier durch Python, mit echten Faellen.
+  const faelle = [
+    ['{"NewHome": None}', true, "leere Theme"],
+    ['{}', true, "gar nichts"],
+    ['None', true, "None statt Zuordnung"],
+    ['{"A": {}}', true, "Theme mit leerer Zuordnung"],
+    ['{"A": {"x": "1"}}', false, "echte Theme"],
+    ['{"A": {"x": "1"}, "B": None}', true, "eine von zweien leer"],
+  ];
+  const code = faelle.map(([wert, erwartet]) =>
+    `g = ${wert}\n`
+    + `leer = (not isinstance(g, dict) or not g) or bool([k for k, v in g.items() if not isinstance(v, dict) or not v])\n`
+    + `print("ja" if leer else "nein")`
+  ).join("\n");
+  const aus = execFileSync("python3", ["-c", code], { encoding: "utf8" }).trim().split("\n");
+  faelle.forEach(([, erwartet, was], i) => {
+    assert.strictEqual(aus[i], erwartet ? "ja" : "nein", `${was}: erwartet ${erwartet ? "abgelehnt" : "angenommen"}`);
+  });
+
+  // Und die Pruefung steht auch wirklich im Server, vor dem Schreiben.
+  const block = py.slice(py.indexOf("async def ws_save_theme"), py.indexOf("def _schreibe()"));
+  assert.match(block, /empty_theme/, "der Server lehnt leere Themes nicht ab");
+  assert.match(block, /isinstance\(geparst, dict\)/, "der Server prueft die geparste Theme nicht");
 });

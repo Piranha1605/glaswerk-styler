@@ -290,9 +290,38 @@ async def ws_save_theme(hass: HomeAssistant, connection, msg) -> None:
         return
 
     try:
-        yaml_lib.safe_load(msg["yaml"])
+        geparst = yaml_lib.safe_load(msg["yaml"])
     except yaml_lib.YAMLError as err:
         connection.send_error(msg["id"], "invalid_yaml", f"YAML ist ungueltig: {err}")
+        return
+
+    # Eine leere Theme nicht schreiben - sie legt ALLE Themes lahm.
+    #
+    # "NewHome:" ohne Inhalt ist gueltiges YAML und wird zu None. Home
+    # Assistant erwartet unter frontend->themes an jeder Stelle eine
+    # Zuordnung und verweigert dann den gesamten Block - nicht nur diese eine
+    # Theme. Die Meldung nennt zwar den Namen, aber nicht die Datei, und wer
+    # sie nicht kennt, sucht lange.
+    #
+    # Am 17.10.2026 in Enricos Haus passiert: Die Grundlage fehlte, das Panel
+    # begann mit einem leeren Modell, und das Speichern schrieb NewHome.yaml
+    # mit 116 Bytes. Beim naechsten Neustart stand die Oberflaeche ohne jede
+    # Theme da. Die Ursache ist behoben (die Grundlage faehrt jetzt mit), aber
+    # der Weg dorthin bleibt offen, solange niemand ihn versperrt - und
+    # versperrt gehoert er HIER, nicht im Panel: Der Server ist das letzte
+    # Tor, durch das jeder Client muss.
+    if not isinstance(geparst, dict) or not geparst:
+        connection.send_error(
+            msg["id"], "empty_theme", "Die Theme ist leer - das legt in Home Assistant alle Themes lahm."
+        )
+        return
+    leere = [k for k, v in geparst.items() if not isinstance(v, dict) or not v]
+    if leere:
+        connection.send_error(
+            msg["id"],
+            "empty_theme",
+            f"Ohne Inhalt wuerde das in Home Assistant alle Themes lahmlegen: {', '.join(leere)}",
+        )
         return
 
     themes_dir = Path(hass.config.path(THEMES_SUBDIR))
