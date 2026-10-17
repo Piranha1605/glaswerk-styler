@@ -1670,7 +1670,16 @@ const STIL_KARTE = `
     inset-inline-start: 0; min-width: 200px; box-sizing: border-box;
     padding: var(--ha-space-2, 8px);
     border-radius: var(--ha-card-border-radius, 12px);
-    background: var(--card-background-color);
+    /* Kartenflaeche, nicht HAs deckende Grundfarbe. --card-background-color
+       ist ein anderer Farbton UND ohne Alpha: gemessen am 17.10.2026 stand die
+       Liste voll deckend da, die Karten daneben bei 36 Prozent. Das sah aus
+       wie ein Fehler. Enrico: "die ganzen popups haben eine andere farbe. die
+       sollten eigentlich kartenfarben haben." Der Rueckfall bleibt fuer Themes
+       ohne --ha-card-background.
+       KEINE Farbwerte in diesen Kommentar: glaswerk-bar.test.js liest die
+       Blaetter als Ganzes und laesst nur Variablen zu. */
+    background: var(--ha-card-background, var(--card-background-color));
+    backdrop-filter: var(--ha-card-backdrop-filter, none);
     border: 1px solid var(--divider-color);
     box-shadow: var(--ha-card-box-shadow, none);
   }
@@ -1702,7 +1711,9 @@ const STIL_FENSTER = `
     position: absolute; z-index: 5; top: calc(100% + var(--ha-space-3, 12px));
     width: min(340px, 100%); box-sizing: border-box; padding: var(--ha-space-3, 12px);
     border-radius: var(--ha-card-border-radius, 12px);
-    background: var(--card-background-color);
+    /* Kartenflaeche wie bei der Liste - siehe dort. */
+    background: var(--ha-card-background, var(--card-background-color));
+    backdrop-filter: var(--ha-card-backdrop-filter, none);
     border: 1px solid var(--divider-color);
     box-shadow: var(--ha-card-box-shadow, none);
     color: var(--primary-text-color); font-size: var(--ha-font-size-m, 14px);
