@@ -1012,55 +1012,65 @@ header.top-app-bar {
   },
 
   // -------------------------------------------------------------------------
-  {
-    id: "glas-dialoge",
-    gruppe: "glas",
-    ziel: "dialog",
-    de: "Dialoge in Glas",
-    en: "Dialogs in glass",
-    zweckDe: "Gerundete Dialogfläche mit Lichtkante. Bewusst OHNE Weichzeichnung - die macht die Auswahllisten darin unerreichbar.",
-    zweckEn: "Rounded dialog surface with a light edge. Deliberately WITHOUT blur - it makes the dropdowns inside unreachable.",
-    css: `/* KEIN backdrop-filter auf der Dialogflaeche.
-
-   Ein Filter macht den Dialog zum Bezugsrahmen fuer position: fixed. Die
-   Auswahllisten darin sind fixed: Sie landen neben dem sichtbaren Bereich,
-   und die Liste bleibt leer. An der Versionsauswahl von HACS und am
-   Info-Dialog von HA gemessen. Ein Filter auf einem ::before hilft nicht.
-
-   Welcher Selektor unter HA 2026 traegt, ist am 13.10.2026 an einem offenen
-   Info-Dialog gemessen: In keinem der Dialog-Bauteile kommt noch eine einzige
-   mdc-Klasse vor. Der Dialog ist eine wa-dialog von Web Awesome, und sie gibt
-   ihre Flaeche als CSS-Teil nach aussen - ein Teil reicht durch die
-   Shadow-Grenze, deshalb greift wa-dialog::part(dialog) von hier aus.
-   Nachgemessen: Radius 26px, Schatten gesetzt.
-
-   Die mdc-Zeile bleibt trotzdem stehen. Sie ist unter HA 2026 tot, aber wer
-   eine aeltere Instanz faehrt, braucht sie - und eine tote Zeile kostet
-   nichts. Die Korrektur gehoert als ZUSAETZLICHER Selektor geschrieben, nicht
-   als Ersatz. */
-.mdc-dialog__surface,
-wa-dialog::part(dialog),
-wa-drawer::part(dialog) {
-  border-radius: var(--ha-dialog-border-radius, 26px) !important;
-  box-shadow:
-    0 24px 70px rgba(0, 0, 0, .28),
-    inset 0 1px 0 rgba(255, 255, 255, .5) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}`,
-  },
+  //
+  // HIER STAND "glas-dialoge", ENTFERNT AM 17.10.2026.
+  //
+  // Sie zielte auf uix-dialog - ein Feld, das nirgends ankommt. An der
+  // laufenden Instanz gemessen: UIX legt uix-node-Elemente fuer card, root,
+  // view, row, badge, glance, grid-section, sidebar, drawer und (bei
+  // offenem Info-Dialog) more-info an. Der Typ "dialog" erscheint in KEINEM
+  // Zustand - nicht auf dem Dashboard, nicht bei offenem More-Info, nicht
+  // auf der Profilseite, nicht bei einem Dialog in den Einstellungen.
+  //
+  // Ein Umhaengen auf uix-more-info haette nichts gebracht: Ihre Regeln
+  // waren mit denen von glas-more-info praktisch deckungsgleich -
+  // dieselben drei Selektoren, derselbe Radius, Schatten nur in der
+  // Deckkraft verschieden (.28/.5 gegen .3/.45).
+  //
+  // Der einzige echte Zusatz war "backdrop-filter: none" gegen eine Falle,
+  // die an drei Dialogarten nachgemessen nirgends auftritt: More-Info,
+  // Einstellungsdialog und Drawer standen alle auf filter=none, unter
+  // glaswerk_v1 wie unter ha_blanko. Die Zeile wehrte etwas ab, das
+  // niemand setzt.
+  //
+  // Ihr Messwissen steht jetzt im Kommentar von glas-more-info.
 
   // -------------------------------------------------------------------------
   {
     id: "glas-more-info",
     gruppe: "glas",
     ziel: "more-info",
-    de: "Info-Dialog in Glas",
-    en: "More-info dialog in glass",
-    zweckDe: "Rundung und Lichtkante für den Dialog, der sich beim Klick auf eine Entität öffnet.",
-    zweckEn: "Radius and light edge for the dialog that opens when you tap an entity.",
-    css: `/* :host ist hier ha-more-info-dialog. Auch hier keine Weichzeichnung auf
-   der Flaeche - aus demselben Grund wie bei den uebrigen Dialogen. */
+    de: "Dialoge in Glas",
+    en: "Dialogs in glass",
+    zweckDe: "Rundung und Lichtkante für die Dialoge - den Info-Dialog beim Klick auf eine Entität und die Dialoge der Einstellungen.",
+    zweckEn: "Radius and light edge for dialogs - the more-info dialog and the dialogs in settings.",
+    css: `/* Welcher Selektor unter HA 2026 traegt, ist am 13.10.2026 an einem
+   offenen Info-Dialog gemessen: In keinem der Dialog-Bauteile kommt noch
+   eine einzige mdc-Klasse vor. Der Dialog ist eine wa-dialog von Web
+   Awesome, und sie gibt ihre Flaeche als CSS-Teil nach aussen - ein Teil
+   reicht durch die Shadow-Grenze, deshalb greift wa-dialog::part(dialog)
+   von hier aus. Der Knoten haengt an ha-adaptive-dialog.
+
+   Die mdc-Zeile bleibt trotzdem stehen. Sie ist unter HA 2026 tot, aber
+   wer eine aeltere Instanz faehrt, braucht sie - und eine tote Zeile
+   kostet nichts. Die Korrektur gehoert als ZUSAETZLICHER Selektor
+   geschrieben, nicht als Ersatz.
+
+   KEINE WEICHZEICHNUNG auf der Flaeche. Ein Filter macht den Dialog zum
+   Bezugsrahmen fuer position: fixed. Die Auswahllisten darin sind fixed:
+   Sie landen neben dem sichtbaren Bereich, und die Liste bleibt leer. An
+   der Versionsauswahl von HACS und am Info-Dialog von HA gemessen. Ein
+   Filter auf einem ::before hilft nicht.
+
+   Ein "backdrop-filter: none" steht hier dennoch NICHT: Am 17.10.2026 an
+   drei Dialogarten nachgemessen - More-Info, Einstellungsdialog, Drawer -
+   stand ueberall filter=none, unter glaswerk_v1 wie unter ha_blanko. Die
+   Zeile haette etwas abgewehrt, das niemand setzt.
+
+   DER RADIUS KOMMT NICHT VON HIER. --ha-dialog-border-radius ist nirgends
+   gesetzt, die 26px sind nur der Rueckfallwert. Gemessen wirkt
+   --wa-panel-border-radius: 38px unter glaswerk_v1, 24px unter ha_blanko.
+   Die Zeile bleibt fuer den Fall, dass jemand die Variable setzt. */
 wa-dialog::part(dialog),
 wa-drawer::part(dialog),
 .mdc-dialog__surface {

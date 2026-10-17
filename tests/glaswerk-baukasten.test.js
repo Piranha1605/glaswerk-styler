@@ -297,6 +297,27 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 const hier = path.dirname(fileURLToPath(import.meta.url));
 const panel = readFileSync(path.join(hier, "../custom_components/glaswerk/www/glaswerk-panel.js"), "utf8");
+const baukastenQuelle = readFileSync(path.join(hier, "../custom_components/glaswerk/www/baukasten.js"), "utf8");
+
+pruefe("Die Zahlen im Kommentar stimmen mit der Liste ueberein", () => {
+  // Der Kopf von SORTEN_VORLAGEN nennt, wieviele Vorlagen auf wieviele
+  // Sorten verteilt sind. Bis zum 17.10.2026 stand dort "Vierzehn auf
+  // fuenf" - beides falsch, und niemandem war es aufgefallen, weil nichts
+  // nachzaehlte. Ein Kommentar, der luegt, ist schlimmer als keiner.
+  const zahlwort = { 3: "[Dd]rei", 4: "[Vv]ier", 5: "[Ff]uenf", 14: "[Vv]ierzehn",
+                     18: "[Aa]chtzehn", 19: "[Nn]eunzehn", 20: "[Zz]wanzig" };
+  const stelle = baukastenQuelle.indexOf("export const SORTEN_VORLAGEN");
+  const block = baukastenQuelle.slice(Math.max(0, stelle - 700), stelle);
+  const sorten = Object.values(SORTEN_VORLAGEN).filter((l) => l.length).length;
+  if (zahlwort[VORLAGEN.length]) {
+    assert.match(block, new RegExp(zahlwort[VORLAGEN.length]),
+      `der Kommentar nennt nicht ${VORLAGEN.length} Vorlagen`);
+  }
+  if (zahlwort[sorten]) {
+    assert.match(block, new RegExp(zahlwort[sorten] + " Sorten"),
+      `der Kommentar nennt nicht ${sorten} Sorten`);
+  }
+});
 
 pruefe("Der Baukasten steht ganz oben, vor UIX", () => {
   // Zuerst zusammenstecken, dann feinjustieren - die Reihenfolge der Knoepfe

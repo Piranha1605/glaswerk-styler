@@ -94,7 +94,10 @@ const STELLEN = {
   //   zoom: {h: 0.5}      nur die obere Haelfte
   //   zoom: {b: 0.6}      nur die linke 60 %
   //   zoom: {max: 220}    hoechstens 220 px Hoehe ab oben
-  "glas-karten":        { pfad: "/glaswerk-muster/muster", finde: "erste-karte", zoom: { max: 150 } },
+  // Die ha-card in einer hui-heading-card: dort wurde der Unterschied
+  // gemessen (Radius 20 gegen 12). Die erste Karte der Ansicht zeigte
+  // keinen - deshalb die Heading-Karte.
+  "glas-karten":        { pfad: "/glaswerk-muster/muster", finde: "heading-karte" },
   "glas-lichtkante":    { pfad: "/glaswerk-muster/muster", finde: "erste-karte" },
   "glas-symbolkachel":  { pfad: "/glaswerk-muster/muster", finde: "erste-karte", zoom: { b: 0.55, max: 150 } },
   "glas-nur-weichzeichnung": { pfad: "/glaswerk-muster/muster", finde: "markdown-karte", zoom: { max: 160 } },
@@ -103,7 +106,7 @@ const STELLEN = {
   "regler-gluehen":     { pfad: "/glaswerk-muster/muster", finde: "regler-zeile" },
   "regler-schlank":     { pfad: "/glaswerk-muster/muster", finde: "regler-zeile" },
   "glas-knoepfe":       { pfad: "/glaswerk-muster/muster", finde: "kopfknoepfe" },
-  "abschnitte-trennen": { pfad: "/glaswerk-muster/muster", finde: "abschnitt", zoom: { max: 130 } },
+  "abschnitte-trennen": { pfad: "/glaswerk-muster/muster", finde: "abschnitt-rand", zoom: { max: 140 } },
   // Ein einzelnes Badge statt der ganzen Reihe.
   "glas-badges":        { pfad: "/glaswerk-muster/muster", finde: "ein-badge" },
   "verlauf-kapsel":     { pfad: "/glaswerk-muster/leiste", finde: "bar" },
@@ -128,22 +131,10 @@ const STELLEN = {
 const OHNE_STELLE = {
   "glas-bubble": "Bubble Card ist auf der Testmaschine nicht installiert",
   "sync-bedienelemente": "braucht Bubble Card und Mushroom zum Vergleich",
-  // BEFUND vom 17.10.2026, nicht nur ein fehlendes Bild:
-  //
-  // uix-dialog kommt an KEINEM Bauteil an. Gemessen unter zwei Themes
-  // (vorschau_arbeit und glaswerk_v1), beide tragen das Feld in der Datei,
-  // uix-theme zeigt richtig - und UIX legt dafuer nirgends ein Stylesheet
-  // ab. Zum Vergleich: unter derselben Theme kommen regler-schlank,
-  // sync-bedienelemente und verlauf-kapsel an sechs Karten an.
-  //
-  // Das CSS zielt auf wa-drawer::part(dialog) - die ausfahrbare
-  // Seitenleiste, die es nur bei schmalem Fenster gibt. Ob UIX dieses
-  // Bauteil ueberhaupt patcht, ist die offene Frage; ein ::part() von
-  // aussen erreicht man nur, wenn das Stylesheet im richtigen Baum liegt.
-  //
-  // Solange das nicht geklaert ist, gaebe es hier zwei gleiche Bilder -
-  // und im Panel saehe man beim Ueberfahren nichts.
-  "glas-dialoge": "uix-dialog kommt an keinem Bauteil an - siehe Kommentar",
+  // glas-dialoge steht hier nicht mehr: Die Vorlage ist am 17.10.2026
+  // entfernt worden, weil uix-dialog an keinem Bauteil ankommt und ihre
+  // Regeln mit glas-more-info deckungsgleich waren. Die Begruendung steht
+  // an der Stelle, wo sie in vorlagen.js stand.
 
   // UNTER DER SICHTBARKEITSSCHWELLE, am 17.10.2026 mit Zoom gemessen.
   //
@@ -160,14 +151,45 @@ const OHNE_STELLE = {
   // Zum Wiederaufnehmen muesste je Vorlage das tatsaechlich bemalte
   // INNENBAUTEIL gesucht werden (etwa der Badge-Hintergrund statt des
   // ha-badge-Wirts). Das ist Einzelarbeit pro Vorlage.
-  "glas-karten": "unter 2 % sichtbar - der Effekt steckt tiefer als ha-card",
-  "glas-symbolkachel": "1,2 % sichtbar - Symbolflaeche liegt im Shadow Root der Kachel",
-  "glas-nur-weichzeichnung": "0 % sichtbar - hui-markdown-card aendert sich nicht",
-  "abschnitte-trennen": "0,6 % sichtbar - hui-grid-section aendert nur die Textfarbe",
-  "glas-badges": "0 % sichtbar - ha-badge aendert nur die Textfarbe",
-  "glas-more-info": "0 % sichtbar - der Radius kommt aus --wa-panel-border-radius, nicht aus der Vorlage",
-  "glas-toast": "0 % sichtbar",
-  "glas-knoepfe": "0 % sichtbar - ha-icon-button aendert nur die Textfarbe",
+  // Am 17.10.2026 wurde der ganze DOM zwischen glaswerk_v1 und ha_blanko
+  // verglichen - 885 Knoten, ueber alle Shadow-Grenzen. Von 251
+  // unterschiedlichen blieben nach Abzug der vererbten Textfarbe 74
+  // uebrig, und davon betrafen die allermeisten die Seitenleiste.
+  //
+  // Diese fuenf Bauteile tragen unter BEIDEN Themes ueberhaupt keine
+  // Flaeche - kein Hintergrund, kein Bild, kein Filter. Da ist nichts zu
+  // bemalen und folglich nichts zu zeigen. Das ist eine Aussage ueber die
+  // Vorlagen, nicht ueber das Werkzeug.
+  // Diese drei wurden mit korrigiertem Ausschnitt NOCHMAL versucht und
+  // blieben trotzdem unter der Schwelle:
+  //
+  //   glas-karten        0,0 % - auch an der ha-card IN einer
+  //                      hui-heading-card, wo ein Radiusunterschied
+  //                      20 gegen 12 gemessen wurde. Vier Pixel Rundung
+  //                      an einer Ecke sind in 440x275 nichts.
+  //   abschnitte-trennen 0,6 % - der div in hui-sections-view aendert
+  //                      Radius 26 gegen 16. Dasselbe Problem.
+  //   glas-toast         0,5 % - die Vorlage wirkt nachweislich
+  //                      (blur(20px) saturate(1.7), Radius 18px gegen
+  //                      none/0px), aber eine Weichzeichnung auf dunklem,
+  //                      ruhigem Grund hat nichts zu zeigen. Der Toast
+  //                      musste dafuer erst unmittelbar vor der Aufnahme
+  //                      ausgeloest werden - er steht nur vier Sekunden
+  //                      und war vorher bei BEIDEN Durchgaengen schon weg.
+  "glas-karten": "0,0 % sichtbar - vier Pixel Radiusunterschied gehen in 440x275 unter",
+  "abschnitte-trennen": "0,6 % sichtbar - nur ein Radiusunterschied am Abschnitt",
+  "glas-toast": "0,5 % sichtbar - die Weichzeichnung hat auf ruhigem Grund nichts zu zeigen",
+
+  "glas-badges": "ha-badge traegt unter keiner Theme eine Flaeche",
+  "glas-symbolkachel": "ha-tile-icon traegt unter keiner Theme eine Flaeche",
+  "glas-knoepfe": "ha-icon-button traegt unter keiner Theme eine Flaeche",
+  "glas-nur-weichzeichnung": "hui-markdown-card traegt unter keiner Theme eine Flaeche",
+  // Der Radius des Dialogs kommt aus --wa-panel-border-radius (38px gegen
+  // 24px), einem gewoehnlichen Theme-Feld. Die Vorlage liest
+  // --ha-dialog-border-radius, das nirgends gesetzt ist.
+  "glas-more-info": "der Radius kommt aus der Theme, nicht aus der Vorlage",
+  // Gemessen 0,1 % - die Leiste der Einstellungsseiten unterscheidet sich
+  // zu wenig, um in einem 440x275-Bild aufzufallen.
   "glas-kopfleiste-einstellungen": "0,1 % sichtbar",
 };
 
@@ -270,9 +292,29 @@ function stelle(was) {
   }
   if (was === "toast") {
     // NICHT notification-manager: der ist 0x0 und nur der Wirt. Das
-    // sichtbare Bauteil ist ha-toast (gemessen 350x48).
+    // sichtbare Bauteil ist ha-toast (gemessen 350x48). Dort wirkt die
+    // Vorlage messbar: blur(20px) saturate(1.7), Radius 18px, Schatten -
+    // unter ha_blanko traegt es gar keine Flaeche.
     return tief(document, (e) => /ha-toast|mwc-snackbar/.test(e.localName))
       .find((e) => e.getBoundingClientRect().width > 50) ?? null;
+  }
+  if (was === "heading-karte") {
+    // Die ha-card INNERHALB einer hui-heading-card: Dort wurde der
+    // Unterschied gemessen (Radius 20px unter glaswerk_v1, 12px unter
+    // ha_blanko). Die aeussere hui-heading-card traegt nichts.
+    const h = tief(document, (e) => e.localName === "hui-heading-card")[0];
+    if (!h) return null;
+    const k = tief(h, (e) => e.localName === "ha-card")[0];
+    return k ?? h;
+  }
+  if (was === "abschnitt-rand") {
+    // Der div in hui-sections-view, nicht die hui-grid-section: Dort
+    // aendert sich der Radius (26px gegen 16px).
+    const v = tief(document, (e) => e.localName === "hui-sections-view")[0];
+    if (!v) return null;
+    const d = [...(v.shadowRoot || v).querySelectorAll("div")]
+      .find((e) => { const r = e.getBoundingClientRect(); return r.width > 200 && r.height > 100; });
+    return d ?? null;
   }
   if (was === "drawer") {
     // Der wa-drawer selbst ist 0 hoch; sichtbar ist sein part(dialog) im
@@ -462,15 +504,24 @@ try {
         })()`);
         await warte(1600);
       }
-      if (stelle.oeffne === "toast") {
+      // Der Toast kommt ERST NACH der Wartezeit - er steht nur rund vier
+      // Sekunden, und bisRuhe() darf bis zu fuenf warten. Am 17.10.2026
+      // gemessen: bei 3000 ms noch 350x48, bei 5000 ms weg. Vorher
+      // ausgeloest war er zum Aufnahmezeitpunkt in BEIDEN Durchgaengen
+      // verschwunden - zwei leere Bilder, 0,0 % Unterschied, und die
+      // Vorlage sah wirkungslos aus, obwohl sie einzeln nachweislich
+      // wirkt (blur(20px), Radius 18px gegen none/0px ohne sie).
+      const toastJetzt = async () => {
+        if (stelle.oeffne !== "toast") return;
         await c.lies(`(() => {
           const ha = document.querySelector("home-assistant");
           ha.dispatchEvent(new CustomEvent("hass-notification",
             { detail: { message: "Glaswerk" }, bubbles: true, composed: true }));
           return true;
         })()`);
-        await warte(900);
-      }
+        await warte(700);
+      };
+      await toastJetzt();
 
       // Auf Ruhe warten: ha-card traegt transition: all .3s, und beim Laden
       // reihen sich mehrere Theme-Durchlaeufe. Zweimal messen, bis gleich.
@@ -492,6 +543,27 @@ try {
 
       if (!vor) { maengel.push(`${an ? "nachher" : "vorher"}: ${stelle.finde} nicht auf der Seite`); break; }
       if (vor.w < 20 || vor.h < 20) { maengel.push(`${an ? "nachher" : "vorher"}: Element ist ${Math.round(vor.w)}x${Math.round(vor.h)}`); break; }
+
+      // Falls die Wartezeit den Toast hat verfallen lassen: neu ausloesen
+      // und die Lage frisch holen. Sonst nimmt captureScreenshot einen
+      // Ausschnitt auf, an dem nichts mehr steht.
+      if (stelle.oeffne === "toast") {
+        const steht = await c.lies(`(() => { ${SUCHER}
+          const el = stelle("toast");
+          return el ? el.getBoundingClientRect().width > 50 : false;
+        })()`);
+        if (!steht) {
+          await toastJetzt();
+          const neu = await c.lies(`(() => { ${SUCHER}
+            const el = stelle("toast");
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { x: r.left, y: r.top, w: r.width, h: r.height };
+          })()`);
+          if (!neu) { maengel.push(`${an ? "nachher" : "vorher"}: Toast steht nicht`); break; }
+          Object.assign(vor, neu);
+        }
+      }
 
       // PRUEFUNG 1: Wirkt die Vorlage ueberhaupt?
       //
@@ -519,6 +591,27 @@ try {
           return false;
         })()`);
         if (!drin) maengel.push(`die Vorlage wirkt nicht - ihr CSS steht in keinem Shadow Root`);
+      }
+
+      // Den Toast UNMITTELBAR vor der Aufnahme frisch ausloesen.
+      //
+      // Zwischen Positionsmessung und captureScreenshot liegt die
+      // Wirkungspruefung oben, die ueber alle Shadow Roots laeuft und
+      // Zeit kostet. Der Toast steht nur rund vier Sekunden - er war
+      // deshalb bei der Aufnahme regelmaessig schon weg, in BEIDEN
+      // Durchgaengen. Die Rohbilder waren byteweise identisch, 0,0 %
+      // Unterschied, und die Vorlage sah wirkungslos aus. Gemessen wirkt
+      // sie: blur(20px) saturate(1.7), Radius 18px gegen none/0px.
+      if (stelle.oeffne === "toast") {
+        await toastJetzt();
+        const frisch = await c.lies(`(() => { ${SUCHER}
+          const el = stelle("toast");
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { x: r.left, y: r.top, w: r.width, h: r.height };
+        })()`);
+        if (!frisch) { maengel.push(`${an ? "nachher" : "vorher"}: Toast steht zur Aufnahme nicht`); break; }
+        Object.assign(vor, frisch);
       }
 
       // Aufnehmen. Etwas Rand mit, damit die Kante im Bild liegt.

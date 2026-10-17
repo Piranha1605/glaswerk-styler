@@ -1144,16 +1144,19 @@ export const KARTENSTIL_FELDER = [...KARTENFELDER, ...FLAECHENFELDER];
 // eine macht Flaechen, die andere Bedienelemente - fuer den Nutzer sind das
 // zwei verschiedene Dinge am selben Ort, naemlich auf der Karte.
 //
-// Vierzehn Vorlagen auf fuenf Sorten. "Oberflaeche" ist dazugekommen, weil
+// Neunzehn Vorlagen auf drei Sorten. "Oberflaeche" ist dazugekommen, weil
 // Seitenleiste, Kopfleiste und Dialoge sonst nirgends hingehoert haetten -
 // sie sind weder Karte noch Hintergrund.
+//
+// Die Zahlen standen hier bis zum 17.10.2026 auf "Vierzehn auf fuenf" und
+// waren damit doppelt falsch. Ein Test zaehlt sie jetzt nach.
 
 export const SORTEN_VORLAGEN = {
   karten: ["glas-karten", "glas-bubble", "glas-nur-weichzeichnung", "glas-lichtkante", "glas-symbolkachel",
            "sync-bedienelemente", "glas-knoepfe", "regler-gluehen", "regler-schlank"],
   hintergrund: ["abschnitte-trennen"],
   oberflaeche: ["grund-ueberall", "glas-leistenknoepfe", "glas-seitenleiste", "glas-kopfleiste", "glas-kopfleiste-einstellungen",
-                "glas-dialoge", "glas-more-info", "glas-badges", "glas-toast",
+                "glas-more-info", "glas-badges", "glas-toast",
                 // Zielt auf uix-card, gehoert aber zur Oberflaeche: Die Kapsel
                 // ist der aktive Knopf der Steuerleiste, kein Kartenstil.
                 "verlauf-kapsel"],
