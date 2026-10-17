@@ -152,6 +152,24 @@ pruefe("Die zuletzt geoeffnete Theme wird gemerkt - an jeder Stelle, die sie aen
     "da liegt mehr als der Name im localStorage");
 });
 
+pruefe("Die Baukasten-Kachel wirft keine geladene Theme weg", () => {
+  // Am 17.10.2026 passiert: Theme laden, Baukasten oeffnen, speichern - und
+  // die Datei war blanko. Die Kachel rief neuBeginnen() IMMER, also auch ueber
+  // einer geladenen Theme: Name leer, Grundlage zurueck auf ha_blanko, alle
+  // Felder verworfen. Gewarnt hat nichts, weil eine frisch geladene Theme
+  // nichts Geaendertes hat und darfVerlassen() deshalb durchlaesst.
+  const block = panel.slice(panel.indexOf('const was = b.dataset.start;'),
+                            panel.indexOf('schalter[was]?.();'));
+  assert.match(block, /if \(was === "baukasten"\)/, "die Kachel fuehrt nicht mehr zum Baukasten");
+  // Der Kern: neuBeginnen steht hinter einer Bedingung, nicht davor.
+  assert.match(block, /const leer = !ZUSTAND\.name && ZUSTAND\.meta\.Grundlage === "ha_blanko"/,
+    "die Kachel prueft nicht mehr, ob ueberhaupt etwas geladen ist");
+  assert.match(block, /if \(leer\) await this\.neuBeginnen\(\)/,
+    "neuBeginnen haengt nicht an der Bedingung");
+  assert.doesNotMatch(block, /\{ await this\.neuBeginnen\(\); this\.oeffneBaukasten\(\)/,
+    "die Kachel wirft wieder bedingungslos weg");
+});
+
 pruefe("Oeffnen setzt den Vergleichsstand neu", () => {
   // Sonst zaehlt "geaendert" gegen die Vorlage statt gegen die Datei, und der
   // Zaehler steht beim Oeffnen sofort auf mehreren hundert.

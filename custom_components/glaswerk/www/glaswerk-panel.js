@@ -3220,7 +3220,22 @@ class GlaswerkPanel extends HTMLElement {
         // "Mit dem Baukasten" ist kein eigener Weg, sondern zwei: erst eine
         // neue Theme, dann der Baukasten darueber. Ohne Theme waere er leer
         // und alle Kacheln gesperrt.
-        if (was === "baukasten") { await this.neuBeginnen(); this.oeffneBaukasten(); return; }
+        //
+        // ABER nur, wenn wirklich noch nichts geladen ist. Bis zum 17.10.2026
+        // rief die Kachel neuBeginnen() IMMER - und warf damit jede geladene
+        // Theme weg: Name leer, Herkunft zurueck auf ha_blanko, alle
+        // geaenderten Felder verworfen. Enrico ist es zweimal passiert,
+        // zuletzt mit Piranha.yaml: laden, Baukasten oeffnen, speichern - und
+        // die Datei war blanko, von 76 KB auf 16 KB. darfVerlassen() greift
+        // dabei nicht, weil eine frisch geladene Theme nichts Geaendertes hat.
+        // Der Knopf in der Symbolleiste machte es laengst richtig und oeffnet
+        // nur.
+        if (was === "baukasten") {
+          const leer = !ZUSTAND.name && ZUSTAND.meta.Grundlage === "ha_blanko";
+          if (leer) await this.neuBeginnen();
+          this.oeffneBaukasten();
+          return;
+        }
         schalter[was]?.();
       })
     );
