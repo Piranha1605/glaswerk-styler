@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Rahmen 1 - Aufsicht. 5 s, kein Text.
+         Der Kopf wird beim Einhaengen verworfen; alles Noetige steht im
+         <template>. -->
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          /* Der Grundton der Theme, nicht Schwarz - frame.md. */
+          background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+        }
+        /* Die Buehne traegt die Perspektive, die Ebene dreht sich darin.
+           Zwei Elemente, weil ein gedrehtes Element seine eigene Perspektive
+           nicht setzen kann. */
+        #f1-stage {
+          position: absolute;
+          inset: 0;
+          perspective: 1700px;
+          perspective-origin: 50% 46%;
+        }
+        #f1-plane {
+          position: absolute;
+          inset: 0;
+          transform-style: preserve-3d;
+        }
+        #f1-video {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 1920px;
+          height: 1080px;
+          margin: -540px 0 0 -960px;
+          border-radius: 22px;
+          object-fit: cover;
+          /* Der Wurf der Theme, nur groesser: Die Ebene schwebt im Raum. */
+          box-shadow: 0 60px 150px rgba(0, 0, 0, 0.62), 0 8px 24px rgba(0, 0, 0, 0.38);
+        }
+        /* EIN Lichtstreifen, einmal - kein Blinken. Er laeuft ueber das Glas,
+           nicht darunter, und faengt sich an der Rundung. */
+        #f1-sheen {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 1920px;
+          height: 1080px;
+          margin: -540px 0 0 -960px;
+          border-radius: 22px;
+          overflow: hidden;
+          pointer-events: none;
+        }
+        #f1-sheen i {
+          position: absolute;
+          top: -40%;
+          left: -70%;
+          width: 46%;
+          height: 180%;
+          display: block;
+          transform: rotate(18deg);
+          background: linear-gradient(
+            100deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.1) 42%,
+            rgba(255, 255, 255, 0.18) 50%,
+            rgba(255, 255, 255, 0.1) 58%,
+            rgba(255, 255, 255, 0) 100%
+          );
+        }
+        /* Die Raumtiefe: aussen dunkler, damit die Ebene nicht an den Rand
+           klebt. */
+        #f1-vignette {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(130% 95% at 50% 44%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.55) 100%);
+        }
+      </style>
+
+      <div data-hf-id="hf-z61k" id="root" data-composition-id="f1-aufsicht" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-itwj" id="f1-stage">
+          <div data-hf-id="hf-a48b" id="f1-plane">
+            <video data-hf-id="hf-10oh"
+              id="f1-video"
+              class="clip"
+              src="filme/01-aufsicht-bewegt.mp4"
+              muted
+              playsinline
+              data-start="0"
+              data-duration="5"
+              data-track-index="0"
+            ></video>
+            <div data-hf-id="hf-r77r" id="f1-sheen" data-layout-allow-overflow><i data-hf-id="hf-3e1i" data-layout-allow-overflow></i></div>
+          </div>
+        </div>
+        <div data-hf-id="hf-nge5" id="f1-vignette"></div>
+      </div>
+
+      <script>
+        const tl = gsap.timeline({ paused: true });
+
+        // Die Kamera sinkt ab und dreht zwei Grad mit. Anfangswert steht IM
+        // fromTo, nicht im CSS - sonst streiten CSS-transform und Tween
+        // (lint: gsap_css_transform_conflict).
+        tl.fromTo(
+          "#f1-plane",
+          { rotateX: 54, rotateZ: -3.2, y: 70, scale: 1.04 },
+          { rotateX: 46, rotateZ: -1.2, y: 10, scale: 1.0, duration: 5, ease: "none" },
+          0
+        );
+
+        // Der Lichtstreifen: einmal durch, in der Mitte der Szene.
+        tl.fromTo("#f1-sheen i", { xPercent: 0 }, { xPercent: 520, duration: 2.6, ease: "power1.inOut" }, 1.1);
+
+        // Das Bild kommt aus dem Dunkeln, statt zu stehen.
+        tl.fromTo("#f1-video", { opacity: 0 }, { opacity: 1, duration: 0.9, ease: "power2.out" }, 0);
+
+        window.__timelines["f1-aufsicht"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

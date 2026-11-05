@@ -1,0 +1,37 @@
+#!/bin/sh
+# Enforces the commit format described in COMMITS.md.
+# Enable once per clone: git config core.hooksPath .githooks
+
+msg_file="$1"
+subject=$(sed -n '1p' "$msg_file")
+body=$(sed '1,2d' "$msg_file" | grep -v '^#')
+
+fail() {
+  echo "commit-msg: $1" >&2
+  echo "See COMMITS.md for the format." >&2
+  exit 1
+}
+
+echo "$subject" | grep -Eq '^(Fix|Add|Change|Remove|Docs|Test|Build): .{3,}$' \
+  || fail "first line must be '<Fix|Add|Change|Remove|Docs|Test|Build>: <short summary>'"
+
+[ ${#subject} -le 72 ] || fail "first line is longer than 72 characters"
+
+if echo "$subject" | grep -q '^Fix:'; then
+  echo "$body" | grep -q '^Problem: .' || fail "a Fix needs a 'Problem:' line"
+  echo "$body" | grep -q '^Solution: .' || fail "a Fix needs a 'Solution:' line"
+fi
+
+# No tool signatures.
+if grep -v '^#' "$msg_file" | grep -Eiq 'claude|co-authored-by|generated with'; then
+  fail "no names or signatures in commit messages"
+fi
+
+# No personal names: whole words, set per clone, kept out of the repository:
+#   git config commit-msg.blocked 'name1|name2'
+blocked=$(git config --get commit-msg.blocked)
+if [ -n "$blocked" ] && grep -v '^#' "$msg_file" | grep -Eiwq "$blocked"; then
+  fail "no names in commit messages"
+fi
+
+exit 0

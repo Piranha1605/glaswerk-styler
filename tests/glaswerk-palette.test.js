@@ -1,0 +1,157 @@
+// Die Palettenrechnung. Der strengste Test ist der Rueckweg: fuettert man HAs
+// eigene Farbe hinein, muss HAs eigene Rampe herauskommen. Tut sie das nicht,
+// taugt das Profil nicht.
+
+import assert from "node:assert";
+import { rampe, hexZuHsl, hslZuHex, STUFEN, HA_PROFIL } from "../custom_components/glaswerk/www/palette.js";
+
+let n = 0;
+function pruefe(was, fn) { fn(); n++; console.log("ok", was); }
+
+// HAs eigene Stufe 60 je Rolle, aus docs/beispiele/ha-blanko.yaml
+const HA_60 = { primary: "#37c8fd", neutral: "#989898", red: "#f3676c", green: "#00ac49", orange: "#f36d00" };
+// und HAs eigene volle Rampen, soweit fuer die Pruefung gebraucht
+const HA_NEUTRAL = ["#141414", "#202020", "#363636", "#4a4a4a", "#5e5e5e", "#7a7a7a", "#989898"];
+
+function abstand(a, b) {
+  const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
+  return Math.max(
+    Math.abs(((x >> 16) & 255) - ((y >> 16) & 255)),
+    Math.abs(((x >> 8) & 255) - ((y >> 8) & 255)),
+    Math.abs((x & 255) - (y & 255)));
+}
+
+pruefe("Neutral reproduziert HAs Rampe exakt", () => {
+  const r = Object.values(rampe("#5e5e5e", "neutral"));
+  HA_NEUTRAL.forEach((soll, i) => assert.strictEqual(r[i], soll, `Stufe ${STUFEN[i]}`));
+});
+
+pruefe("Jede Rolle trifft ihre eigene Stufe 60 nah", () => {
+  // Nicht exakt: HAs Rampen sind von Hand abgestimmt, die Rechnung ist eine
+  // Annaeherung. Zehn Stufen Abweichung je Kanal sind akzeptabel.
+  for (const [rolle, hex] of Object.entries(HA_60)) {
+    const r = rampe(hex, rolle);
+    const d = abstand(r[`ha-color-${rolle}-60`], hex);
+    assert.ok(d <= 10, `${rolle}: ${r[`ha-color-${rolle}-60`]} statt ${hex}, Abstand ${d}`);
+  }
+});
+
+pruefe("Die Helligkeit steigt mit der Stufennummer, ohne Ausreisser", () => {
+  for (const rolle of Object.keys(HA_PROFIL)) {
+    const werte = Object.values(rampe("#3388cc", rolle));
+    let vorher = -1;
+    werte.forEach((hex, i) => {
+      const l = hexZuHsl(hex).l;
+      assert.ok(l > vorher, `${rolle} Stufe ${STUFEN[i]}: ${l} nicht heller als ${vorher}`);
+      vorher = l;
+    });
+  }
+});
+
+pruefe("Jeder Wert ist sechsstelliges Hex - sonst gibt es kein RGB-Tripel", () => {
+  // Home Assistant leitet --rgb-<name> nur aus Werten ab, die mit # beginnen.
+  // Mushroom baut seine Zustandsfarben aus genau diesen Tripeln.
+  for (const rolle of Object.keys(HA_PROFIL))
+    for (const [k, v] of Object.entries(rampe("#ff9800", rolle)))
+      assert.match(v, /^#[0-9a-f]{6}$/, `${k} = ${v}`);
+});
+
+pruefe("Elf Stufen mit den richtigen Namen", () => {
+  const r = rampe("#ff9800", "orange");
+  assert.strictEqual(Object.keys(r).length, 11);
+  assert.deepStrictEqual(Object.keys(r), STUFEN.map((s) => `ha-color-orange-${s}`));
+});
+
+pruefe("Der Farbton des Nutzers bleibt erhalten", () => {
+  const r = rampe("#cc3388", "primary");
+  const soll = hexZuHsl("#cc3388").h;
+  for (const st of ["30", "50", "70"]) {
+    const h = hexZuHsl(r[`ha-color-primary-${st}`]).h;
+    assert.ok(Math.abs(h - soll) < 2, `Stufe ${st}: ${h} statt ${soll}`);
+  }
+});
+
+pruefe("Neutral bleibt grau, egal welche Farbe hineingeht", () => {
+  for (const [k, v] of Object.entries(rampe("#cc3388", "neutral")))
+    assert.strictEqual(hexZuHsl(v).s, 0, `${k} = ${v} ist nicht grau`);
+});
+
+pruefe("Unsinn liefert null statt einer erfundenen Rampe", () => {
+  assert.strictEqual(rampe("kein hex", "orange"), null);
+  assert.strictEqual(rampe("#ff9800", "gibtesnicht"), null);
+  // Gegenprobe: gueltige Eingabe liefert sehr wohl etwas
+  assert.ok(rampe("#ff9800", "orange"));
+});
+
+pruefe("hexZuHsl und hslZuHex sind zueinander umkehrbar", () => {
+  for (const hex of ["#ff9800", "#37c8fd", "#00ac49", "#141414", "#ffffff"]) {
+    const { h, s, l } = hexZuHsl(hex);
+    assert.ok(abstand(hslZuHex(h, s, l), hex) <= 1, `${hex} -> ${hslZuHex(h, s, l)}`);
+  }
+});
+
+assert.ok(n >= 9, `nur ${n} Pruefungen gelaufen - der Test prueft nichts`);
+console.log(`\n${n} Pruefungen`);
+
+// --- Nachtrag: die klassischen Begleiter ---
+import { begleiter, alsTripel } from "../custom_components/glaswerk/www/palette.js";
+
+pruefe("Die Begleiter folgen der Rampe, nicht dem alten Blau", () => {
+  const b = begleiter("#cc3388");
+  const r = rampe("#cc3388", "primary");
+  assert.strictEqual(b["dark-primary-color"], r["ha-color-primary-30"]);
+  assert.strictEqual(b["light-primary-color"], r["ha-color-primary-80"]);
+  // Stufe 50, nicht 40: siehe die Begruendung in palette.js.
+  assert.strictEqual(b["state-icon-color"], r["ha-color-primary-50"]);
+  assert.strictEqual(b["primary-color"], r["ha-color-primary-50"]);
+  // Symbol und Kapsel duerfen nicht zwei verschiedene Blau sein.
+  assert.strictEqual(b["state-icon-color"], b["primary-color"]);
+  // Gegenprobe: nichts davon ist noch HAs Blau
+  for (const v of Object.values(b)) assert.notStrictEqual(v, "#0288d1");
+});
+
+pruefe("primary-color wird mitgeschrieben - und bleibt dadurch in Takt", () => {
+  // Hier stand bis zum 14.10.2026 das Gegenteil: "primary-color ist NICHT
+  // dabei - HA leitet es selbst ab". Das stimmte, solange niemand es anfasste.
+  //
+  // Gemessen hat sich aber gezeigt, dass HAs eigene Ableitung
+  // (var(--ha-color-primary-40)) den dunkelsten der vier Blautoene liefert,
+  // die auf einer Seite nebeneinander stehen. Stufe 50 trifft die anderen.
+  //
+  // Die alte Sorge bleibt berechtigt - ein VON HAND gesetzter Wert friert die
+  // Rampe ein. Sie ist nur nicht mehr der Fall: Wer die Palette wechselt,
+  // bekommt das Feld neu, weil begleiter() es mitschreibt.
+  const b = begleiter("#cc3388");
+  assert.ok("primary-color" in b, "primary-color fehlt bei den Begleitern");
+  // Die Gegenprobe zur alten Sorge: zwei Paletten, zwei Werte. Bliebe es
+  // stehen, waeren sie gleich.
+  assert.notStrictEqual(begleiter("#cc3388")["primary-color"],
+                        begleiter("#2196f3")["primary-color"]);
+  // Und das Tripel haengt an DERSELBEN Stufe - sonst laeuft es der Farbe
+  // davon, wie rgb-accent-color am 12.10.2026.
+  const r = rampe("#cc3388", "primary");
+  assert.strictEqual(b["rgb-primary-color"], alsTripel(r["ha-color-primary-50"]));
+});
+
+console.log(`\n${n} Pruefungen (mit Begleitern)`);
+
+pruefe("darker-primary-color und rgb-primary-color folgen mit", () => {
+  // Beide blieben sonst auf HAs Blau stehen. Beim Tripel ist es besonders
+  // tueckisch: Home Assistant leitet --rgb-<name> NICHT ab, wenn das Theme
+  // schon ein eigenes rgb-Feld mitbringt - und ha_blanko bringt eines mit.
+  const b = begleiter("#2e9e4f");
+  const r = rampe("#2e9e4f", "primary");
+  assert.strictEqual(b["darker-primary-color"], r["ha-color-primary-20"]);
+  assert.match(b["rgb-primary-color"], /^\d{1,3}, \d{1,3}, \d{1,3}$/);
+  // Das Tripel gehoert zu Stufe 50 - seit dem 14.10.2026 schreibt der
+  // Baukasten --primary-color selbst, und zwar aus dieser Stufe. Vorher war
+  // es die 40, weil HA das Feld von sich aus so ableitete.
+  const h = r["ha-color-primary-50"];
+  const soll = [1, 2, 3].map((i) => parseInt(h.slice(1 + (i - 1) * 2, 1 + i * 2), 16)).join(", ");
+  assert.strictEqual(b["rgb-primary-color"], soll);
+  // Gegenprobe: nichts davon ist noch HAs Blau
+  assert.notStrictEqual(b["darker-primary-color"], "#016194");
+  assert.notStrictEqual(b["rgb-primary-color"], "0, 154, 199");
+});
+
+console.log(`\n${n} Pruefungen (vollstaendig)`);

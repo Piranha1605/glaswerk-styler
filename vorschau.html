@@ -1,0 +1,9 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Glaswerk – Entwurf</title>
+<style>html,body{margin:0;height:100%}glaswerk-panel{display:block;height:100vh}</style>
+<glaswerk-panel id="p"></glaswerk-panel>
+<script type="module">
+  import "./custom_components/glaswerk/www/glaswerk-panel.js";
+  document.getElementById("p").hass = { language: "de", themes: { theme: "ha_blanko", darkMode: false } };
+</script>

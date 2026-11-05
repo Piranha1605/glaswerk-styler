@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Rahmen 8 - Der Name. 3,5 s.
+         Die Wortmarke ist Richtung C1 "Kernlicht", am 15.10.2026 gewaehlt:
+         das Wort als Glas, von innen beleuchtet.
+
+         DAS WORT IST EIN STAPEL, keine Schriftfarbe. Glas besteht aus
+         Dingen, die eine Farbe nicht kann - Licht, das austritt, ein
+         durchscheinender Koerper, ein leuchtender Kern, eine geschliffene
+         Kante, ein Glanz obendrauf. Jede Lage ist dasselbe Wort an
+         derselben Stelle: eine liegt im Fluss und haelt den Platz, der
+         Rest steht absolut darueber.
+
+         Und daraus kommt die Bewegung: Das Glas steht zuerst DUNKEL da
+         (Koerper und Kante), dann geht das Licht an (Kern und Halo). Ein
+         Logo, das nur eingeblendet wird, haette von dem Einfall nichts
+         gezeigt. -->
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+          font-family: system-ui, ui-sans-serif, sans-serif;
+          display: grid;
+          place-items: center;
+          align-content: center;
+        }
+        /* Der Schein hinter dem Wort - er macht aus der Flaeche einen Raum,
+           in dem eine Lampe steht. */
+        #f8-schein {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 1700px;
+          height: 760px;
+          margin: -420px 0 0 -850px;
+          border-radius: 50%;
+          pointer-events: none;
+          background: radial-gradient(ellipse at 50% 50%,
+            rgba(118, 170, 240, 0.26) 0%, rgba(90, 140, 220, 0.10) 42%, transparent 72%);
+          filter: blur(40px);
+        }
+
+        #f8-glas {
+          position: relative;
+          display: inline-block;
+          line-height: 1;
+        }
+        #f8-glas span {
+          font-size: 188px;
+          font-weight: 800;
+          letter-spacing: 0.022em;
+          white-space: nowrap;
+        }
+        #f8-glas .l {
+          position: absolute;
+          left: 0;
+          top: 0;
+          display: block;
+        }
+        /* Die Lage im Fluss haelt die Groesse; zu sehen ist sie nie. */
+        #f8-platz {
+          visibility: hidden;
+          display: block;
+        }
+
+        #f8-halo { color: #a9ccff; filter: blur(26px); }
+        #f8-koerper { color: rgba(150, 190, 240, 0.12); }
+        #f8-kern {
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: radial-gradient(ellipse 58% 68% at 50% 58%,
+            rgba(255, 255, 255, 0.9) 0%, rgba(198, 228, 255, 0.52) 36%,
+            rgba(140, 190, 250, 0.07) 72%, transparent 86%);
+        }
+        /* Schliff UND Glanz auf einer Lage: Eine Lage, die nur einen
+           Strich traegt und keine Fuellung, ist fuer die Layoutpruefung
+           eine Schrift, die nicht gemalt wird - zu Recht, und einen Marker
+           dafuer gibt es nicht. Oben liegen muss der Schliff ohnehin,
+           sonst malt der Kern die innere Haelfte des Strichs zu. */
+        #f8-glanz {
+          color: transparent;
+          -webkit-text-stroke: 1.6px rgba(214, 235, 255, 0.52);
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.8) 6%, rgba(255, 255, 255, 0.12) 26%, rgba(255, 255, 255, 0) 40%);
+        }
+        /* Der Lichtstreifen laeuft EINMAL ueber das Glas. Er ist auf die
+           Schrift maskiert, nicht auf einen Kasten - sonst liefe er auch
+           ueber die Luecken zwischen den Buchstaben. */
+        #f8-streif {
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-repeat: no-repeat;
+          background-size: 900px 100%;
+          background-image: linear-gradient(104deg,
+            rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 44%,
+            rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0.5) 56%, rgba(255, 255, 255, 0) 100%);
+        }
+
+        #f8-unten {
+          margin-top: 44px;
+          font-size: 44px;
+          font-weight: 400;
+          text-align: center;
+          display: block;
+        }
+        #f8-klein {
+          margin-top: 18px;
+          font-size: 26px;
+          font-weight: 400;
+          letter-spacing: 0.08em;
+          text-align: center;
+          display: block;
+        }
+
+        /* DIE GLASPLATTE unter jeder Beschriftung. Auf Ansage vom
+           15.10.2026: "leg die overlays auf eine glasplatte und macht die
+           schriftfarbe auch zum glaslook".
+
+           Sie loest nebenbei ein Problem, das zweimal gemessen wurde: Die
+           Theme schaltet im Film auf Hell, und weisse Schrift auf hellem
+           Grund faellt der Kontrastpruefung nicht auf, weil ein Bild oder
+           ein Video dahinterliegt und kein Farbwert. Auf einer dunklen
+           Platte traegt die Schrift in beiden Modi, ohne Tricks. */
+        .glasplatte {
+          padding: 16px 32px;
+          border-radius: 18px;
+          /* 0,84 statt 0,62: Bei 0,62 zog der backdrop-filter auf dem HELLEN
+             Theme so viel Helligkeit herauf, dass die Platte hellblau wurde
+             und die helle Glasschrift darauf verschwand - gemessen bei 13 s.
+             Die Platte muss dunkel sein, egal was dahinterliegt; die
+             Weichzeichnung macht die Kanten, nicht die Farbe. */
+          background: linear-gradient(150deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.012) 58%),
+            rgba(10, 15, 26, 0.84);
+          backdrop-filter: blur(28px) saturate(180%);
+          box-shadow: inset 0 1.5px 0 0 rgba(255, 255, 255, 0.26),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+            inset 0 -1.5px 0 0 rgba(0, 0, 0, 0.4),
+            0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+        }
+        /* UND DIE SCHRIFT SELBST IST GLAS: hell an der Oberkante, matter im
+           Bauch, wieder hell an der Unterkante - so faengt eine geschliffene
+           Kante das Licht. Dazu ein feiner Schliff als Strich und ein Schein
+           nach aussen.
+
+           Die Fuellung ist durchsichtig und kommt aus dem Verlauf. Das ist
+           der Fall, den die Layoutpruefung als beabsichtigt kennt
+           (background-clip: text) - eine durchsichtige Schrift OHNE ihn
+           meldet sie zu Recht als nicht gemalt. */
+        .glasschrift {
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 255, 0.92) 30%,
+            rgba(198, 224, 252, 0.86) 60%, rgba(236, 246, 255, 0.99) 100%);
+          -webkit-text-stroke: 0.9px rgba(226, 243, 255, 0.38);
+          filter: drop-shadow(0 0 16px rgba(150, 200, 255, 0.38))
+            drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+        }
+      </style>
+
+      <div id="root" data-composition-id="f8-name" data-width="1920" data-height="1080">
+        <div id="f8-schein" data-layout-allow-overflow></div>
+        <div id="f8-block" class="clip" data-start="0" data-duration="3.5" data-track-index="0">
+          <div id="f8-glas">
+            <span class="l" id="f8-halo" data-layout-allow-occlusion>GLASWERK</span>
+            <span class="l" id="f8-koerper" data-layout-allow-occlusion>GLASWERK</span>
+            <span class="l" id="f8-kern" data-layout-allow-occlusion>GLASWERK</span>
+            <span class="l" id="f8-glanz" data-layout-allow-occlusion>GLASWERK</span>
+            <span class="l" id="f8-streif" data-layout-allow-overflow data-layout-allow-occlusion>GLASWERK</span>
+            <span id="f8-platz">GLASWERK</span>
+          </div>
+          <span id="f8-unten" class="glasschrift">Theme. App. Cards. Widgets.</span>
+          <span id="f8-klein" class="glasschrift">Home Assistant Theme Studio</span>
+        </div>
+      </div>
+
+      <script>
+        const tl = gsap.timeline({ paused: true });
+
+        // 1. Das Glas kommt - dunkel. Koerper und Kante sind alles, was
+        //    jetzt zu sehen ist: eine Scheibe, in die etwas geschnitten ist.
+        tl.fromTo(
+          "#f8-glas",
+          { opacity: 0, scale: 0.94, y: 26 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "back.out(1.4)" },
+          0
+        );
+        // Nur das LICHT steht am Anfang auf null. Schliff und Glanz gehoeren zum
+        // Glas und sind von Bild eins an da - sonst erschiene die Scheibe erst
+        // mit der Lampe, und der ganze Einfall waere hin.
+        gsap.set(["#f8-kern", "#f8-halo", "#f8-streif"], { opacity: 0 });
+
+        // 2. Das Licht geht an. Der Halo ueberschiesst leicht und faellt
+        //    zurueck - eine Lampe, die anlaeuft, steht nicht sofort still.
+        tl.to("#f8-kern", { opacity: 1, duration: 0.75, ease: "power2.out" }, 0.38);
+        tl.fromTo("#f8-halo", { opacity: 0 }, { opacity: 0.62, duration: 0.5, ease: "power2.out" }, 0.38);
+        tl.to("#f8-halo", { opacity: 0.46, duration: 0.5, ease: "power1.inOut" }, 0.9);
+
+        // 3. Der Schein dahinter zieht mit dem Licht an.
+        tl.fromTo("#f8-schein", { opacity: 0, scale: 0.86 },
+          { opacity: 1, scale: 1, duration: 1.0, ease: "power2.out" }, 0.3);
+
+        // 4. Ein Streifen laeuft einmal ueber das Glas. In Pixeln, nicht in
+        //    Prozent: Prozent beziehen sich bei background-position auf die
+        //    Differenz von Bild und Flaeche, und die ist hier von der
+        //    Wortbreite abhaengig - also nichts, worauf man zielen kann.
+        tl.set("#f8-streif", { opacity: 1 }, 1.15);
+        tl.fromTo(
+          "#f8-streif",
+          { backgroundPosition: "-1000px 0px" },
+          { backgroundPosition: "1800px 0px", duration: 1.15, ease: "power1.inOut" },
+          1.15
+        );
+        tl.to("#f8-streif", { opacity: 0, duration: 0.2 }, 2.3);
+
+        // 5. Die beiden Zeilen darunter.
+        tl.fromTo("#f8-unten", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 0.85);
+        tl.fromTo("#f8-klein", { opacity: 0 }, { opacity: 1, duration: 0.55, ease: "power2.out" }, 1.1);
+
+        window.__timelines["f8-name"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

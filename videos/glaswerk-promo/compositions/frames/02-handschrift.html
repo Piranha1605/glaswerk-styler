@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Rahmen 2 - Die Handschrift. 6 s, fuenf Stile zu je 1,2 s. -->
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+          font-family: system-ui, ui-sans-serif, sans-serif;
+        }
+        /* Die fuenf Aufnahmen liegen GESTAPELT, nicht nebeneinander: Nur die
+           Deckkraft blendet. Dadurch bleibt die Steuerleiste oben auf dem
+           Pixel stehen, waehrend sich die Flaechen darunter haeuten - sie ist
+           der Anker der Szene. */
+        .f2-lage {
+          position: absolute;
+          inset: 0;
+          width: 1920px;
+          height: 1080px;
+          object-fit: cover;
+        }
+        #f2-zeile {
+          position: absolute;
+          left: 96px;
+          top: 74px;
+          font-size: 58px;
+          font-weight: 600;
+          letter-spacing: -0.01em;
+        }
+        /* Der Stilname unten links, gesperrt - 28 px, wie in frame.md. */
+        #f2-schild {
+          position: absolute;
+          left: 96px;
+          bottom: 92px;
+          font-size: 28px;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        /* Die Namen liegen uebereinander, damit das Schild nicht springt;
+           seine Breite richtet sich nach dem laengsten. */
+        #f2-schild {
+          display: grid;
+        }
+        #f2-schild .f2-name {
+          /* Jeder Name traegt den Glasschliff selbst, nicht die Platte. */
+          grid-area: 1 / 1;
+          display: block;
+          white-space: nowrap;
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 255, 0.92) 30%,
+            rgba(198, 224, 252, 0.86) 60%, rgba(236, 246, 255, 0.99) 100%);
+          -webkit-text-stroke: 0.7px rgba(226, 243, 255, 0.34);
+        }
+
+        /* DIE GLASPLATTE unter jeder Beschriftung. Auf Ansage vom
+           15.10.2026: "leg die overlays auf eine glasplatte und macht die
+           schriftfarbe auch zum glaslook".
+
+           Sie loest nebenbei ein Problem, das zweimal gemessen wurde: Die
+           Theme schaltet im Film auf Hell, und weisse Schrift auf hellem
+           Grund faellt der Kontrastpruefung nicht auf, weil ein Bild oder
+           ein Video dahinterliegt und kein Farbwert. Auf einer dunklen
+           Platte traegt die Schrift in beiden Modi, ohne Tricks. */
+        .glasplatte {
+          padding: 16px 32px;
+          border-radius: 18px;
+          /* 0,84 statt 0,62: Bei 0,62 zog der backdrop-filter auf dem HELLEN
+             Theme so viel Helligkeit herauf, dass die Platte hellblau wurde
+             und die helle Glasschrift darauf verschwand - gemessen bei 13 s.
+             Die Platte muss dunkel sein, egal was dahinterliegt; die
+             Weichzeichnung macht die Kanten, nicht die Farbe. */
+          background: linear-gradient(150deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.012) 58%),
+            rgba(10, 15, 26, 0.84);
+          backdrop-filter: blur(28px) saturate(180%);
+          box-shadow: inset 0 1.5px 0 0 rgba(255, 255, 255, 0.26),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+            inset 0 -1.5px 0 0 rgba(0, 0, 0, 0.4),
+            0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+        }
+        /* UND DIE SCHRIFT SELBST IST GLAS: hell an der Oberkante, matter im
+           Bauch, wieder hell an der Unterkante - so faengt eine geschliffene
+           Kante das Licht. Dazu ein feiner Schliff als Strich und ein Schein
+           nach aussen.
+
+           Die Fuellung ist durchsichtig und kommt aus dem Verlauf. Das ist
+           der Fall, den die Layoutpruefung als beabsichtigt kennt
+           (background-clip: text) - eine durchsichtige Schrift OHNE ihn
+           meldet sie zu Recht als nicht gemalt. */
+        .glasschrift {
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 255, 0.92) 30%,
+            rgba(198, 224, 252, 0.86) 60%, rgba(236, 246, 255, 0.99) 100%);
+          -webkit-text-stroke: 0.9px rgba(226, 243, 255, 0.38);
+          filter: drop-shadow(0 0 16px rgba(150, 200, 255, 0.38))
+            drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+        }
+      </style>
+
+      <div data-hf-id="hf-de98" id="root" data-composition-id="f2-handschrift" data-width="1920" data-height="1080">
+        <!-- Reihenfolge = Stapelreihenfolge. Glas liegt unten und bleibt
+             sichtbar; jede weitere Lage blendet darueber. -->
+        <img data-hf-id="hf-wg54" class="f2-lage clip" id="f2-glas" src="bilder/02-handschrift-glas.png" alt=""
+             data-start="0" data-duration="6" data-track-index="0" />
+        <img data-hf-id="hf-33k0" class="f2-lage clip" id="f2-liquid" src="bilder/02-handschrift-liquid-glass.png" alt=""
+             data-start="0" data-duration="6" data-track-index="1" />
+        <img data-hf-id="hf-jqak" class="f2-lage clip" id="f2-macos" src="bilder/02-handschrift-macos.png" alt=""
+             data-start="0" data-duration="6" data-track-index="2" />
+        <img data-hf-id="hf-zg3j" class="f2-lage clip" id="f2-gepraegt" src="bilder/02-handschrift-gepraegt.png" alt=""
+             data-start="0" data-duration="6" data-track-index="3" />
+        <img data-hf-id="hf-cpv4" class="f2-lage clip" id="f2-kontur" src="bilder/02-handschrift-kontur.png" alt=""
+             data-start="0" data-duration="6" data-track-index="4" />
+
+        <!-- FUENF SCHILDER, nicht eines mit wechselndem Text. Ein
+             tl.call(), das den Text austauscht, ist nicht suchsicher: Beim
+             Springen auf eine Stelle feuert es nicht, und dann steht der
+             falsche Name unter dem richtigen Stil. Jedes Schild ist hier ein
+             eigener Clip mit eigener Zeit - das Geruest blendet sie, nicht
+             mein Code. -->
+        <div data-hf-id="hf-serr" id="f2-schild" class="clip glasplatte" data-start="0" data-duration="6" data-track-index="5">
+          <span data-hf-id="hf-lzxu" class="f2-name" id="f2-n1">Glass</span>
+          <span data-hf-id="hf-sge6" class="f2-name" id="f2-n2">Liquid Glass</span>
+          <span data-hf-id="hf-lfng" class="f2-name" id="f2-n3">macOS</span>
+          <span data-hf-id="hf-te8z" class="f2-name" id="f2-n4">Embossed</span>
+          <span data-hf-id="hf-cod6" class="f2-name" id="f2-n5">Outline</span>
+        </div>
+        <div data-hf-id="hf-xt0u" id="f2-zeile" class="clip glasplatte" data-start="1.5" data-duration="4.5" data-track-index="6"><span class="glasschrift">A look of its own.</span></div>
+      </div>
+
+      <script>
+        const tl = gsap.timeline({ paused: true });
+
+        // Fuenf Stile, 1,2 s je Stil. Die Blende ist kurz (0,45 s) und sitzt
+        // am ANFANG des Abschnitts - so steht jeder Stil eine knappe Sekunde
+        // ruhig da, statt dauernd zu wabern.
+        const stapel = [
+          { el: "#f2-liquid", name: "Liquid Glass" },
+          { el: "#f2-macos", name: "macOS" },
+          { el: "#f2-gepraegt", name: "Embossed" },
+          { el: "#f2-kontur", name: "Outline" },
+        ];
+        // Die oberen vier starten unsichtbar; Glas liegt zuunterst.
+        // gsap.set statt tl.set: Ein set() AN POSITION 0 einer pausierten
+        // Zeitleiste zeichnet nicht, solange der Kopf genau auf 0 steht -
+        // das erste Bild zeigte sonst Kontur statt Glas.
+        gsap.set(["#f2-liquid", "#f2-macos", "#f2-gepraegt", "#f2-kontur"], { opacity: 0 });
+
+        // Die Namen: alle unsichtbar ausser dem ersten, dann je einer an und
+        // der vorige aus. Reine Deckkraft, also suchsicher in beide
+        // Richtungen.
+        gsap.set(["#f2-n2", "#f2-n3", "#f2-n4", "#f2-n5"], { opacity: 0 });
+
+        stapel.forEach((s, i) => {
+          const t = 1.2 * (i + 1);
+          tl.to(s.el, { opacity: 1, duration: 0.45, ease: "power2.inOut" }, t);
+          tl.to(`#f2-n${i + 1}`, { opacity: 0, duration: 0.2, ease: "none" }, t + 0.18);
+          tl.to(`#f2-n${i + 2}`, { opacity: 1, duration: 0.2, ease: "none" }, t + 0.26);
+        });
+
+        // Das Schild kommt von unten herein und bleibt.
+        tl.fromTo("#f2-schild", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 0.25);
+
+        // Die Zeile bei 1,5 s - dann hat der erste Wechsel gerade begonnen.
+        tl.fromTo("#f2-zeile", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 1.5);
+
+        window.__timelines["f2-handschrift"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

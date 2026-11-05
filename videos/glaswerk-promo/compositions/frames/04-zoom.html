@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Rahmen 4 - Der Zoom. 6 s, die lange Fahrt. -->
+  </head>
+  <body>
+    <template>
+      <style>
+        #root {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          background: linear-gradient(145deg, #0d141f 0%, #16202f 52%, #0a111a 100%);
+          font-family: system-ui, ui-sans-serif, sans-serif;
+        }
+        #f4-stage {
+          position: absolute;
+          inset: 0;
+          perspective: 1700px;
+          perspective-origin: 50% 46%;
+        }
+        /* Zwei Lagen desselben Bildes: unten weich, oben scharf und auf das
+           Zahnrad maskiert. So entsteht Tiefe aus EINEM Standbild - die
+           Weichzeichnung des Glases wird dabei zum ersten Mal als echte
+           Tiefe sichtbar statt als Effekt. */
+        .f4-lage {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 1920px;
+          height: 1080px;
+          margin: -540px 0 0 -960px;
+          border-radius: 22px;
+          object-fit: cover;
+        }
+        #f4-weich {
+          filter: blur(0px);
+        }
+        #f4-scharf-huelle {
+          position: absolute;
+          inset: 0;
+          /* Die Maske sitzt auf dem Zahnrad: gemessen bei x 1835, y 94 in
+             einem 1920 x 1080 breiten Bild, also 95,6 % / 8,7 %. */
+          -webkit-mask-image: radial-gradient(
+            circle at 95.6% 8.7%,
+            #000 0,
+            #000 var(--f4-r, 0px),
+            transparent calc(var(--f4-r, 0px) + 180px)
+          );
+          mask-image: radial-gradient(
+            circle at 95.6% 8.7%,
+            #000 0,
+            #000 var(--f4-r, 0px),
+            transparent calc(var(--f4-r, 0px) + 180px)
+          );
+        }
+        #f4-plane {
+          position: absolute;
+          inset: 0;
+          transform-style: preserve-3d;
+          /* DER DREHPUNKT SITZT AUF DEM ZAHNRAD, gemessen bei x 1835, y 94.
+             Damit bleibt der Knopf beim Vergroessern stehen, und die Fahrt
+             muss ihn nur noch verschieben - zwei Zahlen statt geratener
+             Prozente. Der erste Versuch arbeitete mit xPercent und landete
+             auf den Messuhren: alles weich, der scharfe Fleck ausserhalb des
+             Bildes. */
+          transform-origin: 1835px 94px;
+        }
+        /* Die Leiste in ihrer eigenen Aufnahme, 6576 x 512 - also dreimal so
+           viel Bild wie derselbe Streifen in der Aufsicht. Sie landet zum
+           Schluss der Fahrt auf dem Bild und traegt das Zahnrad scharf.
+           Warum ueberhaupt ein zweites Bild: Das Zahnrad sitzt in der
+           Aufsicht 85 px vom rechten Rand. Um es in die Mitte zu bringen,
+           muesste die Ebene elffach vergroessert werden - dann ist von dem
+           Knopf nur noch Brei uebrig, und rechts und oben laeuft das Bild
+           aus dem Rahmen. Gemessen: bei 2,6-fach stand das Zahnrad zwar in
+           der Mitte, und rechts daneben 740 px Nichts. */
+        #f4-slab {
+          position: absolute;
+          left: 60px;
+          top: 330px;
+          /* Die Breite ist nicht gewaehlt, sondern das Bild: 4600 minus die
+             3241, die links aus dem Rahmen laufen. Ein breiterer Rahmen
+             haette rechts eine leere Kante - rechts vom Zahnrad ist in der
+             Aufnahme nichts mehr. */
+          width: 1359px;
+          height: 358px;
+          overflow: hidden;
+          border-radius: 26px;
+          box-shadow: 0 40px 90px rgba(0, 0, 0, 0.62), 0 4px 14px rgba(0, 0, 0, 0.42),
+            inset 0 1.5px 0 0 rgba(255, 255, 255, 0.1);
+        }
+        /* 4600 px breit: Das Zahnrad sitzt bei 96,1 % der Bildbreite, also
+           4421 px - mit dem linken Versatz landet es bei x 1240. */
+        #f4-leiste {
+          position: absolute;
+          left: -3241px;
+          top: 0;
+          width: 4600px;
+          height: 358px;
+          display: block;
+        }
+        #f4-zeile {
+          position: absolute;
+          left: 96px;
+          bottom: 104px;
+          font-size: 58px;
+          font-weight: 600;
+          letter-spacing: -0.01em;
+        }
+        #f4-vignette {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(120% 90% at 50% 46%, rgba(0, 0, 0, 0) 56%, rgba(0, 0, 0, 0.5) 100%);
+        }
+
+        /* DIE GLASPLATTE unter jeder Beschriftung. Auf Ansage vom
+           15.10.2026: "leg die overlays auf eine glasplatte und macht die
+           schriftfarbe auch zum glaslook".
+
+           Sie loest nebenbei ein Problem, das zweimal gemessen wurde: Die
+           Theme schaltet im Film auf Hell, und weisse Schrift auf hellem
+           Grund faellt der Kontrastpruefung nicht auf, weil ein Bild oder
+           ein Video dahinterliegt und kein Farbwert. Auf einer dunklen
+           Platte traegt die Schrift in beiden Modi, ohne Tricks. */
+        .glasplatte {
+          padding: 16px 32px;
+          border-radius: 18px;
+          /* 0,84 statt 0,62: Bei 0,62 zog der backdrop-filter auf dem HELLEN
+             Theme so viel Helligkeit herauf, dass die Platte hellblau wurde
+             und die helle Glasschrift darauf verschwand - gemessen bei 13 s.
+             Die Platte muss dunkel sein, egal was dahinterliegt; die
+             Weichzeichnung macht die Kanten, nicht die Farbe. */
+          background: linear-gradient(150deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.012) 58%),
+            rgba(10, 15, 26, 0.84);
+          backdrop-filter: blur(28px) saturate(180%);
+          box-shadow: inset 0 1.5px 0 0 rgba(255, 255, 255, 0.26),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+            inset 0 -1.5px 0 0 rgba(0, 0, 0, 0.4),
+            0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+        }
+        /* UND DIE SCHRIFT SELBST IST GLAS: hell an der Oberkante, matter im
+           Bauch, wieder hell an der Unterkante - so faengt eine geschliffene
+           Kante das Licht. Dazu ein feiner Schliff als Strich und ein Schein
+           nach aussen.
+
+           Die Fuellung ist durchsichtig und kommt aus dem Verlauf. Das ist
+           der Fall, den die Layoutpruefung als beabsichtigt kennt
+           (background-clip: text) - eine durchsichtige Schrift OHNE ihn
+           meldet sie zu Recht als nicht gemalt. */
+        .glasschrift {
+          color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          background-image: linear-gradient(180deg,
+            rgba(255, 255, 255, 0.98) 0%, rgba(232, 243, 255, 0.92) 30%,
+            rgba(198, 224, 252, 0.86) 60%, rgba(236, 246, 255, 0.99) 100%);
+          -webkit-text-stroke: 0.9px rgba(226, 243, 255, 0.38);
+          filter: drop-shadow(0 0 16px rgba(150, 200, 255, 0.38))
+            drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+        }
+      </style>
+
+      <div data-hf-id="hf-q8vb" id="root" data-composition-id="f4-zoom" data-width="1920" data-height="1080">
+        <div data-hf-id="hf-qcey" id="f4-stage">
+          <div data-hf-id="hf-7lan" id="f4-plane" data-layout-allow-overflow>
+            <img data-hf-id="hf-z2xt" class="f4-lage clip" id="f4-weich" src="bilder/01-aufsicht.png" alt=""
+                 data-start="0" data-duration="6" data-track-index="0" />
+            <div data-hf-id="hf-20fx" id="f4-scharf-huelle" class="clip" data-start="0" data-duration="6" data-track-index="1">
+              <img data-hf-id="hf-be52" class="f4-lage" id="f4-scharf" src="bilder/01-aufsicht.png" alt="" />
+            </div>
+          </div>
+        </div>
+        <div data-hf-id="hf-whwd" id="f4-slab" class="clip" data-layout-allow-overflow
+             data-start="3.6" data-duration="2.4" data-track-index="2">
+          <img data-hf-id="hf-1kv8" id="f4-leiste" src="bilder/steuerkarte/01-leiste.png" alt="" data-layout-allow-overflow />
+        </div>
+        <div data-hf-id="hf-mxrq" id="f4-vignette"></div>
+        <div data-hf-id="hf-9ipz" id="f4-zeile" class="clip glasplatte" data-start="3" data-duration="3" data-track-index="2"><span class="glasschrift">All from one button.</span></div>
+      </div>
+
+      <script>
+        const tl = gsap.timeline({ paused: true });
+
+        // Die Ebene richtet sich auf, waehrend die Kamera naeher kommt. Der
+        // Ursprung sitzt auf dem Zahnrad - deshalb faehrt das Bild nicht nur
+        // groesser, sondern AUF den Knopf zu.
+        // Wie weit die Fahrt gehen DARF, rechnet der Bildrand aus, nicht das
+        // Gefuehl. Mit dem Drehpunkt auf dem Zahnrad landet der Knopf bei
+        // (1835 + x, 94 + y), und das Bild deckt den Rahmen nur, solange
+        //     1835 + x >= 1920 - 85 * s        (rechter Rand)
+        //      94 + y <=         94 * s        (oberer Rand)
+        // Bei s = 2,2 heisst das x >= -102 und y <= 113. Gewaehlt: -90 / 100,
+        // das Zahnrad steht dann bei (1745, 194) - oben rechts, da wo die
+        // Kamera hinfaehrt.
+        tl.fromTo(
+          "#f4-plane",
+          { rotateX: 46, rotateZ: -1.2, scale: 1.0, x: 0, y: 0 },
+          { rotateX: 0, rotateZ: 0, scale: 2.2, x: -90, y: 100, duration: 6, ease: "power2.inOut" },
+          0
+        );
+
+        // Alles ausser dem Knopf geht weich. Erst spaet, damit der Anfang
+        // scharf bleibt und die Tiefe als Bewegung ankommt.
+        tl.fromTo("#f4-weich", { filter: "blur(0px)" }, { filter: "blur(20px)", duration: 3.4, ease: "power2.in" }, 1.6);
+
+        // Der scharfe Fleck waechst mit der Fahrt mit.
+        const maske = { r: 0 };
+        const setze = () =>
+          document.getElementById("f4-scharf-huelle").style.setProperty("--f4-r", maske.r + "px");
+        setze();
+        tl.to(maske, { r: 220, duration: 3.4, ease: "power2.in", onUpdate: setze }, 1.6);
+
+        // Die Ankunft: Die Leiste kommt aus derselben Tiefe und faengt sich.
+        // Kein Schnitt - die Ebene faehrt darunter weiter und wird weicher,
+        // also liest es sich als Scharfstellen, nicht als neues Bild.
+        tl.fromTo(
+          "#f4-slab",
+          { opacity: 0, scale: 1.07, y: 26 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.85, ease: "power2.out" },
+          3.6
+        );
+
+        // UND DER SCHARFE FLECK IM HINTERGRUND GEHT DABEI AUS. Sonst steht
+        // dieselbe Leiste zweimal im Bild - einmal als Fleck oben rechts,
+        // einmal als Nahaufnahme. Im ersten Lauf war genau das zu sehen, und
+        // es liest sich als Fehler, nicht als Tiefe.
+        tl.to("#f4-scharf-huelle", { opacity: 0, duration: 0.7, ease: "power2.inOut" }, 3.6);
+
+        tl.fromTo("#f4-zeile", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 3);
+
+        window.__timelines["f4-zoom"] = tl;
+      </script>
+    </template>
+  </body>
+</html>
