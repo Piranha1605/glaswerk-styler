@@ -1133,6 +1133,24 @@ ha-toast {
   box-shadow:
     0 12px 36px rgba(0, 0, 0, .22),
     inset 0 1px 0 rgba(255, 255, 255, .4);
+}
+
+/* HA 2026.11: Die sichtbare Flaeche ist das .toast IM Shadow Root von
+   ha-toast, deckend aus --ha-color-neutral-10, Radius aus
+   --ha-border-radius-sm. Der Knoten haengt an notification-manager - die
+   Regel oben erreicht nur den Wirt ha-toast, und dessen Glas lag UNTER der
+   deckenden Flaeche. Am 09.11.2026 gemessen: kein sichtbarer Unterschied.
+   Darum hier ueber Variablen: Die Flaeche wird durchscheinend, damit das
+   Glas des Wirts durchkommt. Der Grundton wird erst auf :host abgelegt -
+   dieselbe Variable mit sich selbst zu mischen waere ein Zyklus, und der
+   Hintergrund fiele ganz weg. Die Schrift bleibt hell, die Flaeche bleibt
+   dunkel, in beiden Modi wie bei HA. */
+:host {
+  --glaswerk-toast-grund: var(--ha-color-neutral-10, #202020);
+}
+ha-toast {
+  --ha-color-neutral-10: color-mix(in srgb, var(--glaswerk-toast-grund) 66%, transparent);
+  --ha-border-radius-sm: 18px;
 }`,
   },
 
