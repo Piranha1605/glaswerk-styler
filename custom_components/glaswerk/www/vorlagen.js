@@ -297,6 +297,10 @@ ha-card.is-on .bubble-color-background {
     en: "Blur only beneath the card",
     zweckDe: "Für Karten, die ihre Fläche selbst malen - Horizon-Cards, Shelly-Karten. Sie bekommen den Weichzeichner der Theme, aber keine zweite Fläche darüber.",
     zweckEn: "For cards that paint their own surface - Horizon cards, Shelly cards. They get the theme's blur but no second surface on top.",
+    // Kein Vorschaubild: am 09.11.2026 unter HA 2026.11 und der Theme macui
+    // gemessen - Vorher und Nachher waren gleich. Das Panel zeigt diesen Text.
+    hinweisDe: "Kein Vorher/Nachher: Die Vorlage wirkt nur auf Karten, die ihre Fläche selbst malen - Horizon-Cards und Shelly-Karten.",
+    hinweisEn: "No before/after: the template only affects cards that paint their own surface - Horizon cards and Shelly cards.",
     // AUS HATG UEBERNOMMEN, auf Ansage vom 15.10.2026: "ja bitte". Dort heisst
     // sie "Glas: nur Weichzeichnung unter der Karte" und nennt Horizon-Cards
     // und Shelly-Karten beim Namen. Der Maintainer erinnerte sich an sie, die
@@ -457,6 +461,10 @@ ha-card.text-only::before {
     en: "Icons as rounded tiles",
     zweckDe: "Macht aus den runden Symbolflächen weiche Quadrate - in Kacheln, bei Mushroom, in Zeilen und auf Glance-Karten zugleich.",
     zweckEn: "Turns the round icon backgrounds into soft squares - in tiles, in Mushroom, in rows and on glance cards at once.",
+    // Kein Vorschaubild: am 09.11.2026 unter HA 2026.11 und der Theme macui
+    // gemessen - Vorher und Nachher waren gleich. Das Panel zeigt diesen Text.
+    hinweisDe: "Kein Vorher/Nachher: Unter Glaswerk-Themes haben die Kachelsymbole diese Form schon. Die Vorlage hilft bei Themes, deren Symbolflächen rund bleiben.",
+    hinweisEn: "No before/after: under Glaswerk themes the tile icons already have this shape. The template helps themes whose icon backgrounds stay round.",
     css: `/* Kein Pfad noetig: Symbolbehaelter lesen alle eine Rundungs-Variable, und
    Variablen erben durch jede Shadow-Grenze. Ein :host-Block erreicht damit
    Kacheln, Mushroom, Zeilen und Glance auf einmal.
@@ -960,6 +968,10 @@ ha-user-badge {
     en: "Top bar in glass (dashboard)",
     zweckDe: "Weichzeichnung unter der Kopfleiste eines Dashboards. Die Farbe kommt aus app-header-background-color.",
     zweckEn: "Blur under a dashboard's top bar. The colour comes from app-header-background-color.",
+    // Kein Vorschaubild: am 09.11.2026 unter HA 2026.11 und der Theme macui
+    // gemessen - Vorher und Nachher waren gleich. Das Panel zeigt diesen Text.
+    hinweisDe: "Kein Vorher/Nachher: Glaswerk-Themes geben der Kopfleiste die Weichzeichnung schon über das Feld app-header-backdrop-filter. Die Vorlage hilft bei Themes ohne dieses Feld.",
+    hinweisEn: "No before/after: Glaswerk themes already blur the top bar through the app-header-backdrop-filter field. The template helps themes without it.",
     css: `/* Das Ziel ist uix-root, NICHT uix-top-app-bar-fixed.
 
    Am 13.10.2026 an einem Dashboard gemessen: ha-top-app-bar-fixed existiert
@@ -997,6 +1009,10 @@ ha-user-badge {
     en: "Top bar in glass (settings)",
     zweckDe: "Dasselbe für die Leiste der Einstellungsseiten - die ist ein anderes Bauteil als die des Dashboards.",
     zweckEn: "The same for the settings pages' bar - a different component from the dashboard one.",
+    // Kein Vorschaubild: am 09.11.2026 unter HA 2026.11 und der Theme macui
+    // gemessen - Vorher und Nachher waren gleich. Das Panel zeigt diesen Text.
+    hinweisDe: "Kein Vorher/Nachher: Seit Home Assistant 2026.11 haben die Einstellungsseiten diese Leiste (ha-top-app-bar-fixed) nicht mehr. Die Vorlage wirkt nur bis 2026.10.",
+    hinweisEn: "No before/after: since Home Assistant 2026.11 the settings pages no longer use this bar (ha-top-app-bar-fixed). The template only applies up to 2026.10.",
     css: `/* Beide Schreibweisen, nicht nur eine: Unter HA 2026 heisst die Klasse
    .top-app-bar, bis HA 2025 hiess sie .mdc-top-app-bar. Wer die alte streicht,
    nimmt aelteren Instanzen die Vorlage weg. In 629 Elementen einer
@@ -1106,6 +1122,10 @@ wa-drawer::part(dialog),
     en: "Badges in glass",
     zweckDe: "Die kleinen Zustandsplaketten oben auf dem Dashboard bekommen dieselbe Glasfläche wie die Karten.",
     zweckEn: "The small state badges at the top of the dashboard get the same glass surface as the cards.",
+    // Kein Vorschaubild: am 09.11.2026 unter HA 2026.11 und der Theme macui
+    // gemessen - Vorher und Nachher waren gleich. Das Panel zeigt diesen Text.
+    hinweisDe: "Kein Vorher/Nachher: Glaswerk-Themes geben den Badges Glas, Lichtkante und runde Enden schon über ihre Felder. Die Vorlage hilft bei Themes ohne diese Felder.",
+    hinweisEn: "No before/after: Glaswerk themes already give badges glass, a light edge and round ends through their fields. The template helps themes without them.",
     css: `:host,
 .badge {
   backdrop-filter: var(--ha-card-backdrop-filter, blur(18px) saturate(160%));

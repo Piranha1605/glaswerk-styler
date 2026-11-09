@@ -2404,13 +2404,19 @@ class GlaswerkPanel extends HTMLElement {
              Beide Bilder zeigen DIESELBE Theme; der einzige Unterschied ist
              diese eine Vorlage. Ein Vorher-Bild mit einer anderen Theme waere
              ein Vergleich zweier Dinge auf einmal. -->
+        ${v.hinweisDe ? `
+        <!-- Vorlagen ohne sichtbaren Unterschied unter Glaswerk-Themes zeigen
+             einen Satz statt zweier gleicher Bilder (siehe hinweisDe). -->
+        <div class="vbild ohne hinweis">
+          <span class="vleer">${this.spr === "en" ? v.hinweisEn : v.hinweisDe}</span>
+        </div>` : `
         <div class="vbild">
           <img class="vvorher" src="/glaswerk_static/vorschau/${v.id}-vorher.jpg" alt="" loading="lazy">
           <img class="vnachher" src="/glaswerk_static/vorschau/${v.id}-nachher.jpg" alt="" loading="lazy"
                onerror="this.closest('.vbild').classList.add('ohne')">
           <span class="vmarke">${T("vorher")}</span>
           <span class="vleer">${T("noch kein Bild")}</span>
-        </div>
+        </div>`}
         <div class="vtext">
           <b>${this.spr === "en" ? v.en : v.de}</b>
           <p>${this.spr === "en" ? v.zweckEn : v.zweckDe}</p>
@@ -4288,6 +4294,7 @@ class GlaswerkPanel extends HTMLElement {
                       font-size: 12px; color: var(--s-tinte-leise); }
       .vbild.ohne img, .vbild.ohne .vmarke { display: none; }
       .vbild.ohne .vleer { display: flex; }
+      .vbild.hinweis .vleer { padding: 0 24px; text-align: center; line-height: 1.5; }
       .vtext { padding: 11px 13px 4px; flex: 1; }
       .vtext b { font-size: 13.5px; display: block; }
       .vtext p { font-size: 12px; color: var(--s-tinte-leise); margin: 4px 0 7px; line-height: 1.45; }
