@@ -1,87 +1,106 @@
-# Glaswerk — Home Assistant Theme Studio
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/banner.png" alt="Glaswerk Styler – theme studio for Home Assistant" width="100%" />
+</p>
 
-A panel for the Home Assistant sidebar for building a complete theme visually —
-built on the colour layer of HA 2026 rather than on the classic individual
-variables.
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/Piranha1605/glaswerk-styler?label=Version&color=2F80ED" alt="Version" />
+  <img src="https://img.shields.io/badge/HACS-Custom%20Repository-2F80ED?logo=home-assistant&logoColor=white" alt="HACS" />
+  <img src="https://img.shields.io/badge/Home%20Assistant-2026.10%2B-2F80ED?logo=home-assistant&logoColor=white" alt="Home Assistant 2026.10+" />
+  <img src="https://img.shields.io/github/license/Piranha1605/glaswerk-styler?color=2F80ED" alt="MIT" />
+  <img src="https://img.shields.io/github/stars/Piranha1605/glaswerk-styler?color=2F80ED" alt="Stars" />
+</p>
 
-**Status: 0.2.0b5, work in progress.** Glaswerk reads and writes themes, ships a
-kit of ready-made parts and a control card for dashboards. It is not released
-yet.
+<p align="center">
+  <a href="https://github.com/Piranha1605/glaswerk-styler/blob/main/README.md">Deutsch</a> · <b>English</b>
+</p>
 
-## What this is about
+<p align="center">
+  <a href="https://buymeacoffee.com/enricotenif"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/bmac-badge.png" alt="Buy me a coffee" /></a>
+</p>
 
-Since 2026, Home Assistant computes its interface from a colour layer of its
-own: six roles (`primary`, `neutral`, `success`, `warning`, `danger`,
-`disabled`), three loudness levels (`quiet`, `normal`, `loud`) and three states
-(`resting`, `hover`, `active`). **15 decisions** produce 51 fill colours and 19
-text colours.
+# Glaswerk Styler
 
-Glaswerk builds on exactly that. The guiding rule: **only change what you can see.**
+**The theme studio for Home Assistant. Build it visually, tune it live on your dashboard.**
 
-And because Bubble Card and Mushroom can read their variables from the same
-layer, one assignment covers light and dark at once — no UI eXtension, no CSS
-rules, no shadow DOM paths. CSS variables inherit through every shadow boundary;
-measured, a value set on `html` arrives twelve levels deep.
+Glaswerk Styler is a panel in your Home Assistant sidebar. It lets you build a complete theme without touching YAML – built on Home Assistant 2026's colour layer. It also brings a control bar for your dashboards: transparency, blur, text size, card style, palette and background are set right where you see them. What you end up with is a plain theme file.
 
-What comes out at the end is an ordinary theme file.
+<p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/dashboard.jpg" alt="A dashboard with a Glaswerk theme and the control bar" width="100%" /></p>
 
-## Relationship to HATG
+## At a glance
 
-[HATG](https://github.com/Piranha1605/ha-theme-generator) stays in service and
-continues to be maintained. Glaswerk does not replace it — it is a second, simpler
-route, deliberately in its own repository with its own integration domain so
-both can be installed side by side.
+| | |
+|---|---|
+| **Studio** | A sidebar panel: open a theme, change it, save it – 475 fields in eight steps |
+| **Kit** | 15 colour palettes, fonts, corners, density, card styles and backgrounds as ready-made parts |
+| **Control bar** | One dashboard card: menu, fullscreen, settings window and quick sliders |
+| **UIX templates** | 19 templates for UI eXtension with before/after previews |
+| **Bubble Card and Mushroom** | read their colours from the same layer – one assignment covers light and dark |
+| **Backups** | Every write keeps the previous version, back with one click |
 
-One rule when running both: **a theme belongs to one tool.** A Glaswerk theme
-survives HATG's import intact — every reference stays verbatim — but HATG adds
-its own defaults. Don't edit the same file in both.
+## The studio
 
-The measured knowledge about Home Assistant, Bubble Card and Mushroom lives in
-HATG's `CLAUDE.md` and in `docs/uebergabe-neues-projekt.md`. Glaswerk builds on it
-instead of working it out again.
+The panel reads any existing theme – including foreign ones. Whatever Glaswerk does not know stays untouched in the file. The rule: **only change what you see.** From 15 decisions, Home Assistant derives 51 fill colours and 19 text colours.
 
-## What comes out of it
+<p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/studio.jpg" alt="The Glaswerk panel" width="100%" /></p>
 
-The same view, the same window size, the same cards — only the theme changes.
-Three pictures, not two: without the middle one you credit the UIX templates
-with what the fields did.
+**Kit.** If you don't want to start from scratch, snap a theme together from ready-made parts. Five palettes are adopted and verifiable: macOS (read from the system), Android, Nord, Solarized, Catppuccin and Gruvbox.
 
-**Home Assistant as shipped.**
+<p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/studio-kit.jpg" alt="The kit" width="100%" /></p>
 
-**With a Glaswerk theme — the fields alone.** Apple's system colours, glass on the
-cards, corner radii, shadows, a background of four colour islands. This is an
-ordinary theme file: no UI eXtension, no CSS rule, no shadow DOM path.
+**Eight steps.** Basics, surfaces, shape, states, icons, third-party cards, polish and output – every group with one sentence on what it is for.
 
-**The same theme with UI eXtension.** The sidebar turns translucent and the
-active row into a pill in the accent colour; plus divider lines between the
-sections. UIX is the finishing touch — the larger part is already in the
-picture before it.
+<p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/studio-stufe.jpg" alt="Step 1: Basics" width="100%" /></p>
 
-## The kit
+**UI eXtension.** For everything that needs a rule instead of a value: glass on cards, light edge, sidebar in glass, glowing and slimmer sliders. Every template shows before and after in the same spot.
 
-If you would rather not start from nothing, you assemble a theme from
-ready-made parts: colours, type, corners, density, card style, background. The
-fifteen palettes show their colours as beads — the large one at the front is
-the accent.
+<p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/studio-uix.jpg" alt="UIX templates with previews" width="100%" /></p>
 
-![The kit in the panel, with fifteen colour palettes](docs/bilder/baukasten-farben.jpg)
+## The control bar
 
-Five of them are **adopted** and verifiable: macOS and Android, plus Nord,
-Solarized, Catppuccin and Gruvbox. Apple's values are read from the system
-rather than copied from documentation — `werkzeuge/test/macos-farben.swift`
-pulls them out of AppKit, and several of the well-known ones have not been
-correct since macOS 26.
+A card for your dashboard. It floats at the bottom edge, and every change goes straight into the theme file.
 
-**Corners** and **Density** set the ladders Home Assistant computes its edges
-and spacing from — nine steps from `sm` to `6xl`, twenty from `--ha-space-1` to
-`-20`. Four parts each, with Home Assistant's own values as one of them. **Card
-style** has seven: Glass, macOS, Embossed, Outline, Flat, Raised, Paper.
+<p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/steuerleiste.jpg" alt="The control bar" width="100%" /></p>
 
-The parts recognise themselves in a finished file even when it was not built
-with the kit: `werkzeuge/themes/macos.yaml` comes out of a script and still
-matches in all six categories.
+- **Menu** with every view of the dashboard
+- **Fullscreen** for wall tablets – remembered per device
+- **Quick sliders** for transparency, blur and text size
+- **Settings window** modelled on the Mac's System Settings: appearance, background, text and size, motion, UIX templates, display with earlier versions
 
-## The control card
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/schnellregler.jpg" alt="Quick sliders" width="48%" />
+  <img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/einstellungen.jpg" alt="Settings window" width="48%" />
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/einstellungen-background.jpg" alt="Backgrounds" width="48%" />
+  <img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/einstellungen-motion.jpg" alt="Motion" width="48%" />
+</p>
+
+## Installation
+
+**Via HACS (recommended)**
+
+1. HACS → menu at the top right → **Custom repositories**
+2. Add `https://github.com/Piranha1605/glaswerk-styler`, type **Integration**
+3. Install **Glaswerk** and restart Home Assistant
+4. Settings → Devices & services → **Add integration** → Glaswerk
+
+**Manually**
+
+Copy the `custom_components/glaswerk` folder into `config/custom_components/`, restart Home Assistant and add the integration as above.
+
+**Glaswerk** then appears in the sidebar, and the control bar is in the card picker under **"By card"**, search "Glaswerk". No resource to register – Glaswerk does that itself.
+
+**Requires** Home Assistant 2026.10.0 or newer. UI eXtension is only needed for the UIX templates.
+
+## Quick start
+
+1. Open **Glaswerk** in the sidebar
+2. **New** or **Open an existing one** – or pick palette, font and card style in the **Kit**
+3. **Save** and select the theme in your profile
+4. Put the control bar on your dashboard and fine-tune from there
+
+## Reference: control bar
 
 Glaswerk ships a card for dashboards: a bar of buttons. Each one is a target, a
 switch or a built-in function — mode, light/dark, fullscreen, weather.
@@ -185,7 +204,6 @@ Settings — sections on the left, choices on the right:
 | UIX templates | every template from the panel with a switch, grouped by cards, interface and background — works only with UI eXtension |
 | Display | fullscreen, edit dashboard, theme choice, earlier versions |
 
-![The settings window](docs/bilder/steuerkarte-einstellungsfenster.jpg)
 
 Card styles, palettes, typefaces and backgrounds are the parts of the panel's
 kit — the same values, written the same way. The window shows which part is in
@@ -224,8 +242,6 @@ against HA 2026.10 on 17 Oct 2026. That includes the conditions 2026.10 added:
 
 The same control exists in a small form, for the badge row above the cards:
 
-![The badge in light mode](docs/bilder/steuerbadge-hell.jpg)
-![The badge in dark mode](docs/bilder/steuerbadge-dunkel.jpg)
 
 ```yaml
 type: custom:glaswerk-bar-badge
@@ -254,14 +270,6 @@ Worth knowing:
   again after a reload, as soon as the card is on the view. The same button or
   Esc leads back.
 
-## Installation
-
-Not via HACS yet. To try it, copy the `custom_components/glaswerk` folder into
-`config/custom_components/`, restart Home Assistant and add the integration
-under Settings → Devices & Services.
-
-Requires Home Assistant 2026.10.0 or newer.
-
 ## Backups
 
 Before Glaswerk overwrites a theme file — from the panel or from the control
@@ -270,10 +278,18 @@ with date and time in the name. The last ten per theme are kept. The file is
 written to a helper file first and then renamed in one step; if something
 breaks off, the old file stays as it was.
 
+## Relation to HATG
+
+[HATG](https://github.com/Piranha1605/ha-theme-generator) stays in service and keeps being maintained. Glaswerk is the second, simpler way – with its own integration domain, so both can run side by side. One rule: **a theme belongs to one tool.**
+
+## Support
+
+If you like Glaswerk, I'm happy about a coffee:
+
+<p align="center">
+  <a href="https://buymeacoffee.com/enricotenif"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/bmac-badge.png" alt="Buy me a coffee" /></a>
+</p>
+
 ## Licence
 
 MIT
-
----
-
-German version: [README.md](README.md)
