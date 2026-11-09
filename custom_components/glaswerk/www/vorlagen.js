@@ -1078,6 +1078,22 @@ wa-drawer::part(dialog),
   box-shadow:
     0 24px 70px rgba(0, 0, 0, .3),
     inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+}
+
+/* HA 2026.11: Der Info-Dialog steckt jetzt eine Ebene tiefer
+   (ha-more-info-dialog > ha-adaptive-dialog > ha-dialog > wa-dialog), und der
+   uix-Knoten haengt an ha-more-info-dialog. ::part reicht nur EINE
+   Shadow-Grenze weit - die Regel oben greift dort nicht mehr. Am 09.11.2026
+   gemessen: Radius und Schatten blieben unveraendert.
+   Was durch jede Grenze reicht, sind Variablen. ha-dialog liest seinen
+   Schatten aus --dialog-box-shadow und den Radius aus
+   --ha-dialog-border-radius. Darum setzt die Vorlage hier beide, mit
+   denselben Werten wie oben. Die Regel oben bleibt fuer 2026.10. */
+:host {
+  --ha-dialog-border-radius: 26px;
+  --dialog-box-shadow:
+    0 24px 70px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .45);
 }`,
   },
 
