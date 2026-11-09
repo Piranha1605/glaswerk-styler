@@ -21,12 +21,34 @@ www/palette.js
 www/theme.js
 www/uix.js
 www/vorlagen.js
+www/vorschau/abschnitte-trennen-nachher.jpg
+www/vorschau/abschnitte-trennen-vorher.jpg
+www/vorschau/glas-bubble-nachher.jpg
+www/vorschau/glas-bubble-vorher.jpg
 www/vorschau/glas-karten-nachher.jpg
 www/vorschau/glas-karten-vorher.jpg
+www/vorschau/glas-knoepfe-nachher.jpg
+www/vorschau/glas-knoepfe-vorher.jpg
+www/vorschau/glas-leistenknoepfe-nachher.jpg
+www/vorschau/glas-leistenknoepfe-vorher.jpg
 www/vorschau/glas-lichtkante-nachher.jpg
 www/vorschau/glas-lichtkante-vorher.jpg
-www/vorschau/glas-symbolkachel-nachher.jpg
-www/vorschau/glas-symbolkachel-vorher.jpg
+www/vorschau/glas-more-info-nachher.jpg
+www/vorschau/glas-more-info-vorher.jpg
+www/vorschau/glas-seitenleiste-nachher.jpg
+www/vorschau/glas-seitenleiste-vorher.jpg
+www/vorschau/glas-toast-nachher.jpg
+www/vorschau/glas-toast-vorher.jpg
+www/vorschau/grund-ueberall-nachher.jpg
+www/vorschau/grund-ueberall-vorher.jpg
+www/vorschau/regler-gluehen-nachher.jpg
+www/vorschau/regler-gluehen-vorher.jpg
+www/vorschau/regler-schlank-nachher.jpg
+www/vorschau/regler-schlank-vorher.jpg
+www/vorschau/sync-bedienelemente-nachher.jpg
+www/vorschau/sync-bedienelemente-vorher.jpg
+www/vorschau/verlauf-kapsel-nachher.jpg
+www/vorschau/verlauf-kapsel-vorher.jpg
 www/zuordnung.js
 # Die Hilfeseite und ihre fuenf Bilder. Von Hand eingetragen, wie
 # ha_blanko, datei.py und bilder.py: sync-liste-bauen.sh kennt sie noch nicht.
