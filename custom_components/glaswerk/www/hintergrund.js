@@ -338,7 +338,7 @@ export const HINTERGRUENDE = [
   },
   {
     id: "glaswerk",
-    de: "Glaswerk", en: "Glasswork",
+    de: "Glaswerk", en: "Glaswerk",
     zweckDe: "Diagonal verlegte Kacheln unter zwei Lichtbaendern. Gemacht fuer Glas - das Raster ist das, was durchscheint.",
     zweckEn: "Diagonally laid tiles under two bands of light. Made for glass - the grid is what shows through.",
     // Am 14.10.2026 nach einer Vorlage des Maintainers gebaut. Vier Sorten

@@ -347,7 +347,7 @@ export const PALETTEN = [
   },
   {
     id: "glaswerk",
-    de: "Glaswerk", en: "Glasswork",
+    de: "Glaswerk", en: "Glaswerk",
     zweckDe: "Kuehles Azur mit violettem Akzent, dazu Minze, Koralle und Bernstein.",
     zweckEn: "Cool azure with a violet accent, plus mint, coral and amber.",
     // Am 14.10.2026 aus der Vorlage des Maintainers abgenommen - die Toene
@@ -368,7 +368,7 @@ export const PALETTEN = [
   },
   {
     id: "glaswerk-orange",
-    de: "Glaswerk Orange", en: "Glasswork Orange",
+    de: "Glaswerk Orange", en: "Glaswerk Orange",
     zweckDe: "Dieselbe Theme in warmem Orange - Glut statt Azur, derselbe Aufbau.",
     zweckEn: "The same theme in warm orange - ember instead of azure, same structure.",
     // Auf Ansage vom 14.10.2026 ("ja mach das orange"), nachdem der Ton kurz
