@@ -41,7 +41,7 @@ import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, HINTERGRUENDE, palet
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
 
-const GLASWERK_VERSION = "0.2.0b5";
+const GLASWERK_VERSION = "1.0.0";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1
