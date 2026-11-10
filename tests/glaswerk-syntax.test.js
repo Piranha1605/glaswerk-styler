@@ -55,10 +55,12 @@ pruefe("Gegenprobe: eine doppelte Deklaration faellt auf", () => {
   assert.match(fehler, /already been declared/);
 });
 
-pruefe("Und node --check allein findet sie wirklich nicht", () => {
-  // Haelt fest, WARUM diese Datei existiert. Sollte node irgendwann strenger
-  // werden, faellt diese Pruefung um - dann ist der Umweg ueber stdin
-  // ueberfluessig geworden, und das soll man sehen statt es zu erben.
+pruefe("node --check allein: Stand der Laufzeit festhalten", () => {
+  // Haelt fest, WARUM diese Datei existiert. Bis Node 20 liess
+  // `node --check` die doppelte Deklaration durch; Node 26 findet sie
+  // (gemessen am 10.11.2026). Der Umweg ueber stdin bleibt trotzdem: Er
+  // ist auf ALLEN Versionen streng, und die CI laeuft noch auf Node 20.
+  // Deshalb nur eine Meldung, kein Fehlschlag.
   const probe = path.join(hier, ".syntax-probe.js");
   writeFileSync(probe, "export function f(a) { const a = 1; return a; }\n");
   let durchgelassen = false;
@@ -67,8 +69,9 @@ pruefe("Und node --check allein findet sie wirklich nicht", () => {
     durchgelassen = true;
   } catch { /* gefunden - dann ist die strenge Pruefung nicht mehr noetig */ }
   finally { unlinkSync(probe); }
-  assert.ok(durchgelassen,
-    "node --check ist streng geworden - tests/glaswerk-syntax.test.js kann vereinfacht werden");
+  console.log(durchgelassen
+    ? "   (node " + process.version + ": --check allein laesst sie durch - stdin-Pruefung noetig)"
+    : "   (node " + process.version + ": --check allein findet sie schon - stdin-Pruefung bleibt fuer aeltere Versionen)");
 });
 
 // ---------------------------------------------------------------------------
