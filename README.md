@@ -26,6 +26,12 @@ Glaswerk Styler ist ein eigenes Panel in der Seitenleiste von Home Assistant. Da
 
 <p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/dashboard.jpg" alt="Ein Dashboard mit Glaswerk-Theme und Steuerleiste" width="100%" /></p>
 
+## Video
+
+Glaswerk Styler in 2½ Minuten – vom Studio bis zur Steuerleiste:
+
+<p align="center"><a href="https://youtu.be/_ZQBg-Uf-2A"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/video-thumbnail.jpg" alt="Glaswerk Styler video" width="80%" /></a></p>
+
 ## Auf einen Blick
 
 | | |

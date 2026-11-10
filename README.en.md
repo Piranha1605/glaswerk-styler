@@ -26,6 +26,12 @@ Glaswerk Styler is a panel in your Home Assistant sidebar. It lets you build a c
 
 <p align="center"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/v1/dashboard.jpg" alt="A dashboard with a Glaswerk theme and the control bar" width="100%" /></p>
 
+## Video
+
+Glaswerk Styler in 2½ minutes – from the studio to the control bar:
+
+<p align="center"><a href="https://youtu.be/_ZQBg-Uf-2A"><img src="https://raw.githubusercontent.com/Piranha1605/glaswerk-styler/main/docs/video-thumbnail.jpg" alt="Glaswerk Styler video" width="80%" /></a></p>
+
 ## At a glance
 
 | | |
