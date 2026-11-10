@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/Piranha1605/glaswerk-styler?label=Version&color=2F80ED" alt="Version" />
-  <img src="https://img.shields.io/badge/HACS-Custom%20Repository-2F80ED?logo=home-assistant&logoColor=white" alt="HACS" />
+  <img src="https://img.shields.io/badge/Marketplace-Custom%20Repository-2F80ED?logo=home-assistant&logoColor=white" alt="Marketplace" />
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.10%2B-2F80ED?logo=home-assistant&logoColor=white" alt="Home Assistant 2026.10+" />
   <img src="https://img.shields.io/github/license/Piranha1605/glaswerk-styler?color=2F80ED" alt="MIT" />
   <img src="https://img.shields.io/github/stars/Piranha1605/glaswerk-styler?color=2F80ED" alt="Stars" />
@@ -84,12 +84,24 @@ A card for your dashboard. It floats at the bottom edge, and every change goes s
 
 ## Installation
 
-**Via HACS (recommended)**
+**Via the Marketplace (Home Assistant 2026.11 and later, recommended)**
+
+[![Open in Home Assistant](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Piranha1605&repository=glaswerk-styler&category=integration)
+
+1. Click the button above – or Settings → **Marketplace** → **Add from link** → `Piranha1605/glaswerk-styler`
+2. Open **Glaswerk** and select **Install**
+3. The setup opens by itself afterwards; otherwise Settings → Devices & services → **Add integration** → Glaswerk
+
+The first time, the Marketplace asks you to connect GitHub and to accept the notice for community content.
+
+**Via HACS (Home Assistant 2026.10)**
 
 1. HACS → menu at the top right → **Custom repositories**
 2. Add `https://github.com/Piranha1605/glaswerk-styler`, type **Integration**
 3. Install **Glaswerk** and restart Home Assistant
 4. Settings → Devices & services → **Add integration** → Glaswerk
+
+Coming from HACS to 2026.11 needs nothing from you: Glaswerk moves to the Marketplace automatically and keeps getting updates there.
 
 **Manually**
 

@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/v/release/Piranha1605/glaswerk-styler?label=Version&color=2F80ED" alt="Version" />
-  <img src="https://img.shields.io/badge/HACS-Custom%20Repository-2F80ED?logo=home-assistant&logoColor=white" alt="HACS" />
+  <img src="https://img.shields.io/badge/Marketplace-Custom%20Repository-2F80ED?logo=home-assistant&logoColor=white" alt="Marketplace" />
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.10%2B-2F80ED?logo=home-assistant&logoColor=white" alt="Home Assistant 2026.10+" />
   <img src="https://img.shields.io/github/license/Piranha1605/glaswerk-styler?color=2F80ED" alt="MIT" />
   <img src="https://img.shields.io/github/stars/Piranha1605/glaswerk-styler?color=2F80ED" alt="Stars" />
@@ -84,12 +84,24 @@ Eine Karte für dein Dashboard. Sie schwebt am unteren Rand, und jede Änderung 
 
 ## Installation
 
-**Über HACS (empfohlen)**
+**Über den Marketplace (Home Assistant 2026.11 und neuer, empfohlen)**
+
+[![In Home Assistant öffnen](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=Piranha1605&repository=glaswerk-styler&category=integration)
+
+1. Den Knopf oben anklicken – oder Einstellungen → **Marketplace** → **Über Link hinzufügen** → `Piranha1605/glaswerk-styler`
+2. **Glaswerk** öffnen und **Installieren**
+3. Die Einrichtung öffnet sich danach von selbst; sonst Einstellungen → Geräte & Dienste → **Integration hinzufügen** → Glaswerk
+
+Beim ersten Mal fragt der Marketplace nach der Verbindung mit GitHub und dem Risikohinweis für Community-Inhalte.
+
+**Über HACS (Home Assistant 2026.10)**
 
 1. HACS → Menü oben rechts → **Benutzerdefinierte Repositories**
 2. `https://github.com/Piranha1605/glaswerk-styler` eintragen, Typ **Integration**
 3. **Glaswerk** installieren und Home Assistant neu starten
 4. Einstellungen → Geräte & Dienste → **Integration hinzufügen** → Glaswerk
+
+Wer von HACS auf 2026.11 umsteigt, muss nichts tun: Glaswerk wandert automatisch in den Marketplace und bekommt dort seine Updates.
 
 **Von Hand**
 
