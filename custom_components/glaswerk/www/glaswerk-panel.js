@@ -28,6 +28,7 @@ import { ZUORDNUNG, ANZAHL } from "./zuordnung.js";
 import { UIX_ZIELE } from "./uix.js";
 import { VORLAGEN, VORLAGEN_GRUPPEN } from "./vorlagen.js";
 import { ERKLAERUNGEN, MERKSAETZE, AUSLESEN } from "./hilfe.js";
+import { sprachcode, lokal, wahl, lokalObjekt, GEBIETSSCHEMA } from "./sprachen.js";
 
 // Ein relativer Import loest sich gegen die Adresse SEINES Moduls auf, ein
 // src im Markup dagegen gegen die Adresse der SEITE (/glaswerk). Die Bilder
@@ -41,7 +42,7 @@ import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, HINTERGRUENDE, palet
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
 
-const GLASWERK_VERSION = "1.0.2";
+const GLASWERK_VERSION = "1.1.0";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1
@@ -1738,7 +1739,12 @@ const TEXTE = {
     "noch nicht geprueft": "not checked yet",
   },
 };
-const t = (s, spr) => (TEXTE[spr] && TEXTE[spr][s]) || s;
+// Deutsch ist die Quelle. Englisch steht in TEXTE.en, fr/nl/es kommen aus den
+// Woerterbuechern in sprachen.js, die den englischen Text als Schluessel haben.
+const t = (s, spr) => {
+  if (spr === "de" || typeof s !== "string") return s;
+  return lokal((TEXTE.en && TEXTE.en[s]) || s, spr);
+};
 
 // Zwei kleine Zeichen, selbst gezeichnet. MDI-Pfaddaten aus dem Gedaechtnis
 // waeren zu einem Teil falsch, und ein halb falscher Pfad sieht kaputt aus.
@@ -2208,7 +2214,7 @@ class GlaswerkPanel extends HTMLElement {
 
     const sorteHtml = (schluessel) => {
       const s = BAUKASTEN[schluessel];
-      const name = this.spr === "en" ? s.en : s.de;
+      const name = wahl(s.de, s.en, this.spr);
       const vorlagen = (SORTEN_VORLAGEN[schluessel] || []).length;
       const anV = ZUSTAND.modell
         ? (SORTEN_VORLAGEN[schluessel] || []).filter((id) => {
@@ -2225,7 +2231,7 @@ class GlaswerkPanel extends HTMLElement {
           <div class="bk-teile">
             <button class="bk-teil" data-bk-seite="${schluessel}" ${ZUSTAND.modell ? "" : "disabled"}>
               <span class="bk-name">${T("Tweaks")}</span>
-              <span class="bk-zweck">${this.spr === "en" ? s.zweckEn : s.zweckDe}</span>
+              <span class="bk-zweck">${wahl(s.zweckDe, s.zweckEn, this.spr)}</span>
               <span class="bk-zahl">${anV}/${vorlagen}</span>
             </button>
           </div>
@@ -2251,7 +2257,7 @@ class GlaswerkPanel extends HTMLElement {
               // die Paletten tun - sie zeigt, was man waehlt. Siehe
               // kartenPerle() in baukasten.js.
               const perle = schluessel === "karten" ? kartenPerle(teil, dunkel) : null;
-              const zweck = this.spr === "en" ? teil.zweckEn : teil.zweckDe;
+              const zweck = wahl(teil.zweckDe, teil.zweckEn, this.spr);
               return `
               <button class="bk-teil ${an ? "an" : ""}" data-bk-sorte="${schluessel}"
                       data-bk-teil="${teil.id}" ${m ? "" : "disabled"}
@@ -2260,7 +2266,7 @@ class GlaswerkPanel extends HTMLElement {
                 ${perle ? `<span class="bk-buehne" style="background:${perlGrund}"><i style="${perle.stil};border-radius:${perle.radius}px"></i></span>` : ""}
                 ${tupfer ? `<span class="bk-tupfer">${tupfer.map((f) =>
                     `<i style="background:${f.hex}" title="${f.rolle}"></i>`).join("")}</span>` : ""}
-                <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
+                <span class="bk-name">${wahl(teil.de, teil.en, this.spr)}</span>
                 ${tupfer ? "" : `<span class="bk-zweck">${zweck}</span>`}
                 ${an ? `<span class="bk-haken"><ha-icon icon="mdi:check"></ha-icon></span>` : ""}
               </button>`;
@@ -2281,7 +2287,7 @@ class GlaswerkPanel extends HTMLElement {
     // Eine Sorte offen? Dann ihre Seite statt der Uebersicht - im SELBEN
     // Dialog, mit einem Weg zurueck.
     const seite = this._bkSeite && BAUKASTEN[this._bkSeite] ? this._bkSeite : null;
-    const sTitel = seite ? (this.spr === "en" ? BAUKASTEN[seite].en : BAUKASTEN[seite].de) : null;
+    const sTitel = seite ? (wahl(BAUKASTEN[seite].de, BAUKASTEN[seite].en, this.spr)) : null;
 
     d.innerHTML = `
       <header class="dkopf">
@@ -2339,10 +2345,10 @@ class GlaswerkPanel extends HTMLElement {
 
         ${teil ? `
         <div class="bk-gewaehlt">
-          <span class="bk-name">${this.spr === "en" ? teil.en : teil.de}</span>
-          <span class="bk-zweck">${this.spr === "en" ? teil.zweckEn : teil.zweckDe}</span>
+          <span class="bk-name">${wahl(teil.de, teil.en, this.spr)}</span>
+          <span class="bk-zweck">${wahl(teil.zweckDe, teil.zweckEn, this.spr)}</span>
         </div>` : (s.nurVorlagen ? `
-        <p class="bk-zweck">${this.spr === "en" ? s.zweckEn : s.zweckDe}</p>` : "")}
+        <p class="bk-zweck">${wahl(s.zweckDe, s.zweckEn, this.spr)}</p>` : "")}
 
         ${felder.length ? `
         <section class="bk-sorte">
@@ -2353,7 +2359,7 @@ class GlaswerkPanel extends HTMLElement {
               const zahl = parseFloat(String(wert)) || (f.art === "zahl" ? 1 : 0);
               return `
               <label class="bk-regel">
-                <span>${this.spr === "en" ? f.en : f.de}</span>
+                <span>${wahl(f.de, f.en, this.spr)}</span>
                 <input type="range" data-bk-feld="${f.v}" data-bk-art="${f.art}"
                        min="${f.min}" max="${f.max}" step="${f.schritt ?? 1}" value="${zahl}">
                 <b data-bk-wert="${f.v}">${wert || "–"}</b>
@@ -2371,8 +2377,8 @@ class GlaswerkPanel extends HTMLElement {
               return `
               <label class="bk-tweak ${an ? "an" : ""}">
                 <input type="checkbox" data-bk-vorlage="${v.id}" ${an ? "checked" : ""} ${m ? "" : "disabled"}>
-                <span class="bk-name">${this.spr === "en" ? v.en : v.de}</span>
-                <span class="bk-zweck">${this.spr === "en" ? v.zweckEn : v.zweckDe}</span>
+                <span class="bk-name">${wahl(v.de, v.en, this.spr)}</span>
+                <span class="bk-zweck">${wahl(v.zweckDe, v.zweckEn, this.spr)}</span>
               </label>`;
             }).join("")}
           </div>
@@ -2434,7 +2440,7 @@ class GlaswerkPanel extends HTMLElement {
       <div class="feldseite">
         <p class="bk-zweck">${T("Neutral fehlt mit Absicht - HA rechnet die Rolle grau, egal welcher Ton hineingeht.")}</p>
         <div class="bk-farben">
-          ${FREIE_ROLLEN.map((r) => zeile(r.rolle, this.spr === "en" ? r.en : r.de,
+          ${FREIE_ROLLEN.map((r) => zeile(r.rolle, wahl(r.de, r.en, this.spr),
               this._freieFarben[r.rolle] || lies(`--ha-color-${r.rolle}-50`, "beide") || "",
               lies(`--ha-color-${r.rolle}-50`, "beide") || "")).join("")}
           ${zeile("akzent", T("Akzent"), this._freieFarben.akzent || akzent, akzent)}
@@ -2592,7 +2598,7 @@ class GlaswerkPanel extends HTMLElement {
         }
 
         ZUSTAND.meldung = { art: "gut",
-          text: `${this.spr === "en" ? teil.en : teil.de} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
+          text: `${wahl(teil.de, teil.en, this.spr)} · ${r.gesetzt} ${t("Felder gesetzt", this.spr)}` };
  // Anwenden UND oeffnen, nicht zweimal klicken lassen: Wer ein Teil
         // waehlt, will als Naechstes sehen, was daran noch zu drehen ist.
         //
@@ -2639,7 +2645,7 @@ class GlaswerkPanel extends HTMLElement {
     const d = this.shadowRoot.querySelector(".dialog");
     let mit = 0, ohne = 0;
     const benutzt = new Set();
-    const satz = (e) => (e && (e[this.spr] || e.de)) || "";
+    const satz = (e) => (e && (this.spr === "de" ? e.de : lokalObjekt(e.en ?? e.de, this.spr))) || "";
 
     const stufen = STUFEN.map((st) => {
       const gruppen = (st.gruppen || []).map((g) => {
@@ -2650,7 +2656,7 @@ class GlaswerkPanel extends HTMLElement {
           return `
             <tr${e ? "" : ' class="hi-leer"'}>
               <td><code>${f.v}</code></td>
-              <td>${this.spr === "en" ? (f.en || T(f.t)) : f.t}</td>
+              <td>${this.spr === "de" ? f.t : (f.en ? lokal(f.en, this.spr) : T(f.t))}</td>
               <td>${e ? esc(e) : `<em>${T("noch kein Satz")}</em>`}</td>
             </tr>`;
         }).join("");
@@ -2667,7 +2673,7 @@ class GlaswerkPanel extends HTMLElement {
     }).join("");
 
     const merk = MERKSAETZE.map((m) => {
-      const x = m[this.spr] || m.de;
+      const x = this.spr === "de" ? m.de : lokalObjekt(m.en ?? m.de, this.spr);
       return `
       <section class="hi-merk">
         <h4>${esc(x.titel)}</h4>
@@ -2677,7 +2683,7 @@ class GlaswerkPanel extends HTMLElement {
     }).join("");
 
     const lesen = AUSLESEN.map((a) => {
-      const x = a[this.spr] || a.de;
+      const x = this.spr === "de" ? a.de : lokalObjekt(a.en ?? a.de, this.spr);
       return `
       <section class="hi-merk">
         <h4>${esc(x.titel)}</h4>
@@ -2747,7 +2753,7 @@ class GlaswerkPanel extends HTMLElement {
           const drin = VORLAGEN.filter((v) => v.gruppe === g.id);
           if (!drin.length) return "";
           return `
-            <h3 class="uixtitel">${this.spr === "en" ? g.en : g.de}</h3>
+            <h3 class="uixtitel">${wahl(g.de, g.en, this.spr)}</h3>
             <div class="vorlagenraster">
               ${drin.map((v) => this.vorlagenKarte(v, m, T)).join("")}
             </div>`;
@@ -2769,7 +2775,7 @@ class GlaswerkPanel extends HTMLElement {
                 <label class="uixkopf">
                   <input type="checkbox" data-uix="${z.id}" ${offen ? "checked" : ""}
                          ${m ? "" : "disabled"}>
-                  <span>${this.spr === "en" ? z.en : z.de}</span>
+                  <span>${wahl(z.de, z.en, this.spr)}</span>
                   <code>${name}</code>
                 </label>
                 ${offen ? `<textarea class="uixcss" data-uix-css="${z.id}" spellcheck="false"
@@ -2804,7 +2810,7 @@ class GlaswerkPanel extends HTMLElement {
         <!-- Vorlagen ohne sichtbaren Unterschied unter Glaswerk-Themes zeigen
              einen Satz statt zweier gleicher Bilder (siehe hinweisDe). -->
         <div class="vbild ohne hinweis">
-          <span class="vleer">${this.spr === "en" ? v.hinweisEn : v.hinweisDe}</span>
+          <span class="vleer">${wahl(v.hinweisDe, v.hinweisEn, this.spr)}</span>
         </div>` : `
         <div class="vbild">
           <img class="vvorher" src="/glaswerk_static/vorschau/${v.id}-vorher.jpg" alt="" loading="lazy">
@@ -2814,9 +2820,9 @@ class GlaswerkPanel extends HTMLElement {
           <span class="vleer">${T("noch kein Bild")}</span>
         </div>`}
         <div class="vtext">
-          <b>${this.spr === "en" ? v.en : v.de}</b>
-          <p>${this.spr === "en" ? v.zweckEn : v.zweckDe}</p>
-          <code>uix-${v.ziel}${ziel ? " · " + (this.spr === "en" ? ziel.en : ziel.de) : ""}</code>
+          <b>${wahl(v.de, v.en, this.spr)}</b>
+          <p>${wahl(v.zweckDe, v.zweckEn, this.spr)}</p>
+          <code>uix-${v.ziel}${ziel ? " · " + (wahl(ziel.de, ziel.en, this.spr)) : ""}</code>
         </div>
         <label class="vschalter">
           <input type="checkbox" data-vorlage="${v.id}" ${offen ? "checked" : ""} ${m ? "" : "disabled"}>
@@ -3178,7 +3184,7 @@ class GlaswerkPanel extends HTMLElement {
               <span class="punkt"></span>
               <div class="zeilentext">
                 <b>${x.name.replace(/\.yaml$/, "")}</b>
-                <small>${x.kopf ? (this.spr === "en" ? x.kopf.replace(/^Erzeugt mit (.+?) am /, "Created with $1 on ") : x.kopf) : T("Mit Glaswerk gebaut")} &middot; ${kb(x.bytes)}</small>
+                <small>${x.kopf ? (this.spr !== "de" ? x.kopf.replace(/^Erzeugt mit (.+?) am /, "Created with $1 on ") : x.kopf) : T("Mit Glaswerk gebaut")} &middot; ${kb(x.bytes)}</small>
               </div>
               <span class="stempel">${T("oeffnen")}</span>
             </div>`).join("")}
@@ -3358,8 +3364,7 @@ class GlaswerkPanel extends HTMLElement {
   // Sprache als Englisch bekam Deutsch. Gemeldet am 10.11.2026 im Forum von
   // einem Nutzer mit franzoesischer Oberflaeche.
   get spr() {
-    const s = String((this._hass && (this._hass.locale?.language || this._hass.language)) || "en").toLowerCase();
-    return s.startsWith("de") ? "de" : "en";
+    return sprachcode(this._hass && (this._hass.locale?.language || this._hass.language));
   }
 
   // Ein Fehler beim Zeichnen hinterliess bisher eine leere Flaeche - und wer
@@ -4141,7 +4146,7 @@ class GlaswerkPanel extends HTMLElement {
       return;
     }
     if (!ZUSTAND.autoZeit) { el.textContent = ""; el.className = "autostand"; return; }
-    const uhr = ZUSTAND.autoZeit.toLocaleTimeString(this.spr === "en" ? "en-GB" : "de-DE",
+    const uhr = ZUSTAND.autoZeit.toLocaleTimeString(GEBIETSSCHEMA[this.spr] || "en-GB",
       { hour: "2-digit", minute: "2-digit" });
     el.textContent = t("Zwischenstand ", this.spr) + uhr;
     el.className = "autostand";

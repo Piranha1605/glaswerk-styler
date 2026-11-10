@@ -16,6 +16,7 @@
 // Die ersten beiden kommen ohne Browser aus und sind so geprueft.
 
 import { vorlageAn, vorlageAus } from "./theme.js";
+import { lokal } from "./sprachen.js";
 import {
   istFest, festUnerkannt, stelleFest,
   bewegung, leseBewegung, bewegungNachWahl, driftDauer, farbDauer, punkteDauer,
@@ -204,7 +205,7 @@ const TEXTE = {
     "The sky cannot be switched on like this: the style target \"Dashboard root\" contains CSS that a template would break. Nothing of the whole field would arrive afterwards."],
   zeile: ["Zeile", "line"],
 };
-const T = (k, spr) => TEXTE[k][spr === "en" ? 1 : 0];
+const T = (k, spr) => (spr === "de" ? TEXTE[k][0] : lokal(TEXTE[k][1], spr));
 
 // Namen von Entitaeten kommen aus der Instanz und gehoeren nicht ungeprueft
 // ins HTML.

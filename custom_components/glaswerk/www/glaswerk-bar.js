@@ -328,6 +328,345 @@ export const TEXTE = {
       sensor: "the temperature sensor", weather: "the weather entity",
     },
   },
+  fr: {
+    name: "Carte de contrôle Glaswerk",
+    nameBadge: "Contrôle Glaswerk",
+    beschreibung: "Menu et contrôles : cibles, interrupteurs, mode, plein écran, météo.",
+    modus: "Mode",
+    auto: "Auto - suit l'appareil",
+    light: "Clair",
+    dark: "Sombre",
+    hellDunkel: "Clair / sombre",
+    vollbild: "Plein écran",
+    vollbildAus: "Quitter le plein écran",
+    menue: "Menu",
+    knopf: (n) => `Bouton ${n}`,
+    fest: (theme, modus) =>
+      `Le thème "${theme}" n'a qu'un mode ${modus === "dark" ? "sombre" : "clair"}.`,
+    leer: "Aucun bouton configuré.",
+    feld: {
+      buttons: "Boutons", controls: "Contrôles", kiosk_only: "Plein écran dans Home Assistant uniquement",
+      replace_header: "Remplacer l'en-tête de Home Assistant",
+      menu_shape: "Forme", menu_size: "Taille", collapse: "Replier les cibles",
+      placement: "Emplacement",
+      hide_sidebar_button: "Omettre le bouton de la barre latérale",
+      labels: "Libellés dans la barre",
+      collapse_width: "Replier sous cette largeur de carte", show_highlight: "Pilule sur la vue actuelle",
+    },
+    hilfe: {
+      buttons: "Une cible, un interrupteur ou une fonction - dans cet ordre.",
+      controls: "Affichés dans cet ordre.",
+      kiosk_only: "Masque seulement la barre latérale et l'en-tête. La fenêtre du navigateur reste telle quelle.",
+      replace_header: "Sur ce tableau de bord, la barre prend la place de l'en-tête et reste en haut lors du défilement. "
+        + "Un bouton de barre latérale est ajouté. En mode édition, l'en-tête revient.",
+      collapse_width: "C'est la carte qui est mesurée, pas la fenêtre.",
+      placement: "Au bord inférieur, la barre flotte au-dessus du tableau de bord et ne défile pas avec lui. "
+        + "En mode édition, elle reprend sa place dans la grille.",
+      hide_sidebar_button: "Uniquement avec \"Remplacer l'en-tête\". Attention : sur un téléphone, c'est le seul accès "
+        + "à la barre latérale et donc aux paramètres.",
+      labels: "S'applique uniquement à la barre. Le menu déplié affiche toujours du texte.",
+    },
+    knopffeld: {
+      name: "Nom", icon: "Icône", link: "Cible", entity: "Entité",
+      function: "Fonction intégrée", temperature: "Capteur de température (météo uniquement)",
+      temperature_source: "Température depuis (météo uniquement)", tap_action: "Action d'appui",
+      align_end: "À la fin de la barre", in_menu: "Ajouter au menu",
+      separator_before: "Séparateur avant",
+    },
+    funktion: { mode: "Mode (trois boutons)", theme: "Clair / sombre", fullscreen: "Plein écran", weather: "Météo",
+                motion: "Mouvement de l'arrière-plan", appearance: "Transparence et texte",
+                settings: "Paramètres (tout dans une fenêtre)",
+                sidebar: "Barre latérale", assist: "Assist", edit: "Modifier le tableau de bord" },
+    teil: { mode: "Mode", fullscreen: "Plein écran" },
+    bewegung: "Mouvement de l'arrière-plan",
+    darstellung: "Transparence et texte",
+    alles: "Paramètres",
+    seitenleiste: "Barre latérale",
+    assist: "Assist",
+    bearbeiten: "Modifier le tableau de bord",
+    unschaerfe: "Flou",
+    fenster: {
+      titel: "Paramètres", zu: "Fermer",
+      seiten: { aussehen: "Apparence", hintergrund: "Arrière-plan", schrift: "Texte et taille",
+                bewegung: "Mouvement", uix: "Modèles UIX", anzeige: "Affichage" },
+      modus: "Mode", karten: "Cartes", farbe: "Couleur", flaeche: "Surface de carte",
+      verlaeufe: "Dégradés", bilder: "Vos images",
+      keineBilder: "Vous téléversez vos propres images dans le panneau. Elles se trouvent dans config/www/glaswerk.",
+      schriftart: "Police de caractères", groesse: "Taille", rundung: "Coins", dichte: "Densité",
+      vollbild: "Plein écran", theme: "Thème", themeHilfe: "S'applique à chaque appareil sur lequel vous êtes connecté.",
+      sicherungen: "Versions antérieures", keineSicherungen: "Aucune pour l'instant. Glaswerk en conserve une avant chaque écrasement.",
+      zurueck: "Restaurer", zurueckGeholt: (zeit) => `La version du ${zeit} est restaurée.`,
+      eigene: "Aucun des préréglages - ajusté dans le panneau.",
+      vorlagen: { karten: "Cartes", oberflaeche: "Interface", hintergrund: "Arrière-plan", weitere: "Plus" },
+      uixHinweis: "Fonctionne uniquement avec UI eXtension, et chaque modèle s'applique aussi bien au mode clair qu'au mode sombre. Votre propre CSS dans la même cible de style est conservé lors du changement.",
+      zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
+    },
+    transparenz: "Transparence",
+    schrift: "Taille du texte",
+    deckend: "opaque",
+    nurHier: (modus) => `S'applique en mode ${modus === "dark" ? "sombre" : "clair"} - le thème sépare les deux.`,
+    ohneUnschaerfe: "Le thème n'a pas de flou (--ha-card-backdrop-filter). Les cartes deviennent seulement plus pâles, pas dépolies.",
+    kachelnKurz: "Au-delà de 100 %, les tuiles de Home Assistant tronquent plus tôt les noms longs.",
+    mushFest: (wert) => `Mushroom est fixé à ${wert} et ne grandit pas avec.`,
+    regler: { drift: "Dérive", punkte: "Points de couleur", farbe: "Décalage de couleur", weite: "Amplitude" },
+    aus: "désactivé",
+    kreis: "cercle complet",
+    laedt: "Lecture du thème …",
+    speichert: "Enregistrement …",
+    gespeichert: (name) => `Enregistré dans ${name}.yaml.`,
+    nichtGespeichert: "Non enregistré",
+    punkteNur: "Uniquement avec un arrière-plan composé de points de couleur.",
+    weiteNur: "Uniquement avec le décalage de couleur.",
+    grund: {
+      admin: () => "Le curseur écrit le fichier du thème. Seul un administrateur peut le faire.",
+      ohneDatei: (name) => `Il n'y a pas de fichier ${name}.yaml dans le dossier des thèmes pour le thème "${name}".`,
+      unlesbar: (was) => `Le fichier du thème ne peut pas être lu : ${was}`,
+      unklar: (n) => `${n} ligne(s) du fichier du thème ne peuvent pas être placées. L'écriture les ferait perdre.`,
+      name: (name) => `Le fichier contient le thème "${name}", pas le thème actif.`,
+      fremd: () => "Le thème n'a pas été créé avec Glaswerk. Un thème appartient à un seul outil.",
+      keineFlaeche: () => "Le thème ne définit pas de surface de carte (--ha-card-background).",
+      form: (wert) => `La surface de carte n'est pas une couleur simple : ${wert}`,
+      skala: (wert) => `L'échelle de police (--ha-font-size-scale) n'est pas un nombre : ${wert}`,
+      wechsel: (name) => `Le thème "${name}" est maintenant actif. Veuillez rouvrir.`,
+      unschaerfe: (wert) => `Le flou n'est pas un filtre simple : ${wert}`,
+      teil: (was) => `Élément inconnu : ${was}`,
+      bild: (was) => `Pas une image de /local/hatg : ${was}`,
+    },
+    wahl: {
+      inline: "dans la grille", bottom: "au bord inférieur",
+      auto: "comme saisi", icons: "icônes uniquement", text: "icônes et texte",
+      theme: "rayon du thème", pill: "entièrement rond",
+      small: "petit", normal: "normal", large: "grand",
+      never: "jamais", narrow: "quand l'espace se réduit", always: "toujours",
+      sensor: "le capteur de température", weather: "l'entité météo",
+    },
+  },
+  es: {
+    name: "Tarjeta de control de Glaswerk",
+    nameBadge: "Control de Glaswerk",
+    beschreibung: "Menú y controles: destinos, interruptores, modo, pantalla completa, tiempo.",
+    modus: "Modo",
+    auto: "Auto - sigue al dispositivo",
+    light: "Claro",
+    dark: "Oscuro",
+    hellDunkel: "Claro / oscuro",
+    vollbild: "Pantalla completa",
+    vollbildAus: "Salir de pantalla completa",
+    menue: "Menú",
+    knopf: (n) => `Botón ${n}`,
+    fest: (theme, modus) =>
+      `El tema "${theme}" solo tiene modo ${modus === "dark" ? "oscuro" : "claro"}.`,
+    leer: "No hay ningún botón configurado.",
+    feld: {
+      buttons: "Botones", controls: "Controles", kiosk_only: "Pantalla completa solo en Home Assistant",
+      replace_header: "Sustituir el encabezado de Home Assistant",
+      menu_shape: "Forma", menu_size: "Tamaño", collapse: "Plegar destinos",
+      placement: "Ubicación",
+      hide_sidebar_button: "Omitir el botón de la barra lateral",
+      labels: "Etiquetas en la barra",
+      collapse_width: "Plegar por debajo de este ancho de tarjeta", show_highlight: "Píldora en la vista actual",
+    },
+    hilfe: {
+      buttons: "Un destino, un interruptor o una función - en este orden.",
+      controls: "Se muestran en este orden.",
+      kiosk_only: "Solo oculta la barra lateral y el encabezado. La ventana del navegador queda como está.",
+      replace_header: "En este panel de control la barra ocupa el lugar del encabezado y se queda arriba al desplazarse. "
+        + "Se añade un botón de barra lateral. En el modo de edición vuelve el encabezado.",
+      collapse_width: "Se mide la tarjeta, no la ventana.",
+      placement: "En el borde inferior la barra flota sobre el panel de control y no se desplaza con él. "
+        + "En el modo de edición vuelve a estar en la cuadrícula.",
+      hide_sidebar_button: "Solo con \"Sustituir el encabezado\". Cuidado: en un teléfono es la única forma "
+        + "de llegar a la barra lateral y, por tanto, a los ajustes.",
+      labels: "Se aplica solo a la barra. El menú desplegable siempre lleva texto.",
+    },
+    knopffeld: {
+      name: "Nombre", icon: "Icono", link: "Destino", entity: "Entidad",
+      function: "Función integrada", temperature: "Sensor de temperatura (solo tiempo)",
+      temperature_source: "Temperatura desde (solo tiempo)", tap_action: "Acción al tocar",
+      align_end: "Al final de la barra", in_menu: "Añadir al menú",
+      separator_before: "Separador antes",
+    },
+    funktion: { mode: "Modo (tres botones)", theme: "Claro / oscuro", fullscreen: "Pantalla completa", weather: "Tiempo",
+                motion: "Movimiento del fondo", appearance: "Transparencia y texto",
+                settings: "Ajustes (todo en una ventana)",
+                sidebar: "Barra lateral", assist: "Assist", edit: "Editar panel de control" },
+    teil: { mode: "Modo", fullscreen: "Pantalla completa" },
+    bewegung: "Movimiento del fondo",
+    darstellung: "Transparencia y texto",
+    alles: "Ajustes",
+    seitenleiste: "Barra lateral",
+    assist: "Assist",
+    bearbeiten: "Editar panel de control",
+    unschaerfe: "Desenfoque",
+    fenster: {
+      titel: "Ajustes", zu: "Cerrar",
+      seiten: { aussehen: "Apariencia", hintergrund: "Fondo", schrift: "Texto y tamaño",
+                bewegung: "Movimiento", uix: "Plantillas UIX", anzeige: "Visualización" },
+      modus: "Modo", karten: "Tarjetas", farbe: "Color", flaeche: "Superficie de la tarjeta",
+      verlaeufe: "Degradados", bilder: "Tus imágenes",
+      keineBilder: "Tus propias imágenes las subes en el panel. Se guardan en config/www/glaswerk.",
+      schriftart: "Tipografía", groesse: "Tamaño", rundung: "Esquinas", dichte: "Densidad",
+      vollbild: "Pantalla completa", theme: "Tema", themeHilfe: "Se aplica a todos los dispositivos en los que has iniciado sesión.",
+      sicherungen: "Versiones anteriores", keineSicherungen: "Aún ninguna. Glaswerk guarda una antes de cada sobrescritura.",
+      zurueck: "Restaurar", zurueckGeholt: (zeit) => `La versión del ${zeit} ha vuelto.`,
+      eigene: "Ninguno de los preajustes - ajustado en el panel.",
+      vorlagen: { karten: "Tarjetas", oberflaeche: "Interfaz", hintergrund: "Fondo", weitere: "Más" },
+      uixHinweis: "Solo funciona con UI eXtension, y cada plantilla se aplica por igual a claro y oscuro. Tu propio CSS en el mismo destino de estilo se mantiene al cambiar.",
+      zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
+    },
+    transparenz: "Transparencia",
+    schrift: "Tamaño del texto",
+    deckend: "opaco",
+    nurHier: (modus) => `Se aplica en modo ${modus === "dark" ? "oscuro" : "claro"} - el tema mantiene ambos por separado.`,
+    ohneUnschaerfe: "El tema no tiene desenfoque (--ha-card-backdrop-filter). Las tarjetas solo se vuelven más pálidas, no esmeriladas.",
+    kachelnKurz: "Por encima del 100 %, los mosaicos de Home Assistant recortan antes los nombres largos.",
+    mushFest: (wert) => `Mushroom está fijado en ${wert} y no crece con él.`,
+    regler: { drift: "Deriva", punkte: "Puntos de color", farbe: "Cambio de color", weite: "Alcance" },
+    aus: "desactivado",
+    kreis: "círculo completo",
+    laedt: "Leyendo el tema …",
+    speichert: "Guardando …",
+    gespeichert: (name) => `Guardado en ${name}.yaml.`,
+    nichtGespeichert: "No guardado",
+    punkteNur: "Solo con un fondo hecho de puntos de color.",
+    weiteNur: "Solo con cambio de color.",
+    grund: {
+      admin: () => "El control deslizante escribe el archivo del tema. Solo un administrador puede hacerlo.",
+      ohneDatei: (name) => `No hay ningún archivo ${name}.yaml en la carpeta de temas para el tema "${name}".`,
+      unlesbar: (was) => `No se puede leer el archivo del tema: ${was}`,
+      unklar: (n) => `${n} línea(s) del archivo del tema no se pueden ubicar. Al escribir se perderían.`,
+      name: (name) => `El archivo contiene el tema "${name}", no el activo.`,
+      fremd: () => "El tema no se creó con Glaswerk. Un tema pertenece a una sola herramienta.",
+      keineFlaeche: () => "El tema no define superficie de tarjeta (--ha-card-background).",
+      form: (wert) => `La superficie de la tarjeta no es un color simple: ${wert}`,
+      skala: (wert) => `La escala de fuente (--ha-font-size-scale) no es un número: ${wert}`,
+      wechsel: (name) => `Ahora está activo el tema "${name}". Vuelve a abrirlo.`,
+      unschaerfe: (wert) => `El desenfoque no es un filtro simple: ${wert}`,
+      teil: (was) => `Parte desconocida: ${was}`,
+      bild: (was) => `No es una imagen de /local/hatg: ${was}`,
+    },
+    wahl: {
+      inline: "en la cuadrícula", bottom: "en el borde inferior",
+      auto: "como se introdujo", icons: "solo iconos", text: "iconos y texto",
+      theme: "radio del tema", pill: "totalmente redondo",
+      small: "pequeño", normal: "normal", large: "grande",
+      never: "nunca", narrow: "cuando se estrecha", always: "siempre",
+      sensor: "el sensor de temperatura", weather: "la entidad meteorológica",
+    },
+  },
+  nl: {
+    name: "Glaswerk-bedieningskaart",
+    nameBadge: "Glaswerk-bediening",
+    beschreibung: "Menu en bediening: doelen, schakelaars, modus, volledig scherm, weer.",
+    modus: "Modus",
+    auto: "Auto - volgt het apparaat",
+    light: "Licht",
+    dark: "Donker",
+    hellDunkel: "Licht / donker",
+    vollbild: "Volledig scherm",
+    vollbildAus: "Volledig scherm verlaten",
+    menue: "Menu",
+    knopf: (n) => `Knop ${n}`,
+    fest: (theme, modus) =>
+      `Het thema "${theme}" heeft alleen een ${modus === "dark" ? "donkere" : "lichte"} modus.`,
+    leer: "Geen knop ingesteld.",
+    feld: {
+      buttons: "Knoppen", controls: "Bediening", kiosk_only: "Volledig scherm alleen in Home Assistant",
+      replace_header: "Kopbalk van Home Assistant vervangen",
+      menu_shape: "Vorm", menu_size: "Grootte", collapse: "Doelen inklappen",
+      placement: "Plaatsing",
+      hide_sidebar_button: "Zijbalkknop weglaten",
+      labels: "Labels in de balk",
+      collapse_width: "Inklappen onder deze kaartbreedte", show_highlight: "Pil op de huidige weergave",
+    },
+    hilfe: {
+      buttons: "Een doel, een schakelaar of een functie - in deze volgorde.",
+      controls: "Getoond in deze volgorde.",
+      kiosk_only: "Verbergt alleen de zijbalk en de kopbalk. Het browservenster blijft zoals het is.",
+      replace_header: "Op dit dashboard neemt de balk de plaats van de kopbalk in en blijft hij bovenaan tijdens het scrollen. "
+        + "Er komt een zijbalkknop bij. In de bewerkingsmodus is de kopbalk terug.",
+      collapse_width: "De kaart wordt gemeten, niet het venster.",
+      placement: "Aan de onderrand zweeft de balk boven het dashboard en scrollt hij niet mee. "
+        + "In de bewerkingsmodus staat hij weer in het raster.",
+      hide_sidebar_button: "Alleen met \"Kopbalk vervangen\". Let op: op een telefoon is dit de enige weg "
+        + "naar de zijbalk en daarmee naar de instellingen.",
+      labels: "Geldt alleen voor de balk. Het menu dat uitklapt, toont altijd tekst.",
+    },
+    knopffeld: {
+      name: "Naam", icon: "Pictogram", link: "Doel", entity: "Entiteit",
+      function: "Ingebouwde functie", temperature: "Temperatuursensor (alleen weer)",
+      temperature_source: "Temperatuur van (alleen weer)", tap_action: "Tikactie",
+      align_end: "Aan het einde van de balk", in_menu: "Aan het menu toevoegen",
+      separator_before: "Scheidingslijn ervoor",
+    },
+    funktion: { mode: "Modus (drie knoppen)", theme: "Licht / donker", fullscreen: "Volledig scherm", weather: "Weer",
+                motion: "Achtergrondbeweging", appearance: "Transparantie en tekst",
+                settings: "Instellingen (alles in één venster)",
+                sidebar: "Zijbalk", assist: "Assist", edit: "Dashboard bewerken" },
+    teil: { mode: "Modus", fullscreen: "Volledig scherm" },
+    bewegung: "Achtergrondbeweging",
+    darstellung: "Transparantie en tekst",
+    alles: "Instellingen",
+    seitenleiste: "Zijbalk",
+    assist: "Assist",
+    bearbeiten: "Dashboard bewerken",
+    unschaerfe: "Vervaging",
+    fenster: {
+      titel: "Instellingen", zu: "Sluiten",
+      seiten: { aussehen: "Uiterlijk", hintergrund: "Achtergrond", schrift: "Tekst en grootte",
+                bewegung: "Beweging", uix: "UIX-sjablonen", anzeige: "Weergave" },
+      modus: "Modus", karten: "Kaarten", farbe: "Kleur", flaeche: "Kaartvlak",
+      verlaeufe: "Kleurverlopen", bilder: "Je afbeeldingen",
+      keineBilder: "Je eigen afbeeldingen upload je in het paneel. Ze staan in config/www/glaswerk.",
+      schriftart: "Letterbeeld", groesse: "Grootte", rundung: "Hoeken", dichte: "Dichtheid",
+      vollbild: "Volledig scherm", theme: "Thema", themeHilfe: "Geldt voor elk apparaat waarop je bent aangemeld.",
+      sicherungen: "Eerdere versies", keineSicherungen: "Nog geen. Glaswerk bewaart er een voor elke overschrijving.",
+      zurueck: "Herstellen", zurueckGeholt: (zeit) => `De versie van ${zeit} is terug.`,
+      eigene: "Geen van de voorinstellingen - aangepast in het paneel.",
+      vorlagen: { karten: "Kaarten", oberflaeche: "Interface", hintergrund: "Achtergrond", weitere: "Meer" },
+      uixHinweis: "Werkt alleen met UI eXtension, en elk sjabloon geldt voor licht en donker tegelijk. Je eigen CSS in hetzelfde stijldoel blijft staan als je wisselt.",
+      zeit: (k) => `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)} ${k.slice(9, 11)}:${k.slice(11, 13)}:${k.slice(13, 15)}`,
+    },
+    transparenz: "Transparantie",
+    schrift: "Tekstgrootte",
+    deckend: "dekkend",
+    nurHier: (modus) => `Geldt in de ${modus === "dark" ? "donkere" : "lichte"} modus - het thema houdt die twee gescheiden.`,
+    ohneUnschaerfe: "Het thema heeft geen vervaging (--ha-card-backdrop-filter). De kaarten worden alleen bleker, niet mat.",
+    kachelnKurz: "Boven 100 % korten de tegels van Home Assistant lange namen eerder af.",
+    mushFest: (wert) => `Mushroom staat vast op ${wert} en groeit niet mee.`,
+    regler: { drift: "Drijven", punkte: "Kleurstippen", farbe: "Kleurverschuiving", weite: "Bereik" },
+    aus: "uit",
+    kreis: "volle cirkel",
+    laedt: "Thema wordt ingelezen …",
+    speichert: "Opslaan …",
+    gespeichert: (name) => `Opgeslagen in ${name}.yaml.`,
+    nichtGespeichert: "Niet opgeslagen",
+    punkteNur: "Alleen met een achtergrond van kleurstippen.",
+    weiteNur: "Alleen met kleurverschuiving.",
+    grund: {
+      admin: () => "De schuifregelaar schrijft het themabestand. Alleen een beheerder mag dat.",
+      ohneDatei: (name) => `Er is geen bestand ${name}.yaml in de themamap voor het thema "${name}".`,
+      unlesbar: (was) => `Het themabestand kan niet worden gelezen: ${was}`,
+      unklar: (n) => `${n} regel(s) van het themabestand kunnen niet worden geplaatst. Schrijven zou ze verloren laten gaan.`,
+      name: (name) => `Het bestand bevat het thema "${name}", niet het actieve.`,
+      fremd: () => "Het thema is niet met Glaswerk gemaakt. Een thema hoort bij één hulpmiddel.",
+      keineFlaeche: () => "Het thema stelt geen kaartvlak in (--ha-card-background).",
+      form: (wert) => `Het kaartvlak is geen eenvoudige kleur: ${wert}`,
+      skala: (wert) => `De letterschaal (--ha-font-size-scale) is geen getal: ${wert}`,
+      wechsel: (name) => `Het thema "${name}" is nu actief. Open opnieuw.`,
+      unschaerfe: (wert) => `De vervaging is geen eenvoudig filter: ${wert}`,
+      teil: (was) => `Onbekend onderdeel: ${was}`,
+      bild: (was) => `Geen afbeelding uit /local/hatg: ${was}`,
+    },
+    wahl: {
+      inline: "in het raster", bottom: "aan de onderrand",
+      auto: "zoals ingevoerd", icons: "alleen pictogrammen", text: "pictogrammen en tekst",
+      theme: "themaradius", pill: "volledig rond",
+      small: "klein", normal: "normaal", large: "groot",
+      never: "nooit", narrow: "als het smal wordt", always: "altijd",
+      sensor: "de temperatuursensor", weather: "de weerentiteit",
+    },
+  },
 };
 
 // `alles` traegt die Palette und nicht das Zahnrad: In Home Assistant fuehrt
@@ -378,7 +717,14 @@ export function sprache(hass) {
     || globalThis.document?.documentElement?.lang
     || globalThis.navigator?.language || "en"
   ).toLowerCase();
-  return s.startsWith("de") ? "de" : "en";
+  // Fuenf Sprachen wie im Panel (sprachen.js); alles andere Englisch.
+  for (const c of ["de", "fr", "nl", "es"]) if (s === c || s.startsWith(c + "-") || s.startsWith(c + "_")) return c;
+  return "en";
+}
+
+// Texte der Leiste in der Sprache; fehlt eine Sprache, Englisch.
+export function texte(spr) {
+  return TEXTE[spr] ?? TEXTE.en;
 }
 
 // ---- Modus ---------------------------------------------------------------
@@ -804,6 +1150,7 @@ function ladeWerkzeug() {
     import(new URL("./baukasten.js", import.meta.url).href),
     import(new URL("./hintergrund-seite.js", import.meta.url).href),
     import(new URL("./vorlagen.js", import.meta.url).href),
+    import(new URL("./sprachen.js", import.meta.url).href),
   ]).then((module) => Object.assign({}, ...module), (fehler) => {
     // Ein gescheitertes Laden nicht merken - der naechste Versuch darf gelingen.
     werkzeugLaden = null;
@@ -2186,7 +2533,7 @@ class Steuerung extends Basis {
   }
 
   _baue(spr) {
-    const t = TEXTE[spr];
+    const t = texte(spr);
     const c = this._config;
     // Das Einstellungsfenster bleibt offen, waehrend die Leiste neu baut - eine
     // neue Breite (das Vollbild!) baut sie neu, und das Fenster ginge mit.
@@ -2304,7 +2651,7 @@ class Steuerung extends Basis {
   }
 
   _stelle(spr) {
-    const t = TEXTE[spr];
+    const t = texte(spr);
     const hass = this._hass;
     let hatVollbild = false;
 
@@ -2583,7 +2930,7 @@ class Steuerung extends Basis {
     this._oeffne(art);
     knopf.setAttribute("aria-expanded", "true");
     this._feld = feld;
-    this._reglerMeldung(art, TEXTE[sprache(this._hass)].laedt);
+    this._reglerMeldung(art, texte(sprache(this._hass)).laedt);
     // Unter den Knopf, aber nie ueber den Rand der Leiste hinaus.
     const platz = feld.parentElement.clientWidth - feld.offsetWidth;
     const links = knopf._inListe ? 0 : knopf.offsetLeft;
@@ -2592,7 +2939,7 @@ class Steuerung extends Basis {
   }
 
   async _reglerLaden(art) {
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     this._regler = null;
     let stand;
     try {
@@ -2650,7 +2997,7 @@ class Steuerung extends Basis {
   }
 
   _reglerMeldung(art, text) {
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     const titel = neu("div", "rtitel");
     titel.textContent = art === "fenster" ? t.fenster.seiten[this._fensterSeite] : t[art];
     const meldung = neu("div", "rstatus");
@@ -2800,7 +3147,7 @@ class Steuerung extends Basis {
     if (!r || this.getAttribute("offen") !== r.art) return;
     const andereTheme = r.name !== (this._hass.themes?.theme ?? r.name);
     if (andereTheme || (r.art !== "bewegung" && r.modus !== aktuellerModus(this._hass))) {
-      if (r.art === "fenster") this._fensterNav(TEXTE[sprache(this._hass)]);
+      if (r.art === "fenster") this._fensterNav(texte(sprache(this._hass)));
       this._reglerLaden(r.art);
     }
   }
@@ -2820,7 +3167,7 @@ class Steuerung extends Basis {
   // ginge dabei mit.
 
   async _fensterAuf() {
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     if (!this._fenster) this._fenster = this._baueFenster(t);
     this._oeffne("fenster");
     if (!this._fenster.open) this._fenster.showModal?.();
@@ -2971,7 +3318,8 @@ class Steuerung extends Basis {
   // wozu sie da ist. Kein Bild - eine Kachel braucht eines, und fuer die
   // meisten Vorlagen gibt es noch keins; der Zweck sagt mehr als der Name.
   _vorlagenListe(vorlagen) {
-    const en = sprache(this._hass) === "en";
+    const spr = sprache(this._hass);
+    const wahl = (de, en) => (spr === "de" ? de : (this._w?.lokal ? this._w.lokal(en, spr) : en));
     const an = this._regler?.vorlagen ?? {};
     const liste = neu("div", "vliste");
     liste.append(...vorlagen.map((v) => {
@@ -2982,9 +3330,9 @@ class Steuerung extends Basis {
       b.setAttribute("aria-checked", String(an[v.id] === true));
       const text = neu("span", "vtext");
       const name = neu("span", "vname");
-      name.textContent = en ? v.en : v.de;
+      name.textContent = wahl(v.de, v.en);
       const zweck = neu("span", "vzweck");
-      zweck.textContent = en ? v.zweckEn : v.zweckDe;
+      zweck.textContent = wahl(v.zweckDe, v.zweckEn);
       text.append(name, zweck);
       b.append(text, neu("span", "vschalter"));
       return b;
@@ -3047,12 +3395,13 @@ class Steuerung extends Basis {
   _baukastenKacheln(t, sorte) {
     const r = this._regler;
     const w = this._w;
-    const en = sprache(this._hass) === "en";
+    const spr = sprache(this._hass);
+    const wahl = (de, en) => (spr === "de" ? de : (this._w?.lokal ? this._w.lokal(en, spr) : en));
     const dunkel = r.modus === "dark";
     const wert = (teil, name) => teil[r.modus]?.[name] ?? teil.flach?.[name] ?? teil.felder?.[name];
     const kacheln = (w.BAUKASTEN?.[sorte]?.teile ?? []).map((teil) => {
-      const k = { name: en ? teil.en : teil.de, daten: { sorte, teil: teil.id },
-                  an: r.sitzt?.[sorte] === teil.id, zweck: en ? teil.zweckEn : teil.zweckDe };
+      const k = { name: wahl(teil.de, teil.en), daten: { sorte, teil: teil.id },
+                  an: r.sitzt?.[sorte] === teil.id, zweck: wahl(teil.zweckDe, teil.zweckEn) };
       if (sorte === "palette") {
         const punkte = w.palettenVorschau(teil, dunkel).map((p) => p.hex);
         k.hintergrund = `linear-gradient(90deg, ${punkte.map((hex, i) =>
@@ -3156,7 +3505,7 @@ class Steuerung extends Basis {
     if (this._speichert) return;
     const r = this._regler;
     if (!r || r.sperre) return;
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     this._speichert = true;
     try {
       const hass = this._hass;
@@ -3188,7 +3537,7 @@ class Steuerung extends Basis {
   }
 
   _fensterKlick(knopf) {
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     const d = knopf.dataset;
     if (d.fensterZu !== undefined) { this._fenster?.close(); return true; }
     if (d.seite) {
@@ -3236,7 +3585,7 @@ class Steuerung extends Basis {
     if (!was || !r) return;
     r.werte[was] = was === "weite" ? AUSSCHLAEGE[Number(regler.value)] : Number(regler.value);
     r.geaendert.add(was);
-    this._reglerStelle(TEXTE[sprache(this._hass)]);
+    this._reglerStelle(texte(sprache(this._hass)));
     if (losgelassen) this._reglerSpeichern();
   }
 
@@ -3246,7 +3595,7 @@ class Steuerung extends Basis {
   async _reglerSpeichern() {
     if (this._speichert) { this._nochmal = true; return; }
     this._speichert = true;
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     try {
       do {
         this._nochmal = false;
@@ -3392,7 +3741,7 @@ class Steuerung extends Basis {
     const lage = modusLage(this._hass);
     if (lage.schaltbar) return false;
     this._sende("hass-notification", {
-      message: TEXTE[sprache(this._hass)].fest(lage.theme, lage.fest),
+      message: texte(sprache(this._hass)).fest(lage.theme, lage.fest),
     });
     return true;
   }
@@ -3558,7 +3907,7 @@ class GlaswerkBarEditor extends Basis {
 
   _zeichne() {
     if (!this._config || !this.isConnected) return;
-    const t = TEXTE[sprache(this._hass)];
+    const t = texte(sprache(this._hass));
     if (!this._form) {
       this._form = document.createElement("ha-form");
       this._form.addEventListener("value-changed", (ev) => {

@@ -13,6 +13,13 @@ karte.py
 manifest.json
 translations/de.json
 translations/en.json
+www/sprachen.js
+www/sprache-fr.js
+www/sprache-nl.js
+www/sprache-es.js
+translations/fr.json
+translations/nl.json
+translations/es.json
 www/baukasten.js
 www/bedienelemente.js
 www/glaswerk-bar.js

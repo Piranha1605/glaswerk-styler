@@ -162,10 +162,14 @@ pruefe("kiosk_only gilt nur bei einem echten true", () => {
   }
 });
 
-pruefe("Deutsch bei de, sonst englisch", () => {
+pruefe("Fuenf Sprachen, alles andere englisch", () => {
   assert.strictEqual(sprache({ language: "de" }), "de");
   assert.strictEqual(sprache({ locale: { language: "de-CH" }, language: "en" }), "de");
-  assert.strictEqual(sprache({ language: "fr" }), "en");
+  assert.strictEqual(sprache({ language: "fr" }), "fr");
+  assert.strictEqual(sprache({ language: "nl-BE" }), "nl");
+  assert.strictEqual(sprache({ language: "es" }), "es");
+  assert.strictEqual(sprache({ language: "it" }), "en");
+  assert.strictEqual(sprache({ language: "pl" }), "en");
 });
 
 // ---- Was die Datei benutzt ------------------------------------------------
@@ -186,7 +190,7 @@ pruefe("Die Datei steht allein - bis jemand den Regler der Bewegung oeffnet", ()
   // zweiten. Nichts von aussen, und nichts ausserhalb von ladeWerkzeug.
   const code = quelle.split("\n").filter((z) => !/^\s*\/\//.test(z)).join("\n");
   const nach = [...code.matchAll(/\bimport\s*\(([^)]*\))/g)].map((m) => m[1]);
-  const MODULE = ["theme.js", "hintergrund.js", "baukasten.js", "hintergrund-seite.js", "vorlagen.js"];
+  const MODULE = ["theme.js", "hintergrund.js", "baukasten.js", "hintergrund-seite.js", "vorlagen.js", "sprachen.js"];
   assert.deepStrictEqual(nach, MODULE.map((m) => `new URL("./${m}", import.meta.url)`));
   const lader = /function ladeWerkzeug\(\) \{([\s\S]*?)\n\}/.exec(quelle);
   assert.ok(lader && (lader[1].match(/\bimport\s*\(/g) || []).length === MODULE.length, "ein import ausserhalb von ladeWerkzeug");
@@ -334,13 +338,18 @@ pruefe("Symbole kommen aus Home Assistants eigenem Satz", () => {
   for (const s of symbole) assert.match(s, /^mdi:[a-z-]+$/, s);
 });
 
-pruefe("Beide Sprachen tragen dieselben Texte", () => {
+pruefe("Alle Sprachen tragen dieselben Texte", () => {
   const block = /const TEXTE = \{([\s\S]*?)\n\};/.exec(quelle);
   assert.ok(block, "TEXTE nicht gefunden");
-  const [de, en] = block[1].split(/\n  en: \{/);
+  // Aufteilen an den Sprachbloecken "  de: {", "  en: {", "  fr: {" ...
+  const teile = block[1].split(/\n  (?=[a-z]{2}: \{)/).filter((t) => /^[a-z]{2}: \{/.test(t.trim()));
+  const sprachen = teile.map((t) => t.trim().slice(0, 2));
+  assert.deepStrictEqual(sprachen, ["de", "en", "fr", "es", "nl"].filter((s) => sprachen.includes(s)));
+  assert.ok(sprachen.length >= 2 && sprachen.includes("de") && sprachen.includes("en"), sprachen.join(","));
   const schluessel = (s) => [...s.matchAll(/^\s{4,6}([a-zA-Z_]+):/gm)].map((m) => m[1]).sort();
-  assert.ok(schluessel(de).length >= 10, "der Ausdruck findet die Schluessel nicht");
-  assert.deepStrictEqual(schluessel(de), schluessel(en));
+  const soll = schluessel(teile[0]);
+  assert.ok(soll.length >= 10, "der Ausdruck findet die Schluessel nicht");
+  for (let i = 1; i < teile.length; i++) assert.deepStrictEqual(schluessel(teile[i]), soll, sprachen[i]);
 });
 
 // ---- Karte und Badge ------------------------------------------------------

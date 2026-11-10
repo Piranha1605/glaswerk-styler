@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Glaswerk",
+        "description": "Configurar Glaswerk."
+      }
+    },
+    "abort": {
+      "already_configured": "Glaswerk ya está configurado."
+    }
+  }
+}
