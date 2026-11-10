@@ -41,7 +41,7 @@ import { BAUKASTEN, teilAnwenden, erkenneTeil, KARTENSTILE, HINTERGRUENDE, palet
 import { hintergrundSeiteHtml, bindeHintergrundSeite, wetterEntitaeten,
          hintergrundGewaehlt } from "./hintergrund-seite.js";
 
-const GLASWERK_VERSION = "1.0.1";
+const GLASWERK_VERSION = "1.0.2";
 
 // Die acht Stufen sind ein Weg, kein Menue: von der leeren Datei bis zur
 // geschriebenen Theme. Jede Stufe setzt auf der vorigen auf - wer Stufe 1
@@ -3353,9 +3353,13 @@ class GlaswerkPanel extends HTMLElement {
     this.zeichne();
   }
 
+  // Deutsch nur bei deutscher Oberflaeche, sonst Englisch - wie die Leiste
+  // (sprache() in glaswerk-bar.js). Bis 1.0.1 stand es umgekehrt: Jede andere
+  // Sprache als Englisch bekam Deutsch. Gemeldet am 10.11.2026 im Forum von
+  // einem Nutzer mit franzoesischer Oberflaeche.
   get spr() {
-    const s = (this._hass && this._hass.language) || "de";
-    return s.startsWith("en") ? "en" : "de";
+    const s = String((this._hass && (this._hass.locale?.language || this._hass.language)) || "en").toLowerCase();
+    return s.startsWith("de") ? "de" : "en";
   }
 
   // Ein Fehler beim Zeichnen hinterliess bisher eine leere Flaeche - und wer
