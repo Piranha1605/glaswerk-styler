@@ -2,6 +2,8 @@
 # Links der Pfad beim Entwicklungsrechner, rechts nach | das Ziel auf
 # der Instanz. Ohne | landet die Datei unter /config/custom_components/glaswerk.
 
+brand/icon.png
+brand/icon@2x.png
 __init__.py
 config_flow.py
 const.py
