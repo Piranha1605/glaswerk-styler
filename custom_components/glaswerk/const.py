@@ -7,7 +7,7 @@ Konfigurationseintraege der Nutzer - also vor dem ersten Release festlegen.
 
 DOMAIN = "glaswerk"
 NAME = "Glaswerk"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 PANEL_URL = "glaswerk"
 PANEL_TITLE = "Glaswerk"
@@ -19,7 +19,7 @@ PANEL_FILE = "glaswerk-panel.js"
 # Pruefsumme ueber den www-Ordner nicht rechnen laesst - sonst steht sie im Pfad
 # (siehe __init__.py). Sie bleibt als Literal stehen, weil ein Test sie gegen
 # das Manifest prueft.
-FRONTEND_MODULE = "/glaswerk_static/glaswerk-panel.js?v=1.0.0"
+FRONTEND_MODULE = "/glaswerk_static/glaswerk-panel.js?v=1.0.1"
 
 # Die Steuerkarte. Ihre Adresse wird aus STATIC_PATH und VERSION gebaut, nicht
 # hier ausgeschrieben - die Versionsnummer steht schon an vier Stellen, und
