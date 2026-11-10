@@ -97,6 +97,8 @@ Copy the `custom_components/glaswerk` folder into `config/custom_components/`, r
 
 **Glaswerk** then appears in the sidebar, and the control bar is in the card picker under **"By card"**, search "Glaswerk". No resource to register – Glaswerk does that itself.
 
+**Languages:** German, English, French, Dutch and Spanish – Glaswerk follows Home Assistant's language; any other language gets English.
+
 **Requires** Home Assistant 2026.10.0 or newer. UI eXtension is only needed for the UIX templates.
 
 ## Quick start

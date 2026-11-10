@@ -97,6 +97,8 @@ Den Ordner `custom_components/glaswerk` nach `config/custom_components/` kopiere
 
 Danach steht **Glaswerk** in der Seitenleiste, und die Steuerleiste findest du im Kartenwähler unter **„Nach Karte"**, Suche „Glaswerk". Eine Ressource musst du nicht eintragen – Glaswerk macht das selbst.
 
+**Sprachen:** Deutsch, Englisch, Französisch, Niederländisch und Spanisch – Glaswerk folgt der Sprache von Home Assistant, alle anderen Sprachen bekommen Englisch.
+
 **Voraussetzung:** Home Assistant 2026.10.0 oder neuer. UI eXtension ist nur für die UIX-Vorlagen nötig.
 
 ## Schnellstart
